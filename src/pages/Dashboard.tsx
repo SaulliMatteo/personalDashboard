@@ -128,6 +128,34 @@ function Dashboard() {
     initializeLayout();
   }, []);
 
+  // Bugfix: se l'utente perde il focus della finestra (alt-tab, altra app)
+  // mentre sta trascinando un widget, e rilascia il mouse FUORI dalla pagina,
+  // il browser non consegna mai il vero evento "mouseup" al nostro document.
+  // react-grid-layout (via react-draggable) resta quindi bloccato in stato
+  // "drag attivo" per sempre, e con lui anche il nostro ghost.
+  //
+  // Soluzione: al blur della finestra, simuliamo noi un mouseup sul document,
+  // lo stesso identico evento che la libreria sta già ascoltando — la libreria
+  // crede che il drag sia terminato normalmente e chiude tutto da sola
+  // (chiamando anche onDragStop, quindi il layout risulta comunque salvato).
+  useEffect(() => {
+    const forceEndDrag = () => {
+      document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+      clearGhost();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) forceEndDrag();
+    };
+
+    window.addEventListener("blur", forceEndDrag);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("blur", forceEndDrag);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
   /**
    * === GHOST PREVIEW DURANTE DRAG/RESIZE ===
    *
