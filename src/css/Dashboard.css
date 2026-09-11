@@ -1,13 +1,7 @@
-/* =========================
-   AGGIUNTE: ghost preview durante drag/resize
-   Da appendere al tuo styles.css esistente.
-   ========================= */
-
-/* Necessario perché la ghost preview è posizionata in absolute
-   rispetto a questo contenitore. */
 .grid-container {
   position: relative;
 }
+
 .react-grid-item {
   transition:
     transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -16,49 +10,68 @@
     box-shadow 180ms ease;
   cursor: grab;
 }
-/* Il widget trascinato: più feedback visivo del semplice
-   transition già presente (ombra + leggero tilt). */
+
 .react-grid-item.react-draggable-dragging {
   cursor: grabbing;
   z-index: 20;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
-  transform: scale(1.04) rotate(1deg);
+  transform: scale(1.03) rotate(0.6deg);
   transition:
     transform 120ms ease,
     box-shadow 120ms ease;
 }
-/* Placeholder "fantasma" invece del rettangolo tratteggiato spoglio */
-/* 1. Il placeholder di default della libreria non deve più essere visibile:
-      lo sostituiamo interamente col nostro .widget-ghost */
+
+/* Il placeholder originale resta nel DOM (ci serve per misurarne la posizione)
+   ma è invisibile: la preview vera la disegna .widget-ghost sopra di lui. */
 .react-grid-placeholder {
-  background: transparent !important;
-  border: none !important;
   opacity: 0 !important;
 }
 
-/* 2. Il nostro ghost: deve "risaltare" come un vetro smerigliato,
-      non sparire nel nero di sfondo */
+/* La preview "fantasma": stessa forma del widget reale, solo più eterea */
 .widget-ghost {
   position: absolute;
+  top: 0;
+  left: 0;
   pointer-events: none;
-  z-index: 5;
+  z-index: 15;
+  opacity: 0.45;
+  filter: blur(1.5px) saturate(0.8);
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, width, height;
 }
 
-.widget-ghost .widget {
-  background: rgba(255, 255, 255, 0.06);   /* più chiaro dello sfondo, non più scuro */
-  border: 1px dashed rgba(255, 255, 255, 0.3);
-  opacity: 0.5;                             /* leggibile ma chiaramente "fantasma" */
+/* Il widget clonato dentro il ghost eredita già .widget dal componente stesso:
+   qui aggiungiamo solo un bordo tratteggiato per farlo leggere come "anteprima" */
+.widget-ghost > .widget {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: none;
 }
-/* Leggero hover sul widget anche fuori dal drag, per far capire che è "afferrabile" */
+
 .widget:hover {
   border-color: #333333;
 }
 
-/* Maniglia di resize più discreta ma visibile all'hover */
 .react-resizable-handle {
   opacity: 0;
   transition: opacity 150ms ease;
 }
 .react-grid-item:hover .react-resizable-handle {
   opacity: 0.6;
+}
+.react-grid-item > .react-resizable-handle {
+  width: 32px;
+  height: 32px;
+  z-index: 10;               /* sopra al contenuto del widget, per sicurezza */
+  cursor: se-resize;
+}
+
+/* Il quadratino visivo (::after, generato dalla libreria) resta piccolo e discreto,
+   ma ora ha molto più margine di errore intorno per essere agganciato dal mouse */
+.react-grid-item > .react-resizable-handle::after {
+  right: 6px;
+  bottom: 6px;
 }
