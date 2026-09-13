@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import GridLayout, { useContainerWidth } from "react-grid-layout";
+import GridLayout, { useContainerWidth, noCompactor } from "react-grid-layout";
+import { freeMovePushCompactor } from "../compactors/freeMovePushCompactor";
 import { calcGridItemPosition } from "react-grid-layout/core";
 import Sidebar from "../components/sideBar/Sidebar";
 import WeatherWidget from "../components/widgets/WeatherWidget";
@@ -271,6 +272,7 @@ function Dashboard() {
               // dall'area della griglia.
               dragConfig={{ bounded: true }}
               width={width}
+              compactor={freeMovePushCompactor}
               // Aggiorna la posizione del ghost sia all'inizio del drag
               // sia ad ogni movimento successivo del mouse.
               onDragStart={captureGhost}
