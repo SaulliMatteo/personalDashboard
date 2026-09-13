@@ -1,3 +1,27 @@
+/* ==========================================================================
+   TOKEN DI TEMA — Modern
+   ========================================================================== */
+
+:root {
+  --bg: #0b0b0e;
+  --bg-sidebar: #0b0b0e;
+  --bg-card: #131318;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-accent: rgba(108, 141, 255, 0.35);
+
+  --text-primary: #f2f2f4;
+  --text-secondary: #b5b5bc;
+  --text-muted: #8a8a92;
+
+  --accent: #6c8dff;
+  --accent-soft: rgba(108, 141, 255, 0.12);
+
+  --radius-card: 14px;
+  --radius-item: 8px;
+
+  --ease-out-back: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -19,6 +43,6 @@ body {
     "Segoe UI",
     sans-serif;
 
-  background: #090909;
-  color: #ffffff;
+  background: var(--bg);
+  color: var(--text-primary);
 }
