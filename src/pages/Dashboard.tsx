@@ -263,13 +263,19 @@ function Dashboard() {
           {mounted && (
             <GridLayout
               className="widget-grid"
+              
               layout={layoutWithConstraints}
               gridConfig={{ cols, rowHeight, margin: [marginX, marginY] }}
+              resizeConfig={{ handles: ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne'] }}
+              // Impedisce di trascinare/ridimensionare un widget fuori
+              // dall'area della griglia.
+              dragConfig={{ bounded: true }}
               width={width}
               // Aggiorna la posizione del ghost sia all'inizio del drag
               // sia ad ogni movimento successivo del mouse.
               onDragStart={captureGhost}
               onDrag={captureGhost}
+              
               // Al rilascio: salva la nuova posizione nello stato React
               // (layout "vero", senza vincoli), nasconde il ghost, e
               // persiste il risultato nel database SQLite via saveLayout.
