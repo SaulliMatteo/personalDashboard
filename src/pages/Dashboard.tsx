@@ -9,7 +9,7 @@ import CalendarWidget from "../components/widgets/CalendarWidget";
 import NotesWidget from "../components/widgets/NotesWidget";
 import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE prima del nostro Dashboard.css
 import "../css/Dashboard.css"; // Il nostro CSS custom, sovrascrive/estende i default della libreria
-// import BorderGlow from "../components/import/BorderGlow";
+import BorderGlow from "../components/import/BorderGlow";
 import { MdOutlineLockReset } from "react-icons/md";
 
 import {
@@ -312,20 +312,20 @@ function Dashboard() {
             >
               {/* I widget veri. La key deve corrispondere esattamente
                   all'id (i) usato in layout/DefaultLayout/WIDGET_CONSTRAINTS. */}
-              {/* <BorderGlow
+              <div key="weather"><BorderGlow
                 edgeSensitivity={24}
                 glowColor="40 80 80"
-                backgroundColor="#120F17"
+                backgroundColor="#000"
                 borderRadius={28}
                 glowRadius={33}
                 glowIntensity={0.7}
                 coneSpread={25}
                 animated={false}
                 colors={['#c084fc', '#f472b6', '#38bdf8']}
-              > */}
+              >
 
-                <div key="weather"><WeatherWidget /></div>
-              {/* </BorderGlow> */}
+                <WeatherWidget />
+              </BorderGlow></div>
               <div key="tasks"><TasksWidget /> </div>
               <div key="calendar"><CalendarWidget /></div>
               <div key="notes"><NotesWidget /></div>
