@@ -2,37 +2,26 @@ import { collides } from "react-grid-layout/core";
 import type { Compactor, Layout } from "react-grid-layout/core";
 
 /**
- * Compactor "libero con spinta".
+ * ID del widget attualmente sotto controllo dell'utente (drag o resize).
+ * Vive fuori dal Compactor perché l'interfaccia Compactor.compact(layout, cols)
+ * non prevede un terzo parametro per comunicare "quale item è quello attivo" —
+ * quindi lo teniamo in un modulo-level state, aggiornato da Dashboard.tsx
+ * tramite setActiveItem() a onDragStart/onDragStop/onResizeStart/onResizeStop.
  *
- * L'interfaccia Compactor espone SOLO `compact(layout, cols)` — non esiste
- * un hook separato per "solo il widget appena spostato" (la versione
- * precedente di questo file assumeva un `onMove` che in realtà non esiste
- * nell'API della libreria). Quindi tutta la logica vive qui dentro.
- *
- * Cosa fa, e cosa NON fa, rispetto al compactor verticale di default:
- * - NON fa "fluttuare" i widget verso l'alto per riempire spazi vuoti:
- *   è quello il comportamento che causava la frizione di prima (dover
- *   girare intorno a un widget invece di scambiarlo direttamente).
- * - Risolve però le sovrapposizioni: se due widget si sovrappongono dopo
- *   un drag/resize, quello "più in basso" (o quello con indice maggiore,
- *   a parità di posizione) viene spinto subito sotto il bordo inferiore
- *   dell'altro. Ripete finché non restano collisioni (una spinta può
- *   crearne una nuova più sotto — es. A spinge B, B finisce per
- *   sovrapporsi a C, quindi spinge anche C).
- *
- * Limite noto: non conoscendo esplicitamente "quale widget hai appena
- * trascinato", la scelta di chi resta fermo e chi viene spinto si basa
- * sulla posizione (chi sta più in alto resta fermo) e, a parità, sull'
- * ordine nell'array. Nella grande maggioranza dei casi corrisponde
- * comunque a quello che ti aspetti (il widget che rilasci sopra un
- * altro lo spinge giù), ma se noti un caso in cui si comporta al
- * contrario, dimmelo con lo scenario esatto e affino la regola.
+ * SENZA questo, compact() decide chi spostare guardando solo y/indice — e può
+ * decidere di spostare proprio il widget che l'utente sta trascinando,
+ * bloccandolo appena tocca un altro widget (bug osservato: "si alza di poco
+ * e si ferma", perché ad ogni frame di drag viene rimesso lì a forza).
  */
+let activeItemId: string | null = null;
+
+export function setActiveItem(id: string | null) {
+  activeItemId = id;
+}
+
 export const freeMovePushCompactor: Compactor = {
-  // null = nessuna compattazione automatica "di riempimento gap",
-  // lo stesso valore usato internamente per noCompactor.
   type: null,
-  allowOverlap: false,
+  allowOverlap: true,
   preventCollision: false,
 
   compact(layout: Layout, _cols: number): Layout {
@@ -40,7 +29,7 @@ export const freeMovePushCompactor: Compactor = {
 
     let changed = true;
     let iterations = 0;
-    const maxIterations = items.length * items.length + 10; // guardia anti-loop infinito
+    const maxIterations = items.length * items.length + 10;
 
     while (changed && iterations < maxIterations) {
       changed = false;
@@ -54,8 +43,21 @@ export const freeMovePushCompactor: Compactor = {
           if (a.static || b.static) continue;
           if (!collides(a, b)) continue;
 
-          const [fixed, moving] =
-            a.y < b.y || (a.y === b.y && i < j) ? [a, b] : [b, a];
+          let fixed, moving;
+          if (a.i === activeItemId) {
+            // a è il widget sotto controllo utente: non si tocca mai.
+            fixed = a;
+            moving = b;
+          } else if (b.i === activeItemId) {
+            fixed = b;
+            moving = a;
+          } else {
+            // Nessuno dei due è quello attivo (es. effetto a catena su
+            // altri widget spinti indirettamente): torna alla regola
+            // originale basata su y/indice.
+            [fixed, moving] =
+              a.y < b.y || (a.y === b.y && i < j) ? [a, b] : [b, a];
+          }
 
           const newY = fixed.y + fixed.h;
           if (moving.y !== newY) {

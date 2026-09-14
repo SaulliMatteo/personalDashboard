@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import GridLayout, { useContainerWidth } from "react-grid-layout";
-import { freeMovePushCompactor } from "../compactors/freeMovePushCompactor";
 import { calcGridItemPosition } from "react-grid-layout/core";
 import Sidebar from "../components/sideBar/Sidebar";
 import WeatherWidget from "../components/widgets/WeatherWidget";
 import TasksWidget from "../components/widgets/TasksWidget";
 import CalendarWidget from "../components/widgets/CalendarWidget";
 import NotesWidget from "../components/widgets/NotesWidget";
+import { freeMovePushCompactor, setActiveItem } from "../compactors/freeMovePushCompactor";
 import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE prima del nostro Dashboard.css
 import "../css/Dashboard.css"; // Il nostro CSS custom, sovrascrive/estende i default della libreria
 import { MdOutlineLockReset } from "react-icons/md";
@@ -270,10 +270,18 @@ function Dashboard() {
           {mounted && (
             <GridLayout
               className="widget-grid"
-              
+
               layout={layoutWithConstraints}
               gridConfig={{ cols, rowHeight, margin: [marginX, marginY] }}
+              // Handle di resize su tutti i lati/angoli (default libreria: solo 'se').
               resizeConfig={{ handles: ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne'] }}
+              // Impedisce alla libreria di ridimensionare il contenitore
+              // della griglia solo quanto basta per i widget attuali:
+              // altrimenti "bounded" (sopra) vincola il drag a
+              // quell'area ridotta invece che a tutta la finestra
+              // disponibile, ed è per questo che prima non riuscivi a
+              // rilasciare un widget nello spazio vuoto sotto gli altri.
+              autoSize={false}
               // Impedisce di trascinare/ridimensionare un widget fuori
               // dall'area della griglia.
               dragConfig={{ bounded: true }}
@@ -281,24 +289,27 @@ function Dashboard() {
               compactor={freeMovePushCompactor}
               // Aggiorna la posizione del ghost sia all'inizio del drag
               // sia ad ogni movimento successivo del mouse.
-              onDragStart={captureGhost}
+              onDragStart={(layout, oldItem, newItem, placeholder) => {
+                setActiveItem(newItem?.i ?? oldItem?.i ?? null);   // AGGIUNTA
+                captureGhost(layout, oldItem, newItem, placeholder);
+              }}
               onDrag={captureGhost}
-              
-              // Al rilascio: salva la nuova posizione nello stato React
-              // (layout "vero", senza vincoli), nasconde il ghost, e
-              // persiste il risultato nel database SQLite via saveLayout.
+
               onDragStop={async (newLayout) => {
                 const newLayoutItems = newLayout as LayoutItem[];
                 setLayout(newLayoutItems);
                 clearGhost();
+                setActiveItem(null);   // AGGIUNTA — fondamentale, altrimenti resta "bloccato" sul prossimo drag
                 await saveLayout(newLayoutItems);
               }}
-              // Al termine di un ridimensionamento: stessa logica di
-              // onDragStop (salva stato + persisti su DB), ma non serve
-              // clearGhost() perché il resize non usa l'overlay ghost.
+
+              onResizeStart={(_layout, oldItem, newItem) => {   // AGGIUNTA — prop nuova
+                setActiveItem(newItem?.i ?? oldItem?.i ?? null);
+              }}
               onResizeStop={async (newLayout) => {
                 const newLayoutItems = newLayout as LayoutItem[];
                 setLayout(newLayoutItems);
+                setActiveItem(null);   // AGGIUNTA
                 await saveLayout(newLayoutItems);
               }}
               // Scatta anche per cambi di layout non causati direttamente
