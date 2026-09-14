@@ -100,6 +100,8 @@
 
 .main {
   flex: 1;
+  display: flex;             /* AGGIUNTA */
+  flex-direction: column;    /* AGGIUNTA */
 
   min-width: 0;
 
@@ -139,6 +141,7 @@ html, body {
    ========================= */
 
 .dashboard-header {
+  flex-shrink: 0;   /* AGGIUNTA: non farlo mai schiacciare */
   margin-bottom: 22px;
 }
 
@@ -166,12 +169,8 @@ html, body {
   position: relative;
   width: 100%;
   min-width: 0;
-  /* Con autoSize={false} su GridLayout, l'altezza del contenitore la
-     decidiamo noi da CSS: deve riempire tutto lo spazio verticale
-     disponibile sotto l'header, non solo quanto basta per i widget
-     attuali — altrimenti il drag "bounded" resta vincolato a
-     un'area piccola invece che a tutta la finestra. */
-  min-height: calc(100vh - 18px - 20px - 22px - 44px);
+  flex: 1;          /* SOSTITUISCE il min-height: calc(...) */
+  min-height: 0;    /* AGGIUNTA: obbligatoria coi flex-child scrollabili, senza questa flex:1 a volte non si restringe/espande bene */
 }
 
 
