@@ -9,6 +9,8 @@ import NotesWidget from "../components/widgets/NotesWidget";
 import {freeMovePushCompactor} from "../compactors/freeMovePushCompactor";
 import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE prima del nostro Dashboard.css
 import "../css/Dashboard.css"; // Il nostro CSS custom, sovrascrive/estende i default della libreria
+import BorderGlow from "../components/import/BorderGlow";
+import { MdOutlineLockReset } from "react-icons/md";
 
 import {
   saveLayout,
@@ -214,6 +216,10 @@ function Dashboard() {
   // Da chiamare quando il drag/resize termina (o viene annullato): nasconde
   // il ghost rimuovendo lo stato.
   const clearGhost = () => setDragTarget(null);
+  const resetLayout = async () => {
+    setLayout(DefaultLayout);
+    await saveLayout(DefaultLayout);
+  };
 
   /**
    * Calcola la posizione in pixel (left/top/width/height) del ghost a
@@ -249,6 +255,7 @@ function Dashboard() {
           <div>
             <h1>Dashboard</h1>
             <p>Welcome back.</p>
+            <button onClick={resetLayout}><MdOutlineLockReset /></button>
           </div>
         </header>
 
@@ -313,8 +320,21 @@ function Dashboard() {
             >
               {/* I widget veri. La key deve corrispondere esattamente
                   all'id (i) usato in layout/DefaultLayout/WIDGET_CONSTRAINTS. */}
-              <div key="weather"><WeatherWidget /></div>
-              <div key="tasks"><TasksWidget /></div>
+              <div key="weather"><BorderGlow
+                edgeSensitivity={24}
+                glowColor="40 80 80"
+                backgroundColor="#000"
+                borderRadius={28}
+                glowRadius={33}
+                glowIntensity={0.7}
+                coneSpread={25}
+                animated={false}
+                colors={['#c084fc', '#f472b6', '#38bdf8']}
+              >
+
+                <WeatherWidget />
+              </BorderGlow></div>
+              <div key="tasks"><TasksWidget /> </div>
               <div key="calendar"><CalendarWidget /></div>
               <div key="notes"><NotesWidget /></div>
             </GridLayout>

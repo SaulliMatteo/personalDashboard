@@ -51,8 +51,8 @@ import type { Compactor, Layout } from "react-grid-layout/core";
  *
  */
 export const freeMovePushCompactor: Compactor = {
-  type: "vertical",
-  allowOverlap: false,
+  type: null,
+  allowOverlap: true,
   preventCollision: false,
 
   compact(layout: Layout, _cols: number): Layout {

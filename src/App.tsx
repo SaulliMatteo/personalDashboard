@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import Dashboard from "./pages/Dashboard";
 import { initializeDatabase } from "./database/db";
-// import "./css/App.css"
+import "./css/App.css"
 import "./css/theme.css"
 
 function App() {
