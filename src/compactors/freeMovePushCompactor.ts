@@ -2,54 +2,23 @@ import { collides } from "react-grid-layout/core";
 import type { Compactor, Layout } from "react-grid-layout/core";
 
 /**
- * Compactor "libero con spinta".
+ * ID del widget attualmente sotto controllo dell'utente (drag o resize).
+ * Vive fuori dal Compactor perché l'interfaccia Compactor.compact(layout, cols)
+ * non prevede un terzo parametro per comunicare "quale item è quello attivo" —
+ * quindi lo teniamo in un modulo-level state, aggiornato da Dashboard.tsx
+ * tramite setActiveItem() a onDragStart/onDragStop/onResizeStart/onResizeStop.
  *
- * Obiettivo: i widget si muovono liberamente per tutta la griglia e, quando
- * vengono rilasciati, restano esattamente dove li hai lasciati. Se però un
- * widget finisce sopra un altro (collisione), i due scambiano la posizione
- * soltanto se necessario: quello trascinato prende il posto, l'altro viene
- * spinto via (sotto il bordo del primo) in modo che non ci siano
- * sovrapposizioni.
- *
- * Cosa fa, e cosa NON fa, rispetto al compactor verticale di default:
- * - NON fa "fluttuare" i widget verso l'alto per riempire spazi vuoti:
- *   se lasci un widget in mezzo alla griglia con spazio sopra e sotto,
- *   rimane esattamente dove lo lasci e nessun altro widget sale a
- *   riempire lo spazio vuoto sopra di lui.
- * - Risolve però le sovrapposizioni: se due widget si sovrappongono dopo
- *   un drag/resize, quello "più in basso" (o quello con indice maggiore,
- *   a parità di posizione) viene spinto immediatamente sotto il bordo
- *   inferiore dell'altro. Il processo si ripete finché non restano
- *   collisioni (una spinta può crearne una nuova più sotto: A spinge B,
- *   B finisce sopra C, quindi B spinge anche C).
- *
- * NOTE IMPORTANTI SULL'INTERAZIONE CON LA LIBRERIA
- * —————————————————————————————————————————————————
- * 1. `type` DEVE essere `"vertical"` (NON `null`).
- *    In `react-grid-layout` (dist/chunk in quanto:
- *    moveElementAwayFromCollision) quando `compactType === null` e nasce
- *    una collisione spostando un widget verso l'alto, viene attivato uno
- *    specifico ramo di codice:
- *
- *      if (collisionNorth && compact Type === null) {
- *        collidesWith.y = itemToMove.y;            // scambia: l'altro prende il posto
- *        itemToMove.y  = itemToMove.y + item.h;    // il trascinato va sotto
- *      }
- *
- *    Quel ramo fa esattamente il comportamento che vedevi nell'UI:
- *    appena toccaviign un widget, i ruoli s'inverte e il widget che
- *    stavi trascinando veniva forzato nella posizione non voluta
- *    "saltando in alto" e restando incollato all'altro. Con
- *    `type: "vertical"` la libreria usa invece la spinta classica
- *    (l'item collide vie coperto di una riga) e il nostro `compact()`
- *    risolve le sovrapposizioni quando rilasci.
- *
- * 2. `allowOverlap: false` e `preventCollision: false`:
- *    permettono che durante il drag i widget si muovano liberamente
- *    SUI другой (il trascinato può momentaneamente passare sopra),
- *    lasciando al rilascio la sistematizzazione finalè.
- *
+ * SENZA questo, compact() decide chi spostare guardando solo y/indice — e può
+ * decidere di spostare proprio il widget che l'utente sta trascinando,
+ * bloccandolo appena tocca un altro widget (bug osservato: "si alza di poco
+ * e si ferma", perché ad ogni frame di drag viene rimesso lì a forza).
  */
+let activeItemId: string | null = null;
+
+export function setActiveItem(id: string | null) {
+  activeItemId = id;
+}
+
 export const freeMovePushCompactor: Compactor = {
   type: null,
   allowOverlap: true,
@@ -60,7 +29,7 @@ export const freeMovePushCompactor: Compactor = {
 
     let changed = true;
     let iterations = 0;
-    const maxIterations = items.length * items.length + 10; // guardia anti-loop infinito
+    const maxIterations = items.length * items.length + 10;
 
     while (changed && iterations < maxIterations) {
       changed = false;
@@ -74,8 +43,21 @@ export const freeMovePushCompactor: Compactor = {
           if (a.static || b.static) continue;
           if (!collides(a, b)) continue;
 
-          const [fixed, moving] =
-            a.y < b.y || (a.y === b.y && i < j) ? [a, b] : [b, a];
+          let fixed, moving;
+          if (a.i === activeItemId) {
+            // a è il widget sotto controllo utente: non si tocca mai.
+            fixed = a;
+            moving = b;
+          } else if (b.i === activeItemId) {
+            fixed = b;
+            moving = a;
+          } else {
+            // Nessuno dei due è quello attivo (es. effetto a catena su
+            // altri widget spinti indirettamente): torna alla regola
+            // originale basata su y/indice.
+            [fixed, moving] =
+              a.y < b.y || (a.y === b.y && i < j) ? [a, b] : [b, a];
+          }
 
           const newY = fixed.y + fixed.h;
           if (moving.y !== newY) {

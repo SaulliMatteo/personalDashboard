@@ -6,7 +6,7 @@ import WeatherWidget from "../components/widgets/WeatherWidget";
 import TasksWidget from "../components/widgets/TasksWidget";
 import CalendarWidget from "../components/widgets/CalendarWidget";
 import NotesWidget from "../components/widgets/NotesWidget";
-import {freeMovePushCompactor} from "../compactors/freeMovePushCompactor";
+import { freeMovePushCompactor, setActiveItem } from "../compactors/freeMovePushCompactor";
 import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE prima del nostro Dashboard.css
 import "../css/Dashboard.css"; // Il nostro CSS custom, sovrascrive/estende i default della libreria
 import BorderGlow from "../components/import/BorderGlow";
@@ -290,24 +290,27 @@ function Dashboard() {
               compactor={freeMovePushCompactor}
               // Aggiorna la posizione del ghost sia all'inizio del drag
               // sia ad ogni movimento successivo del mouse.
-              onDragStart={captureGhost}
+              onDragStart={(layout, oldItem, newItem, placeholder) => {
+                setActiveItem(newItem?.i ?? oldItem?.i ?? null);   // AGGIUNTA
+                captureGhost(layout, oldItem, newItem, placeholder);
+              }}
               onDrag={captureGhost}
 
-              // Al rilascio: salva la nuova posizione nello stato React
-              // (layout "vero", senza vincoli), nasconde il ghost, e
-              // persiste il risultato nel database SQLite via saveLayout.
               onDragStop={async (newLayout) => {
                 const newLayoutItems = newLayout as LayoutItem[];
                 setLayout(newLayoutItems);
                 clearGhost();
+                setActiveItem(null);   // AGGIUNTA — fondamentale, altrimenti resta "bloccato" sul prossimo drag
                 await saveLayout(newLayoutItems);
               }}
-              // Al termine di un ridimensionamento: stessa logica di
-              // onDragStop (salva stato + persisti su DB), ma non serve
-              // clearGhost() perché il resize non usa l'overlay ghost.
+
+              onResizeStart={(_layout, oldItem, newItem) => {   // AGGIUNTA — prop nuova
+                setActiveItem(newItem?.i ?? oldItem?.i ?? null);
+              }}
               onResizeStop={async (newLayout) => {
                 const newLayoutItems = newLayout as LayoutItem[];
                 setLayout(newLayoutItems);
+                setActiveItem(null);   // AGGIUNTA
                 await saveLayout(newLayoutItems);
               }}
               // Scatta anche per cambi di layout non causati direttamente
