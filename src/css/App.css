@@ -476,3 +476,9 @@ html, body {
     transition: none !important;
   }
 }
+
+.setting-button {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
