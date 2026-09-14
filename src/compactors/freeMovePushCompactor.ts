@@ -4,34 +4,54 @@ import type { Compactor, Layout } from "react-grid-layout/core";
 /**
  * Compactor "libero con spinta".
  *
- * L'interfaccia Compactor espone SOLO `compact(layout, cols)` — non esiste
- * un hook separato per "solo il widget appena spostato" (la versione
- * precedente di questo file assumeva un `onMove` che in realtà non esiste
- * nell'API della libreria). Quindi tutta la logica vive qui dentro.
+ * Obiettivo: i widget si muovono liberamente per tutta la griglia e, quando
+ * vengono rilasciati, restano esattamente dove li hai lasciati. Se però un
+ * widget finisce sopra un altro (collisione), i due scambiano la posizione
+ * soltanto se necessario: quello trascinato prende il posto, l'altro viene
+ * spinto via (sotto il bordo del primo) in modo che non ci siano
+ * sovrapposizioni.
  *
  * Cosa fa, e cosa NON fa, rispetto al compactor verticale di default:
  * - NON fa "fluttuare" i widget verso l'alto per riempire spazi vuoti:
- *   è quello il comportamento che causava la frizione di prima (dover
- *   girare intorno a un widget invece di scambiarlo direttamente).
+ *   se lasci un widget in mezzo alla griglia con spazio sopra e sotto,
+ *   rimane esattamente dove lo lasci e nessun altro widget sale a
+ *   riempire lo spazio vuoto sopra di lui.
  * - Risolve però le sovrapposizioni: se due widget si sovrappongono dopo
  *   un drag/resize, quello "più in basso" (o quello con indice maggiore,
- *   a parità di posizione) viene spinto subito sotto il bordo inferiore
- *   dell'altro. Ripete finché non restano collisioni (una spinta può
- *   crearne una nuova più sotto — es. A spinge B, B finisce per
- *   sovrapporsi a C, quindi spinge anche C).
+ *   a parità di posizione) viene spinto immediatamente sotto il bordo
+ *   inferiore dell'altro. Il processo si ripete finché non restano
+ *   collisioni (una spinta può crearne una nuova più sotto: A spinge B,
+ *   B finisce sopra C, quindi B spinge anche C).
  *
- * Limite noto: non conoscendo esplicitamente "quale widget hai appena
- * trascinato", la scelta di chi resta fermo e chi viene spinto si basa
- * sulla posizione (chi sta più in alto resta fermo) e, a parità, sull'
- * ordine nell'array. Nella grande maggioranza dei casi corrisponde
- * comunque a quello che ti aspetti (il widget che rilasci sopra un
- * altro lo spinge giù), ma se noti un caso in cui si comporta al
- * contrario, dimmelo con lo scenario esatto e affino la regola.
+ * NOTE IMPORTANTI SULL'INTERAZIONE CON LA LIBRERIA
+ * —————————————————————————————————————————————————
+ * 1. `type` DEVE essere `"vertical"` (NON `null`).
+ *    In `react-grid-layout` (dist/chunk in quanto:
+ *    moveElementAwayFromCollision) quando `compactType === null` e nasce
+ *    una collisione spostando un widget verso l'alto, viene attivato uno
+ *    specifico ramo di codice:
+ *
+ *      if (collisionNorth && compact Type === null) {
+ *        collidesWith.y = itemToMove.y;            // scambia: l'altro prende il posto
+ *        itemToMove.y  = itemToMove.y + item.h;    // il trascinato va sotto
+ *      }
+ *
+ *    Quel ramo fa esattamente il comportamento che vedevi nell'UI:
+ *    appena toccaviign un widget, i ruoli s'inverte e il widget che
+ *    stavi trascinando veniva forzato nella posizione non voluta
+ *    "saltando in alto" e restando incollato all'altro. Con
+ *    `type: "vertical"` la libreria usa invece la spinta classica
+ *    (l'item collide vie coperto di una riga) e il nostro `compact()`
+ *    risolve le sovrapposizioni quando rilasci.
+ *
+ * 2. `allowOverlap: false` e `preventCollision: false`:
+ *    permettono che durante il drag i widget si muovano liberamente
+ *    SUI другой (il trascinato può momentaneamente passare sopra),
+ *    lasciando al rilascio la sistematizzazione finalè.
+ *
  */
 export const freeMovePushCompactor: Compactor = {
-  // null = nessuna compattazione automatica "di riempimento gap",
-  // lo stesso valore usato internamente per noCompactor.
-  type: null,
+  type: "vertical",
   allowOverlap: false,
   preventCollision: false,
 

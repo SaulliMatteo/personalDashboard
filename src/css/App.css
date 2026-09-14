@@ -166,6 +166,12 @@ html, body {
   position: relative;
   width: 100%;
   min-width: 0;
+  /* Con autoSize={false} su GridLayout, l'altezza del contenitore la
+     decidiamo noi da CSS: deve riempire tutto lo spazio verticale
+     disponibile sotto l'header, non solo quanto basta per i widget
+     attuali — altrimenti il drag "bounded" resta vincolato a
+     un'area piccola invece che a tutta la finestra. */
+  min-height: calc(100vh - 18px - 20px - 22px - 44px);
 }
 
 
@@ -283,8 +289,8 @@ html, body {
 .react-resizable-handle-sw,
 .react-resizable-handle-ne,
 .react-resizable-handle-nw {
-  width: 13px !important;
-  height: 13px !important;
+  width: 10px !important;
+  height: 10px !important;
 }
 .react-resizable-handle-se { right: -5px !important; bottom: -5px !important; left: auto !important; top: auto !important; cursor: se-resize; }
 .react-resizable-handle-sw { left: -5px !important; bottom: -5px !important; right: auto !important; top: auto !important; cursor: sw-resize; }
