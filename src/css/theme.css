@@ -226,3 +226,19 @@ body {
     transition: none !important;
   }
 }
+
+/* Quando .widget è dentro BorderGlow, non deve comportarsi da card a sé:
+   niente sfondo/bordo/ombra propri, e niente hover lift che si stacca
+   dal bagliore esterno gestito da BorderGlow. */
+.border-glow-inner .widget {
+  /* background: transparent; */
+  /* border: none; */
+  box-shadow: none;
+  /* border-radius: inherit; */
+}
+
+.border-glow-inner .widget:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: transparent;
+}
