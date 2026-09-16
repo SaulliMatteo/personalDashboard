@@ -4,6 +4,7 @@ export interface AppSettings {
   theme: "dark" | "light";
   glowEnabled: boolean;
   gridMargin: number;
+  
 }
 
 const SETTINGS_FILE = "settings.json";

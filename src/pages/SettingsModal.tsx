@@ -3,7 +3,8 @@ import "../css/SettingsModal.css";
 import WidgetSetting from "../components/setting/WidgetSetting";
 import type { Dispatch, SetStateAction } from "react";
 import type { LayoutItem } from "../database/layoutRepository";
-import { loadSettings, saveSettings, type AppSettings } from "../database/settingRepository";
+import type { AppSettings } from "../database/settingRepository";
+import { useSettings } from "../context/SettingContext";
 
 
 interface SettingsModalProps {
@@ -25,30 +26,10 @@ const TABS: { id: SettingsTab; label: string }[] = [
 function SettingsModal({ isOpen, onClose, setLayout }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
 
-  // Impostazioni caricate dal file JSON su disco. null finché non è
-  // ancora arrivato il primo loadSettings() (evita di renderizzare
-  // controlli con valori sbagliati per un istante).
-  const [settings, setSettings] = useState<AppSettings | null>(null);
-
-  // Carica le impostazioni da settings.json ogni volta che il modale
-  // viene aperto (così riflette eventuali modifiche fatte altrove).
-  useEffect(() => {
-    if (isOpen) {
-      loadSettings().then(setSettings);
-    }
-  }, [isOpen]);
-
-  // Aggiorna un singolo campo: subito in UI (setSettings) e poi su disco
-  // (saveSettings), senza dover riscrivere tutto l'oggetto a mano ogni volta.
-  const updateSetting = async <K extends keyof AppSettings>(
-    key: K,
-    value: AppSettings[K]
-  ) => {
-    if (!settings) return;
-    const updated = { ...settings, [key]: value };
-    setSettings(updated);
-    await saveSettings(updated);
-  };
+  // Impostazioni condivise con tutta l'app tramite il context: leggerle/
+  // aggiornarle da qui aggiorna automaticamente anche la Dashboard,
+  // senza bisogno di ricaricare o passare props manualmente.
+  const { settings, updateSetting } = useSettings();
 
   // Chiude con ESC, come in Obsidian
   useEffect(() => {

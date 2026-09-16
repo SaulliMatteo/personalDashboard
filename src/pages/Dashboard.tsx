@@ -9,6 +9,7 @@ import NotesWidget from "../components/widgets/NotesWidget";
 import { freeMovePushCompactor, setActiveItem } from "../compactors/freeMovePushCompactor";
 import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE prima del nostro Dashboard.css
 import "../css/Dashboard.css"; // Il nostro CSS custom, sovrascrive/estende i default della libreria
+import { useSettings } from "../context/SettingContext"; // AGGIUNTA
 
 import {
   saveLayout,
@@ -52,36 +53,18 @@ const WIDGET_CONSTRAINTS: Record<string, { minW?: number; minH?: number }> = {
 const DefaultLayout: LayoutItem[] = [
   { i: "weather", x: 0, y: 0, w: 4, h: 4 },
   { i: "tasks", x: 4, y: 0, w: 4, h: 4 },
-  { i: "calendar", x: 4, y: 0, w: 4, h: 2 },
+  { i: "calendar", x: 4, y: 0, w: 4, h: 4 },
   { i: "notes", x: 0, y: 2, w: 4, h: 4 },
 ];
 
 // Parametri della griglia: DEVONO combaciare esattamente con quelli passati
 // a gridConfig su <GridLayout>, altrimenti i calcoli pixel del ghost
 // (vedi calcGridItemPosition più sotto) risulterebbero disallineati.
+// NOTA: marginX/marginY sono stati spostati dentro il componente, perché
+// ora dipendono da settings.gridMargin (vedi sotto) e non sono più costanti
+// statiche — cols e rowHeight invece non dipendono dai settings, restano qui.
 const cols = 12;
 const rowHeight = 40;
-const marginX = 10;
-const marginY = 10;
-
-/**
- * Parametri "statici" richiesti da calcGridItemPosition (funzione ESPORTATA
- * dalla libreria stessa, la usiamo per calcolare dove piazzare in pixel
- * il nostro overlay "ghost" durante il drag/resize).
- * containerWidth manca qui perché cambia dinamicamente (dipende dalla
- * larghezza reale del contenitore, misurata da useContainerWidth) e viene
- * aggiunto al momento del calcolo, vedi ghostPos più sotto.
- * containerPadding è impostato uguale a margin perché quello è il default
- * della libreria quando containerPadding non viene passato esplicitamente
- * a GridLayout (comportamento confermato nei tipi della libreria).
- */
-const positionParams = {
-  margin: [marginX, marginY] as const,
-  containerPadding: [marginX, marginY] as const,
-  cols,
-  rowHeight,
-  maxRows: Infinity,
-};
 
 function Dashboard() {
   // width: larghezza attuale del contenitore (px), ricalcolata automaticamente
@@ -91,6 +74,38 @@ function Dashboard() {
   // mounted: true solo dopo il primo render lato client (evita mismatch SSR/
   //        larghezza 0 al primissimo frame).
   const { width, containerRef, mounted } = useContainerWidth();
+
+  // Impostazioni condivise dell'app (tema, margine griglia, glow, ecc.),
+  // lette dal context così si aggiornano in automatico quando l'utente
+  // le cambia nel SettingsModal, senza bisogno di ricaricare la pagina. // AGGIUNTA
+  const { settings } = useSettings(); // AGGIUNTA
+
+  // Margine della griglia: preso dai settings se già caricati, altrimenti
+  // fallback a 10px finché settings è null (primissimo render). // AGGIUNTA
+  const marginX = settings?.gridMargin ?? 10; // AGGIUNTA
+  const marginY = settings?.gridMargin ?? 10; // AGGIUNTA
+
+  /**
+   * Parametri "statici" richiesti da calcGridItemPosition (funzione ESPORTATA
+   * dalla libreria stessa, la usiamo per calcolare dove piazzare in pixel
+   * il nostro overlay "ghost" durante il drag/resize).
+   * containerWidth manca qui perché cambia dinamicamente (dipende dalla
+   * larghezza reale del contenitore, misurata da useContainerWidth) e viene
+   * aggiunto al momento del calcolo, vedi ghostPos più sotto.
+   * containerPadding è impostato uguale a margin perché quello è il default
+   * della libreria quando containerPadding non viene passato esplicitamente
+   * a GridLayout (comportamento confermato nei tipi della libreria).
+   *
+   * Spostato qui dentro (non più costante globale) perché ora referenzia
+   * marginX/marginY, che dipendono da settings.gridMargin. // MODIFICATA
+   */
+  const positionParams = {
+    margin: [marginX, marginY] as const,
+    containerPadding: [marginX, marginY] as const,
+    cols,
+    rowHeight,
+    maxRows: Infinity,
+  };
 
   // Layout "vero", quello che viene salvato/caricato dal database.
   // Contiene SOLO i dati essenziali (i, x, y, w, h), niente vincoli minW/minH.
@@ -242,7 +257,9 @@ function Dashboard() {
   })();
 
   return (
-    <div className="app">
+    // Classe tema dinamica: legge settings.theme dal context. Fallback a
+    // "theme-dark" finché settings non è ancora stato caricato. // AGGIUNTA
+    <div className={`app ${settings?.theme === "light" ? "theme-light" : "theme-dark"}`}>
       <Sidebar setLayout={setLayout} />
       <main className="main">
         <header className="dashboard-header">
