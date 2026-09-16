@@ -1,4 +1,5 @@
 import { useRef, useCallback, useEffect, type ReactNode } from 'react';
+import { useSettings } from '../../context/SettingContext'; // AGGIUNTA — aggiusta il path in base a dove si trova il file
 import './BorderGlow.css';
 
 interface BorderGlowProps {
@@ -94,6 +95,17 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Se l'utente ha disattivato il glow dalle impostazioni, sovrascriviamo
+  // qui i valori effettivi usati più sotto — così ogni widget che usa
+  // BorderGlow lo rispetta automaticamente, senza doverlo gestire
+  // manualmente in ogni CalendarWidget/WeatherWidget/ecc. // AGGIUNTA
+  const { settings } = useSettings(); // AGGIUNTA
+  const glowOn = settings?.glowEnabled ?? true; // AGGIUNTA
+
+  const effectiveGlowRadius = glowOn ? glowRadius : 0; // AGGIUNTA
+  const effectiveGlowIntensity = glowOn ? glowIntensity : 0; // AGGIUNTA
+  const effectiveAnimated = glowOn && animated; // AGGIUNTA
+
   const getCenterOfElement = useCallback((el: HTMLElement) => {
     const { width, height } = el.getBoundingClientRect();
     return [width / 2, height / 2];
@@ -121,7 +133,11 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
     return degrees;
   }, [getCenterOfElement]);
 
+  // Se il glow è disattivato, ignoriamo anche il movimento del mouse:
+  // non ha senso ricalcolare edge-proximity/cursor-angle per un effetto
+  // che non verrà comunque disegnato. // AGGIUNTA (guardia in cima)
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!glowOn) return; // AGGIUNTA
     const card = cardRef.current;
     if (!card) return;
 
@@ -134,10 +150,10 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
 
     card.style.setProperty('--edge-proximity', `${(edge * 100).toFixed(3)}`);
     card.style.setProperty('--cursor-angle', `${angle.toFixed(3)}deg`);
-  }, [getEdgeProximity, getCursorAngle]);
+  }, [glowOn, getEdgeProximity, getCursorAngle]); // MODIFICATA — aggiunta glowOn alle dipendenze
 
   useEffect(() => {
-    if (!animated || !cardRef.current) return;
+    if (!effectiveAnimated || !cardRef.current) return; // MODIFICATA — era: !animated
     const card = cardRef.current;
     const angleStart = 110;
     const angleEnd = 465;
@@ -155,9 +171,9 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
       onUpdate: v => card.style.setProperty('--edge-proximity', `${v}`),
       onEnd: () => card.classList.remove('sweep-active'),
     });
-  }, [animated]);
+  }, [effectiveAnimated]); // MODIFICATA — era: [animated]
 
-  const glowVars = buildGlowVars(glowColor, glowIntensity);
+  const glowVars = buildGlowVars(glowColor, effectiveGlowIntensity); // MODIFICATA — era: glowIntensity
   const lightSurface = isLightColor(backgroundColor);
 
   return (
@@ -169,7 +185,7 @@ const BorderGlow: React.FC<BorderGlowProps> = ({
         '--card-bg': backgroundColor,
         '--edge-sensitivity': edgeSensitivity,
         '--border-radius': `${borderRadius}px`,
-        '--glow-padding': `${glowRadius}px`,
+        '--glow-padding': `${effectiveGlowRadius}px`, // MODIFICATA — era: glowRadius
         '--cone-spread': coneSpread,
         '--fill-opacity': fillOpacity,
         ...glowVars,

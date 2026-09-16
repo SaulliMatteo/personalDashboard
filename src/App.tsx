@@ -3,6 +3,7 @@ import Dashboard from "./pages/Dashboard";
 import { initializeDatabase } from "./database/db";
 import "./css/App.css"
 import "./css/theme.css"
+import { SettingsProvider } from "./context/SettingContext";
 
 function App() {
   useEffect(() => {
@@ -15,7 +16,11 @@ function App() {
       });
   }, []);
 
-  return <Dashboard />;
+  return (
+    <SettingsProvider>
+      <Dashboard />
+    </SettingsProvider>
+  );
 }
 
 export default App;
