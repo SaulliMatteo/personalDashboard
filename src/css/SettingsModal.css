@@ -105,3 +105,29 @@
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-primary, #f2f2f4);
 }
+
+.settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--text-secondary, #b5b5bc);
+}
+
+.settings-field--checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-field select,
+.settings-field input[type="range"] {
+  accent-color: var(--accent, #6c8dff);
+}

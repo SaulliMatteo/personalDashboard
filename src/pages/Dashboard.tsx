@@ -9,7 +9,6 @@ import NotesWidget from "../components/widgets/NotesWidget";
 import { freeMovePushCompactor, setActiveItem } from "../compactors/freeMovePushCompactor";
 import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE prima del nostro Dashboard.css
 import "../css/Dashboard.css"; // Il nostro CSS custom, sovrascrive/estende i default della libreria
-import { MdOutlineLockReset } from "react-icons/md";
 
 import {
   saveLayout,
@@ -215,10 +214,6 @@ function Dashboard() {
   // Da chiamare quando il drag/resize termina (o viene annullato): nasconde
   // il ghost rimuovendo lo stato.
   const clearGhost = () => setDragTarget(null);
-  const resetLayout = async () => {
-    setLayout(DefaultLayout);
-    await saveLayout(DefaultLayout);
-  };
 
   /**
    * Calcola la posizione in pixel (left/top/width/height) del ghost a
@@ -254,7 +249,6 @@ function Dashboard() {
           <div>
             <h1>Dashboard</h1>
             <p>Welcome back.</p>
-            {/* <button onClick={resetLayout}><MdOutlineLockReset /></button> */}
           </div>
         </header>
 

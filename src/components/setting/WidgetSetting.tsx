@@ -32,7 +32,7 @@ const WidgetSetting = ({ setLayout }: WidgetSettingProps) => {
                 reset posizione widget 
                 <button 
                     onClick={resetLayout}
-                    className='text-[#131318] bg-white p-1 px-4 rounded-xl '
+                    className='text-[#131318] font-bold bg-white p-1 px-4 rounded-xl hover:cursor-pointer hover:bg-[var(--text-primary)]'
                 > 
                     reset
                 </button>
