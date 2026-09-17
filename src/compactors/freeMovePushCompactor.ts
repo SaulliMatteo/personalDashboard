@@ -4,7 +4,9 @@ import type { Compactor, Layout } from "react-grid-layout/core";
 let activeItemId: string | null = null;
 let maxRowsState = Infinity;
 const collisionTimers = new Map<string, number>();
-const PUSH_DELAY_MS = 300;
+const PUSH_DELAY_MS = 600;
+
+let lastSafePosition: { x: number; y: number } | null = null;
 
 function pairKey(aId: string, bId: string): string {
   return aId < bId ? `${aId}|${bId}` : `${bId}|${aId}`;
@@ -27,9 +29,10 @@ export function hasPendingCollision(layout: Layout, activeId: string): boolean {
   return false;
 }
 
-export function setActiveItem(id: string | null) {
+export function setActiveItem(id: string | null, initialPosition?: { x: number; y: number }) {
   activeItemId = id;
   collisionTimers.clear();
+  lastSafePosition = id && initialPosition ? { ...initialPosition } : null;
 }
 
 export function clampToBounds(layout: Layout, cols: number): Layout {
@@ -44,51 +47,39 @@ export function setGridBounds(maxRows: number) {
   maxRowsState = maxRows;
 }
 
-/**
- * Respinge "dragged" fuori dallo spazio occupato da "stationary", lungo
- * l'asse in cui si sovrappongono DI MENO — come se sbattesse contro un
- * muro e scivolasse lungo il bordo più vicino, invece di saltare a una
- * riga fissa. È l'effetto "non posso ancora entrare qui" usato durante
- * il periodo di attesa, PRIMA che la collisione maturi.
- */
-function bounceOutOf(
-  dragged: { x: number; y: number; w: number; h: number },
-  stationary: { x: number; y: number; w: number; h: number },
-  cols: number
-): { x: number; y: number } {
-  const overlapX =
-    Math.min(dragged.x + dragged.w, stationary.x + stationary.w) -
-    Math.max(dragged.x, stationary.x);
-  const overlapY =
-    Math.min(dragged.y + dragged.h, stationary.y + stationary.h) -
-    Math.max(dragged.y, stationary.y);
-
-  let { x, y } = dragged;
-
-  if (overlapX < overlapY) {
-    const draggedCenter = dragged.x + dragged.w / 2;
-    const stationaryCenter = stationary.x + stationary.w / 2;
-    x =
-      draggedCenter < stationaryCenter
-        ? Math.max(0, stationary.x - dragged.w)
-        : Math.min(cols - dragged.w, stationary.x + stationary.w);
-  } else {
-    const draggedCenter = dragged.y + dragged.h / 2;
-    const stationaryCenter = stationary.y + stationary.h / 2;
-    y =
-      draggedCenter < stationaryCenter
-        ? Math.max(0, stationary.y - dragged.h)
-        : Math.min(Math.max(0, maxRowsState - dragged.h), stationary.y + stationary.h);
-  }
-
-  return { x, y };
-}
-
 function resolveLayout(layout: Layout, cols: number, immediate: boolean): Layout {
   const items = layout.map((it) => ({ ...it }));
-  const originalY = new Map(layout.map((it) => [it.i, it.y]));
+  const originalPositions = new Map(layout.map((it) => [it.i, { x: it.x, y: it.y }]));
   const now = Date.now();
   const seenThisRound = new Set<string>();
+
+  if (!immediate && activeItemId) {
+    const active = items.find((it) => it.i === activeItemId);
+    if (active) {
+      let blocked = false;
+      for (const other of items) {
+        if (other.i === activeItemId || other.static) continue;
+        if (!collides(active, other)) continue;
+
+        const key = pairKey(active.i, other.i);
+        seenThisRound.add(key);
+        const firstSeen = collisionTimers.get(key);
+        if (firstSeen === undefined) {
+          collisionTimers.set(key, now);
+          blocked = true;
+        } else if (now - firstSeen < PUSH_DELAY_MS) {
+          blocked = true;
+        }
+      }
+
+      if (blocked && lastSafePosition) {
+        active.x = lastSafePosition.x;
+        active.y = lastSafePosition.y;
+      } else if (!blocked) {
+        lastSafePosition = { x: active.x, y: active.y };
+      }
+    }
+  }
 
   let changed = true;
   let iterations = 0;
@@ -109,36 +100,7 @@ function resolveLayout(layout: Layout, cols: number, immediate: boolean): Layout
         const key = pairKey(a.i, b.i);
         seenThisRound.add(key);
 
-        const involvesActive = a.i === activeItemId || b.i === activeItemId;
-
-        if (!immediate && involvesActive) {
-          const firstSeen = collisionTimers.get(key);
-          const matured = firstSeen !== undefined && now - firstSeen >= PUSH_DELAY_MS;
-
-          if (firstSeen === undefined) {
-            collisionTimers.set(key, now);
-          }
-
-          if (!matured) {
-            // Non ancora maturata: il widget trascinato NON entra nello
-            // spazio dell'altro, viene respinto fuori come contro un muro.
-            // L'altro (stazionario) non si muove affatto finché non matura.
-            const dragged = a.i === activeItemId ? a : b;
-            const stationary = a.i === activeItemId ? b : a;
-            const pos = bounceOutOf(dragged, stationary, cols);
-            if (dragged.x !== pos.x || dragged.y !== pos.y) {
-              dragged.x = pos.x;
-              dragged.y = pos.y;
-              changed = true;
-            }
-            continue;
-          }
-          // Maturata: prosegue sotto con la logica di spinta normale.
-        } else if (!immediate) {
-          // Coppia in cui NESSUNO dei due è il widget attivo (es. effetto
-          // a catena indiretto): stesso ritardo, ma qui non c'è un
-          // "dragged" ovvio da far rimbalzare — manteniamo il comportamento
-          // di attesa silenziosa precedente.
+        if (!immediate && !(a.i === activeItemId || b.i === activeItemId)) {
           const firstSeen = collisionTimers.get(key);
           if (firstSeen === undefined) {
             collisionTimers.set(key, now);
@@ -157,14 +119,27 @@ function resolveLayout(layout: Layout, cols: number, immediate: boolean): Layout
           fixed = b;
           moving = a;
         } else {
-          const aY = originalY.get(a.i)!;
-          const bY = originalY.get(b.i)!;
+          const aOrig = originalPositions.get(a.i)!;
+          const bOrig = originalPositions.get(b.i)!;
           [fixed, moving] =
-            aY < bY || (aY === bY && i < j) ? [a, b] : [b, a];
+            aOrig.y < bOrig.y || (aOrig.y === bOrig.y && i < j) ? [a, b] : [b, a];
+        }
+
+        const origPos = originalPositions.get(moving.i);
+        if (origPos && (origPos.x !== moving.x || origPos.y !== moving.y)) {
+          const candidate = { ...moving, x: origPos.x, y: origPos.y };
+          const stillBlocked = items.some(
+            (other) => other.i !== moving.i && !other.static && collides(candidate, other)
+          );
+          if (!stillBlocked) {
+            moving.x = origPos.x;
+            moving.y = origPos.y;
+            changed = true;
+            continue;
+          }
         }
 
         let newY = fixed.y + fixed.h;
-
         if (newY + moving.h > maxRowsState) {
           const above = fixed.y - moving.h;
           newY = above >= 0 ? above : Math.max(0, maxRowsState - moving.h);
@@ -185,8 +160,12 @@ function resolveLayout(layout: Layout, cols: number, immediate: boolean): Layout
   }
 
   for (const it of items) {
+    const beforeX = it.x, beforeY = it.y;
     it.x = Math.max(0, Math.min(it.x, cols - it.w));
     it.y = Math.max(0, Math.min(it.y, Math.max(0, maxRowsState - it.h)));
+    if (it.x !== beforeX || it.y !== beforeY) {
+      console.warn("[compactor] CLAMP APPLICATO:", { id: it.i, prima: { x: beforeX, y: beforeY }, dopo: { x: it.x, y: it.y }, maxRowsState, cols });
+    }
   }
 
   return items;

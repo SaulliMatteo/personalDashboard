@@ -171,6 +171,7 @@ html, body {
   min-width: 0;
   flex: 1;          /* SOSTITUISCE il min-height: calc(...) */
   min-height: 0;    /* AGGIUNTA: obbligatoria coi flex-child scrollabili, senza questa flex:1 a volte non si restringe/espande bene */
+  overflow: hidden;
 }
 
 
@@ -481,4 +482,10 @@ html, body {
     animation: none !important;
     transition: none !important;
   }
+}
+
+.setting-button {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }

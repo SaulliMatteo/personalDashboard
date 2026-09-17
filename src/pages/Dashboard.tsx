@@ -9,8 +9,7 @@ import NotesWidget from "../components/widgets/NotesWidget";
 import { freeMovePushCompactor, setActiveItem, setGridBounds, finalizeLayout, clampToBounds, hasPendingCollision } from "../compactors/freeMovePushCompactor";
 import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE prima del nostro Dashboard.css
 import "../css/Dashboard.css"; // Il nostro CSS custom, sovrascrive/estende i default della libreria
-import BorderGlow from "../components/import/BorderGlow";
-import { MdOutlineLockReset } from "react-icons/md";
+import { useSettings } from "../context/SettingContext"; // AGGIUNTA
 
 import {
   saveLayout,
@@ -53,36 +52,18 @@ const WIDGET_CONSTRAINTS: Record<string, { minW?: number; minH?: number }> = {
 const DefaultLayout: LayoutItem[] = [
   { i: "weather", x: 0, y: 0, w: 4, h: 4 },
   { i: "tasks", x: 4, y: 0, w: 4, h: 4 },
-  { i: "calendar", x: 4, y: 0, w: 4, h: 2 },
+  { i: "calendar", x: 4, y: 4, w: 4, h: 4 },   
   { i: "notes", x: 0, y: 2, w: 4, h: 4 },
 ];
 
 // Parametri della griglia: DEVONO combaciare esattamente con quelli passati
 // a gridConfig su <GridLayout>, altrimenti i calcoli pixel del ghost
 // (vedi calcGridItemPosition più sotto) risulterebbero disallineati.
+// NOTA: marginX/marginY sono stati spostati dentro il componente, perché
+// ora dipendono da settings.gridMargin (vedi sotto) e non sono più costanti
+// statiche — cols e rowHeight invece non dipendono dai settings, restano qui.
 const cols = 12;
 const rowHeight = 40;
-const marginX = 10;
-const marginY = 10;
-
-/**
- * Parametri "statici" richiesti da calcGridItemPosition (funzione ESPORTATA
- * dalla libreria stessa, la usiamo per calcolare dove piazzare in pixel
- * il nostro overlay "ghost" durante il drag/resize).
- * containerWidth manca qui perché cambia dinamicamente (dipende dalla
- * larghezza reale del contenitore, misurata da useContainerWidth) e viene
- * aggiunto al momento del calcolo, vedi ghostPos più sotto.
- * containerPadding è impostato uguale a margin perché quello è il default
- * della libreria quando containerPadding non viene passato esplicitamente
- * a GridLayout (comportamento confermato nei tipi della libreria).
- */
-const positionParams = {
-  margin: [marginX, marginY] as const,
-  containerPadding: [marginX, marginY] as const,
-  cols,
-  rowHeight,
-  maxRows: Infinity,
-};
 
 function Dashboard() {
   // width: larghezza attuale del contenitore (px), ricalcolata automaticamente
@@ -92,6 +73,38 @@ function Dashboard() {
   // mounted: true solo dopo il primo render lato client (evita mismatch SSR/
   //        larghezza 0 al primissimo frame).
   const { width, containerRef, mounted } = useContainerWidth();
+
+  // Impostazioni condivise dell'app (tema, margine griglia, glow, ecc.),
+  // lette dal context così si aggiornano in automatico quando l'utente
+  // le cambia nel SettingsModal, senza bisogno di ricaricare la pagina. // AGGIUNTA
+  const { settings } = useSettings(); // AGGIUNTA
+
+  // Margine della griglia: preso dai settings se già caricati, altrimenti
+  // fallback a 10px finché settings è null (primissimo render). // AGGIUNTA
+  const marginX = settings?.gridMargin ?? 10; // AGGIUNTA
+  const marginY = settings?.gridMargin ?? 10; // AGGIUNTA
+
+  /**
+   * Parametri "statici" richiesti da calcGridItemPosition (funzione ESPORTATA
+   * dalla libreria stessa, la usiamo per calcolare dove piazzare in pixel
+   * il nostro overlay "ghost" durante il drag/resize).
+   * containerWidth manca qui perché cambia dinamicamente (dipende dalla
+   * larghezza reale del contenitore, misurata da useContainerWidth) e viene
+   * aggiunto al momento del calcolo, vedi ghostPos più sotto.
+   * containerPadding è impostato uguale a margin perché quello è il default
+   * della libreria quando containerPadding non viene passato esplicitamente
+   * a GridLayout (comportamento confermato nei tipi della libreria).
+   *
+   * Spostato qui dentro (non più costante globale) perché ora referenzia
+   * marginX/marginY, che dipendono da settings.gridMargin. // MODIFICATA
+   */
+  const positionParams = {
+    margin: [marginX, marginY] as const,
+    containerPadding: [marginX, marginY] as const,
+    cols,
+    rowHeight,
+    maxRows: Infinity,
+  };
 
   // Layout "vero", quello che viene salvato/caricato dal database.
   // Contiene SOLO i dati essenziali (i, x, y, w, h), niente vincoli minW/minH.
@@ -124,9 +137,6 @@ function Dashboard() {
     if (!el) return;
 
     const updateBounds = () => {
-      // Volutamente conservativo (non sottraggo il containerPadding): meglio
-      // un limite leggermente più stretto del reale che uno che lascia
-      // sforare di qualche pixel.
       const maxRows = Math.max(1, Math.floor(el.clientHeight / (rowHeight + marginY)));
       setGridBounds(maxRows);
     };
@@ -136,7 +146,7 @@ function Dashboard() {
     const ro = new ResizeObserver(updateBounds);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [containerRef, mounted]);
+  }, [containerRef, mounted, marginY]);   // AGGIUNTO marginY
   // Al primo montaggio del componente, prova a caricare il layout salvato
   // in precedenza dall'utente. Se non c'è nulla salvato (savedLayout vuoto,
   // es. primo avvio), resta il DefaultLayout impostato inizialmente.
@@ -278,14 +288,15 @@ function Dashboard() {
   })();
 
   return (
-    <div className="app">
-      <Sidebar />
+    // Classe tema dinamica: legge settings.theme dal context. Fallback a
+    // "theme-dark" finché settings non è ancora stato caricato. // AGGIUNTA
+    <div className={`app ${settings?.theme === "light" ? "theme-light" : "theme-dark"}`}>
+      <Sidebar setLayout={setLayout} />
       <main className="main">
         <header className="dashboard-header">
           <div>
             <h1>Dashboard</h1>
             <p>Welcome back.</p>
-            <button onClick={resetLayout}><MdOutlineLockReset /></button>
           </div>
         </header>
 
@@ -329,7 +340,7 @@ function Dashboard() {
                 dragOriginRef.current = id
                   ? { id, layout: layout.map((it) => ({ ...it })) }
                   : null;
-                setActiveItem(id);
+                setActiveItem(id, oldItem ? { x: oldItem.x, y: oldItem.y } : undefined);
                 captureGhost(evLayout, oldItem, newItem, placeholder);
               }}
               onDrag={captureGhost}
@@ -385,25 +396,9 @@ function Dashboard() {
             >
               {/* I widget veri. La key deve corrispondere esattamente
                   all'id (i) usato in layout/DefaultLayout/WIDGET_CONSTRAINTS. */}
-              <div key="weather">
-                <BorderGlow
-                  edgeSensitivity={24}
-                  glowColor="40 80 80"
-                  backgroundColor="#000"
-                  borderRadius={28}
-                  glowRadius={33}
-                  glowIntensity={0.7}
-                  coneSpread={25}
-                  animated={false}
-                  colors={['#c084fc', '#f472b6', '#38bdf8']}
-                >
-
-                <WeatherWidget />
-              </BorderGlow></div>
+              <div key="weather"><WeatherWidget /></div>
               <div key="tasks"><TasksWidget /> </div>
-              <div key="calendar">
-                <CalendarWidget />
-              </div>
+              <div key="calendar"><CalendarWidget /></div>
               <div key="notes"><NotesWidget /></div>
             </GridLayout>
           )}
