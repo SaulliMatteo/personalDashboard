@@ -50,10 +50,10 @@ const WIDGET_CONSTRAINTS: Record<string, { minW?: number; minH?: number }> = {
  * loadLayout() non appena i dati salvati sono disponibili (vedi useEffect).
  */
 const DefaultLayout: LayoutItem[] = [
-  { i: "weather", x: 0, y: 0, w: 4, h: 4 },
-  { i: "tasks", x: 4, y: 0, w: 4, h: 4 },
-  { i: "calendar", x: 4, y: 4, w: 4, h: 4 },   
-  { i: "notes", x: 0, y: 2, w: 4, h: 4 },
+  { i: "weather", x: 0, y: 0, w: 4, h: 3 },
+  { i: "tasks", x: 4, y: 0, w: 4, h: 3 },
+  { i: "calendar", x: 8, y: 0, w: 4, h: 4 },
+  { i: "notes", x: 0, y: 3, w: 4, h: 4 },
 ];
 
 // Parametri della griglia: DEVONO combaciare esattamente con quelli passati
@@ -237,7 +237,7 @@ function Dashboard() {
   ) => {
     const target = placeholder ?? newItem;
     if (!target) return;
-
+    console.log("[captureGhost]", { fromPlaceholder: !!placeholder, w: target.w, h: target.h });   // TEMPORANEO
     // Ottimizzazione: onDrag scatta MOLTO spesso (decine di volte al secondo).
     // Se la posizione/dimensione calcolata è identica a quella già in stato,
     // evitiamo un setState (e quindi un re-render) inutile.
@@ -332,15 +332,15 @@ function Dashboard() {
               // Aggiorna la posizione del ghost sia all'inizio del drag
               // sia ad ogni movimento successivo del mouse.
               onDragStart={(evLayout, oldItem, newItem, placeholder) => {
-                // Fotografia dell'INTERO layout prima che il drag inizi a muovere
-                // qualunque cosa (non solo la posizione del widget trascinato):
-                // se il gesto verrà annullato, dobbiamo riportare indietro anche
-                // eventuali altri widget spinti nel frattempo, non solo questo.
                 const id = newItem?.i ?? oldItem?.i ?? null;
                 dragOriginRef.current = id
                   ? { id, layout: layout.map((it) => ({ ...it })) }
                   : null;
-                setActiveItem(id, oldItem ? { x: oldItem.x, y: oldItem.y } : undefined);
+                setActiveItem(
+                  id,
+                  oldItem ? { x: oldItem.x, y: oldItem.y, w: oldItem.w, h: oldItem.h } : undefined,
+                  false   // CAMBIATO: terzo argomento, non è resize
+                );
                 captureGhost(evLayout, oldItem, newItem, placeholder);
               }}
               onDrag={captureGhost}
@@ -372,14 +372,27 @@ function Dashboard() {
                 await saveLayout(finalItems);
                 setTimeout(() => { suppressLayoutChangeRef.current = false; }, 150);   // AGGIUNGI QUESTA RIGA (ho alzato a 150ms, i tuoi log mostravano due chiamate ravvicinate ma non sappiamo ancora la distanza esatta — meglio abbondare per il primo test)
               }}
+              onResizeStart={(evLayout, oldItem, newItem, placeholder) => {
+                const id = newItem?.i ?? oldItem?.i ?? null;
+                setActiveItem(
+                  id,
+                  oldItem ? { x: oldItem.x, y: oldItem.y, w: oldItem.w, h: oldItem.h } : undefined,
+                  true
+                );
+                captureGhost(evLayout, oldItem, newItem, placeholder);   // AGGIUNTA
+              }}
+
+              onResize={(newLayout, oldItem, newItem, placeholder) => {   // CAMBIATO: ora prende tutti i parametri, non solo newLayout
+                setLayout(newLayout as LayoutItem[]);
+                captureGhost(newLayout, oldItem, newItem, placeholder);   // AGGIUNTA
+              }}
+
               onResizeStop={async (newLayout) => {
                 const resolved = finalizeLayout(newLayout as LayoutItem[], cols) as LayoutItem[];
                 setLayout(resolved);
                 setActiveItem(null);
+                clearGhost();   // AGGIUNTA — altrimenti il ghost resta visibile anche dopo aver finito di ridimensionare
                 await saveLayout(resolved);
-              }}
-              onResizeStart={(_layout, oldItem, newItem) => {   // AGGIUNTA — prop nuova
-                setActiveItem(newItem?.i ?? oldItem?.i ?? null);
               }}
               // Scatta anche per cambi di layout non causati direttamente
               // da drag/resize (es. compattazione automatica quando un
