@@ -8,8 +8,12 @@
   min-width: 800px;
   min-height: 600px;
   background: var(--bg);
+  user-select: none;
+  -webkit-user-select: none;
 }
-
+/* Nessuna selezione testo da nessuna parte nell'app, di default —
+   evita che trascinare un widget selezioni anche il testo sotto il
+   cursore. Fatta eccezione più sotto per le Notes. */
 
 /* =========================
    SIDEBAR
@@ -173,6 +177,12 @@ html, body {
   min-height: 0;    /* AGGIUNTA: obbligatoria coi flex-child scrollabili, senza questa flex:1 a volte non si restringe/espande bene */
   overflow: hidden;
 }
+/* Durante un drag/resize attivo, disattiva la selezione testo su tutta la
+   griglia — altrimenti il movimento del mouse, oltre a spostare il widget,
+   seleziona anche il testo sotto il cursore (comportamento di default del
+   browser su qualunque drag con testo in mezzo). Fuori dal drag resta
+   normale, così puoi ancora selezionare/copiare il contenuto di un widget
+   quando non lo stai trascinando. */
 
 
 /* =========================
