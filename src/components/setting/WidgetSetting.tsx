@@ -13,10 +13,10 @@ interface WidgetSettingProps {
 }
 
 const DefaultLayout: LayoutItem[] = [
-  { i: "weather", x: 0, y: 0, w: 4, h: 4 },
-  { i: "tasks", x: 4, y: 0, w: 4, h: 4 },
-  { i: "calendar", x: 4, y: 0, w: 4, h: 4 },
-  { i: "notes", x: 0, y: 2, w: 4, h: 4 },
+  { i: "weather", x: 0, y: 0, w: 4, h: 3 },
+  { i: "tasks", x: 4, y: 0, w: 4, h: 3 },
+  { i: "calendar", x: 8, y: 0, w: 4, h: 4 },
+  { i: "notes", x: 0, y: 3, w: 4, h: 4 },
 ];
 
 
