@@ -7,9 +7,13 @@
   width: 100%;
   min-width: 800px;
   min-height: 600px;
-  background: #090909;
+  background: var(--bg);
+  user-select: none;
+  -webkit-user-select: none;
 }
-
+/* Nessuna selezione testo da nessuna parte nell'app, di default —
+   evita che trascinare un widget selezioni anche il testo sotto il
+   cursore. Fatta eccezione più sotto per le Notes. */
 
 /* =========================
    SIDEBAR
@@ -25,18 +29,19 @@
 
   padding: 24px 14px;
 
-  background: #111111;
-  border-right: 1px solid #242424;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-subtle);
 
   box-sizing: border-box;
 }
 
 .sidebar-logo {
   padding: 0 12px;
-  margin-bottom: 32px;
+  margin-bottom: 26px;
 
-  font-size: 17px;
+  font-size: 15.5px;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .sidebar-nav {
@@ -55,24 +60,25 @@
   display: flex;
   align-items: center;
 
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 10px;
+  padding: 8px 10px;
 
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-item);
 
   background: transparent;
 
-  color: #8c8c8c;
+  color: var(--text-muted);
 
-  font-size: 14px;
+  font-size: 13.5px;
   text-align: left;
 
   cursor: pointer;
 
   transition:
-    background 0.15s ease,
-    color 0.15s ease;
+    background 200ms ease,
+    color 200ms ease,
+    transform 150ms ease;
 }
 
 .nav-item span {
@@ -81,13 +87,14 @@
 }
 
 .nav-item:hover {
-  background: #1b1b1b;
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
+  color: #e8e8ea;
+  transform: translateX(2px);
 }
 
 .nav-item.active {
-  background: #222222;
-  color: #ffffff;
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 
@@ -97,13 +104,39 @@
 
 .main {
   flex: 1;
+  display: flex;             /* AGGIUNTA */
+  flex-direction: column;    /* AGGIUNTA */
 
   min-width: 0;
 
-  padding: 20px;
+  padding: 18px 20px;
 
   overflow-y: auto;
+  overflow-x: hidden;
   box-sizing: border-box;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-accent) transparent;
+}
+
+/* Solo .main scrolla: la pagina/il body non devono mai avere una loro
+   scrollbar separata, altrimenti sotto una certa altezza ne vedi due. */
+html, body {
+  overflow: hidden;
+}
+
+.main::-webkit-scrollbar {
+  width: 8px;
+}
+.main::-webkit-scrollbar-track {
+  background: transparent;
+}
+.main::-webkit-scrollbar-thumb {
+  background: rgba(108, 141, 255, 0.25);
+  border-radius: 8px;
+}
+.main::-webkit-scrollbar-thumb:hover {
+  background: rgba(108, 141, 255, 0.4);
 }
 
 
@@ -112,20 +145,23 @@
    ========================= */
 
 .dashboard-header {
-  margin-bottom: 32px;
+  flex-shrink: 0;   /* AGGIUNTA: non farlo mai schiacciare */
+  margin-bottom: 22px;
 }
 
 .dashboard-header h1 {
   margin: 0;
 
-  font-size: 28px;
-  font-weight: 600;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .dashboard-header p {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
 
-  color: #707070;
+  font-size: 13.5px;
+  color: var(--text-muted);
 }
 
 
@@ -134,24 +170,50 @@
    ========================= */
 
 .grid-container {
+  position: relative;
   width: 100%;
   min-width: 0;
+  flex: 1;          /* SOSTITUISCE il min-height: calc(...) */
+  min-height: 0;    /* AGGIUNTA: obbligatoria coi flex-child scrollabili, senza questa flex:1 a volte non si restringe/espande bene */
+  overflow: hidden;
 }
+/* Durante un drag/resize attivo, disattiva la selezione testo su tutta la
+   griglia — altrimenti il movimento del mouse, oltre a spostare il widget,
+   seleziona anche il testo sotto il cursore (comportamento di default del
+   browser su qualunque drag con testo in mezzo). Fuori dal drag resta
+   normale, così puoi ancora selezionare/copiare il contenuto di un widget
+   quando non lo stai trascinando. */
 
 
 /* =========================
    REACT GRID LAYOUT
    ========================= */
 
+
 .widget-grid {
   position: relative;
+  height: 100% !important; 
 }
-
+/* Nota: prima c'erano due dichiarazioni di .react-grid-item con transizioni
+   diverse (200ms ease vs 260ms cubic-bezier con rimbalzo). Tenuta solo
+   questa: transizione più "smooth" + cursore a manina durante il drag. */
 .react-grid-item {
   transition:
-    transform 200ms ease,
+    transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1),
     width 200ms ease,
-    height 200ms ease;
+    height 200ms ease,
+    box-shadow 180ms ease;
+  cursor: grab;
+}
+
+.react-grid-item.react-draggable-dragging {
+  cursor: grabbing;
+  z-index: 20;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  transform: scale(1.03) rotate(0.6deg);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
 }
 
 
@@ -170,53 +232,146 @@
 
   box-sizing: border-box;
 
-  padding: 20px;
+  padding: 16px 18px;
 
-  background: #111111;
+  background: var(--bg-card);
 
-  border: 1px solid #242424;
-  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
 
   overflow: hidden;
-}
-.react-grid-item.cssTransforms:not(.react-draggable-dragging) {
+
   transition:
-    transform 200ms ease,
-    width 200ms ease,
-    height 200ms ease;
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms var(--ease-out-back);
 }
+
+.widget:hover {
+  border-color: var(--border-accent);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  transform: translateY(-2px);
+}
+
+/* durante il drag il sollevamento va disattivato, altrimenti confligge
+   con la trasformazione scale/rotate di react-grid-layout */
+.react-grid-item.react-draggable-dragging .widget:hover {
+  transform: none;
+}
+
+/* Nota: prima .react-grid-placeholder aveva due regole opposte
+   (una lo rendeva un box tratteggiato visibile, l'altra lo rendeva
+   invisibile per lasciare spazio al .widget-ghost). Tenuto solo il
+   sistema ghost: il placeholder resta nel DOM ma invisibile. */
 .react-grid-placeholder {
-  background: transparent !important;
-  border: 1px dashed #444444;
-  border-radius: 12px;
-  opacity: 1;
+  opacity: 0 !important;
 }
+
+/* La preview "fantasma": stessa forma del widget reale, solo più eterea */
+.widget-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 15;
+  opacity: 0.45;
+  filter: blur(1.5px) saturate(0.8);
+  transition:
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, width, height;
+}
+
+.widget-ghost > .widget {
+  border-style: dashed;
+  border-color: var(--border-accent);
+  box-shadow: none;
+}
+
+.react-resizable-handle {
+  opacity: 0;
+  position: absolute;
+  z-index: 10;
+}
+
+/* angoli: leggermente più ampi di prima, ma ancora piccoli e precisi */
+.react-resizable-handle-se,
+.react-resizable-handle-sw,
+.react-resizable-handle-ne,
+.react-resizable-handle-nw {
+  width: 10px !important;
+  height: 10px !important;
+}
+.react-resizable-handle-se { right: -5px !important; bottom: -5px !important; left: auto !important; top: auto !important; cursor: se-resize; }
+.react-resizable-handle-sw { left: -5px !important; bottom: -5px !important; right: auto !important; top: auto !important; cursor: sw-resize; }
+.react-resizable-handle-ne { right: -5px !important; top: -5px !important; left: auto !important; bottom: auto !important; cursor: ne-resize; }
+.react-resizable-handle-nw { left: -5px !important; top: -5px !important; right: auto !important; bottom: auto !important; cursor: nw-resize; }
+
+/* lati: qui il problema era che la libreria imposta anche una width/height
+   inline sull'handle. Quando noi mettevamo solo left+right (senza
+   azzerare width), quella width inline vinceva comunque e l'elemento
+   restava piccolo e ancorato a un angolo invece di stendersi lungo
+   tutto il bordo — per questo sembrava "attaccato agli angoli".
+   Aggiungendo width/height: auto !important lasciamo che siano
+   left+right (o top+bottom) a determinare l'estensione. */
+.react-resizable-handle-n,
+.react-resizable-handle-s {
+  left: 14px !important;
+  right: 14px !important;
+  width: auto !important;
+  height: 8px !important;
+  margin: 0 !important;
+  transform: none !important;
+  cursor: ns-resize;
+}
+.react-resizable-handle-n { top: -4px !important; bottom: auto !important; }
+.react-resizable-handle-s { bottom: -4px !important; top: auto !important; }
+
+.react-resizable-handle-w,
+.react-resizable-handle-e {
+  top: 14px !important;
+  bottom: 14px !important;
+  height: auto !important;
+  width: 8px !important;
+  margin: 0 !important;
+  transform: none !important;
+  cursor: ew-resize;
+}
+.react-resizable-handle-w { left: -4px !important; right: auto !important; }
+.react-resizable-handle-e { right: -4px !important; left: auto !important; }
+
+
 /* =========================
    WIDGET HEADER
    ========================= */
 
 .widget-header {
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 }
 
 .widget-header h2 {
   margin: 0;
 
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
 
-  color: #a0a0a0;
+  color: var(--text-muted);
 }
 
 .widget-value {
-  font-size: 38px;
+  font-size: 28px;
   font-weight: 600;
+  line-height: 1.1;
+  color: var(--accent);
 }
 
 .widget-description {
-  margin-top: 4px;
+  margin-top: 2px;
 
-  color: #666666;
+  font-size: 12.5px;
+  color: var(--text-muted);
 }
 
 
@@ -228,22 +383,26 @@
   display: flex;
   align-items: center;
 
-  gap: 20px;
+  gap: 14px;
 }
 
 .weather-temperature {
-  font-size: 42px;
+  font-size: 30px;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .weather-content p {
-  margin: 0 0 4px;
+  margin: 0 0 2px;
 
-  font-size: 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .weather-content span {
-  color: #707070;
+  font-size: 12.5px;
+  color: var(--text-muted);
 }
 
 
@@ -255,17 +414,19 @@
   display: flex;
   flex-direction: column;
 
-  gap: 3px;
-  margin-bottom: 16px;
+  gap: 2px;
+  margin-bottom: 12px;
 }
 
 .calendar-event strong {
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .calendar-event span {
-  color: #777777;
-  font-size: 13px;
+  color: var(--text-muted);
+  font-size: 12.5px;
 }
 
 
@@ -274,31 +435,67 @@
    ========================= */
 
 .note {
-  margin: 0 0 14px;
+  margin: 0 0 10px;
 
-  color: #888888;
+  color: var(--text-secondary);
 
-  font-size: 13px;
+  font-size: 12.5px;
   line-height: 1.5;
 }
+
+.note:last-child {
+  margin-bottom: 0;
+}
+
+
+/* =========================
+   ENTRATA A CASCATA (solo al mount iniziale)
+   ========================= */
+
+.widget.enter {
+  animation: rise 480ms var(--ease-out-back) backwards;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes widget-shake {
   0% {
     transform: rotate(0deg);
   }
-
   25% {
     transform: rotate(-0.5deg);
   }
-
   50% {
     transform: rotate(0.5deg);
   }
-
   75% {
     transform: rotate(-0.3deg);
   }
-
   100% {
     transform: rotate(0deg);
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .widget,
+  .nav-item,
+  .react-grid-item {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.setting-button {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
