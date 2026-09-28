@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import GridLayout, { useContainerWidth } from "react-grid-layout";
 import { calcGridItemPosition } from "react-grid-layout/core";
 import Sidebar from "../components/sideBar/Sidebar";
@@ -6,8 +6,10 @@ import WeatherWidget from "../components/widgets/WeatherWidget";
 import TasksWidget from "../components/widgets/TasksWidget";
 import CalendarWidget from "../components/widgets/CalendarWidget";
 import NotesWidget from "../components/widgets/NotesWidget";
+import { freeMovePushCompactor, setActiveItem, setGridBounds, finalizeLayout, clampToBounds, hasPendingCollision } from "../compactors/freeMovePushCompactor";
 import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE prima del nostro Dashboard.css
 import "../css/Dashboard.css"; // Il nostro CSS custom, sovrascrive/estende i default della libreria
+import { useSettings } from "../context/SettingContext"; // AGGIUNTA
 
 import {
   saveLayout,
@@ -28,7 +30,6 @@ const WIDGETS: Record<string, () => React.ReactElement> = {
   calendar: () => <CalendarWidget />,
   notes: () => <NotesWidget />,
 };
-
 /**
  * Dimensioni minime per widget, in unità di griglia (non pixel).
  * Impediscono all'utente di rimpicciolire un widget fino a renderlo inutilizzabile
@@ -49,38 +50,20 @@ const WIDGET_CONSTRAINTS: Record<string, { minW?: number; minH?: number }> = {
  * loadLayout() non appena i dati salvati sono disponibili (vedi useEffect).
  */
 const DefaultLayout: LayoutItem[] = [
-  { i: "weather", x: 0, y: 0, w: 4, h: 4 },
-  { i: "tasks", x: 4, y: 0, w: 4, h: 4 },
-  { i: "calendar", x: 4, y: 0, w: 4, h: 2 },
-  { i: "notes", x: 0, y: 2, w: 4, h: 4 },
+  { i: "weather", x: 0, y: 0, w: 4, h: 3 },
+  { i: "tasks", x: 4, y: 0, w: 4, h: 3 },
+  { i: "calendar", x: 8, y: 0, w: 4, h: 4 },
+  { i: "notes", x: 0, y: 3, w: 4, h: 4 },
 ];
 
 // Parametri della griglia: DEVONO combaciare esattamente con quelli passati
 // a gridConfig su <GridLayout>, altrimenti i calcoli pixel del ghost
 // (vedi calcGridItemPosition più sotto) risulterebbero disallineati.
+// NOTA: marginX/marginY sono stati spostati dentro il componente, perché
+// ora dipendono da settings.gridMargin (vedi sotto) e non sono più costanti
+// statiche — cols e rowHeight invece non dipendono dai settings, restano qui.
 const cols = 12;
 const rowHeight = 40;
-const marginX = 10;
-const marginY = 10;
-
-/**
- * Parametri "statici" richiesti da calcGridItemPosition (funzione ESPORTATA
- * dalla libreria stessa, la usiamo per calcolare dove piazzare in pixel
- * il nostro overlay "ghost" durante il drag/resize).
- * containerWidth manca qui perché cambia dinamicamente (dipende dalla
- * larghezza reale del contenitore, misurata da useContainerWidth) e viene
- * aggiunto al momento del calcolo, vedi ghostPos più sotto.
- * containerPadding è impostato uguale a margin perché quello è il default
- * della libreria quando containerPadding non viene passato esplicitamente
- * a GridLayout (comportamento confermato nei tipi della libreria).
- */
-const positionParams = {
-  margin: [marginX, marginY] as const,
-  containerPadding: [marginX, marginY] as const,
-  cols,
-  rowHeight,
-  maxRows: Infinity,
-};
 
 function Dashboard() {
   // width: larghezza attuale del contenitore (px), ricalcolata automaticamente
@@ -91,6 +74,38 @@ function Dashboard() {
   //        larghezza 0 al primissimo frame).
   const { width, containerRef, mounted } = useContainerWidth();
 
+  // Impostazioni condivise dell'app (tema, margine griglia, glow, ecc.),
+  // lette dal context così si aggiornano in automatico quando l'utente
+  // le cambia nel SettingsModal, senza bisogno di ricaricare la pagina. // AGGIUNTA
+  const { settings } = useSettings(); // AGGIUNTA
+
+  // Margine della griglia: preso dai settings se già caricati, altrimenti
+  // fallback a 10px finché settings è null (primissimo render). // AGGIUNTA
+  const marginX = settings?.gridMargin ?? 10; // AGGIUNTA
+  const marginY = settings?.gridMargin ?? 10; // AGGIUNTA
+
+  /**
+   * Parametri "statici" richiesti da calcGridItemPosition (funzione ESPORTATA
+   * dalla libreria stessa, la usiamo per calcolare dove piazzare in pixel
+   * il nostro overlay "ghost" durante il drag/resize).
+   * containerWidth manca qui perché cambia dinamicamente (dipende dalla
+   * larghezza reale del contenitore, misurata da useContainerWidth) e viene
+   * aggiunto al momento del calcolo, vedi ghostPos più sotto.
+   * containerPadding è impostato uguale a margin perché quello è il default
+   * della libreria quando containerPadding non viene passato esplicitamente
+   * a GridLayout (comportamento confermato nei tipi della libreria).
+   *
+   * Spostato qui dentro (non più costante globale) perché ora referenzia
+   * marginX/marginY, che dipendono da settings.gridMargin. // MODIFICATA
+   */
+  const positionParams = {
+    margin: [marginX, marginY] as const,
+    containerPadding: [marginX, marginY] as const,
+    cols,
+    rowHeight,
+    maxRows: Infinity,
+  };
+
   // Layout "vero", quello che viene salvato/caricato dal database.
   // Contiene SOLO i dati essenziali (i, x, y, w, h), niente vincoli minW/minH.
   const [layout, setLayout] = useState<LayoutItem[]>(DefaultLayout);
@@ -99,7 +114,8 @@ function Dashboard() {
   // griglia) verso cui il widget sta per atterrare. È null quando non si
   // sta trascinando/ridimensionando nulla.
   const [dragTarget, setDragTarget] = useState<LayoutItem | null>(null);
-
+  const dragOriginRef = useRef<{ id: string; layout: LayoutItem[] } | null>(null);
+  const suppressLayoutChangeRef = useRef(false);   // AGGIUNGI QUESTA RIGA
   /**
    * Layout "arricchito" con i vincoli minW/minH, calcolato ad ogni render
    * a partire da `layout`. Questo è quello che passiamo davvero a
@@ -112,7 +128,25 @@ function Dashboard() {
     ...item,
     ...WIDGET_CONSTRAINTS[item.i],
   }));
+  // Ricalcola quante righe entrano DAVVERO nell'altezza attuale di .grid-container,
+  // e lo comunica al compactor tramite setGridBounds(). Senza questo, il clamp
+  // dentro compact() non ha nessun numero reale a cui appoggiarsi (resta a
+  // Infinity) e quindi non blocca nulla, qualunque cosa scriviamo lì dentro.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
 
+    const updateBounds = () => {
+      const maxRows = Math.max(1, Math.floor(el.clientHeight / (rowHeight + marginY)));
+      setGridBounds(maxRows);
+    };
+
+    updateBounds();
+
+    const ro = new ResizeObserver(updateBounds);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [containerRef, mounted, marginY]);   // AGGIUNTO marginY
   // Al primo montaggio del componente, prova a caricare il layout salvato
   // in precedenza dall'utente. Se non c'è nulla salvato (savedLayout vuoto,
   // es. primo avvio), resta il DefaultLayout impostato inizialmente.
@@ -120,7 +154,13 @@ function Dashboard() {
     async function initializeLayout() {
       try {
         const savedLayout = await loadLayout();
-        if (savedLayout.length > 0) setLayout(savedLayout);
+        const source = savedLayout.length > 0 ? savedLayout : DefaultLayout;
+        // Passa SEMPRE il layout (salvato o default) attraverso compact()
+        // prima di metterlo in stato: se per qualunque motivo passato è
+        // rimasto salvato uno stato con overlap, si autocorregge qui,
+        // una volta sola, invece di aspettare che l'utente trascini qualcosa.
+        const healed = finalizeLayout(source, cols) as LayoutItem[];; 
+        setLayout(healed);
       } catch (error) {
         console.error("Errore nel caricamento del layout:", error);
       }
@@ -128,6 +168,40 @@ function Dashboard() {
     initializeLayout();
   }, []);
 
+  const resetLayout = async () => {
+    const healed = finalizeLayout(DefaultLayout, cols) as LayoutItem[];;
+    setLayout(healed);
+    await saveLayout(healed);
+  };
+
+  // Bugfix: se l'utente perde il focus della finestra (alt-tab, altra app)
+  // mentre sta trascinando un widget, e rilascia il mouse FUORI dalla pagina,
+  // il browser non consegna mai il vero evento "mouseup" al nostro document.
+  // react-grid-layout (via react-draggable) resta quindi bloccato in stato
+  // "drag attivo" per sempre, e con lui anche il nostro ghost.
+  //
+  // Soluzione: al blur della finestra, simuliamo noi un mouseup sul document,
+  // lo stesso identico evento che la libreria sta già ascoltando — la libreria
+  // crede che il drag sia terminato normalmente e chiude tutto da sola
+  // (chiamando anche onDragStop, quindi il layout risulta comunque salvato).
+  useEffect(() => {
+    const forceEndDrag = () => {
+      document.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
+      clearGhost();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) forceEndDrag();
+    };
+
+    window.addEventListener("blur", forceEndDrag);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("blur", forceEndDrag);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
   /**
    * === GHOST PREVIEW DURANTE DRAG/RESIZE ===
    *
@@ -163,7 +237,7 @@ function Dashboard() {
   ) => {
     const target = placeholder ?? newItem;
     if (!target) return;
-
+    console.log("[captureGhost]", { fromPlaceholder: !!placeholder, w: target.w, h: target.h });   // TEMPORANEO
     // Ottimizzazione: onDrag scatta MOLTO spesso (decine di volte al secondo).
     // Se la posizione/dimensione calcolata è identica a quella già in stato,
     // evitiamo un setState (e quindi un re-render) inutile.
@@ -185,6 +259,7 @@ function Dashboard() {
   // Da chiamare quando il drag/resize termina (o viene annullato): nasconde
   // il ghost rimuovendo lo stato.
   const clearGhost = () => setDragTarget(null);
+
 
   /**
    * Calcola la posizione in pixel (left/top/width/height) del ghost a
@@ -213,8 +288,10 @@ function Dashboard() {
   })();
 
   return (
-    <div className="app">
-      <Sidebar />
+    // Classe tema dinamica: legge settings.theme dal context. Fallback a
+    // "theme-dark" finché settings non è ancora stato caricato. // AGGIUNTA
+    <div className={`app ${settings?.theme === "light" ? "theme-light" : "theme-dark"}`}>
+      <Sidebar setLayout={setLayout} />
       <main className="main">
         <header className="dashboard-header">
           <div>
@@ -235,42 +312,105 @@ function Dashboard() {
           {mounted && (
             <GridLayout
               className="widget-grid"
+
               layout={layoutWithConstraints}
               gridConfig={{ cols, rowHeight, margin: [marginX, marginY] }}
+              // Handle di resize su tutti i lati/angoli (default libreria: solo 'se').
+              resizeConfig={{ handles: ['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne'] }}
+              // Impedisce alla libreria di ridimensionare il contenitore
+              // della griglia solo quanto basta per i widget attuali:
+              // altrimenti "bounded" (sopra) vincola il drag a
+              // quell'area ridotta invece che a tutta la finestra
+              // disponibile, ed è per questo che prima non riuscivi a
+              // rilasciare un widget nello spazio vuoto sotto gli altri.
+              autoSize={false}
+              // Impedisce di trascinare/ridimensionare un widget fuori
+              // dall'area della griglia.
+              dragConfig={{ bounded: true }}
               width={width}
+              compactor={freeMovePushCompactor}
               // Aggiorna la posizione del ghost sia all'inizio del drag
               // sia ad ogni movimento successivo del mouse.
-              onDragStart={captureGhost}
-              onDrag={captureGhost}
-              // Al rilascio: salva la nuova posizione nello stato React
-              // (layout "vero", senza vincoli), nasconde il ghost, e
-              // persiste il risultato nel database SQLite via saveLayout.
-              onDragStop={async (newLayout) => {
-                const newLayoutItems = newLayout as LayoutItem[];
-                setLayout(newLayoutItems);
-                clearGhost();
-                await saveLayout(newLayoutItems);
+              onDragStart={(evLayout, oldItem, newItem, placeholder) => {
+                const id = newItem?.i ?? oldItem?.i ?? null;
+                dragOriginRef.current = id
+                  ? { id, layout: layout.map((it) => ({ ...it })) }
+                  : null;
+                setActiveItem(
+                  id,
+                  oldItem ? { x: oldItem.x, y: oldItem.y, w: oldItem.w, h: oldItem.h } : undefined,
+                  false   // CAMBIATO: terzo argomento, non è resize
+                );
+                captureGhost(evLayout, oldItem, newItem, placeholder);
               }}
-              // Al termine di un ridimensionamento: stessa logica di
-              // onDragStop (salva stato + persisti su DB), ma non serve
-              // clearGhost() perché il resize non usa l'overlay ghost.
+              onDrag={captureGhost}
+
+              onDragStop={async (newLayout) => {
+                const dropped = newLayout as LayoutItem[];
+                const origin = dragOriginRef.current;
+
+                const pending = origin ? hasPendingCollision(dropped, origin.id) : false;
+                console.log("[onDragStop]", JSON.stringify({
+                  time: Date.now(),
+                  draggedId: origin?.id,
+                  pending,
+                  dropped: dropped.map(it => ({ i: it.i, x: it.x, y: it.y, w: it.w, h: it.h })),
+                  originLayout: origin?.layout.map(it => ({ i: it.i, x: it.x, y: it.y, w: it.w, h: it.h })),
+                }, null, 2));
+                let finalItems: LayoutItem[];
+                if (origin && pending) {
+                  finalItems = finalizeLayout(origin.layout, cols) as LayoutItem[];
+                } else {
+                  finalItems = finalizeLayout(dropped, cols) as LayoutItem[];
+                }
+
+                suppressLayoutChangeRef.current = true;   // AGGIUNGI QUESTA RIGA, prima del setLayout
+                setLayout(finalItems);
+                clearGhost();
+                setActiveItem(null);
+                dragOriginRef.current = null;
+                await saveLayout(finalItems);
+                setTimeout(() => { suppressLayoutChangeRef.current = false; }, 150);   // AGGIUNGI QUESTA RIGA (ho alzato a 150ms, i tuoi log mostravano due chiamate ravvicinate ma non sappiamo ancora la distanza esatta — meglio abbondare per il primo test)
+              }}
+              onResizeStart={(evLayout, oldItem, newItem, placeholder) => {
+                const id = newItem?.i ?? oldItem?.i ?? null;
+                setActiveItem(
+                  id,
+                  oldItem ? { x: oldItem.x, y: oldItem.y, w: oldItem.w, h: oldItem.h } : undefined,
+                  true
+                );
+                captureGhost(evLayout, oldItem, newItem, placeholder);   // AGGIUNTA
+              }}
+
+              onResize={(newLayout, oldItem, newItem, placeholder) => {   // CAMBIATO: ora prende tutti i parametri, non solo newLayout
+                setLayout(newLayout as LayoutItem[]);
+                captureGhost(newLayout, oldItem, newItem, placeholder);   // AGGIUNTA
+              }}
+
               onResizeStop={async (newLayout) => {
-                const newLayoutItems = newLayout as LayoutItem[];
-                setLayout(newLayoutItems);
-                await saveLayout(newLayoutItems);
+                const resolved = finalizeLayout(newLayout as LayoutItem[], cols) as LayoutItem[];
+                setLayout(resolved);
+                setActiveItem(null);
+                clearGhost();   // AGGIUNTA — altrimenti il ghost resta visibile anche dopo aver finito di ridimensionare
+                await saveLayout(resolved);
               }}
               // Scatta anche per cambi di layout non causati direttamente
               // da drag/resize (es. compattazione automatica quando un
               // widget viene rimosso). Tiene lo stato React sincronizzato
               // con quello che la libreria calcola internamente.
               onLayoutChange={(newLayout) => {
-                setLayout(newLayout as LayoutItem[]);
+                if (suppressLayoutChangeRef.current) {
+                  console.log("[onLayoutChange] IGNORATO (soppresso)", Date.now());   // per conferma nel test
+                  return;
+                }
+                console.log("[onLayoutChange]", Date.now(), (newLayout as LayoutItem[]).map(it => ({ i: it.i, x: it.x, y: it.y })));
+                setLayout(clampToBounds(newLayout as LayoutItem[], cols) as LayoutItem[]);
               }}
             >
               {/* I widget veri. La key deve corrispondere esattamente
                   all'id (i) usato in layout/DefaultLayout/WIDGET_CONSTRAINTS. */}
               <div key="weather"><WeatherWidget /></div>
-              <div key="tasks"><TasksWidget /></div>
+              <div key="tasks"><TasksWidget /> </div>
               <div key="calendar"><CalendarWidget /></div>
               <div key="notes"><NotesWidget /></div>
             </GridLayout>
