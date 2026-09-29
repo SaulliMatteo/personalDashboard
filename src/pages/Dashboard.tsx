@@ -6,8 +6,8 @@ import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE pr
 import "../css/Dashboard.css"; // Il nostro CSS custom, sovrascrive/estende i default della libreria
 import { useSettings } from "../context/SettingContext";
 import { useLayout } from "../context/LayoutContext";
-import { WIDGET_MAP } from "../widgets/registry";
-import { GRID_COLS, GRID_MAX_ROWS, ROW_HEIGHT_RATIO } from "../grid/gridConfig";
+import { WIDGET_MAP } from "../components/setting/widgets/registry";
+import { GRID_COLS, GRID_MAX_ROWS, ROW_HEIGHT_RATIO } from "../config/gridConfig";
 
 import { saveLayout, type LayoutItem } from "../database/layoutRepository";
 
