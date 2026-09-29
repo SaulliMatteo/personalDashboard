@@ -1,6 +1,6 @@
 import { useState } from "react";
 import "../css/WidgetCatalog.css";
-import { WIDGET_REGISTRY, type WidgetDefinition, type WidgetSize } from "../widgets/registry";
+import { WIDGET_REGISTRY, type WidgetDefinition, type WidgetSize } from "../components/setting/widgets/registry";
 import { useLayout } from "../context/LayoutContext";
 import { useNav } from "../context/NavContext";
 

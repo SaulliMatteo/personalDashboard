@@ -1,9 +1,9 @@
 import type { ReactElement } from "react";
-import WeatherWidget from "../components/widgets/WeatherWidget";
-import TasksWidget from "../components/widgets/TasksWidget";
-import CalendarWidget from "../components/widgets/CalendarWidget";
-import NotesWidget from "../components/widgets/NotesWidget";
-import type { LayoutItem } from "../database/layoutRepository";
+import WeatherWidget from "../../widgets/WeatherWidget";
+import TasksWidget from "../../widgets/TasksWidget";
+import CalendarWidget from "../../widgets/CalendarWidget";
+import NotesWidget from "../../widgets/NotesWidget";
+import type { LayoutItem } from "../../../database/layoutRepository";
 
 /**
  * Taglie fisse ammesse nell'app. Le dimensioni sono in unità di griglia

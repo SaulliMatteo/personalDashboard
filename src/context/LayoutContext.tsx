@@ -15,8 +15,8 @@ import {
   type LayoutItem,
 } from "../database/layoutRepository";
 import { finalizeLayout, setGridBounds } from "../compactors/freeMovePushCompactor";
-import { DEFAULT_LAYOUT } from "../widgets/registry";
-import { GRID_COLS, GRID_MAX_ROWS } from "../grid/gridConfig";
+import { DEFAULT_LAYOUT } from "../components/setting/widgets/registry";
+import { GRID_COLS, GRID_MAX_ROWS } from "../config/gridConfig";
 import { initializeDatabase } from "../database/db";
 
 interface LayoutContextValue {
