@@ -1,17 +1,11 @@
 import { useState } from "react";
 import { MdOutlineSettings } from "react-icons/md";
 import SettingsModal from "../../pages/SettingsModal";
-import type { Dispatch, SetStateAction } from "react";
-import type { LayoutItem } from "../../database/layoutRepository";
+import { useNav } from "../../context/NavContext";
 
-interface SidebarProps {
-  setLayout: Dispatch<SetStateAction<LayoutItem[]>>;
-}
-
-function Sidebar({setLayout} : SidebarProps) {
-  
-  
+function Sidebar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { view, goToDashboard } = useNav();
 
   return (
     <aside className="sidebar">
@@ -20,7 +14,10 @@ function Sidebar({setLayout} : SidebarProps) {
       </div>
 
       <nav className="sidebar-nav">
-        <button className="nav-item active">
+        <button
+          className={`nav-item${view === "dashboard" ? " active" : ""}`}
+          onClick={goToDashboard}
+        >
           Dashboard
         </button>
 
@@ -45,7 +42,7 @@ function Sidebar({setLayout} : SidebarProps) {
           Settings    <MdOutlineSettings />
         </button>
       </div>
-      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} setLayout={setLayout} />
+      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </aside>
   );
 }
