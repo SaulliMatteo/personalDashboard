@@ -7,22 +7,11 @@ const collisionTimers = new Map<string, number>();
 const PUSH_DELAY_MS = 600;
 
 /**
- * Ultimo stato NOTO SENZA COLLISIONI del widget attivo — posizione E
- * dimensione insieme, perché durante un resize cambiano w/h (e a volte
- * anche x/y, se ridimensioni dai bordi sinistro/superiore), non solo x/y
- * come nel drag. Un unico rettangolo "sicuro" copre entrambi i casi.
+ * Ultima posizione NOTA SENZA COLLISIONI del widget attivo durante un
+ * drag. Le dimensioni (w, h) sono ormai fisse per ogni widget — non c'è
+ * più il resize — quindi qui basta tracciare x/y.
  */
 let lastSafeRect: { x: number; y: number; w: number; h: number } | null = null;
-
-/**
- * True mentre l'interazione attiva è un RESIZE (non un drag). Cambia il
- * comportamento in caso di collisione: nel drag aspettiamo PUSH_DELAY_MS
- * prima di bloccare (per non scattare su sfioramenti accidentali); nel
- * resize invece blocchiamo SUBITO, sempre — non ha senso "aspettare" che
- * un ingrandimento verso uno spazio occupato diventi improvvisamente
- * valido, il blocco deve essere immediato e diretto come un muro.
- */
-let isResizeMode = false;
 
 function pairKey(aId: string, bId: string): string {
   return aId < bId ? `${aId}|${bId}` : `${bId}|${aId}`;
@@ -46,20 +35,16 @@ export function hasPendingCollision(layout: Layout, activeId: string): boolean {
 }
 
 /**
- * initialRect: stato (x,y,w,h) del widget PRIMA di iniziare l'interazione,
+ * initialRect: stato (x,y,w,h) del widget PRIMA di iniziare il drag,
  * usato come primo punto sicuro noto.
- * resizing: true se l'interazione che sta per iniziare è un resize
- * (comportamento "muro immediato") invece di un drag ("muro con attesa").
  */
 export function setActiveItem(
   id: string | null,
-  initialRect?: { x: number; y: number; w: number; h: number },
-  resizing = false
+  initialRect?: { x: number; y: number; w: number; h: number }
 ) {
   activeItemId = id;
   collisionTimers.clear();
   lastSafeRect = id && initialRect ? { ...initialRect } : null;
-  isResizeMode = resizing;
 }
 
 export function clampToBounds(layout: Layout, cols: number): Layout {
@@ -99,24 +84,9 @@ function resolveLayout(layout: Layout, cols: number, immediate: boolean): Layout
     if (active) {
       let blocked = false;
 
-      // Il resize deve bloccarsi anche contro i BORDI della griglia, non
-      // solo contro altri widget: se stai ingrandendo verso uno spazio
-      // vuoto ma oltre cols/maxRows, non c'è nessun collides() che lo
-      // rilevi (non c'è nessuno lì contro cui scontrarsi), quindi va
-      // controllato esplicitamente.
-      if (isResizeMode && (active.x + active.w > cols || active.y + active.h > maxRowsState)) {
-        blocked = true;
-      }
-
       for (const other of items) {
         if (other.i === activeItemId || other.static) continue;
         if (!collides(active, other)) continue;
-
-        if (isResizeMode) {
-          // Resize: nessuna attesa, blocco immediato appena tocca qualcosa.
-          blocked = true;
-          continue;
-        }
 
         const key = pairKey(active.i, other.i);
         seenThisRound.add(key);
@@ -165,11 +135,8 @@ function resolveLayout(layout: Layout, cols: number, immediate: boolean): Layout
       }
 
       if (blocked && lastSafeRect) {
-        // Torna all'ultimo rettangolo sicuro INTERO (x,y,w,h insieme):
-        // per il resize questo vuol dire "torna alla dimensione precedente
-        // a questo passo", lasciando intatta la crescita avvenuta finora
-        // nelle direzioni libere — solo il passo che avrebbe causato la
-        // collisione viene annullato.
+        // Torna all'ultima posizione sicura nota: il passo di drag che
+        // avrebbe causato la collisione viene annullato.
         active.x = lastSafeRect.x;
         active.y = lastSafeRect.y;
         active.w = lastSafeRect.w;
