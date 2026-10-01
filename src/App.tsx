@@ -1,6 +1,6 @@
 import Dashboard from "./pages/Dashboard";
 import WidgetCatalog from "./pages/WidgetCatalog";
-import "./css/App.css"
+
 import "./css/theme.css"
 import { SettingsProvider } from "./context/SettingContext";
 import { LayoutProvider } from "./context/LayoutContext";

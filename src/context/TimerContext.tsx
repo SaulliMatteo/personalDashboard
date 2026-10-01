@@ -169,42 +169,48 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       ? { phase: "long_break", minutes: longBreakMinutes }
       : { phase: "short_break", minutes: shortBreakMinutes };
   }
-
+  const completingRef = useRef(false);
   async function completePhaseNaturally() {
-    const s = stateRef.current;
-    const now = Date.now();
+    if (completingRef.current) return;
+      completingRef.current = true;
+      try {
+        const s = stateRef.current;
+        const now = Date.now();
 
-    if (s.phase === "work" && s.subjectId !== null) {
-      if (s.phaseTotalSeconds >= MIN_LOGGABLE_SECONDS) {
-        await logSession(s.subjectId, now, s.phaseTotalSeconds);
-        await refreshToday();
+        if (s.phase === "work" && s.subjectId !== null) {
+          if (s.phaseTotalSeconds >= MIN_LOGGABLE_SECONDS) {
+            await logSession(s.subjectId, now, s.phaseTotalSeconds);
+            await refreshToday();
+          }
+          const cycleCount = s.cycleCount + 1;
+          const next = nextBreak(cycleCount);
+          const newState: TimerState = {
+            subjectId: s.subjectId,
+            phase: next.phase,
+            remainingSeconds: next.minutes * 60,
+            phaseTotalSeconds: next.minutes * 60,
+            runningSince: now,
+            cycleCount,
+          };
+          setState(newState);
+          await saveTimerState(newState);
+        } else if (s.phase === "short_break" || s.phase === "long_break") {
+          // Pausa finita da sola: si riprende a studiare la stessa materia.
+          const newState: TimerState = {
+            subjectId: s.subjectId,
+            phase: "work",
+            remainingSeconds: workMinutes * 60,
+            phaseTotalSeconds: workMinutes * 60,
+            runningSince: now,
+            cycleCount: s.cycleCount,
+          };
+          setState(newState);
+          await saveTimerState(newState);
+        }
+        playChime();
+      } finally {
+        completingRef.current = false;
       }
-      const cycleCount = s.cycleCount + 1;
-      const next = nextBreak(cycleCount);
-      const newState: TimerState = {
-        subjectId: s.subjectId,
-        phase: next.phase,
-        remainingSeconds: next.minutes * 60,
-        phaseTotalSeconds: next.minutes * 60,
-        runningSince: now,
-        cycleCount,
-      };
-      setState(newState);
-      await saveTimerState(newState);
-    } else if (s.phase === "short_break" || s.phase === "long_break") {
-      // Pausa finita da sola: si riprende a studiare la stessa materia.
-      const newState: TimerState = {
-        subjectId: s.subjectId,
-        phase: "work",
-        remainingSeconds: workMinutes * 60,
-        phaseTotalSeconds: workMinutes * 60,
-        runningSince: now,
-        cycleCount: s.cycleCount,
-      };
-      setState(newState);
-      await saveTimerState(newState);
-    }
-    playChime();
   }
 
   // Tick di visualizzazione (ogni secondo, solo mentre il timer corre) +

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { loadSettings, saveSettings, type AppSettings } from "../database/settingRepository";
 
 interface SettingsContextValue {
@@ -10,21 +10,24 @@ const SettingsContext = createContext<SettingsContextValue | undefined>(undefine
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  const settingsRef = useRef<AppSettings | null>(null);
+  const saveChain = useRef<Promise<void>>(Promise.resolve());
 
-  // Carica le impostazioni una sola volta, all'avvio dell'app
   useEffect(() => {
-    loadSettings().then(setSettings);
+    loadSettings().then((loaded) => {
+      settingsRef.current = loaded;
+      setSettings(loaded);
+    });
   }, []);
 
-  // Aggiorna lo stato subito (tutti i componenti che leggono il context
-  // si aggiornano automaticamente) e persiste su disco in background
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      const updated = { ...prev, [key]: value };
-      saveSettings(updated);
-      return updated;
-    });
+    const prev = settingsRef.current;
+    if (!prev) return;
+    const updated = { ...prev, [key]: value };
+    settingsRef.current = updated;
+    setSettings(updated);
+    // Scritture in coda: una alla volta, nell'ordine in cui sono state fatte.
+    saveChain.current = saveChain.current.then(() => saveSettings(updated));
   };
 
   return (
