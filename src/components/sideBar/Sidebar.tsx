@@ -15,7 +15,7 @@ function Sidebar() {
 
       <nav className="sidebar-nav">
         <button
-          className={`nav-item${view === "dashboard" ? " active" : ""}`}
+          className={`nav-item${view.type === "dashboard" ? " active" : ""}`}
           onClick={goToDashboard}
         >
           Dashboard

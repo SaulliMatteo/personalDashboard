@@ -1,8 +1,9 @@
 import { useState } from "react";
 import "../css/WidgetCatalog.css";
-import { WIDGET_REGISTRY, type WidgetDefinition, type WidgetSize } from "../components/setting/widgets/registry";
+import { WIDGET_REGISTRY, type WidgetDefinition, type WidgetSize } from "../widgets/registry";
 import { useLayout } from "../context/LayoutContext";
 import { useNav } from "../context/NavContext";
+import BackButton from "../components/layout/BackButton";
 
 function WidgetCatalog() {
   const { layout, addWidget, removeWidget, findFreeSlot } = useLayout();
@@ -38,9 +39,7 @@ function WidgetCatalog() {
           <h1>Widget disponibili</h1>
           <p>Aggiungi o rimuovi i widget dalla tua dashboard.</p>
         </div>
-        <button className="catalog-back-btn" onClick={goToDashboard}>
-          ← Indietro
-        </button>
+        <BackButton onClick={goToDashboard} />
       </header>
 
       <div className="widget-catalog-grid">
