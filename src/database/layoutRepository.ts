@@ -11,29 +11,27 @@ export interface LayoutItem {
 export async function saveLayout(layout: LayoutItem[]) {
   const db = await getDatabase();
 
-  for (const item of layout) {
-    await db.execute(
-      `
-      INSERT INTO dashboard_layout
-        (widget_id, x, y, w, h)
-      VALUES
-        (?, ?, ?, ?, ?)
-      ON CONFLICT(widget_id)
-      DO UPDATE SET
-        x = excluded.x,
-        y = excluded.y,
-        w = excluded.w,
-        h = excluded.h
-      `,
-      [
-        item.i,
-        item.x,
-        item.y,
-        item.w,
-        item.h,
-      ]
-    );
+  if (layout.length === 0) {
+    await db.execute(`DELETE FROM dashboard_layout`);
+    return;
   }
+
+  const rowPlaceholders = layout.map(() => "(?, ?, ?, ?, ?)").join(", ");
+  await db.execute(
+    `INSERT INTO dashboard_layout (widget_id, x, y, w, h)
+     VALUES ${rowPlaceholders}
+     ON CONFLICT(widget_id) DO UPDATE SET
+       x = excluded.x, y = excluded.y, w = excluded.w, h = excluded.h`,
+    layout.flatMap((item) => [item.i, item.x, item.y, item.w, item.h])
+  );
+
+  // Upsert PRIMA, delete dopo: se l'app si chiude in mezzo, al peggio
+  // restano righe in più, mai un layout con widget mancanti.
+  const idPlaceholders = layout.map(() => "?").join(", ");
+  await db.execute(
+    `DELETE FROM dashboard_layout WHERE widget_id NOT IN (${idPlaceholders})`,
+    layout.map((item) => item.i)
+  );
 }
 
 /**
