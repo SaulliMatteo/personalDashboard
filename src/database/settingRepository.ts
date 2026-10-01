@@ -4,15 +4,16 @@ export interface AppSettings {
   theme: "dark" | "light";
   glowEnabled: boolean;
   gridMargin: number;
-  /**
-   * Versione dello schema del layout salvato. Usata da
-   * src/database/db.ts per capire se la tabella dashboard_layout va
-   * azzerata una volta sola (es. dopo il passaggio da 12 a 4 colonne,
-   * che rende invalidi i vecchi valori x/y/w/h). Non è un dettaglio di
-   * "aspetto" come le altre impostazioni, ma vive qui per riusare lo
-   * stesso file di persistenza già presente invece di introdurne un altro.
-   */
   layoutSchemaVersion: number;
+  /**
+   * Parametri del pomodoro. Vivono qui (come tema/margine griglia) invece
+   * che in una tabella SQLite perché sono preferenze utente, non dati
+   * accumulati — stesso ragionamento già usato per gridMargin.
+   */
+  pomodoroWorkMinutes: number;
+  pomodoroShortBreakMinutes: number;
+  pomodoroLongBreakMinutes: number;
+  pomodoroCyclesBeforeLongBreak: number;
 }
 
 const SETTINGS_FILE = "settings.json";
@@ -22,6 +23,10 @@ const DEFAULT_SETTINGS: AppSettings = {
   glowEnabled: true,
   gridMargin: 10,
   layoutSchemaVersion: 0,
+  pomodoroWorkMinutes: 25,
+  pomodoroShortBreakMinutes: 5,
+  pomodoroLongBreakMinutes: 15,
+  pomodoroCyclesBeforeLongBreak: 4,
 };
 
 export async function loadSettings(): Promise<AppSettings> {

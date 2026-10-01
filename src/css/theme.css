@@ -18,6 +18,14 @@
   --accent: #6c8dff;
   --accent-soft: rgba(108, 141, 255, 0.12);
 
+  /* Fase di pausa del pomodoro: colore distinto e voluto (riposo vs
+     concentrazione), non decorazione. La fase di studio riusa --accent. */
+  --study-break: #f5a35c;
+  --study-break-soft: rgba(245, 163, 92, 0.14);
+
+  /* Traccia di sfondo dell'anello di progresso del timer. */
+  --ring-track: rgba(255, 255, 255, 0.08);
+
   --radius-card: 14px;
   --radius-item: 8px;
 

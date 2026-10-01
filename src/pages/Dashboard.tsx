@@ -6,8 +6,9 @@ import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE pr
 import "../css/Dashboard.css"; // Il nostro CSS custom, sovrascrive/estende i default della libreria
 import { useSettings } from "../context/SettingContext";
 import { useLayout } from "../context/LayoutContext";
-import { WIDGET_MAP } from "../components/setting/widgets/registry";
-import { GRID_COLS, GRID_MAX_ROWS, ROW_HEIGHT_RATIO } from "../config/gridConfig";
+import { useNav } from "../context/NavContext";
+import { WIDGET_MAP } from "../widgets/registry";
+import { GRID_COLS, GRID_MAX_ROWS, ROW_HEIGHT_RATIO } from "../grid/gridConfig";
 
 import { saveLayout, type LayoutItem } from "../database/layoutRepository";
 
@@ -28,6 +29,10 @@ function Dashboard() {
   // Layout condiviso: caricato/salvato/migrato centralmente in
   // LayoutContext, così anche WidgetCatalog vede sempre lo stesso stato.
   const { layout, setLayout, ready } = useLayout();
+
+  // Per aprire la pagina di dettaglio di un widget al click (vedi
+  // onClick più sotto, sui wrapper dei widget).
+  const { openWidgetDetail } = useNav();
 
   // Margine della griglia: preso dai settings se già caricati, altrimenti
   // fallback a 10px finché settings è null (primissimo render).
@@ -78,6 +83,14 @@ function Dashboard() {
   const [dragTarget, setDragTarget] = useState<LayoutItem | null>(null);
   const dragOriginRef = useRef<{ id: string; layout: LayoutItem[] } | null>(null);
   const suppressLayoutChangeRef = useRef(false);
+
+  // Distingue un click "secco" (che deve aprire la pagina di dettaglio
+  // del widget) dal click finale che chiude un drag (che NON deve
+  // navigare via). Non ci affidiamo al comportamento interno della
+  // libreria su questo punto: false all'inizio di ogni drag, true alla
+  // prima variazione di posizione — un vero click, senza movimento, non
+  // fa mai scattare onDrag, quindi resta false e la navigazione procede.
+  const wasDraggingRef = useRef(false);
 
   // Bugfix: se l'utente perde il focus della finestra (alt-tab, altra app)
   // mentre sta trascinando un widget, e rilascia il mouse FUORI dalla pagina,
@@ -231,6 +244,7 @@ function Dashboard() {
             // Aggiorna la posizione del ghost sia all'inizio del drag
             // sia ad ogni movimento successivo del mouse.
             onDragStart={(evLayout, oldItem, newItem, placeholder) => {
+              wasDraggingRef.current = false;
               const id = newItem?.i ?? oldItem?.i ?? null;
               dragOriginRef.current = id
                 ? { id, layout: layout.map((it) => ({ ...it })) }
@@ -241,7 +255,10 @@ function Dashboard() {
               );
               captureGhost(evLayout, oldItem, newItem, placeholder);
             }}
-            onDrag={captureGhost}
+            onDrag={(evLayout, oldItem, newItem, placeholder) => {
+              wasDraggingRef.current = true;
+              captureGhost(evLayout, oldItem, newItem, placeholder);
+            }}
             onDragStop={async (newLayout) => {
               const dropped = newLayout as LayoutItem[];
               const origin = dragOriginRef.current;
@@ -276,7 +293,24 @@ function Dashboard() {
             {layout.map((item) => {
               const widget = WIDGET_MAP[item.i];
               if (!widget) return null;
-              return <div key={item.i}>{widget.component()}</div>;
+              return (
+                <div
+                  key={item.i}
+                  onClick={() => {
+                    // Un vero drag ha fatto scattare onDrag almeno una
+                    // volta: ignoriamo il click che lo conclude e
+                    // consumiamo il flag, pronto per la prossima
+                    // interazione.
+                    if (wasDraggingRef.current) {
+                      wasDraggingRef.current = false;
+                      return;
+                    }
+                    if (widget.detailComponent) openWidgetDetail(item.i);
+                  }}
+                >
+                  {widget.component()}
+                </div>
+              );
             })}
           </GridLayout>
         )}
