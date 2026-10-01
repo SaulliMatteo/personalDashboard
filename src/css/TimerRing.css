@@ -1,0 +1,22 @@
+.timer-ring {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.timer-ring svg {
+  display: block;
+}
+
+.timer-ring-progress {
+  transition: stroke-dashoffset 300ms linear, stroke 300ms ease;
+}
+
+.timer-ring-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}

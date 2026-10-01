@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import "../css/SettingsModal.css";
 import WidgetSetting from "../components/setting/WidgetSetting";
-import type { Dispatch, SetStateAction } from "react";
-import type { LayoutItem } from "../database/layoutRepository";
 import type { AppSettings } from "../database/settingRepository";
 import { useSettings } from "../context/SettingContext";
 
@@ -10,7 +8,6 @@ import { useSettings } from "../context/SettingContext";
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  setLayout: Dispatch<SetStateAction<LayoutItem[]>>;
 }
 
 
@@ -23,7 +20,7 @@ const TABS: { id: SettingsTab; label: string }[] = [
   { id: "about", label: "About" },
 ];
 
-function SettingsModal({ isOpen, onClose, setLayout }: SettingsModalProps) {
+function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
 
   // Impostazioni condivise con tutta l'app tramite il context: leggerle/
@@ -124,7 +121,7 @@ function SettingsModal({ isOpen, onClose, setLayout }: SettingsModalProps) {
 
           {activeTab === "widgets" && (
             <div>
-              <WidgetSetting setLayout={setLayout}></WidgetSetting>
+              <WidgetSetting onClose={onClose} />
             </div>
           )}
 
