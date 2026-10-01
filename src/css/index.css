@@ -32,6 +32,7 @@
   --text-primary: #1a1a1e;
   --text-secondary: #4a4a52;
   --border-subtle: rgba(0, 0, 0, 0.08);
+  --ring-track: rgba(0, 0, 0, 0.08);
 }
 
 html,

@@ -34,7 +34,17 @@ export async function saveLayout(layout: LayoutItem[]) {
       ]
     );
   }
-  console.log(loadLayout())
+}
+
+/**
+ * Rimuove un singolo widget dal layout salvato. Usata dal catalogo widget
+ * quando l'utente toglie un widget dalla dashboard (a differenza di
+ * saveLayout, che fa solo upsert e non cancella righe non più presenti
+ * nell'array passato).
+ */
+export async function deleteWidget(id: string) {
+  const db = await getDatabase();
+  await db.execute(`DELETE FROM dashboard_layout WHERE widget_id = ?`, [id]);
 }
 
 export async function loadLayout(): Promise<LayoutItem[]> {

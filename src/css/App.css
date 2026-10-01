@@ -175,7 +175,13 @@ html, body {
   min-width: 0;
   flex: 1;          /* SOSTITUISCE il min-height: calc(...) */
   min-height: 0;    /* AGGIUNTA: obbligatoria coi flex-child scrollabili, senza questa flex:1 a volte non si restringe/espande bene */
-  overflow: hidden;
+  /* MODIFICATA: con righe di altezza proporzionale (vedi gridConfig.ts)
+     il contenuto potrebbe risultare più alto dello spazio visibile a
+     seconda di quanti widget/quale taglia sono presenti. "hidden" li
+     avrebbe semplicemente tagliati via, invisibili e irraggiungibili;
+     "visible" lascia che trabocchino dentro .main, che è l'unico
+     elemento che deve scrollare (vedi regola html,body sotto). */
+  overflow: visible;
 }
 /* Durante un drag/resize attivo, disattiva la selezione testo su tutta la
    griglia — altrimenti il movimento del mouse, oltre a spostare il widget,
@@ -192,7 +198,14 @@ html, body {
 
 .widget-grid {
   position: relative;
-  height: 100% !important; 
+  /* MODIFICATA: era "height: 100% !important". Con maxRows fisso a 4 e
+     righe di altezza proporzionale, il contenuto può risultare più alto
+     dello spazio disponibile: forzare height al 100% lo avrebbe
+     compresso/tagliato invece di lasciarlo scrollare. min-height 100%
+     mantiene il comportamento precedente quando il contenuto ci sta
+     (l'area vuota resta un target di drop valido), ma permette di
+     crescere oltre se serve. */
+  min-height: 100%;
 }
 /* Nota: prima c'erano due dichiarazioni di .react-grid-item con transizioni
    diverse (200ms ease vs 260ms cubic-bezier con rimbalzo). Tenuta solo

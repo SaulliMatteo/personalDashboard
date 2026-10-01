@@ -4,7 +4,16 @@ export interface AppSettings {
   theme: "dark" | "light";
   glowEnabled: boolean;
   gridMargin: number;
-  
+  layoutSchemaVersion: number;
+  /**
+   * Parametri del pomodoro. Vivono qui (come tema/margine griglia) invece
+   * che in una tabella SQLite perché sono preferenze utente, non dati
+   * accumulati — stesso ragionamento già usato per gridMargin.
+   */
+  pomodoroWorkMinutes: number;
+  pomodoroShortBreakMinutes: number;
+  pomodoroLongBreakMinutes: number;
+  pomodoroCyclesBeforeLongBreak: number;
 }
 
 const SETTINGS_FILE = "settings.json";
@@ -13,6 +22,11 @@ const DEFAULT_SETTINGS: AppSettings = {
   theme: "dark",
   glowEnabled: true,
   gridMargin: 10,
+  layoutSchemaVersion: 0,
+  pomodoroWorkMinutes: 25,
+  pomodoroShortBreakMinutes: 5,
+  pomodoroLongBreakMinutes: 15,
+  pomodoroCyclesBeforeLongBreak: 4,
 };
 
 export async function loadSettings(): Promise<AppSettings> {
