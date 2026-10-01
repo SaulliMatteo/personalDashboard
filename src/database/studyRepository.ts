@@ -51,16 +51,17 @@ export async function listSubjects(): Promise<Subject[]> {
 export async function addSubject(name: string): Promise<Subject> {
   const db = await getDatabase();
   const createdAt = Date.now();
-  await db.execute(`INSERT INTO subjects (name, created_at) VALUES (?, ?)`, [name, createdAt]);
-  const rows = await db.select<{ id: number }[]>(`SELECT id FROM subjects WHERE name = ?`, [name]);
-  return { id: rows[0].id, name, createdAt };
+  const result = await db.execute(
+    `INSERT INTO subjects (name, created_at) VALUES (?, ?)`,
+    [name, createdAt]
+  );
+  return { id: result.lastInsertId as number, name, createdAt };
 }
 
 export async function deleteSubject(id: number): Promise<void> {
   const db = await getDatabase();
-  // Cancella anche lo storico sessioni della materia (ON DELETE CASCADE):
-  // eliminare una materia elimina anche i suoi dati di studio passati,
-  // non solo lei dall'elenco.
+  await db.execute(`DELETE FROM study_sessions WHERE subject_id = ?`, [id]);
+  await db.execute(`UPDATE timer_state SET subject_id = NULL WHERE subject_id = ?`, [id]);
   await db.execute(`DELETE FROM subjects WHERE id = ?`, [id]);
 }
 
