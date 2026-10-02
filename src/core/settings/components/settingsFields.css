@@ -1,0 +1,59 @@
+.settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+.settings-field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-field-inline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-field-description {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.settings-field select,
+.settings-field input[type="number"] {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  padding: 6px 8px;
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.settings-field input[type="range"],
+.settings-field input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+.settings-field input[type="color"] {
+  width: 56px;
+  height: 30px;
+  padding: 2px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  cursor: pointer;
+}
