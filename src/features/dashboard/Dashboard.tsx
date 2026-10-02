@@ -8,16 +8,17 @@ import { useLayout } from "../../core/layout/LayoutContext";
 import { useNav } from "../../core/nav/NavContext";
 import { createDragCompactor, finalizeLayout, clampToBounds } from "../../core/layout/compactor";
 import { saveLayout, type LayoutItem } from "../../core/layout/layoutRepository";
-import { GRID_COLS, GRID_MAX_ROWS, MIN_ROW_HEIGHT } from "../../core/layout/gridConfig";
+import { GRID_COLS, MIN_ROW_HEIGHT } from "../../core/layout/gridConfig";
 import { getWidget } from "../../widgets/registry";
 import { useGhostPreview, useForceEndDragOnBlur } from "./useGhostPreview";
+import DashboardHeader from "./DashboardHeader";
 
 function Dashboard() {
   // width: larghezza del contenitore (px), ricalcolata al resize della finestra.
   // mounted: evita di renderizzare la griglia con width 0 al primo frame.
   const { width, containerRef, mounted } = useContainerWidth();
   const { settings } = useSettings();
-  const { layout, setLayout, ready } = useLayout();
+  const { layout, setLayout, rows, ready } = useLayout();
   const { openWidgetDetail } = useNav();
 
   const margin = settings.gridMargin;
@@ -32,7 +33,7 @@ function Dashboard() {
         margin: marginTuple,
         containerPadding: marginTuple,
         rowHeight: 1,
-        maxRows: GRID_MAX_ROWS,
+        maxRows: rows,
       })
     : 0;
   const rowHeight = Math.max(MIN_ROW_HEIGHT, colWidth * settings.gridRowHeightRatio);
@@ -43,15 +44,16 @@ function Dashboard() {
     containerPadding: marginTuple,
     cols: GRID_COLS,
     rowHeight,
-    maxRows: GRID_MAX_ROWS,
+    maxRows: rows,
   };
 
-  // Compactor con stato di drag PROPRIO di questa griglia; si ricrea solo
-  // se cambia il ritardo di spinta (impossibile durante un drag).
-  const dragCompactor = useMemo(
-    () => createDragCompactor({ maxRows: GRID_MAX_ROWS, pushDelayMs: settings.gridPushDelayMs }),
-    [settings.gridPushDelayMs]
-  );
+  // Compactor con stato di drag PROPRIO di questa griglia. Creato UNA volta:
+  // legge righe e ritardo da un oggetto aggiornato a ogni render, così un
+  // cambio di impostazione non azzera mai una sessione di drag in corso.
+  const compactorConfig = useRef({ maxRows: rows, pushDelayMs: settings.gridPushDelayMs });
+  compactorConfig.current.maxRows = rows;
+  compactorConfig.current.pushDelayMs = settings.gridPushDelayMs;
+  const dragCompactor = useMemo(() => createDragCompactor(compactorConfig.current), []);
 
   const { dragTarget, ghostPos, captureGhost, clearGhost } = useGhostPreview(positionParams, width);
   useForceEndDragOnBlur(clearGhost);
@@ -63,16 +65,11 @@ function Dashboard() {
   // drag (non deve navigare): un vero click non fa mai scattare onDrag.
   const wasDraggingRef = useRef(false);
 
-  const GhostComponent = dragTarget ? getWidget(dragTarget.i)?.component : undefined;
+  const GhostComponent = dragTarget && settings.showDragGhost ? getWidget(dragTarget.i)?.component : undefined;
 
   return (
     <>
-      <header className="dashboard-header">
-        <div>
-          <h1>Dashboard</h1>
-          <p>Welcome back.</p>
-        </div>
-      </header>
+      <DashboardHeader />
 
       {/* position: relative (vedi .grid-container): il ghost si posiziona rispetto a questo contenitore. */}
       <div ref={containerRef} className="grid-container">
@@ -80,13 +77,13 @@ function Dashboard() {
           <GridLayout
             className={`widget-grid${settings.lockLayout ? " is-locked" : ""}`}
             layout={layout}
-            gridConfig={{ cols: GRID_COLS, rowHeight, margin: [margin, margin], maxRows: GRID_MAX_ROWS }}
+            gridConfig={{ cols: GRID_COLS, rowHeight, margin: [margin, margin], maxRows: rows }}
             // Dimensioni fisse per taglia: si cambia taglia dal catalogo.
             resizeConfig={{ enabled: false }}
             // Lascia che la griglia occupi tutto lo spazio, così si può
             // rilasciare un widget anche nello spazio vuoto sotto gli altri.
             autoSize={false}
-            dragConfig={{ enabled: !settings.lockLayout, bounded: true }}
+            dragConfig={{ enabled: !settings.lockLayout, bounded: true, threshold: settings.dragThreshold }}
             width={width}
             compactor={dragCompactor.compactor}
             onDragStart={(evLayout, oldItem, newItem, placeholder) => {
@@ -113,7 +110,7 @@ function Dashboard() {
               // "maturata", si torna al layout di partenza.
               const pending = origin ? dragCompactor.hasPendingCollision(dropped, origin.id) : false;
               const source = origin && pending ? origin.layout : dropped;
-              const finalItems = finalizeLayout(source, GRID_COLS, GRID_MAX_ROWS) as LayoutItem[];
+              const finalItems = finalizeLayout(source, GRID_COLS, rows) as LayoutItem[];
 
               suppressLayoutChangeRef.current = true;
               setLayout(finalItems);
@@ -129,7 +126,7 @@ function Dashboard() {
             // rimosso dal catalogo): tiene lo stato React sincronizzato.
             onLayoutChange={(newLayout) => {
               if (suppressLayoutChangeRef.current) return;
-              setLayout(clampToBounds(newLayout as LayoutItem[], GRID_COLS, GRID_MAX_ROWS) as LayoutItem[]);
+              setLayout(clampToBounds(newLayout as LayoutItem[], GRID_COLS, rows) as LayoutItem[]);
             }}
           >
             {layout.map((item) => {
@@ -144,7 +141,7 @@ function Dashboard() {
                       wasDraggingRef.current = false;
                       return;
                     }
-                    if (widget.detailComponent) openWidgetDetail(item.i);
+                    if (settings.openDetailOnClick && widget.detailComponent) openWidgetDetail(item.i);
                   }}
                 >
                   <WidgetComponent w={item.w} h={item.h} />
@@ -161,6 +158,8 @@ function Dashboard() {
             style={{
               width: ghostPos.width,
               height: ghostPos.height,
+              opacity: settings.ghostOpacity,
+              filter: `blur(${settings.ghostBlur}px) saturate(0.8)`,
               transform: `translate3d(${ghostPos.left}px, ${ghostPos.top}px, 0)`,
             }}
           >
