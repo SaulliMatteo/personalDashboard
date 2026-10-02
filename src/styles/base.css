@@ -1,0 +1,128 @@
+/* ==========================================================================
+   BASE: reset leggero, tipografia, header di pagina, cornice .widget.
+   Gli stili specifici stanno accanto ai componenti che li usano.
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+/* Solo .main scrolla: la pagina non deve mai avere una scrollbar propria. */
+html,
+body {
+  overflow: hidden;
+}
+
+body {
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+/* ---------- Header di pagina (Dashboard, Catalogo, Dettagli) ---------- */
+
+.dashboard-header {
+  flex-shrink: 0;
+  margin-bottom: 22px;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dashboard-header p {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+/* ---------- Cornice comune dei widget (dentro <WidgetFrame>) ---------- */
+
+.widget {
+  width: 100%;
+  height: 100%;
+
+  padding: 16px 18px;
+
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+
+  overflow: hidden;
+}
+
+.widget-header {
+  margin-bottom: 16px;
+}
+
+.widget-header h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* Testo di corpo, usato da widget e pannello Settings */
+.note {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.note:last-child {
+  margin-bottom: 0;
+}
+
+/* Entrata al primo render (classe "enter", usata ad es. da Notes) */
+.widget.enter {
+  animation: rise 480ms var(--ease-out-back) backwards;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Movimento ---------- */
+
+/* Impostazione "Animazioni" disattivata */
+:root[data-animations="off"] *,
+:root[data-animations="off"] *::before,
+:root[data-animations="off"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .widget,
+  .nav-item,
+  .react-grid-item {
+    animation: none !important;
+    transition: none !important;
+  }
+}
