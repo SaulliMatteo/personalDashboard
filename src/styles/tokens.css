@@ -1,0 +1,62 @@
+/* ==========================================================================
+   TOKEN DI TEMA. Unico posto in cui vivono i colori.
+   - --accent viene sovrascritto da <html style> (impostazione "accentColor")
+   - il tema chiaro si attiva con <html data-theme="light"> (impostazione "theme")
+   ========================================================================== */
+:root {
+  color-scheme: dark;
+
+  --bg: #0b0b0e;
+  --bg-sidebar: #0b0b0e;
+  --bg-card: #131318;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+
+  --text-primary: #f2f2f4;
+  --text-secondary: #b5b5bc;
+  --text-muted: #8a8a92;
+
+  --accent: #6c8dff;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --border-accent: color-mix(in srgb, var(--accent) 35%, transparent);
+  /* Colore del testo SOPRA uno sfondo accent. */
+  --on-accent: #0b0b0e;
+
+  /* Superfici semitrasparenti per hover, input, schede: scure sul tema
+     chiaro e chiare sul tema scuro. */
+  --surface-1: rgba(255, 255, 255, 0.04);
+  --surface-2: rgba(255, 255, 255, 0.07);
+  --surface-3: rgba(255, 255, 255, 0.12);
+
+  /* Fase di pausa del pomodoro: colore distinto e voluto (riposo vs concentrazione). */
+  --study-break: #f5a35c;
+  --study-break-soft: rgba(245, 163, 92, 0.14);
+
+  /* Traccia di sfondo dell'anello di progresso del timer. */
+  --ring-track: rgba(255, 255, 255, 0.08);
+
+  --radius-card: 14px;
+  --radius-item: 8px;
+
+  --ease-out-back: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f5f5f7;
+  --bg-sidebar: #ececf0;
+  --bg-card: #ffffff;
+  --border-subtle: rgba(0, 0, 0, 0.08);
+
+  --text-primary: #1a1a1e;
+  --text-secondary: #4a4a52;
+  --text-muted: #6e6e78;
+
+  --on-accent: #ffffff;
+
+  --surface-1: rgba(0, 0, 0, 0.04);
+  --surface-2: rgba(0, 0, 0, 0.07);
+  --surface-3: rgba(0, 0, 0, 0.12);
+
+  --ring-track: rgba(0, 0, 0, 0.08);
+}

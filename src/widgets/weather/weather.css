@@ -1,0 +1,23 @@
+.weather-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.weather-temperature {
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.weather-content p {
+  margin: 0 0 2px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.weather-content span {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
