@@ -22,6 +22,7 @@ function StudyWidget({ w, h }: WidgetProps) {
   // La dashboard passa la taglia come props: il widget non deve più
   // cercarsi nel layout condiviso.
   const isLarge = w >= 2 && h >= 2;
+  const showSubjects = isLarge && settings.studyShowSubjectsInWidget;
 
   const isIdle = phase === "idle";
   const isBreak = phase === "short_break" || phase === "long_break";
@@ -41,7 +42,9 @@ function StudyWidget({ w, h }: WidgetProps) {
 
   return (
     <WidgetFrame>
-      <article className={`widget study-widget ${isLarge ? "study-widget--large" : "study-widget--small"}`}>
+      <article
+        className={`widget study-widget ${isLarge ? "study-widget--large" : "study-widget--small"}${showSubjects ? "" : " study-widget--ring-only"}`}
+      >
         <div className="study-widget-body">
           <div className="study-widget-timer">
             <TimerRing progress={progress} size={isLarge ? 92 : 50} strokeWidth={isLarge ? 7 : 4} color={ringColor}>
@@ -61,7 +64,7 @@ function StudyWidget({ w, h }: WidgetProps) {
             )}
           </div>
 
-          {isLarge && (
+          {showSubjects && (
             <div className="study-widget-subjects">
               {subjects.length === 0 ? (
                 <p className="study-widget-empty">Aggiungi materie dai dettagli del widget.</p>

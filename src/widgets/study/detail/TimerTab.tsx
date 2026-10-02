@@ -40,6 +40,8 @@ function TimerTab() {
   }, [todayBySubject]);
 
   const studiedTodaySeconds = Object.values(todayBySubject).reduce((sum, s) => sum + s, 0);
+  const goalSeconds = settings.studyDailyGoalMinutes * 60;
+  const goalProgress = goalSeconds > 0 ? Math.min(1, studiedTodaySeconds / goalSeconds) : 0;
   const topSubject = subjects
     .map((s) => ({ subject: s, seconds: todayBySubject[s.id] ?? 0 }))
     .filter((s) => s.seconds > 0)
@@ -66,7 +68,14 @@ function TimerTab() {
       <div className="study-detail-recap">
         <div className="study-stat">
           <span className="study-stat-value">{formatHoursMinutes(studiedTodaySeconds)}</span>
-          <span className="study-stat-label">Studiato oggi</span>
+          <span className="study-stat-label">
+            Studiato oggi{goalSeconds > 0 && ` · obiettivo ${formatHoursMinutes(goalSeconds)}`}
+          </span>
+          {goalSeconds > 0 && (
+            <div className="study-goal-track" role="progressbar" aria-valuenow={Math.round(goalProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
+              <div className="study-goal-bar" style={{ width: `${goalProgress * 100}%` }} />
+            </div>
+          )}
         </div>
         <div className="study-stat">
           <span className="study-stat-value">{todaySessionCount}</span>

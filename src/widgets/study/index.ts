@@ -11,6 +11,7 @@ export const studyWidget: WidgetDefinition = {
   component: StudyWidget,
   sizes: [SIZE_S, SIZE_M_SQUARE],
   detailComponent: StudyDetail,
+  settingsGroup: "study",
   // Il timer deve continuare a girare anche se il widget non è in dashboard.
   provider: TimerProvider,
 };

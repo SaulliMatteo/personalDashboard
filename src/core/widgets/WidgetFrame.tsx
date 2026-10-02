@@ -1,31 +1,36 @@
 import BorderGlow, { type BorderGlowProps } from "../../ui/BorderGlow";
 import { useSettings } from "../settings/SettingsContext";
-
-// Unico punto in cui vivono i parametri di default del glow dei widget.
-const GLOW_DEFAULTS: BorderGlowProps = {
-  edgeSensitivity: 24,
-  glowColor: "40 80 80",
-  borderRadius: 14,
-  coneSpread: 25,
-  colors: ["#c084fc", "#f472b6", "#38bdf8"],
-};
+import { GLOW_PALETTES } from "../settings/schema";
+import { resolveTheme, useSystemPrefersLight } from "../settings/theme";
 
 /**
  * Cornice comune di tutti i widget. Legge le impostazioni (glow, tema,
- * animazioni) e le passa a BorderGlow; un widget può comunque
+ * raggio, animazioni) e le passa a BorderGlow; un widget può comunque
  * sovrascrivere qualunque prop: <WidgetFrame colors={[...]}>.
  */
 function WidgetFrame({ children, ...overrides }: BorderGlowProps) {
   const { settings } = useSettings();
+  const systemPrefersLight = useSystemPrefersLight();
+  const isLight = resolveTheme(settings.theme, systemPrefersLight) === "light";
+
+  const colors =
+    settings.glowPalette === "accent"
+      ? [settings.accentColor]
+      : [...GLOW_PALETTES[settings.glowPalette].colors];
 
   return (
     <BorderGlow
-      {...GLOW_DEFAULTS}
-      backgroundColor={settings.theme === "light" ? "#ffffff" : "#000000"}
+      backgroundColor={isLight ? "#ffffff" : "#000000"}
+      borderRadius={settings.cardRadius}
+      colors={colors}
       enabled={settings.glowEnabled}
+      glowColor={`${settings.glowHue} 80 80`}
       glowIntensity={settings.glowIntensity}
       glowRadius={settings.glowRadius}
-      animated={settings.glowEnabled && settings.animationsEnabled}
+      edgeSensitivity={settings.glowEdgeSensitivity}
+      coneSpread={settings.glowConeSpread}
+      fillOpacity={settings.glowFillOpacity}
+      animated={settings.glowEnabled && settings.animationsEnabled && settings.glowSweepOnLoad}
       {...overrides}
     >
       {children}

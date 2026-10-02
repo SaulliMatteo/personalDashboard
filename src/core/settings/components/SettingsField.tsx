@@ -21,6 +21,8 @@ function SettingsField({ def }: { def: SettingDef }) {
   const [draft, setDraft] = useState<string | null>(null);
 
   const value = settings[def.key];
+  // Disattivato (ma visibile) se la impostazione da cui dipende è spenta.
+  const disabled = def.dependsOn !== undefined && !settings[def.dependsOn];
   // def.key è un'unione di chiavi: la coerenza chiave/valore è garantita
   // dallo schema (e da sanitizeSettings in lettura), non dal type system.
   const set = (next: unknown) =>
@@ -31,7 +33,7 @@ function SettingsField({ def }: { def: SettingDef }) {
     case "boolean":
       control = (
         <label className="settings-field-inline">
-          <input type="checkbox" checked={Boolean(value)} onChange={(e) => set(e.target.checked)} />
+          <input type="checkbox" disabled={disabled} checked={Boolean(value)} onChange={(e) => set(e.target.checked)} />
           <span>{def.label}</span>
         </label>
       );
@@ -41,7 +43,7 @@ function SettingsField({ def }: { def: SettingDef }) {
       control = (
         <label className="settings-field-stack">
           <span>{def.label}</span>
-          <select value={String(value)} onChange={(e) => set(e.target.value)}>
+          <select disabled={disabled} value={String(value)} onChange={(e) => set(e.target.value)}>
             {def.options.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
@@ -54,7 +56,23 @@ function SettingsField({ def }: { def: SettingDef }) {
       control = (
         <label className="settings-field-stack">
           <span>{def.label}</span>
-          <input type="color" value={String(value)} onChange={(e) => set(e.target.value)} />
+          <input type="color" disabled={disabled} value={String(value)} onChange={(e) => set(e.target.value)} />
+        </label>
+      );
+      break;
+
+    case "text":
+      control = (
+        <label className="settings-field-stack">
+          <span>{def.label}</span>
+          <input
+            type="text"
+            disabled={disabled}
+            maxLength={def.maxLength}
+            placeholder={def.placeholder}
+            value={String(value)}
+            onChange={(e) => set(e.target.value.slice(0, def.maxLength))}
+          />
         </label>
       );
       break;
@@ -70,6 +88,7 @@ function SettingsField({ def }: { def: SettingDef }) {
             </span>
             <input
               type="range"
+              disabled={disabled}
               min={def.min}
               max={def.max}
               step={def.step}
@@ -86,6 +105,7 @@ function SettingsField({ def }: { def: SettingDef }) {
             <span>{def.label}</span>
             <input
               type="number"
+              disabled={disabled}
               min={def.min}
               max={def.max}
               step={def.step}
@@ -107,7 +127,7 @@ function SettingsField({ def }: { def: SettingDef }) {
   }
 
   return (
-    <div className="settings-field">
+    <div className={`settings-field${disabled ? " is-disabled" : ""}`}>
       {control}
       {def.description && <p className="settings-field-description">{def.description}</p>}
     </div>

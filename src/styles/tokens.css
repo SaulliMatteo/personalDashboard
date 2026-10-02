@@ -28,14 +28,18 @@
   --surface-3: rgba(255, 255, 255, 0.12);
 
   /* Fase di pausa del pomodoro: colore distinto e voluto (riposo vs concentrazione). */
-  --study-break: #f5a35c;
-  --study-break-soft: rgba(245, 163, 92, 0.14);
+  --study-break: #f5a35c; /* sovrascritto da settings.studyBreakColor */
+  --study-break-soft: color-mix(in srgb, var(--study-break) 14%, transparent);
 
   /* Traccia di sfondo dell'anello di progresso del timer. */
   --ring-track: rgba(255, 255, 255, 0.08);
 
+  /* Sovrascritti da <html style> (impostazioni "cardRadius", "itemRadius", ...). */
   --radius-card: 14px;
   --radius-item: 8px;
+  --widget-padding: 16px 18px;
+  --sidebar-width: 240px;
+  --font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   --ease-out-back: cubic-bezier(0.22, 1, 0.36, 1);
 }
