@@ -1,0 +1,252 @@
+/* ==========================================================================
+   MODERN THEME — Personal Dashboard
+   Import questo file dopo index.css / App.css (le regole più specifiche
+   vincono comunque, ma tenerlo per ultimo evita sorprese di cascade).
+   ========================================================================== */
+
+:root {
+  --bg: #0b0b0e;
+  --bg-sidebar: #0b0b0e;
+  --bg-card: #131318;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-accent: rgba(108, 141, 255, 0.35);
+
+  --text-primary: #f2f2f4;
+  --text-secondary: #b5b5bc;
+  --text-muted: #8a8a92;
+
+  --accent: #6c8dff;
+  --accent-soft: rgba(108, 141, 255, 0.12);
+
+  /* Fase di pausa del pomodoro: colore distinto e voluto (riposo vs
+     concentrazione), non decorazione. La fase di studio riusa --accent. */
+  --study-break: #f5a35c;
+  --study-break-soft: rgba(245, 163, 92, 0.14);
+
+  /* Traccia di sfondo dell'anello di progresso del timer. */
+  --ring-track: rgba(255, 255, 255, 0.08);
+
+  --radius-card: 14px;
+  --radius-item: 8px;
+
+  --ease-out-back: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.brand {
+  color: #ffffff;
+}
+
+.nav-item {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--radius-item);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition:
+    background 200ms ease,
+    color 200ms ease,
+    transform 150ms ease;
+}
+
+.nav-item .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 200ms ease;
+  flex-shrink: 0;
+}
+
+.nav-item.active .dot {
+  opacity: 1;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #e8e8ea;
+  transform: translateX(2px);
+}
+
+.nav-item.active {
+  background: var(--accent-soft);
+  color: #ffffff;
+}
+
+/* ---------- Page header ---------- */
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.page-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 32px;
+}
+
+/* ---------- Cards / widgets ---------- */
+.widget,
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.02) inset;
+  transition:
+    transform 220ms var(--ease-out-back),
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.widget:hover,
+.card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-accent);
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(108, 141, 255, 0.08);
+}
+
+/* durante il drag il sollevamento hover va disattivato, altrimenti
+   confligge con la trasformazione di react-grid-layout */
+.react-grid-item.react-draggable-dragging.widget:hover,
+.react-grid-item.react-draggable-dragging.card:hover {
+  transform: none;
+}
+
+.widget-header {
+  margin-bottom: 16px;
+}
+
+.widget-header h2 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.note {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+}
+
+.note:last-child {
+  margin-bottom: 0;
+}
+
+.big-stat {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.stat-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.weather-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.weather-temp {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.weather-detail {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.weather-loc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.event {
+  margin-bottom: 16px;
+}
+
+.event-time {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.event-name {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+/* ---------- Entrata a cascata al primo render ----------
+   Applica la classe "enter" ai widget solo al mount iniziale
+   (vedi nota React sotto): un'unica coreografia, non ripetuta
+   ad ogni update. */
+.widget.enter,
+.card.enter {
+  animation: rise 480ms var(--ease-out-back) backwards;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .widget.enter,
+  .card.enter,
+  .widget,
+  .card,
+  .nav-item {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Quando .widget è dentro BorderGlow, non deve comportarsi da card a sé:
+   niente sfondo/bordo/ombra propri, e niente hover lift che si stacca
+   dal bagliore esterno gestito da BorderGlow. */
+.border-glow-inner .widget {
+  /* background: transparent; */
+  /* border: none; */
+  box-shadow: none;
+  /* border-radius: inherit; */
+}
+
+.border-glow-inner .widget:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: transparent;
+}

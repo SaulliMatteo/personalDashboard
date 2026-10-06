@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import "./settingsModal.css";
 import SettingsSection from "../../core/settings/components/SettingsSection";
-import ConfirmButton from "../../ui/ConfirmButton";
-import { useSettings } from "../../core/settings/SettingsContext";
+import GeneralTab from "./tabs/GeneralTab";
 import WidgetsTab from "./tabs/WidgetsTab";
 
 interface SettingsModalProps {
@@ -10,19 +9,19 @@ interface SettingsModalProps {
   onClose: () => void;
 }
 
-type SettingsTab = "general" | "appearance" | "dashboard" | "widgets" | "about";
+type SettingsTab = "general" | "appearance" | "glow" | "dashboard" | "widgets" | "about";
 
 const TABS: { id: SettingsTab; label: string }[] = [
-  { id: "general", label: "General" },
-  { id: "appearance", label: "Appearance" },
+  { id: "general", label: "Generale" },
+  { id: "appearance", label: "Aspetto" },
+  { id: "glow", label: "Effetti" },
   { id: "dashboard", label: "Dashboard" },
-  { id: "widgets", label: "Widgets" },
-  { id: "about", label: "About" },
+  { id: "widgets", label: "Widget" },
+  { id: "about", label: "Informazioni" },
 ];
 
 function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>("general");
-  const { resetSettings } = useSettings();
 
   // Chiude con ESC
   useEffect(() => {
@@ -41,7 +40,7 @@ function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     <div className="settings-overlay" onClick={onClose}>
       <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
         <aside className="settings-sidebar">
-          <div className="settings-sidebar-title">Settings</div>
+          <div className="settings-sidebar-title">Impostazioni</div>
           <nav className="settings-nav">
             {TABS.map((tab) => (
               <button
@@ -56,47 +55,46 @@ function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </aside>
 
         <section className="settings-content">
-          <button className="settings-close" onClick={onClose} aria-label="Close settings">
+          <button className="settings-close" onClick={onClose} aria-label="Chiudi impostazioni">
             ✕
           </button>
 
-          {activeTab === "general" && (
-            <div>
-              <h2>General</h2>
-              <p className="note">Impostazioni generali della dashboard.</p>
-              <div className="settings-option">
-                <span>Ripristina tutte le impostazioni ai valori di default (il layout dei widget non cambia)</span>
-                <ConfirmButton className="settings-btn" label="Ripristina" onConfirm={resetSettings} />
-              </div>
-            </div>
-          )}
+          {activeTab === "general" && <GeneralTab />}
 
           {activeTab === "appearance" && (
             <div>
-              <h2>Appearance</h2>
-              <p className="note">Tema, colori, animazioni ed effetti glow.</p>
+              <h2>Aspetto</h2>
+              <p className="note">Tema, colori, forme, tipografia e barra laterale.</p>
               <SettingsSection group="appearance" />
+            </div>
+          )}
+
+          {activeTab === "glow" && (
+            <div>
+              <h2>Effetti</h2>
+              <p className="note">Il bordo luminoso dei widget: colori, intensità e forma.</p>
+              <SettingsSection group="glow" />
             </div>
           )}
 
           {activeTab === "dashboard" && (
             <div>
               <h2>Dashboard</h2>
-              <p className="note">Comportamento e proporzioni della griglia.</p>
+              <p className="note">Intestazione, griglia, trascinamento e anteprima di spostamento.</p>
               <SettingsSection group="dashboard" />
             </div>
           )}
 
           {activeTab === "widgets" && (
             <div>
-              <h2>Widgets</h2>
+              <h2>Widget</h2>
               <WidgetsTab onClose={onClose} />
             </div>
           )}
 
           {activeTab === "about" && (
             <div>
-              <h2>About</h2>
+              <h2>Informazioni</h2>
               <p className="note">Personal Dashboard — versione locale.</p>
             </div>
           )}

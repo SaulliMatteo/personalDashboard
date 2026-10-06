@@ -9,4 +9,5 @@ export const weatherWidget: WidgetDefinition = {
   component: WeatherWidget,
   sizes: [SIZE_S, SIZE_M_WIDE],
   defaultPlacement: { x: 0, y: 0, w: 1, h: 1 },
+  settingsGroup: "weather",
 };

@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 256 256">
+  <defs>
+    <radialGradient id="bg" cx="30%" cy="22%" r="85%">
+      <stop offset="0%" stop-color="#241736"/>
+      <stop offset="55%" stop-color="#130f1c"/>
+      <stop offset="100%" stop-color="#0b0b0e"/>
+    </radialGradient>
+
+    <linearGradient id="tileLarge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8aa4ff"/>
+      <stop offset="100%" stop-color="#5b74e0"/>
+    </linearGradient>
+
+    <linearGradient id="tileBar" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+
+    <filter id="glowLarge" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="9" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="glowSmall" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="glowBar" x="-30%" y="-80%" width="160%" height="260%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Sfondo: quadrato molto arrotondato ("squircle"), stesso nero quasi
+       puro del tema dell'app, con un accenno di viola verso l'angolo in
+       alto a sinistra invece di un nero piatto. -->
+  <rect x="0" y="0" width="256" height="256" rx="58" fill="url(#bg)"/>
+
+  <!-- Tile grande: il widget "2x2". -->
+  <g filter="url(#glowLarge)" opacity="0.28">
+    <rect x="40" y="40" width="104" height="104" rx="22" fill="#6c8dff"/>
+  </g>
+  <rect x="40" y="40" width="104" height="104" rx="22" fill="url(#tileLarge)"/>
+
+  <!-- Tile piccolo: il widget "1x1". -->
+  <g filter="url(#glowSmall)" opacity="0.3">
+    <rect x="152" y="40" width="64" height="64" rx="16" fill="#f472b6"/>
+  </g>
+  <rect x="152" y="40" width="64" height="64" rx="16" fill="#f9a8d4"/>
+  <rect x="152" y="40" width="64" height="64" rx="16" fill="#f472b6" opacity="0.55"/>
+
+  <!-- Barra larga: il widget "2x1" / "4x2". -->
+  <g filter="url(#glowBar)" opacity="0.26">
+    <rect x="40" y="152" width="176" height="64" rx="16" fill="#8b5cf6"/>
+  </g>
+  <rect x="40" y="152" width="176" height="64" rx="16" fill="url(#tileBar)"/>
+</svg>

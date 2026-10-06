@@ -9,9 +9,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { DEFAULT_SETTINGS, type AppSettings } from "./schema";
+import { DEFAULT_SETTINGS, isValidSetting, type AppSettings, type SettingKey } from "./schema";
 import { loadSettings, saveSettingsPatch, clearSettings } from "./settingsRepository";
 import { applySettingsToDocument } from "./applySettings";
+import { resolveTheme, useSystemPrefersLight } from "./theme";
 
 // Gli slider emettono molti valori al secondo: li raccogliamo e scriviamo
 // una volta sola quando l'utente si ferma.
@@ -22,6 +23,11 @@ interface SettingsContextValue {
   settings: AppSettings;
   updateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
   resetSettings: () => void;
+  /**
+   * Applica un oggetto di impostazioni (es. incollato dall'utente): solo le
+   * chiavi note e valide vengono accettate, il resto viene scartato.
+   */
+  importSettings: (raw: Record<string, unknown>) => { applied: number; ignored: number };
 }
 
 const SettingsContext = createContext<SettingsContextValue | undefined>(undefined);
@@ -45,10 +51,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Applica tema/accent/animazioni PRIMA del paint, per evitare un flash.
+  // Con tema "Segui il sistema" si ricalcola anche quando cambia il sistema.
+  const systemPrefersLight = useSystemPrefersLight();
+
+  // Applica tema/colori/font/ecc. PRIMA del paint, per evitare un flash.
   useLayoutEffect(() => {
-    if (settings) applySettingsToDocument(settings);
-  }, [settings]);
+    if (settings) applySettingsToDocument(settings, resolveTheme(settings.theme, systemPrefersLight));
+  }, [settings, systemPrefersLight]);
 
   const flush = useCallback(() => {
     if (timer.current !== null) {
@@ -101,9 +110,31 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     writeChain.current = writeChain.current.then(clearSettings);
   }, []);
 
+  const importSettings = useCallback((raw: Record<string, unknown>) => {
+    const accepted: Partial<AppSettings> = {};
+    let ignored = 0;
+    for (const [key, value] of Object.entries(raw)) {
+      if (key in DEFAULT_SETTINGS && isValidSetting(key as SettingKey, value)) {
+        (accepted as Record<string, unknown>)[key] = value;
+      } else {
+        ignored++;
+      }
+    }
+    const applied = Object.keys(accepted).length;
+    if (applied > 0) {
+      const updated = { ...settingsRef.current, ...accepted };
+      settingsRef.current = updated;
+      setSettings(updated);
+      pending.current = { ...pending.current, ...accepted };
+      if (timer.current !== null) window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(flush, SAVE_DEBOUNCE_MS);
+    }
+    return { applied, ignored };
+  }, [flush]);
+
   const value = useMemo(
-    () => (settings ? { settings, updateSetting, resetSettings } : null),
-    [settings, updateSetting, resetSettings]
+    () => (settings ? { settings, updateSetting, resetSettings, importSettings } : null),
+    [settings, updateSetting, resetSettings, importSettings]
   );
 
   if (!value) return null;

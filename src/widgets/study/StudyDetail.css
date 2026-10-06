@@ -205,7 +205,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   padding: 24px;
-  max-width: 480px;
+  max-width: 560px;
 }
 
 .study-settings-intro {
@@ -213,13 +213,6 @@
   font-size: 12.5px;
   line-height: 1.6;
   color: var(--text-muted);
-}
-
-.study-settings-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-top: 14px;
 }
 
 /* ---------- Materie ---------- */
@@ -394,4 +387,21 @@
 .study-report-row span:last-child {
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Obiettivo giornaliero ---------- */
+
+.study-goal-track {
+  height: 5px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: var(--ring-track);
+  overflow: hidden;
+}
+
+.study-goal-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 300ms ease;
 }

@@ -120,3 +120,8 @@
   color: var(--text-muted);
   line-height: 1.5;
 }
+
+/* Taglia grande senza elenco materie: l'anello resta centrato */
+.study-widget--large.study-widget--ring-only .study-widget-body {
+  justify-content: center;
+}
