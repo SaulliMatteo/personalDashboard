@@ -25,3 +25,7 @@ tauri = { version = "2.11.3", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 tauri-plugin-fs = "2"
+# Pinnata ESATTA (non "2" o "^2.4"): la 2.5.0 richiede tauri ^2.12, che
+# confliggerebbe con la tauri = "2.11.3" pinnata sopra. Verificato contro
+# il manifesto pubblicato su crates.io prima di aggiungerla.
+tauri-plugin-notification = "=2.4.0"
