@@ -14,16 +14,15 @@ import {
 } from "./studyRepository";
 import { useSettings } from "../../core/settings/SettingsContext";
 
-// Sotto questa soglia una sessione non viene registrata: evita di
-// riempire lo storico di sessioni da 1-2 secondi per avvii accidentali.
-const MIN_LOGGABLE_SECONDS = 10;
-
 /**
  * Breve suono a due note generato via Web Audio, invece di un file
  * audio da distribuire: zero asset, zero dipendenze. Se in futuro si
  * preferisce un suono proprio, questa è l'unica funzione da sostituire.
  */
-function playChime() {
+function playChime(volumePercent: number) {
+  // 100% = ampiezza massima 0.4 (il vecchio valore fisso 0.2 corrisponde a 50%).
+  const peak = 0.4 * (volumePercent / 100);
+  if (peak <= 0) return;
   try {
     const AudioCtx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     const ctx = new AudioCtx();
@@ -35,7 +34,7 @@ function playChime() {
       osc.frequency.value = freq;
       const start = now + i * 0.15;
       gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(0.2, start + 0.02);
+      gain.gain.linearRampToValueAtTime(peak, start + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.4);
       osc.connect(gain).connect(ctx.destination);
       osc.start(start);
@@ -87,6 +86,11 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const shortBreakMinutes = settings.pomodoroShortBreakMinutes;
   const longBreakMinutes = settings.pomodoroLongBreakMinutes;
   const cyclesBeforeLongBreak = Math.max(1, settings.pomodoroCyclesBeforeLongBreak);
+  // Sotto questa soglia una sessione non viene registrata: evita di riempire
+  // lo storico di sessioni da 1-2 secondi per avvii accidentali.
+  const minLoggableSeconds = settings.studyMinLoggableSeconds;
+  // Se spento, a fine fase il timer resta fermo in attesa del play.
+  const autoStartNext = settings.studyAutoStartNext;
 
   const [ready, setReady] = useState(false);
   const [state, setState] = useState<TimerState>(IDLE_STATE);
@@ -159,7 +163,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       const now = Date.now();
 
       if (s.phase === "work" && s.subjectId !== null) {
-        if (s.phaseTotalSeconds >= MIN_LOGGABLE_SECONDS) {
+        if (s.phaseTotalSeconds >= minLoggableSeconds) {
           await logSession(s.subjectId, now, s.phaseTotalSeconds);
           await refreshToday();
         }
@@ -170,7 +174,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
           phase: next.phase,
           remainingSeconds: next.minutes * 60,
           phaseTotalSeconds: next.minutes * 60,
-          runningSince: now,
+          runningSince: autoStartNext ? now : null,
           cycleCount,
         };
         setState(newState);
@@ -182,7 +186,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
           phase: "work",
           remainingSeconds: workMinutes * 60,
           phaseTotalSeconds: workMinutes * 60,
-          runningSince: now,
+          runningSince: autoStartNext ? now : null,
           cycleCount: s.cycleCount,
         };
         setState(newState);
@@ -195,7 +199,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         await saveTimerState(IDLE_STATE);
         return;
       }
-      playChime();
+      playChime(settings.studySoundEnabled ? settings.studyVolume : 0);
     } finally {
       completingRef.current = false;
     }
@@ -260,7 +264,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     const studied = s.phaseTotalSeconds - remaining;
 
     if (s.phase === "work") {
-      if (s.subjectId !== null && studied >= MIN_LOGGABLE_SECONDS) {
+      if (s.subjectId !== null && studied >= minLoggableSeconds) {
         await logSession(s.subjectId, now, studied);
         await refreshToday();
       }

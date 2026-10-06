@@ -49,7 +49,7 @@ function StudyDetail() {
                 Valgono dal prossimo ciclo in poi: una fase già in corso mantiene la durata con cui è partita.
               </p>
               {/* Campi generati dallo schema (core/settings/schema.ts, gruppo "study"). */}
-              <SettingsSection group="study" className="study-settings-grid" />
+              <SettingsSection group="study" />
             </section>
           )}
 

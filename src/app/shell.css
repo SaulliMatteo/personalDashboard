@@ -40,3 +40,13 @@
 .main::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, var(--accent) 40%, transparent);
 }
+
+/* Impostazione "Posizione della barra laterale": destra */
+:root[data-sidebar="right"] .app {
+  flex-direction: row-reverse;
+}
+
+:root[data-sidebar="right"] .sidebar {
+  border-right: none;
+  border-left: 1px solid var(--border-subtle);
+}

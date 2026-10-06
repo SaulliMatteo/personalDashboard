@@ -1,0 +1,154 @@
+.study-widget-body {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+/* --- Taglia piccola (1x1): anello con apertura in basso (gapDegrees su
+   TimerRing), autosufficiente dentro la card — niente più tagliato dal
+   bordo. I controlli stanno proprio dentro l'apertura, sovrapposti in
+   posizione assoluta rispetto al wrapper dell'anello. */
+.study-widget-body--small {
+  align-items: center;
+  justify-content: center;
+}
+
+.study-widget-ring-wrap {
+  position: relative;
+}
+
+.study-widget-ring-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+
+  display: flex;
+  gap: 5px;
+}
+
+.study-widget-clock {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.study-widget-body--small .study-widget-clock {
+  font-size: 13px;
+}
+
+.study-widget-phase {
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.study-widget-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.study-widget-toggle {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+
+  background: var(--accent-soft);
+  color: var(--accent);
+  cursor: pointer;
+
+  transition: background 150ms ease, transform 120ms ease;
+}
+
+.study-widget-toggle:hover {
+  background: var(--accent);
+  color: #0b0b0e;
+}
+
+.study-widget-toggle:active {
+  transform: scale(0.92);
+}
+
+.study-widget-toggle--muted {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+}
+
+.study-widget-toggle--muted:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+
+.study-widget-toggle--tiny {
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+}
+
+/* --- Taglia grande (2x2): anello a sinistra, materie a destra --- */
+.study-widget--large .study-widget-body {
+  flex-direction: row;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.study-widget--large .study-widget-timer {
+  justify-content: center;
+}
+
+.study-widget-subjects {
+  flex: 1;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.study-widget-subject-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  font-size: 12.5px;
+}
+
+.study-widget-subject-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.study-widget-subject-name {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.study-widget-subject-time {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.study-widget-empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}

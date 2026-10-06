@@ -158,3 +158,50 @@
   background: #e78080;
   color: #1a0b0b;
 }
+
+.settings-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Blocco impostazioni di un singolo widget ---------- */
+
+.settings-widget-block {
+  margin-top: 32px;
+}
+
+.settings-widget-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ---------- Backup ---------- */
+
+.settings-backup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.settings-backup-text {
+  width: 100%;
+  resize: vertical;
+
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  padding: 8px 10px;
+
+  color: var(--text-primary);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 12px;
+  user-select: text;
+}
+
+.settings-backup-actions {
+  display: flex;
+  gap: 8px;
+}

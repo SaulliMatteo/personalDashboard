@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
+import type { SettingsGroup } from "../settings/schema";
 
 /** Taglia ammessa, in unità di griglia (colonne × righe), non pixel. */
 export interface WidgetSize {
@@ -39,6 +40,8 @@ export interface WidgetDefinition {
   defaultPlacement?: WidgetPlacement;
   /** Pagina a schermo intero aperta cliccando il widget in dashboard. */
   detailComponent?: ComponentType;
+  /** Gruppo di impostazioni dello schema che appartiene a questo widget (scheda Settings > Widgets). */
+  settingsGroup?: SettingsGroup;
   /** Provider di contesto che il widget richiede (sempre montato, anche se il widget non è in dashboard). */
   provider?: ComponentType<{ children: ReactNode }>;
 }
