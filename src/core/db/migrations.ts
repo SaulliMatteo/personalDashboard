@@ -71,4 +71,22 @@ export const MIGRATIONS: Migration[] = [
        )`,
     ],
   },
+  {
+    version: 3,
+    description: "Materie: colore, modalità (pomodoro/cronometro) e durate proprie; indice sulle sessioni",
+    statements: [
+      // ALTER TABLE ADD COLUMN non è idempotente: se la colonna esiste già
+      // (DB creato da versioni precedenti dell'app) il runner ignora l'errore
+      // "duplicate column name" e prosegue (vedi core/db/index.ts).
+      `ALTER TABLE subjects ADD COLUMN color TEXT`,
+      `ALTER TABLE subjects ADD COLUMN mode TEXT NOT NULL DEFAULT 'pomodoro'`,
+      `ALTER TABLE subjects ADD COLUMN work_minutes INTEGER NOT NULL DEFAULT 25`,
+      `ALTER TABLE subjects ADD COLUMN short_break_minutes INTEGER NOT NULL DEFAULT 5`,
+      `ALTER TABLE subjects ADD COLUMN long_break_minutes INTEGER NOT NULL DEFAULT 15`,
+      `ALTER TABLE subjects ADD COLUMN cycles_before_long_break INTEGER NOT NULL DEFAULT 4`,
+      // I report leggono le sessioni per intervallo di date: senza indice
+      // la query scorrerebbe tutta la tabella (conta quando lo storico cresce).
+      `CREATE INDEX IF NOT EXISTS idx_study_sessions_ended_at ON study_sessions(ended_at)`,
+    ],
+  },
 ];
