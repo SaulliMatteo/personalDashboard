@@ -78,8 +78,11 @@ export const DEFAULT_SETTINGS = {
   pomodoroLongBreakMinutes: 15,
   pomodoroCyclesBeforeLongBreak: 4,
   studyAutoStartNext: true,
+  studyDefaultMode: "pomodoro" as "pomodoro" | "stopwatch",
   studySoundEnabled: true,
   studyVolume: 50,
+  studyNotificationsEnabled: true,
+  studyStopwatchLapMinutes: 60,
   studyDailyGoalMinutes: 0,
   studyMinLoggableSeconds: 10,
   studyBreakColor: "#f5a35c",
@@ -185,14 +188,20 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "weatherUnit", group: "weather", section: "Località", type: "select", label: "Unità di temperatura", options: [{ value: "c", label: "Celsius (°C)" }, { value: "f", label: "Fahrenheit (°F)" }] },
 
   // ======================= WIDGET: STUDIO =======================
-  { key: "pomodoroWorkMinutes", group: "study", section: "Pomodoro", type: "number", control: "input", min: 1, max: 180, step: 1, label: "Lavoro (min)" },
-  { key: "pomodoroShortBreakMinutes", group: "study", section: "Pomodoro", type: "number", control: "input", min: 1, max: 60, step: 1, label: "Pausa breve (min)" },
-  { key: "pomodoroLongBreakMinutes", group: "study", section: "Pomodoro", type: "number", control: "input", min: 1, max: 120, step: 1, label: "Pausa lunga (min)" },
-  { key: "pomodoroCyclesBeforeLongBreak", group: "study", section: "Pomodoro", type: "number", control: "input", min: 1, max: 12, step: 1, label: "Cicli prima della pausa lunga" },
-  { key: "studyAutoStartNext", group: "study", section: "Pomodoro", type: "boolean", label: "Avvia in automatico la fase successiva", description: "Se spento, a fine fase il timer si ferma e aspetta che premi play." },
+  // Le durate qui sotto sono i valori PREDEFINITI delle nuove materie:
+  // ogni materia può poi avere i propri (icona ingranaggio nella pagina Studio).
+  { key: "studyDefaultMode", group: "study", section: "Nuove materie", type: "select", label: "Modalità predefinita", options: [{ value: "pomodoro", label: "Pomodoro" }, { value: "stopwatch", label: "Cronometro" }] },
+  { key: "pomodoroWorkMinutes", group: "study", section: "Nuove materie", type: "number", control: "input", min: 1, max: 180, step: 1, label: "Lavoro (min)" },
+  { key: "pomodoroShortBreakMinutes", group: "study", section: "Nuove materie", type: "number", control: "input", min: 1, max: 60, step: 1, label: "Pausa breve (min)" },
+  { key: "pomodoroLongBreakMinutes", group: "study", section: "Nuove materie", type: "number", control: "input", min: 1, max: 120, step: 1, label: "Pausa lunga (min)" },
+  { key: "pomodoroCyclesBeforeLongBreak", group: "study", section: "Nuove materie", type: "number", control: "input", min: 1, max: 12, step: 1, label: "Cicli prima della pausa lunga", description: "Valgono solo per le materie create da ora in poi." },
 
-  { key: "studySoundEnabled", group: "study", section: "Suoni", type: "boolean", label: "Suono a fine fase" },
-  { key: "studyVolume", group: "study", section: "Suoni", type: "number", control: "slider", min: 5, max: 100, step: 5, unit: "%", dependsOn: "studySoundEnabled", label: "Volume" },
+  { key: "studyAutoStartNext", group: "study", section: "Timer", type: "boolean", label: "Avvia in automatico la fase successiva", description: "Solo pomodoro. Se spento, a fine fase il timer si ferma e aspetta che premi play." },
+  { key: "studyStopwatchLapMinutes", group: "study", section: "Timer", type: "number", control: "input", min: 1, max: 240, step: 1, label: "Giro dell'anello del cronometro (min)", description: "Ogni quanti minuti l'anello del cronometro compie un giro." },
+
+  { key: "studySoundEnabled", group: "study", section: "Suoni e notifiche", type: "boolean", label: "Suono a fine fase" },
+  { key: "studyVolume", group: "study", section: "Suoni e notifiche", type: "number", control: "slider", min: 5, max: 100, step: 5, unit: "%", dependsOn: "studySoundEnabled", label: "Volume" },
+  { key: "studyNotificationsEnabled", group: "study", section: "Suoni e notifiche", type: "boolean", label: "Notifica di sistema a fine fase" },
 
   { key: "studyDailyGoalMinutes", group: "study", section: "Obiettivi e registrazione", type: "number", control: "input", min: 0, max: 720, step: 5, label: "Obiettivo giornaliero (min)", description: "0 = nessun obiettivo. Se impostato compare una barra di avanzamento." },
   { key: "studyMinLoggableSeconds", group: "study", section: "Obiettivi e registrazione", type: "number", control: "input", min: 1, max: 300, step: 1, label: "Durata minima da registrare (sec)", description: "Le sessioni più brevi vengono scartate (avvii accidentali)." },
