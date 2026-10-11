@@ -17,8 +17,8 @@
 
 .settings-modal {
   display: flex;
-  width: min(780px, 90vw);
-  height: min(520px, 80vh);
+  width: min(520px, 90vw);
+  max-height: 80vh;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
@@ -30,51 +30,6 @@
 @keyframes modal-pop {
   from { opacity: 0; transform: scale(0.96) translateY(6px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.settings-sidebar {
-  width: 200px;
-  flex-shrink: 0;
-  background: var(--surface-1);
-  border-right: 1px solid var(--border-subtle);
-  padding: 16px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.settings-sidebar-title {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-  padding: 4px 10px 10px;
-}
-
-.settings-nav {
-  display: flex;
-  flex-direction: column;
-}
-
-.settings-nav-item {
-  all: unset;
-  cursor: pointer;
-  padding: 8px 10px;
-  border-radius: var(--radius-item);
-  font-size: 13.5px;
-  color: var(--text-secondary);
-  transition: background 150ms ease, color 150ms ease;
-}
-
-.settings-nav-item:hover {
-  background: var(--surface-2);
-  color: var(--text-primary);
-}
-
-.settings-nav-item.active {
-  background: var(--accent-soft);
-  color: var(--text-primary);
 }
 
 .settings-content {
@@ -125,14 +80,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  margin-top: 16px;
 
   font-size: 13.5px;
   color: var(--text-secondary);
-}
-
-.settings-options .settings-option {
-  margin-top: 0;
 }
 
 .settings-btn {
@@ -162,46 +112,4 @@
 .settings-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-/* ---------- Blocco impostazioni di un singolo widget ---------- */
-
-.settings-widget-block {
-  margin-top: 32px;
-}
-
-.settings-widget-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-/* ---------- Backup ---------- */
-
-.settings-backup {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.settings-backup-text {
-  width: 100%;
-  resize: vertical;
-
-  background: var(--surface-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-item);
-  padding: 8px 10px;
-
-  color: var(--text-primary);
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  font-size: 12px;
-  user-select: text;
-}
-
-.settings-backup-actions {
-  display: flex;
-  gap: 8px;
 }
