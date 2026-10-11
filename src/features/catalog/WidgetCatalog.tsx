@@ -5,6 +5,7 @@ import type { WidgetDefinition, WidgetSize } from "../../core/widgets/types";
 import { useLayout } from "../../core/layout/LayoutContext";
 import { useNav } from "../../core/nav/NavContext";
 import BackButton from "../../ui/BackButton";
+import WidgetSettingsButton from "./WidgetSettingsButton";
 
 function WidgetCatalog() {
   const { layout, addWidget, removeWidget, findFreeSlot } = useLayout();
@@ -51,11 +52,14 @@ function WidgetCatalog() {
             <article key={widget.id} className="widget-catalog-card">
               <div className="widget-catalog-card-head">
                 <h2>{widget.name}</h2>
-                <span
-                  className={`widget-catalog-status ${present ? "is-present" : hasAnyFreeSlot ? "is-available" : "is-full"}`}
-                >
-                  {present ? "Nella dashboard" : hasAnyFreeSlot ? "Disponibile" : "Spazio insufficiente"}
-                </span>
+                <div className="widget-catalog-card-tools">
+                  <span
+                    className={`widget-catalog-status ${present ? "is-present" : hasAnyFreeSlot ? "is-available" : "is-full"}`}
+                  >
+                    {present ? "Nella dashboard" : hasAnyFreeSlot ? "Disponibile" : "Spazio insufficiente"}
+                  </span>
+                  <WidgetSettingsButton widget={widget} />
+                </div>
               </div>
 
               <p className="widget-catalog-description">{widget.description}</p>

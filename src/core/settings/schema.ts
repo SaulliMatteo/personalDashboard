@@ -4,15 +4,16 @@
  * Per aggiungerne una:
  *  1. aggiungi la chiave con il valore di default in DEFAULT_SETTINGS;
  *  2. aggiungi una voce in SETTING_DEFS (gruppo, sezione, etichetta, tipo):
- *     compare da sola nel pannello Settings (o dove renderizzi quel gruppo);
+ *     compare da sola dove renderizzi quel gruppo con <SettingsSection>;
  *  3. leggila con useSettings() dove serve.
  * Nessuna migrazione DB: i valori sono righe chiave/valore e le chiavi
  * mancanti ricadono sul default.
  *
- * Gruppi = dove compaiono:
- *  general/appearance/glow/dashboard -> schede omonime del modale Settings
- *  weather/study                     -> scheda "Widgets" (ogni widget dichiara
- *                                       il suo gruppo con `settingsGroup`)
+ * Gruppi: general/appearance/glow/dashboard non hanno più una scheda nel
+ * modale Settings (che ora contiene solo la gestione widget): le chiavi
+ * restano con i loro default e continuano a governare l'app. Il gruppo
+ * "study" si modifica dalla rotellina del widget nel catalogo
+ * (ogni widget dichiara il suo gruppo con `settingsGroup`).
  */
 
 /** Palette del glow dei widget: tre colori usati per il bordo "mesh". */
@@ -68,10 +69,6 @@ export const DEFAULT_SETTINGS = {
   ghostOpacity: 0.45,
   ghostBlur: 1.5,
 
-  // ---- Widget: Meteo ----
-  weatherCity: "Spoleto",
-  weatherUnit: "c" as "c" | "f",
-
   // ---- Widget: Studio ----
   pomodoroWorkMinutes: 25,
   pomodoroShortBreakMinutes: 5,
@@ -91,7 +88,7 @@ export const DEFAULT_SETTINGS = {
 
 export type AppSettings = typeof DEFAULT_SETTINGS;
 export type SettingKey = keyof AppSettings;
-export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "weather" | "study";
+export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study";
 
 interface BaseDef {
   key: SettingKey;
@@ -182,10 +179,6 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "showDragGhost", group: "dashboard", section: "Anteprima di spostamento", type: "boolean", label: "Mostra l'anteprima fantasma", description: "La copia sfocata che indica dove atterrerà il widget." },
   { key: "ghostOpacity", group: "dashboard", section: "Anteprima di spostamento", type: "number", control: "slider", min: 0.15, max: 0.8, step: 0.05, dependsOn: "showDragGhost", label: "Opacità" },
   { key: "ghostBlur", group: "dashboard", section: "Anteprima di spostamento", type: "number", control: "slider", min: 0, max: 6, step: 0.5, unit: "px", dependsOn: "showDragGhost", label: "Sfocatura" },
-
-  // ======================= WIDGET: METEO =======================
-  { key: "weatherCity", group: "weather", section: "Località", type: "text", maxLength: 40, placeholder: "Città", label: "Città mostrata" },
-  { key: "weatherUnit", group: "weather", section: "Località", type: "select", label: "Unità di temperatura", options: [{ value: "c", label: "Celsius (°C)" }, { value: "f", label: "Fahrenheit (°F)" }] },
 
   // ======================= WIDGET: STUDIO =======================
   // Le durate qui sotto sono i valori PREDEFINITI delle nuove materie:
