@@ -1,11 +1,7 @@
-import { useState } from "react";
 import { useSettings } from "../SettingsContext";
 import type { SettingDef, SettingKey } from "../schema";
+import NumberField from "../../../ui/NumberField";
 import "./settingsFields.css";
-
-function clamp(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(value, max));
-}
 
 function formatNumber(value: number, step: number) {
   const decimals = step < 1 ? String(step).split(".")[1]?.length ?? 0 : 0;
@@ -18,7 +14,6 @@ function formatNumber(value: number, step: number) {
  */
 function SettingsField({ def }: { def: SettingDef }) {
   const { settings, updateSetting } = useSettings();
-  const [draft, setDraft] = useState<string | null>(null);
 
   const value = settings[def.key];
   // Disattivato (ma visibile) se la impostazione da cui dipende è spenta.
@@ -98,27 +93,11 @@ function SettingsField({ def }: { def: SettingDef }) {
           </label>
         );
       } else {
-        // Campo numerico con bozza locale: si può cancellare e riscrivere
-        // senza che il valore "scatti" indietro a ogni tasto.
+        // Campo numerico in cui si scrive soltanto (vedi ui/NumberField).
         control = (
           <label className="settings-field-stack">
             <span>{def.label}</span>
-            <input
-              type="number"
-              disabled={disabled}
-              min={def.min}
-              max={def.max}
-              step={def.step}
-              value={draft ?? String(num)}
-              onChange={(e) => {
-                setDraft(e.target.value);
-                const parsed = Number(e.target.value);
-                if (e.target.value !== "" && Number.isFinite(parsed)) {
-                  set(clamp(parsed, def.min, def.max));
-                }
-              }}
-              onBlur={() => setDraft(null)}
-            />
+            <NumberField disabled={disabled} min={def.min} max={def.max} value={num} onCommit={set} live />
           </label>
         );
       }

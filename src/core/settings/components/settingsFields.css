@@ -57,7 +57,7 @@
 }
 
 .settings-field select,
-.settings-field input[type="number"],
+.settings-field input[inputmode="numeric"],
 .settings-field input[type="text"] {
   background: var(--surface-1);
   border: 1px solid var(--border-subtle);

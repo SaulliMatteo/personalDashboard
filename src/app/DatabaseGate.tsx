@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { initializeDatabase } from "../core/db";
+import { hideSplash, setSplashStatus } from "./splash";
 
 type GateState = { status: "loading" } | { status: "ready" } | { status: "error"; message: string };
 
@@ -13,6 +14,7 @@ function DatabaseGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    setSplashStatus("Apro il database…");
     initializeDatabase()
       .then(() => {
         if (!cancelled) setState({ status: "ready" });
@@ -20,6 +22,7 @@ function DatabaseGate({ children }: { children: ReactNode }) {
       .catch((error) => {
         console.error("Errore nell'inizializzazione del database:", error);
         if (!cancelled) setState({ status: "error", message: String(error) });
+        hideSplash(); // l'errore deve essere leggibile
       });
     return () => {
       cancelled = true;

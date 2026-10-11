@@ -1,21 +1,52 @@
+/* Sfondo sfumato legato al colore della materia in corso (--timer-glow,
+   impostata inline da StudyWidget.tsx): stesso effetto della card timer
+   nella pagina di dettaglio. Trasparente da fermo. */
+.widget.study-widget--small {
+  background:
+    radial-gradient(circle at 50% 42%, var(--timer-glow, transparent) 0%, transparent 70%),
+    var(--bg-card);
+  background-blend-mode: soft-light;
+  transition:
+    background 300ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms var(--ease-out-back);
+}
+
+/* Nel 1x1 ogni pixel serve all'anello: padding ridotto rispetto agli altri widget. */
+.widget.study-widget--small {
+  padding: 4px;
+}
+
 .study-widget-body {
   display: flex;
   height: 100%;
   min-height: 0;
 }
 
-/* --- Taglia piccola (1x1): anello e toggle affiancati, non impilati.
-   Una pila verticale richiede più altezza di quanta una cella 1x1 ne offra. */
-.study-widget--small .study-widget-body {
-  flex-direction: row;
+/* --- Taglia piccola (1x1): anello con apertura in basso (gapDegrees su
+   TimerRing), autosufficiente dentro la card — niente più tagliato dal
+   bordo. I controlli stanno proprio dentro l'apertura, sovrapposti in
+   posizione assoluta rispetto al wrapper dell'anello. */
+.study-widget-body--small {
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  width: 100%;
+  overflow: hidden;
 }
 
-.study-widget--small .study-widget-timer {
-  flex-direction: row;
-  gap: 10px;
+.study-widget-ring-wrap {
+  position: relative;
+}
+
+.study-widget-ring-controls {
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  transform: translateX(-50%);
+
+  display: flex;
+  gap: 5px;
 }
 
 .study-widget-clock {
@@ -25,8 +56,10 @@
   color: var(--text-primary);
 }
 
-.study-widget--small .study-widget-clock {
-  font-size: 11px;
+.study-widget-body--small .study-widget-clock {
+  /* la dimensione effettiva è impostata inline in proporzione all'anello */
+  line-height: 1;
+  margin-top: -6px;
 }
 
 .study-widget-phase {
@@ -69,6 +102,22 @@
   transform: scale(0.92);
 }
 
+.study-widget-toggle--muted {
+  background: var(--surface-2);
+  color: var(--text-secondary);
+}
+
+.study-widget-toggle--muted:hover {
+  background: var(--surface-3);
+  color: var(--text-primary);
+}
+
+.study-widget-toggle--tiny {
+  width: 22px;
+  height: 22px;
+  font-size: 13px;
+}
+
 /* --- Taglia grande (2x2): anello a sinistra, materie a destra --- */
 .study-widget--large .study-widget-body {
   flex-direction: row;
@@ -77,41 +126,136 @@
 }
 
 .study-widget--large .study-widget-timer {
-  justify-content: center;
+  padding: 12px 14px;
+  border-radius: 12px;
+  /* Solo una leggera tinta del colore della materia (niente alone né
+     blend-mode): timer e anello restano ben leggibili. */
+  background:
+    linear-gradient(165deg, color-mix(in srgb, var(--timer-glow, transparent) 13%, transparent), transparent 65%),
+    rgba(255, 255, 255, 0.025);
+  border: 1px solid color-mix(in srgb, var(--timer-glow, transparent) 28%, transparent);
+  transition: background 300ms ease, border-color 300ms ease;
 }
 
 .study-widget-subjects {
   flex: 1;
   min-width: 0;
+  min-height: 0;
 
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+}
 
+.study-widget-subjects-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+
+  padding: 0 4px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.study-widget-subjects-total {
+  font-size: 13px;
+  letter-spacing: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.study-widget-subject-list {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   padding-right: 2px;
 }
 
 .study-widget-subject-row {
+  all: unset;
+  box-sizing: border-box;
+  flex-shrink: 0;
+
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 9px;
+
+  padding: 7px 10px;
+  border-radius: 9px;
+  border-left: 3px solid var(--subject-color);
+  background: var(--surface-1);
 
   font-size: 12.5px;
+  cursor: pointer;
+
+  transition: background 150ms ease, transform 120ms ease, opacity 150ms ease;
+}
+
+.study-widget-subject-row:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--subject-color) 16%, transparent);
+}
+
+.study-widget-subject-row:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.study-widget-subject-row:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.study-widget-subject-row.is-active {
+  opacity: 1;
+  background: color-mix(in srgb, var(--subject-color) 22%, transparent);
 }
 
 .study-widget-subject-name {
-  color: var(--text-secondary);
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.study-widget-subject-mode {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .study-widget-subject-time {
   flex-shrink: 0;
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+}
+
+.study-widget-subject-play {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+
+  background: var(--subject-color);
+  color: var(--on-accent);
+  font-size: 15px;
+}
+
+.study-widget-subject-row:disabled:not(.is-active) .study-widget-subject-play {
+  background: var(--surface-2);
+  color: var(--text-muted);
 }
 
 .study-widget-empty {
@@ -121,7 +265,31 @@
   line-height: 1.5;
 }
 
-/* Taglia grande senza elenco materie: l'anello resta centrato */
-.study-widget--large.study-widget--ring-only .study-widget-body {
+/* Barra dell'obiettivo giornaliero (compare solo se l'obiettivo è > 0). */
+.study-widget-goal {
+  height: 4px;
+  margin: 0 4px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.study-widget-goal-bar {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 300ms ease;
+}
+
+/* Taglia grande con "mostra le materie" spento: solo il pannello del timer, centrato. */
+.study-widget--ring-only .study-widget-body {
   justify-content: center;
+}
+
+/* 2x2: play/pausa e stop affiancati sotto l'anello */
+.study-widget-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
