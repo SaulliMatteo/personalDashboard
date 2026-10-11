@@ -16,6 +16,8 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
 tauri-build = { version = "2.6.3", features = [] }
+# Compila il server C di File Transfer (vedi build.rs).
+cc = "1"
 
 [dependencies]
 serde_json = "1.0"
@@ -28,3 +30,5 @@ tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 # confliggerebbe con la tauri = "2.11.3" pinnata sopra. Verificato contro
 # il manifesto pubblicato su crates.io prima di aggiungerla.
 tauri-plugin-notification = "=2.4.0"
+# Anteprima immagini di File Transfer (invio al frontend come data URL).
+base64 = "0.22"
