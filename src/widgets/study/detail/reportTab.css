@@ -42,39 +42,9 @@
 
 .study-report-summary {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
   margin-bottom: 22px;
-}
-
-.study-report-card {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-
-  padding: 14px 16px;
-  background: var(--surface-1);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-card);
-}
-
-.study-report-card--top {
-  border-color: color-mix(in srgb, var(--top-color, var(--accent)) 45%, transparent);
-  background:
-    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--top-color, var(--accent)) 22%, transparent), transparent 70%),
-    var(--surface-1);
-}
-
-.study-report-card .study-stat-value--text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.study-stat-icon--trophy {
-  background: rgba(251, 191, 36, 0.15);
-  color: #fbbf24;
 }
 
 .study-bars {

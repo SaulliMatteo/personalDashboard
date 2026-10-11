@@ -1,5 +1,5 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { MdOutlineCheckCircle, MdOutlineStarBorder, MdOutlineTimer, MdPause, MdPlayArrow, MdSkipNext, MdStop } from "react-icons/md";
+import { MdPause, MdPlayArrow, MdSkipNext, MdStop } from "react-icons/md";
 import { useSettings } from "../../../core/settings/SettingsContext";
 import TimerRing from "../components/TimerRing";
 import { getSessionsBetween, todayRangeMs } from "../data/studyRepository";
@@ -49,34 +49,25 @@ function TimerTab() {
     <>
       <div className="study-detail-recap">
         <div className="study-stat">
-          <span className="study-stat-icon study-stat-icon--time">
-            <MdOutlineTimer />
-          </span>
+          <span className="study-stat-title">Studiato oggi</span>
           <span className="study-stat-value">{formatHoursMinutes(studiedTodaySeconds)}</span>
-          <span className="study-stat-label">
-            Studiato oggi{goalSeconds > 0 && ` · obiettivo ${formatHoursMinutes(goalSeconds)}`}
-          </span>
           {goalSeconds > 0 && (
-            <div className="study-goal-track" role="progressbar" aria-valuenow={Math.round(goalProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
-              <div className="study-goal-bar" style={{ width: `${goalProgress * 100}%` }} />
-            </div>
+            <>
+              <span className="study-stat-sub">Obiettivo {formatHoursMinutes(goalSeconds)}</span>
+              <div className="study-goal-track" role="progressbar" aria-valuenow={Math.round(goalProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
+                <div className="study-goal-bar" style={{ width: `${goalProgress * 100}%` }} />
+              </div>
+            </>
           )}
         </div>
         <div className="study-stat">
-          <span className="study-stat-icon study-stat-icon--sessions">
-            <MdOutlineCheckCircle />
-          </span>
+          <span className="study-stat-title">Sessioni oggi</span>
           <span className="study-stat-value">{todaySessionCount}</span>
-          <span className="study-stat-label">Sessioni oggi</span>
         </div>
         <div className="study-stat">
-          <span className="study-stat-icon study-stat-icon--top">
-            <MdOutlineStarBorder />
-          </span>
+          <span className="study-stat-title">Più studiata oggi</span>
           <span className="study-stat-value study-stat-value--text">{topToday ? topToday.subject.name : "—"}</span>
-          <span className="study-stat-label">
-            {topToday ? `Più studiata oggi · ${formatHoursMinutes(topToday.seconds)}` : "Materia più studiata oggi"}
-          </span>
+          {topToday && <span className="study-stat-sub">{formatHoursMinutes(topToday.seconds)}</span>}
         </div>
       </div>
 
