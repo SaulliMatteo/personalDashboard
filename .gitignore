@@ -1,4 +1,16 @@
-# Logs
+# Dipendenze e build
+node_modules
+dist
+dist-ssr
+*.local
+*.tsbuildinfo
+.vite
+
+# Rust / Tauri (la cartella target pesa gigabyte)
+src-tauri/target
+src-tauri/gen/schemas
+
+# Log
 logs
 *.log
 npm-debug.log*
@@ -7,18 +19,30 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Segreti e configurazioni locali
+.env
+.env.*
+!.env.example
 
-# Editor directories and files
+# Database locali (non vanno mai nel repo)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Editor
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini

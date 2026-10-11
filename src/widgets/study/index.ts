@@ -2,7 +2,7 @@ import type { WidgetDefinition } from "../../core/widgets/types";
 import { SIZE_S, SIZE_M_SQUARE } from "../../core/widgets/sizes";
 import StudyWidget from "./StudyWidget";
 import StudyDetail from "./StudyDetail";
-import { TimerProvider } from "./TimerContext";
+import { TimerProvider } from "./timer/TimerContext";
 
 export const studyWidget: WidgetDefinition = {
   id: "study",

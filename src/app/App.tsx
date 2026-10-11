@@ -7,6 +7,7 @@ import Dashboard from "../features/dashboard/Dashboard";
 import WidgetCatalog from "../features/catalog/WidgetCatalog";
 import DatabaseGate from "./DatabaseGate";
 import AppShell from "./AppShell";
+import BootGate from "./BootGate";
 
 function CurrentView() {
   const { view } = useNav();
@@ -31,11 +32,13 @@ function App() {
     <DatabaseGate>
       <SettingsProvider>
         <LayoutProvider>
-          <WidgetProviders>
-            <NavProvider>
-              <CurrentView />
-            </NavProvider>
-          </WidgetProviders>
+          <BootGate>
+            <WidgetProviders>
+              <NavProvider>
+                <CurrentView />
+              </NavProvider>
+            </WidgetProviders>
+          </BootGate>
         </LayoutProvider>
       </SettingsProvider>
     </DatabaseGate>

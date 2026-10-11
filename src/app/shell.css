@@ -2,7 +2,11 @@
   display: flex;
   width: 100%;
   min-width: 800px;
-  min-height: 600px;
+  /* Altezza DEFINITA = finestra: senza, .app cresce col contenuto e .main
+     (l'unico che scrolla) non va mai in overflow, mentre html/body hanno
+     overflow:hidden -> il contenuto oltre la finestra verrebbe solo tagliato. */
+  height: 100%;
+  min-height: 0;
   background: var(--bg);
   /* Nessuna selezione testo di default: trascinare un widget non deve
      selezionare anche il testo sotto il cursore. */

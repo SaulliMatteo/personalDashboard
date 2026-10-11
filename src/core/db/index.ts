@@ -25,7 +25,13 @@ async function runMigrations() {
   const pending = MIGRATIONS.filter((m) => m.version > current).sort((a, b) => a.version - b.version);
   for (const migration of pending) {
     for (const statement of migration.statements) {
-      await db.execute(statement);
+      try {
+        await db.execute(statement);
+      } catch (error) {
+        // Un ALTER TABLE ADD COLUMN rieseguito (migrazione interrotta a
+        // metà, o DB creato da una versione precedente) non è un errore.
+        if (!String(error).includes("duplicate column name")) throw error;
+      }
     }
     // PRAGMA non accetta parametri: il valore è una costante nostra, non input utente.
     await db.execute(`PRAGMA user_version = ${migration.version}`);

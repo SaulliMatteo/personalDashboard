@@ -3,7 +3,6 @@ import {
   useContext,
   useState,
   useEffect,
-  useRef,
   type Dispatch,
   type SetStateAction,
   type ReactNode,
@@ -13,6 +12,7 @@ import { loadLayout, saveLayout, deleteWidget, type LayoutItem } from "./layoutR
 import { finalizeLayout } from "./compactor";
 import { GRID_COLS } from "./gridConfig";
 import { useSettings } from "../settings/SettingsContext";
+import { useLatestRef } from "../hooks/useLatestRef";
 import { getMeta, setMeta } from "../db";
 import { DEFAULT_LAYOUT, getWidget } from "../../widgets/registry";
 
@@ -56,8 +56,7 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
 
   const rows = Math.max(settings.gridRows, layoutExtent(layout));
   // Ref per l'effect di init (gira una volta sola): legge sempre il valore corrente.
-  const configuredRowsRef = useRef(settings.gridRows);
-  configuredRowsRef.current = settings.gridRows;
+  const configuredRowsRef = useLatestRef(settings.gridRows);
 
   useEffect(() => {
     let cancelled = false;
