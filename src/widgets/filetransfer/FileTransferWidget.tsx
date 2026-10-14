@@ -50,8 +50,10 @@ function FileTransferWidget({ w, h }: WidgetProps) {
         {!isWide ? (
           <div className="ft-widget-small-body">
             <div className="ft-widget-count">{ready ? files.length : "–"}</div>
-            <p className="ft-widget-caption">file ricevuti</p>
-            {toggle}
+            <div className="ft-widget-play-align">
+              <p className="ft-widget-caption">file ricevuti</p>
+              {toggle}
+            </div>
           </div>
         ) : (
           <div className="ft-widget-main">
@@ -69,7 +71,7 @@ function FileTransferWidget({ w, h }: WidgetProps) {
         {isLarge && (
           <ul className="ft-widget-files">
             {files.length === 0 ? (
-              <li className="ft-widget-empty">I file inviati dall'iPad appariranno qui.</li>
+              <li className="ft-widget-empty">I file inviati dal dispositivo appariranno qui.</li>
             ) : (
               files.slice(0, LATEST_FILES_IN_LARGE).map((file) => (
                 <li key={file.name}>

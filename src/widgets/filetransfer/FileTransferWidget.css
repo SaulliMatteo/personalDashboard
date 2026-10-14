@@ -183,3 +183,10 @@ li.ft-widget-empty {
   padding: 0 2px;
   color: var(--text-muted);
 }
+
+.ft-widget-play-align{
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

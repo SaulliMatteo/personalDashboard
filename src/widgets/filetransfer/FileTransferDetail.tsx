@@ -49,7 +49,7 @@ function FileTransferDetail() {
       <header className="dashboard-header ft-detail-header">
         <div>
           <h1>File Transfer</h1>
-          <p>Ricevi file dall'iPad sulla rete locale.</p>
+          <p>Ricevi file dal dispositivo sulla rete locale.</p>
         </div>
         <BackButton onClick={goToDashboard} />
       </header>
@@ -66,7 +66,7 @@ function FileTransferDetail() {
 
           {running && address && (
             <div className="ft-address">
-              <span>INDIRIZZO DA APRIRE SULL'IPAD</span>
+              <span>INDIRIZZO DA APRIRE SUL dispositivo</span>
               <code>http://{address}</code>
             </div>
           )}
@@ -136,7 +136,7 @@ function FileTransferDetail() {
           {files.length === 0 ? (
             <div className="ft-empty">
               <strong>Nessun file ricevuto</strong>
-              <span>I file inviati dall'iPad appariranno qui.</span>
+              <span>I file inviati dal dispositivo appariranno qui.</span>
             </div>
           ) : (
             <ul className="ft-file-list">
