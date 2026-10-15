@@ -1,6 +1,7 @@
 import type { WidgetDefinition } from "../core/widgets/types";
 import type { LayoutItem } from "../core/layout/layoutRepository";
 import { studyWidget } from "./study";
+import { fileTransferWidget } from "./filetransfer";
 
 /**
  * L'UNICO elenco dei widget dell'app. Per aggiungerne uno:
@@ -10,7 +11,7 @@ import { studyWidget } from "./study";
  * Catalogo, dashboard, layout di default e provider si aggiornano da soli.
  * L'ordine determina anche l'ordine delle righe nel layout di default.
  */
-export const WIDGET_REGISTRY: WidgetDefinition[] = [studyWidget];
+export const WIDGET_REGISTRY: WidgetDefinition[] = [studyWidget, fileTransferWidget];
 
 const widgetsById = new Map(WIDGET_REGISTRY.map((widget) => [widget.id, widget] as const));
 

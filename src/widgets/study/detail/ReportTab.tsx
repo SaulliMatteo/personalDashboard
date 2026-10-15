@@ -1,5 +1,4 @@
 import { useEffect, useState, type CSSProperties } from "react";
-import { MdEmojiEvents, MdOutlineCalendarMonth, MdOutlineTimer } from "react-icons/md";
 import { getSessionsBetween, type StudySession } from "../data/studyRepository";
 import { colorForSubject } from "../lib/colors";
 import { formatHoursMinutes } from "../lib/format";
@@ -67,30 +66,20 @@ function ReportTab() {
       </div>
 
       <div className="study-report-summary">
-        <div className="study-report-card">
-          <span className="study-stat-icon study-stat-icon--time">
-            <MdOutlineTimer />
-          </span>
+        <div className="study-stat">
+          <span className="study-stat-title">Totale studiato</span>
           <span className="study-stat-value">{formatHoursMinutes(totalSeconds)}</span>
-          <span className="study-stat-label">Totale studiato</span>
         </div>
 
-        <div className="study-report-card study-report-card--top" style={top ? ({ "--top-color": top.color } as CSSProperties) : undefined}>
-          <span className="study-stat-icon study-stat-icon--trophy">
-            <MdEmojiEvents />
-          </span>
+        <div className="study-stat study-stat--top" style={top ? ({ "--top-color": top.color } as CSSProperties) : undefined}>
+          <span className="study-stat-title">Materia più studiata</span>
           <span className="study-stat-value study-stat-value--text">{top ? top.subject.name : "—"}</span>
-          <span className="study-stat-label">
-            {top ? `Materia più studiata · ${formatHoursMinutes(top.seconds)}` : "Materia più studiata"}
-          </span>
+          {top && <span className="study-stat-sub">{formatHoursMinutes(top.seconds)}</span>}
         </div>
 
-        <div className="study-report-card">
-          <span className="study-stat-icon study-stat-icon--sessions">
-            <MdOutlineCalendarMonth />
-          </span>
+        <div className="study-stat">
+          <span className="study-stat-title">Media al giorno</span>
           <span className="study-stat-value">{formatHoursMinutes(totalSeconds / periodDays(period))}</span>
-          <span className="study-stat-label">Media al giorno</span>
         </div>
       </div>
 
