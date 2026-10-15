@@ -37,6 +37,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "resources": {
+      "filetransfer/public/": "filetransfer-public/"
+    },
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }
