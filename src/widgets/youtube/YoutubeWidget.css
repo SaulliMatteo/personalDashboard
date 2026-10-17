@@ -1,0 +1,136 @@
+.yt-widget {
+  display: flex;
+  flex-direction: column;
+}
+
+.yt-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.yt-widget--small {
+  padding: 10px 12px;
+}
+
+.yt-widget-state {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+.yt-widget-empty {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* Corpo: la miniatura prende tutta l'altezza disponibile (la riga della griglia è bassa). */
+.yt-widget-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.yt-widget-thumb {
+  all: unset;
+  position: relative;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  height: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+/* 1×1: la miniatura riempie la larghezza e sceglie lei il ritaglio. */
+.yt-widget--small .yt-widget-thumb {
+  width: 100%;
+  aspect-ratio: auto;
+}
+
+.yt-widget-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* hqdefault è 4:3 con barre nere: così si vede solo il 16:9 vero */
+}
+
+.yt-widget-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.58);
+  color: #fff;
+  font-size: 18px;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.yt-widget-thumb:hover .yt-widget-play,
+.yt-widget-thumb:focus-visible .yt-widget-play {
+  background: var(--accent);
+  color: var(--on-accent);
+  transform: translate(-50%, -50%) scale(1.08);
+}
+
+.yt-widget-progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.yt-widget-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.yt-widget-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+}
+
+.yt-widget-title {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.yt-widget-channel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
