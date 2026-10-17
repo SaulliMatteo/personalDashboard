@@ -1,22 +1,26 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   MdAdd,
-  MdDeleteOutline,
+  MdExpandLess,
+  MdExpandMore,
+  MdOutlineArchive,
   MdOutlineAvTimer,
   MdOutlineHourglassBottom,
+  MdOutlineUnarchive,
   MdPlayArrow,
   MdSettings,
 } from "react-icons/md";
 import { useSettings } from "../../../core/settings/SettingsContext";
 import SubjectSettingsPopup from "../components/SubjectSettingsPopup";
-import type { SubjectMode } from "../data/studyRepository";
+import { listArchivedSubjects, type Subject, type SubjectMode } from "../data/studyRepository";
 import { colorForSubject } from "../lib/colors";
 import { formatHoursMinutes } from "../lib/format";
 import { useTimer } from "../timer/TimerContext";
 
-/** Elenco materie (avvio, impostazioni, eliminazione) + form per aggiungerne. */
+/** Elenco materie (avvio, impostazioni, archiviazione) + materie archiviate + form per aggiungerne. */
 function SubjectList() {
-  const { phase, subjectId, subjects, todayBySubject, startWork, addSubject, updateSubject, removeSubject } = useTimer();
+  const { phase, subjectId, subjects, todayBySubject, startWork, addSubject, updateSubject, archiveSubject, restoreSubject } =
+    useTimer();
   const { settings } = useSettings();
 
   const [newName, setNewName] = useState("");
@@ -24,6 +28,21 @@ function SubjectList() {
   const [newMode, setNewMode] = useState<SubjectMode | null>(null);
   const [addError, setAddError] = useState<string | null>(null);
   const [settingsId, setSettingsId] = useState<number | null>(null);
+  const [archived, setArchived] = useState<Subject[]>([]);
+  const [showArchived, setShowArchived] = useState(false);
+
+  // `subjects` cambia identità dopo ogni archiviazione/ripristino: da lì si rilegge l'elenco delle archiviate.
+  useEffect(() => {
+    let cancelled = false;
+    listArchivedSubjects()
+      .then((result) => {
+        if (!cancelled) setArchived(result);
+      })
+      .catch((error) => console.error("Errore nel caricamento delle materie archiviate:", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [subjects]);
 
   const effectiveNewMode = newMode ?? settings.studyDefaultMode;
   const canStart = phase === "idle";
@@ -36,7 +55,10 @@ function SubjectList() {
     const result = await addSubject(newName, effectiveNewMode);
     if (result === "ok") setNewName("");
     else if (result === "duplicate") setAddError("Esiste già una materia con questo nome.");
-    else if (result === "error") setAddError("Impossibile aggiungere la materia.");
+    else if (result === "archived") {
+      setAddError("Esiste già una materia archiviata con questo nome: ripristinala dall'elenco «Archiviate».");
+      setShowArchived(true);
+    } else if (result === "error") setAddError("Impossibile aggiungere la materia.");
   }
 
   return (
@@ -79,11 +101,11 @@ function SubjectList() {
                 type="button"
                 className="study-icon-btn study-icon-btn--small study-icon-btn--muted"
                 disabled={isActive}
-                onClick={() => removeSubject(subject.id)}
-                aria-label={`Rimuovi ${subject.name}`}
-                title={isActive ? "Non puoi rimuovere la materia in corso di studio" : "Rimuovi materia"}
+                onClick={() => archiveSubject(subject.id)}
+                aria-label={`Archivia ${subject.name}`}
+                title={isActive ? "Non puoi archiviare la materia in corso di studio" : "Archivia: sparisce dal timer, il tempo studiato resta nel report"}
               >
-                <MdDeleteOutline />
+                <MdOutlineArchive />
               </button>
             </div>
           );
@@ -106,6 +128,40 @@ function SubjectList() {
         </button>
       </form>
       {addError && <p className="study-form-error">{addError}</p>}
+
+      {archived.length > 0 && (
+        <div className="study-archived">
+          <button
+            type="button"
+            className="study-archived-toggle"
+            onClick={() => setShowArchived((open) => !open)}
+            aria-expanded={showArchived}
+          >
+            {showArchived ? <MdExpandLess /> : <MdExpandMore />}
+            Archiviate ({archived.length})
+          </button>
+
+          {showArchived && (
+            <div className="study-archived-list">
+              {archived.map((subject) => (
+                <div key={subject.id} className="study-subject-row study-subject-row--archived">
+                  <span className="study-subject-dot" style={{ background: colorForSubject(subject, 0) }} />
+                  <span className="study-subject-name">{subject.name}</span>
+                  <button
+                    type="button"
+                    className="study-icon-btn study-icon-btn--small study-icon-btn--muted"
+                    onClick={() => restoreSubject(subject.id)}
+                    aria-label={`Ripristina ${subject.name}`}
+                    title="Ripristina: torna nel timer"
+                  >
+                    <MdOutlineUnarchive />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {settingsSubject && (
         <SubjectSettingsPopup
