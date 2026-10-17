@@ -14,6 +14,77 @@
   margin-bottom: 16px;
 }
 
+/* Navigazione tra periodi: ‹ titolo › [Oggi] */
+.study-report-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.study-report-title {
+  margin: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.study-nav-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 18px;
+  color: var(--text-secondary);
+  background: var(--surface-1);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.study-nav-btn:hover:not(:disabled) {
+  background: var(--surface-3);
+  color: var(--text-primary);
+}
+
+.study-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.study-nav-today {
+  all: unset;
+  box-sizing: border-box;
+  margin-left: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  cursor: pointer;
+}
+
+.study-nav-today:hover {
+  background: var(--border-accent);
+}
+
+.study-archived-tag {
+  flex-shrink: 0;
+  margin-left: 2px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--surface-2);
+}
+
 .study-period-toggle {
   display: flex;
   gap: 4px;
