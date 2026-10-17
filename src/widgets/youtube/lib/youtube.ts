@@ -85,12 +85,18 @@ export interface YTPlayerInstance {
   getCurrentTime(): number;
   getDuration(): number;
   seekTo(seconds: number, allowSeekAhead: boolean): void;
+  playVideo(): void;
+  pauseVideo(): void;
+  setPlaybackRate(rate: number): void;
+  getPlaybackRate(): number;
+  getAvailablePlaybackRates(): number[];
 }
 
 interface YTPlayerEvents {
   onReady: () => void;
   onError: (e: { data: number }) => void;
   onStateChange: (e: { data: number }) => void;
+  onPlaybackRateChange?: (e: { data: number }) => void;
 }
 
 interface YTNamespace {
@@ -154,6 +160,13 @@ export function describePlayerError(code: number | string): string {
 // ---------------------------------------------------------------------
 
 /** Secondi -> "m:ss" oppure "h:mm:ss". */
+/** Velocità offerte nel menu, nell'ordine in cui YouTube le elenca (0.25–2); la rete di sicurezza se il player non risponde. */
+export const DEFAULT_PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+
+export function formatRate(rate: number): string {
+  return `${Number.isInteger(rate) ? rate : String(rate)}x`;
+}
+
 export function formatTimestamp(totalSeconds: number): string {
   const safe = Math.max(0, Math.floor(totalSeconds));
   const h = Math.floor(safe / 3600);

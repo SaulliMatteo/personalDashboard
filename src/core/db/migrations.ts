@@ -138,4 +138,23 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE subjects ADD COLUMN archived_at INTEGER`,
     ],
   },
+  {
+    version: 6,
+    description: "YouTube: sessioni di visione (tempo realmente guardato) per il report",
+    statements: [
+      // Una riga per ogni intervallo in cui un video è stato in riproduzione. Niente
+      // REFERENCES/CASCADE: eliminare un video NON cancella il tempo già guardato
+      // (come per le materie archiviate, lo storico non si perde).
+      `CREATE TABLE IF NOT EXISTS video_watch_sessions (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         video_id INTEGER NOT NULL,
+         started_at INTEGER NOT NULL,
+         ended_at INTEGER NOT NULL,
+         duration_seconds INTEGER NOT NULL
+       )`,
+      // Il report legge le sessioni per intervallo di date, e le conta per video.
+      `CREATE INDEX IF NOT EXISTS idx_video_watch_sessions_ended_at ON video_watch_sessions(ended_at)`,
+      `CREATE INDEX IF NOT EXISTS idx_video_watch_sessions_video ON video_watch_sessions(video_id)`,
+    ],
+  },
 ];
