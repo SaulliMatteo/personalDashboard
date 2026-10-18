@@ -117,6 +117,7 @@ export interface FolderPatch {
   name?: string;
   color?: string | null;
   icon?: string;
+  parentId?: number | null;
 }
 
 export async function updateFolder(id: number, patch: FolderPatch): Promise<void> {
@@ -133,6 +134,10 @@ export async function updateFolder(id: number, patch: FolderPatch): Promise<void
   if (patch.icon !== undefined) {
     sets.push("icon = ?");
     values.push(patch.icon);
+  }
+  if (patch.parentId !== undefined) {
+    sets.push("parent_id = ?");
+    values.push(patch.parentId);
   }
   if (sets.length === 0) return;
   const db = await getDatabase();

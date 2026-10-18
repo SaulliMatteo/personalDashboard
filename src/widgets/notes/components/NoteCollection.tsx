@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type PointerEvent, type ReactNode } from "react";
 import {
   MdAdd,
   MdDeleteOutline,
@@ -11,6 +11,7 @@ import {
 } from "react-icons/md";
 import ConfirmButton from "../../../ui/ConfirmButton";
 import type { NoteSummary } from "../data/notesRepository";
+import type { DragItem } from "../lib/drag";
 import { formatWhen, relativeDay, sanitizeHtml } from "../lib/html";
 
 export type SortKey = "updated" | "created" | "title";
@@ -38,6 +39,8 @@ interface NoteCollectionProps {
   onDeleteForever: (id: number) => void;
   onEmptyTrash: () => void;
   onNew: () => void;
+  /** Avvia il trascinamento di una nota verso una cartella. */
+  onDragStart?: (e: PointerEvent<HTMLElement>, item: DragItem) => void;
   /** Presente solo per le cartelle. */
   onCustomize?: () => void;
 }
@@ -66,6 +69,12 @@ function NoteCollection(props: NoteCollectionProps) {
 
   // Le anteprime si ripuliscono una volta per nota, non a ogni render.
   const previews = useMemo(() => new Map(notes.map((n) => [n.id, sanitizeHtml(n.firstContent)])), [notes]);
+
+  function startNoteDrag(e: PointerEvent<HTMLElement>, note: NoteSummary) {
+    if (isTrash || !props.onDragStart) return;
+    if ((e.target as HTMLElement).closest(".nq-note-actions")) return; // stella, cestino, ecc.
+    props.onDragStart(e, { kind: "note", id: note.id, label: note.title || "Senza titolo" });
+  }
 
   const latest = notes.reduce((max, n) => Math.max(max, n.updatedAt), 0);
 
@@ -184,7 +193,12 @@ function NoteCollection(props: NoteCollectionProps) {
 
             if (mode === "list") {
               return (
-                <article key={note.id} className={`nq-row${isTrash ? " is-trashed" : ""}`} onClick={() => !isTrash && props.onOpen(note.id)}>
+                <article
+                  key={note.id}
+                  className={`nq-row${isTrash ? " is-trashed" : ""}`}
+                  onClick={() => !isTrash && props.onOpen(note.id)}
+                  onPointerDown={(e) => startNoteDrag(e, note)}
+                >
                   <div className="nq-row-main">
                     <h3>{note.title || "Senza titolo"}</h3>
                     <span className="nq-row-kicker">{kicker || "SENZA CARTELLA"}</span>
@@ -199,7 +213,12 @@ function NoteCollection(props: NoteCollectionProps) {
             }
 
             return (
-              <article key={note.id} className={`nq-card${isTrash ? " is-trashed" : ""}`} onClick={() => !isTrash && props.onOpen(note.id)}>
+              <article
+                key={note.id}
+                className={`nq-card${isTrash ? " is-trashed" : ""}`}
+                onClick={() => !isTrash && props.onOpen(note.id)}
+                onPointerDown={(e) => startNoteDrag(e, note)}
+              >
                 <div className="nq-card-preview">
                   <div className="nq-card-kicker">{kicker || "SENZA CARTELLA"}</div>
                   <div className="nq-doc nq-doc--card" dangerouslySetInnerHTML={{ __html: previews.get(note.id) ?? "" }} />

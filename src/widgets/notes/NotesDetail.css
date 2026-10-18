@@ -350,6 +350,32 @@
   color: var(--text-primary);
 }
 
+.nq-tree-add {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 16px;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 120ms ease, background 150ms ease;
+}
+
+.nq-tree-row:hover .nq-tree-add,
+.nq-tree-add:focus-visible {
+  opacity: 1;
+}
+
+.nq-tree-add:hover {
+  background: var(--surface-3);
+  color: var(--text-primary);
+}
+
 .nq-tree-icon {
   flex-shrink: 0;
   font-size: 18px;
@@ -1026,4 +1052,56 @@
   gap: 10px;
   padding: 14px 20px 18px;
   border-top: 1px solid var(--border-subtle);
+}
+
+/* ---------- Trascina e rilascia ---------- */
+
+.nq-tree-row.is-drop {
+  background: var(--accent-soft);
+  outline: 1px dashed var(--accent);
+  outline-offset: -1px;
+}
+
+.nq-root-drop {
+  margin: 8px 6px 4px;
+  padding: 9px 10px;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-item);
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.nq-root-drop.is-drop {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+.nq-drag-ghost {
+  position: fixed;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 260px;
+  padding: 7px 12px;
+  border: 1px solid var(--border-accent);
+  border-radius: 10px;
+  background: var(--bg-card);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  color: var(--text-primary);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.nq-drag-ghost span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.nq-dragging,
+body.nq-dragging * {
+  cursor: grabbing !important;
 }
