@@ -11,9 +11,6 @@
   margin-bottom: 10px;
 }
 
-.yt-widget--small {
-  padding: 10px 12px;
-}
 
 .yt-widget-state {
   min-width: 0;
@@ -55,10 +52,23 @@
   cursor: pointer;
 }
 
-/* 1×1: la miniatura riempie la larghezza e sceglie lei il ritaglio. */
-.yt-widget--small .yt-widget-thumb {
+/* 1×2: miniatura in alto a tutta larghezza (prende l'altezza che resta), testo sotto. */
+.yt-widget--tall .yt-widget-body {
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yt-widget--tall .yt-widget-thumb {
+  flex: 1 1 0;
   width: 100%;
+  height: auto;
+  min-height: 0;
   aspect-ratio: auto;
+}
+
+.yt-widget--tall .yt-widget-text {
+  flex: 0 0 auto;
+  justify-content: flex-start;
 }
 
 .yt-widget-thumb img {

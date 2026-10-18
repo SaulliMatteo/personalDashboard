@@ -61,7 +61,7 @@ function YoutubeWidget({ w }: WidgetProps) {
 
   return (
     <WidgetFrame>
-      <article className={`widget yt-widget ${isWide ? "yt-widget--wide" : "yt-widget--small"}`}>
+      <article className={`widget yt-widget ${isWide ? "yt-widget--wide" : "yt-widget--tall"}`}>
         <div className="widget-header yt-widget-header">
           <h2>YouTube</h2>
           {isWide && stateLabel && <span className="yt-widget-state">{stateLabel}</span>}
@@ -89,12 +89,14 @@ function YoutubeWidget({ w }: WidgetProps) {
               )}
             </button>
 
-            {isWide && (
-              <div className="yt-widget-text">
-                <span className="yt-widget-title">{video.title}</span>
-                {video.channel && <span className="yt-widget-channel">{video.channel}</span>}
-              </div>
-            )}
+            <div className="yt-widget-text">
+              <span className="yt-widget-title">{video.title}</span>
+              {isWide ? (
+                video.channel && <span className="yt-widget-channel">{video.channel}</span>
+              ) : (
+                <span className="yt-widget-channel">{stateLabel}</span>
+              )}
+            </div>
           </div>
         )}
       </article>
