@@ -181,12 +181,19 @@
 }
 
 .nq-select {
-  background: var(--surface-1);
+  color-scheme: inherit;
+  background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-item);
   padding: 5px 8px;
   color: var(--text-primary);
   font-size: 12.5px;
+}
+
+/* Il menu aperto è disegnato dal sistema: senza uno sfondo pieno le voci risultavano illeggibili. */
+.nq-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
 }
 
 .nq-select:disabled {

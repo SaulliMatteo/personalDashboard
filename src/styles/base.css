@@ -120,3 +120,5 @@ body {
     transition: none !important;
   }
 }
+
+select option { background: var(--bg-card); color: var(--text-primary); }

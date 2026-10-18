@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { createPortal } from "react-dom";
 import {
   MdOutlineCreateNewFolder,
   MdDeleteOutline,
@@ -32,6 +33,7 @@ import {
   type Folder,
   type NoteSummary,
 } from "./data/notesRepository";
+import type { DragItem } from "./lib/drag";
 import { folderIcon } from "./lib/folders";
 import { htmlToText } from "./lib/html";
 import "./NotesDetail.css";
@@ -73,6 +75,8 @@ function NotesDetail() {
   const [layoutMode, setLayoutMode] = useState<LayoutMode>("grid");
   const [sort, setSort] = useState<SortKey>("updated");
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const [drag, setDrag] = useState<{ item: DragItem; x: number; y: number } | null>(null);
+  const [dropKey, setDropKey] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     try {
@@ -269,12 +273,120 @@ function NotesDetail() {
     await reload();
   }
 
-  function handleAddSubfolder() {
-    if (!customizeFolder) return;
-    setExpanded((prev) => new Set(prev).add(customizeFolder.id));
-    setNewFolder({ parentId: customizeFolder.id });
+  /** Apre il campo "nome" per una nuova sottocartella direttamente nell'albero. */
+  function startSubfolder(parentId: number) {
+    setExpanded((prev) => new Set(prev).add(parentId));
+    setNewFolder({ parentId });
     setSideOpen(true);
   }
+
+  function handleAddSubfolder() {
+    if (customizeFolder) startSubfolder(customizeFolder.id);
+  }
+
+  // ---------------- Trascina e rilascia ----------------
+  // Eventi puntatore (non il drag HTML5): su Windows in Tauri la finestra può
+  // intercettare il drag nativo, mentre questo funziona ovunque.
+
+  /** Rilascio ammesso? key = "root" oppure id cartella (come stringa). */
+  function canDrop(item: DragItem, key: string): boolean {
+    if (key === "root") {
+      return item.kind === "note"
+        ? notes.find((n) => n.id === item.id)?.folderId != null
+        : folderById.get(item.id)?.parentId != null;
+    }
+    const target = Number(key);
+    if (item.kind === "folder") {
+      if (subtreeIds(item.id).includes(target)) return false; // non dentro se stessa o una sua figlia
+      return folderById.get(item.id)?.parentId !== target;
+    }
+    return notes.find((n) => n.id === item.id)?.folderId !== target;
+  }
+
+  async function performMove(item: DragItem, key: string) {
+    const target = key === "root" ? null : Number(key);
+    try {
+      if (item.kind === "note") await updateNote(item.id, { folderId: target }, false);
+      else await updateFolder(item.id, { parentId: target });
+      if (target !== null) setExpanded((prev) => new Set(prev).add(target));
+      await reload();
+    } catch (error) {
+      console.error("Errore nello spostamento:", error);
+    }
+  }
+
+  const canDropRef = useLatestRef(canDrop);
+  const moveRef = useLatestRef(performMove);
+
+  const startDrag = useCallback(
+    (e: ReactPointerEvent<HTMLElement>, item: DragItem) => {
+      if (e.button !== 0) return;
+      const startX = e.clientX;
+      const startY = e.clientY;
+      let active = false;
+      let hoverKey: string | null = null;
+      let hoverTimer: number | null = null;
+
+      const keyAt = (x: number, y: number): string | null =>
+        document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-drop-folder]")?.dataset.dropFolder ?? null;
+
+      const cleanup = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        window.removeEventListener("pointercancel", onCancel);
+        document.body.classList.remove("nq-dragging");
+        if (hoverTimer !== null) window.clearTimeout(hoverTimer);
+      };
+
+      function onMove(ev: PointerEvent) {
+        if (!active) {
+          if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 6) return;
+          active = true;
+          document.body.classList.add("nq-dragging");
+        }
+        setDrag({ item, x: ev.clientX, y: ev.clientY });
+        const key = keyAt(ev.clientX, ev.clientY);
+        const valid = key !== null && canDropRef.current(item, key);
+        setDropKey(valid ? key : null);
+
+        // Fermo per un attimo su una cartella chiusa: la apre.
+        if (key !== hoverKey) {
+          hoverKey = key;
+          if (hoverTimer !== null) window.clearTimeout(hoverTimer);
+          hoverTimer = null;
+          if (valid && key !== "root") {
+            const id = Number(key);
+            hoverTimer = window.setTimeout(() => setExpanded((prev) => new Set(prev).add(id)), 700);
+          }
+        }
+      }
+
+      function onUp(ev: PointerEvent) {
+        cleanup();
+        if (!active) return;
+        // Il click che segue il rilascio non deve aprire la nota/cartella.
+        const swallow = (c: Event) => c.stopPropagation();
+        window.addEventListener("click", swallow, { capture: true, once: true });
+        window.setTimeout(() => window.removeEventListener("click", swallow, { capture: true }), 60);
+
+        const key = keyAt(ev.clientX, ev.clientY);
+        setDrag(null);
+        setDropKey(null);
+        if (key !== null && canDropRef.current(item, key)) void moveRef.current(item, key);
+      }
+
+      function onCancel() {
+        cleanup();
+        setDrag(null);
+        setDropKey(null);
+      }
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+      window.addEventListener("pointercancel", onCancel);
+    },
+    [canDropRef, moveRef]
+  );
 
   async function handleToggleStar(note: NoteSummary) {
     await updateNote(note.id, { starred: !note.starred }, false);
@@ -359,7 +471,7 @@ function NotesDetail() {
             <span className="nq-brand-icon">
               <MdOutlineDescription />
             </span>
-            <span>Quaderno</span>
+            <span>Notes</span>
           </div>
 
           <div className="nq-user">
@@ -406,7 +518,16 @@ function NotesDetail() {
               }}
               onCreateFolder={(name, parentId) => void handleCreateFolder(name, parentId)}
               onCancelCreate={() => setNewFolder(null)}
+              dropKey={dropKey}
+              onDragStart={startDrag}
+              onAddSubfolder={startSubfolder}
             />
+
+            {drag && (
+              <div className={`nq-root-drop${dropKey === "root" ? " is-drop" : ""}`} data-drop-folder="root">
+                Sposta fuori dalle cartelle
+              </div>
+            )}
 
             <button type="button" className="nq-nav-item nq-new-folder" onClick={() => setNewFolder({ parentId: null })}>
               <MdAdd /> <span>Nuova cartella</span>
@@ -515,11 +636,21 @@ function NotesDetail() {
               onDeleteForever={(id) => void handleDeleteForever(id)}
               onEmptyTrash={() => void handleEmptyTrash()}
               onNew={() => void handleNewNote()}
+              onDragStart={startDrag}
               onCustomize={selectedFolder && !searching ? () => setCustomizeId(selectedFolder.id) : undefined}
             />
           )}
         </div>
       </section>
+
+      {drag &&
+        createPortal(
+          <div className="nq-drag-ghost" style={{ left: drag.x + 14, top: drag.y + 14 }}>
+            {drag.item.kind === "folder" ? <MdOutlineCreateNewFolder /> : <MdOutlineDescription />}
+            <span>{drag.item.label}</span>
+          </div>,
+          document.body
+        )}
 
       {customizeFolder && !openNote && (
         <FolderPanel

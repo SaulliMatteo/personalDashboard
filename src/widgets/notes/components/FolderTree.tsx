@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from "react";
-import { MdChevronRight, MdExpandMore, MdOutlineDescription } from "react-icons/md";
+import { useState, type PointerEvent, type ReactNode } from "react";
+import { MdAdd, MdChevronRight, MdExpandMore, MdOutlineDescription } from "react-icons/md";
 import type { Folder, NoteSummary } from "../data/notesRepository";
+import type { DragItem } from "../lib/drag";
 import { folderIcon } from "../lib/folders";
 
 interface FolderTreeProps {
@@ -19,6 +20,10 @@ interface FolderTreeProps {
   onOpenNote: (id: number) => void;
   onCreateFolder: (name: string, parentId: number | null) => void;
   onCancelCreate: () => void;
+  /** Bersaglio di rilascio evidenziato durante un trascinamento ("root" o id cartella). */
+  dropKey: string | null;
+  onDragStart: (e: PointerEvent<HTMLElement>, item: DragItem) => void;
+  onAddSubfolder: (id: number) => void;
 }
 
 const INDENT = 16;
@@ -53,7 +58,7 @@ function NewFolderInput({
 }
 
 function FolderTree(props: FolderTreeProps) {
-  const { childrenOf, counts, notesByFolder, expanded, selectedFolderId, openNoteId, newFolderParent } = props;
+  const { childrenOf, counts, notesByFolder, expanded, selectedFolderId, openNoteId, newFolderParent, dropKey } = props;
 
   const renderLevel = (parentId: number | null, depth: number): ReactNode => (
     <>
@@ -67,7 +72,11 @@ function FolderTree(props: FolderTreeProps) {
 
         return (
           <div key={folder.id}>
-            <div className={`nq-tree-row${selected ? " is-active" : ""}`} style={{ paddingLeft: 10 + depth * INDENT }}>
+            <div
+              className={`nq-tree-row${selected ? " is-active" : ""}${dropKey === String(folder.id) ? " is-drop" : ""}`}
+              data-drop-folder={folder.id}
+              style={{ paddingLeft: 10 + depth * INDENT }}
+            >
               <button
                 type="button"
                 className="nq-tree-chevron"
@@ -76,10 +85,24 @@ function FolderTree(props: FolderTreeProps) {
               >
                 {expandable ? open ? <MdExpandMore /> : <MdChevronRight /> : null}
               </button>
-              <button type="button" className="nq-tree-main" onClick={() => props.onSelect(folder.id)}>
+              <button
+                type="button"
+                className="nq-tree-main"
+                onClick={() => props.onSelect(folder.id)}
+                onPointerDown={(e) => props.onDragStart(e, { kind: "folder", id: folder.id, label: folder.name })}
+              >
                 <Icon className="nq-tree-icon" style={{ color: folder.color ?? undefined }} />
                 <span className="nq-tree-name">{folder.name}</span>
                 <span className="nq-tree-count">{counts.get(folder.id) ?? 0}</span>
+              </button>
+              <button
+                type="button"
+                className="nq-tree-add"
+                onClick={() => props.onAddSubfolder(folder.id)}
+                aria-label={`Nuova sottocartella in ${folder.name}`}
+                title="Nuova sottocartella"
+              >
+                <MdAdd />
               </button>
             </div>
 
@@ -101,6 +124,7 @@ function FolderTree(props: FolderTreeProps) {
                       className={`nq-tree-note${openNoteId === note.id ? " is-active" : ""}`}
                       style={{ paddingLeft: 10 + (depth + 1) * INDENT + 22 }}
                       onClick={() => props.onOpenNote(note.id)}
+                      onPointerDown={(e) => props.onDragStart(e, { kind: "note", id: note.id, label: note.title || "Senza titolo" })}
                     >
                       <MdOutlineDescription />
                       <span className="nq-tree-name">{note.title || "Senza titolo"}</span>
