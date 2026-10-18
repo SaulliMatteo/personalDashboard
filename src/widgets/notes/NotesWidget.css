@@ -1,0 +1,101 @@
+/* Widget Quaderno in dashboard (1x1 = contatore, 2x2 = ultime note). */
+
+.notes-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notes-widget-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 16px;
+}
+
+.notes-widget-small {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.notes-widget-small strong {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.notes-widget-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notes-widget-head div {
+  display: flex;
+  flex-direction: column;
+}
+
+.notes-widget-head strong {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.notes-widget-head div span {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.notes-widget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.notes-widget-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: var(--surface-1);
+  font-size: 12.5px;
+}
+
+.notes-widget-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.notes-widget-when {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.notes-widget-empty {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
