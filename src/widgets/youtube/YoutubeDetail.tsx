@@ -3,7 +3,6 @@ import { MdAdd, MdSearch } from "react-icons/md";
 import { useNav } from "../../core/nav/NavContext";
 import BackButton from "../../ui/BackButton";
 import AddVideoDialog from "./components/AddVideoDialog";
-import FolderDialog from "./components/FolderDialog";
 import { findVideoByYoutubeId, type SavedVideo } from "./data/youtubeRepository";
 import { useYoutubeData } from "./hooks/useYoutubeData";
 import { takePendingVideo } from "./lib/launch";
@@ -11,27 +10,24 @@ import { searchVideos } from "./lib/library";
 import { formatTimestamp } from "./lib/youtube";
 import HomeScreen from "./screens/HomeScreen";
 import LibraryScreen, { type LibraryLocation } from "./screens/LibraryScreen";
-import ReportScreen from "./screens/ReportScreen";
 import WatchScreen from "./screens/WatchScreen";
 import "./YoutubeDetail.css";
 
 type Screen =
   | { name: "home" }
   | { name: "library"; location: LibraryLocation }
-  | { name: "watch"; videoId: number }
-  | { name: "report" };
+  | { name: "watch"; videoId: number };
 
 const TABS = [
   { id: "home", label: "Home" },
   { id: "library", label: "Libreria" },
-  { id: "report", label: "Report" },
 ] as const;
 
 const SEARCH_LIMIT = 8;
 
 /**
  * Pagina del widget YouTube: Home ("da dove ripartiamo"), Libreria (cartelle ad albero),
- * Guarda (player + appunti) e Report. Le cartelle e i video stanno tutti in memoria
+ * Guarda (player + appunti). Le cartelle e i video stanno tutti in memoria
  * (vedi useYoutubeData) e si rileggono dopo ogni modifica e a ogni cambio di schermata.
  */
 function YoutubeDetail() {
@@ -40,7 +36,6 @@ function YoutubeDetail() {
 
   const [screen, setScreen] = useState<Screen>({ name: "home" });
   const [addOpen, setAddOpen] = useState(false);
-  const [newFolderOpen, setNewFolderOpen] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const pendingRef = useRef<string | null>(null);
@@ -112,8 +107,7 @@ function YoutubeDetail() {
   function goTab(id: (typeof TABS)[number]["id"]) {
     setQuery("");
     if (id === "library") setScreen({ name: "library", location: null });
-    else if (id === "home") setScreen({ name: "home" });
-    else setScreen({ name: "report" });
+    else setScreen({ name: "home" });
   }
 
   return (
@@ -203,8 +197,6 @@ function YoutubeDetail() {
               folders={folders}
               videos={videos}
               onOpenVideo={openVideo}
-              onOpenFolder={(id) => setScreen({ name: "library", location: id })}
-              onNewFolder={() => setNewFolderOpen(true)}
               onAddVideo={() => setAddOpen(true)}
             />
           )}
@@ -232,7 +224,6 @@ function YoutubeDetail() {
               onError={setError}
             />
           )}
-          {current.name === "report" && <ReportScreen folders={folders} videos={videos} />}
         </>
       )}
 
@@ -247,7 +238,6 @@ function YoutubeDetail() {
           }}
         />
       )}
-      {newFolderOpen && <FolderDialog folders={folders} onClose={() => setNewFolderOpen(false)} onDone={reload} />}
     </div>
   );
 }

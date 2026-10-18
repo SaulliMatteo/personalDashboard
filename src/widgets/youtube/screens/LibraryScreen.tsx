@@ -61,6 +61,7 @@ function LibraryScreen({ folders, videos, location, onNavigate, onOpenVideo, onA
 
   return (
     <div className="yt-library">
+      {effective !== null && (
       <nav className="yt-breadcrumb" aria-label="Percorso">
         <button type="button" onClick={() => onNavigate(null)} className={effective === null ? "is-current" : ""}>
           Libreria
@@ -84,8 +85,12 @@ function LibraryScreen({ folders, videos, location, onNavigate, onOpenVideo, onA
           </span>
         ))}
       </nav>
+      )}
 
       <div className="yt-screen-head">
+        {effective === null ? (
+          <span />
+        ) : (
         <div>
           <h2>{title}</h2>
           {current && (
@@ -97,6 +102,7 @@ function LibraryScreen({ folders, videos, location, onNavigate, onOpenVideo, onA
             </p>
           )}
         </div>
+        )}
         <div className="yt-screen-actions">
           {effective !== "none" && (
             <button type="button" className="yt-btn" onClick={() => setDialog({ kind: "new" })}>
@@ -138,12 +144,6 @@ function LibraryScreen({ folders, videos, location, onNavigate, onOpenVideo, onA
                   <span className="yt-folder-card-name">Senza cartella</span>
                   <span className="yt-muted">{unfiled.length} video</span>
                 </div>
-              </button>
-            )}
-            {effective === null && (
-              <button type="button" className="yt-folder-new" onClick={() => setDialog({ kind: "new" })}>
-                <MdAdd />
-                <span>Nuova cartella</span>
               </button>
             )}
           </div>

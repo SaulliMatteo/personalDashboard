@@ -39,26 +39,6 @@ export interface VideoNote {
   createdAt: number;
 }
 
-/** Un intervallo in cui un video è stato realmente in riproduzione. */
-export interface WatchSession {
-  id: number;
-  videoId: number;
-  endedAt: number;
-  durationSeconds: number;
-  /** Cartella ATTUALE del video; null se è "Senza cartella" oppure se il video è stato eliminato. */
-  folderId: number | null;
-  /** Titolo attuale; null se il video è stato eliminato (il tempo guardato resta nel report). */
-  videoTitle: string | null;
-}
-
-/** Una nota, con la cartella attuale del suo video (serve a contare gli appunti per cartella). */
-export interface NoteInPeriod {
-  id: number;
-  videoId: number;
-  createdAt: number;
-  folderId: number | null;
-}
-
 export type NewVideoInput = Pick<SavedVideo, "youtubeId" | "title" | "channel" | "thumbnailUrl" | "folderId">;
 
 /** True se l'errore viene da un vincolo UNIQUE (video già salvato, nome cartella duplicato). */
@@ -280,71 +260,6 @@ export async function deleteVideo(id: number): Promise<void> {
   const db = await getDatabase();
   await db.execute(`DELETE FROM video_notes WHERE video_id = ?`, [id]);
   await db.execute(`DELETE FROM saved_videos WHERE id = ?`, [id]);
-}
-
-// ---------------------------------------------------------------------
-// Sessioni di visione (per il report)
-// ---------------------------------------------------------------------
-
-/** Registra un intervallo di riproduzione. Sotto il secondo non si salva nulla (rumore). */
-export async function logWatchSession(
-  videoId: number,
-  startedAt: number,
-  endedAt: number,
-  durationSeconds: number
-): Promise<void> {
-  const seconds = Math.floor(durationSeconds);
-  if (!(seconds >= 1)) return;
-  const db = await getDatabase();
-  await db.execute(
-    `INSERT INTO video_watch_sessions (video_id, started_at, ended_at, duration_seconds) VALUES (?, ?, ?, ?)`,
-    [videoId, startedAt, endedAt, seconds]
-  );
-}
-
-/**
- * Le sessioni terminate in [from, to). LEFT JOIN: se il video è stato eliminato la sessione
- * c'è comunque (titolo e cartella null), così il tempo guardato non sparisce dal report.
- */
-export async function getWatchSessionsBetween(from: number, to: number): Promise<WatchSession[]> {
-  const db = await getDatabase();
-  const rows = await db.select<
-    { id: number; video_id: number; ended_at: number; duration_seconds: number; folder_id: number | null; title: string | null }[]
-  >(
-    `SELECT s.id, s.video_id, s.ended_at, s.duration_seconds, v.folder_id, v.title
-     FROM video_watch_sessions s LEFT JOIN saved_videos v ON v.id = s.video_id
-     WHERE s.ended_at >= ? AND s.ended_at < ?
-     ORDER BY s.ended_at`,
-    [from, to]
-  );
-  return rows.map((r) => ({
-    id: r.id,
-    videoId: r.video_id,
-    endedAt: r.ended_at,
-    durationSeconds: r.duration_seconds,
-    folderId: r.folder_id,
-    videoTitle: r.title,
-  }));
-}
-
-/** Istante della prima sessione di visione (limita la navigazione all'indietro del report); null se non ce ne sono. */
-export async function getFirstWatchTime(): Promise<number | null> {
-  const db = await getDatabase();
-  const rows = await db.select<{ t: number | null }[]>(`SELECT MIN(ended_at) AS t FROM video_watch_sessions`);
-  return rows[0]?.t ?? null;
-}
-
-/** Le note create in [from, to), con la cartella attuale del video. */
-export async function getNotesBetween(from: number, to: number): Promise<NoteInPeriod[]> {
-  const db = await getDatabase();
-  const rows = await db.select<{ id: number; video_id: number; created_at: number; folder_id: number | null }[]>(
-    `SELECT n.id, n.video_id, n.created_at, v.folder_id
-     FROM video_notes n LEFT JOIN saved_videos v ON v.id = n.video_id
-     WHERE n.created_at >= ? AND n.created_at < ?
-     ORDER BY n.created_at`,
-    [from, to]
-  );
-  return rows.map((r) => ({ id: r.id, videoId: r.video_id, createdAt: r.created_at, folderId: r.folder_id }));
 }
 
 // ---------------------------------------------------------------------

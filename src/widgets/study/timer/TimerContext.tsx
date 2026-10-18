@@ -2,8 +2,10 @@ import { createContext, useContext, useState, useEffect, useRef, type ReactNode 
 import {
   listSubjects,
   listArchivedSubjects,
+  listAllSubjects,
   addSubject as addSubjectDb,
   updateSubject as updateSubjectDb,
+  renameSubject as renameSubjectDb,
   archiveSubject as archiveSubjectDb,
   restoreSubject as restoreSubjectDb,
   logSession,
@@ -53,6 +55,8 @@ interface TimerContextValue {
   stopOrSkip: () => Promise<void>;
   addSubject: (name: string, mode?: SubjectMode) => Promise<AddSubjectResult>;
   updateSubject: (id: number, patch: SubjectSettingsPatch) => Promise<void>;
+  /** "duplicate" = nome già usato da un'altra materia attiva; "archived" = da una archiviata. Maiuscole ignorate. */
+  renameSubject: (id: number, name: string) => Promise<AddSubjectResult>;
   /** Toglie la materia dal timer ma ne conserva lo storico nel report. */
   archiveSubject: (id: number) => Promise<void>;
   restoreSubject: (id: number) => Promise<void>;
@@ -354,6 +358,22 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     setSubjects(await listSubjects());
   }
 
+  async function renameSubjectHandler(id: number, name: string): Promise<AddSubjectResult> {
+    const trimmed = name.trim();
+    if (!trimmed) return "empty";
+    try {
+      // Il nome è univoco tra TUTTE le materie (anche archiviate); la materia stessa è esclusa, così si può cambiare solo una maiuscola.
+      const clash = (await listAllSubjects()).find((s) => s.id !== id && s.name.toLowerCase() === trimmed.toLowerCase());
+      if (clash) return clash.archivedAt === null ? "duplicate" : "archived";
+      await renameSubjectDb(id, trimmed);
+      setSubjects(await listSubjects());
+      return "ok";
+    } catch (error) {
+      console.error("Errore nella rinomina della materia:", error);
+      return "error";
+    }
+  }
+
   async function archiveSubjectHandler(id: number) {
     const index = subjectsRef.current.findIndex((s) => s.id === id);
     if (index < 0) return;
@@ -388,6 +408,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         stopOrSkip,
         addSubject: addSubjectHandler,
         updateSubject: updateSubjectHandler,
+        renameSubject: renameSubjectHandler,
         archiveSubject: archiveSubjectHandler,
         restoreSubject: restoreSubjectHandler,
       }}
