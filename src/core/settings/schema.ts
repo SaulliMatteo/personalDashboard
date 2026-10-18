@@ -12,7 +12,7 @@
  * Gruppi: general/appearance/glow/dashboard non hanno più una scheda nel
  * modale Settings (che ora contiene solo la gestione widget): le chiavi
  * restano con i loro default e continuano a governare l'app. Il gruppo
- * "study" si modifica dalla rotellina del widget nel catalogo
+ * "study" e "youtube" si modificano dalla rotellina del widget nel catalogo
  * (ogni widget dichiara il suo gruppo con `settingsGroup`).
  */
 
@@ -84,11 +84,14 @@ export const DEFAULT_SETTINGS = {
   studyMinLoggableSeconds: 10,
   studyBreakColor: "#f5a35c",
   studyShowSubjectsInWidget: true,
+
+  // ---- Widget: YouTube ----
+  youtubeCountAsStudy: false,
 };
 
 export type AppSettings = typeof DEFAULT_SETTINGS;
 export type SettingKey = keyof AppSettings;
-export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study";
+export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube";
 
 interface BaseDef {
   key: SettingKey;
@@ -201,6 +204,14 @@ export const SETTING_DEFS: SettingDef[] = [
 
   { key: "studyBreakColor", group: "study", section: "Aspetto", type: "color", label: "Colore delle pause" },
   { key: "studyShowSubjectsInWidget", group: "study", section: "Aspetto", type: "boolean", label: "Mostra le materie nel widget grande" },
+
+  // ======================= WIDGET: YOUTUBE =======================
+  {
+    key: "youtubeCountAsStudy", group: "youtube", section: "Collegamento con lo Studio", type: "boolean",
+    label: "Conta i video come tempo di studio",
+    description:
+      "Mentre guardi un video, il tempo in riproduzione si aggiunge allo studio della materia che ha lo stesso nome della cartella in cui il video è salvato (solo la cartella diretta; maiuscole e accenti non contano). Non conta se nessuna materia attiva ha quel nome, né mentre il timer dello Studio sta lavorando.",
+  },
 ];
 
 const DEFS_BY_KEY = new Map<SettingKey, SettingDef>(SETTING_DEFS.map((d) => [d.key, d]));

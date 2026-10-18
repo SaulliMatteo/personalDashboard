@@ -1,4 +1,8 @@
 import { useMemo, useRef, useState } from "react";
+import { useSettings } from "../../../core/settings/SettingsContext";
+import { listSubjects, loadTimerState, logSession } from "../../study/data/studyRepository";
+import { useLatestRef } from "../../../core/hooks/useLatestRef";
+import { StudyLinkRecorder } from "../lib/studyLink";
 import { MdChevronRight, MdOutlineCheckCircle, MdOutlineDriveFileMove, MdCheckCircle } from "react-icons/md";
 import ConfirmButton from "../../../ui/ConfirmButton";
 import MoveDialog from "../components/MoveDialog";
@@ -7,7 +11,6 @@ import VideoPlayer, { type PlayerHandle } from "../components/VideoPlayer";
 import VideoRow from "../components/VideoRow";
 import {
   deleteVideo,
-  logWatchSession,
   saveProgress,
   setDuration,
   setWatched,
@@ -69,6 +72,27 @@ function WatchScreen({ video, folders, videos, onOpenVideo, onNavigateLibrary, o
   const [moving, setMoving] = useState(false);
 
   const path = useMemo(() => folderPath(folders, video.folderId), [folders, video.folderId]);
+
+  // Collegamento facoltativo con lo Studio (impostazione del widget).
+  const { settings } = useSettings();
+  const folderName = path.length > 0 ? path[path.length - 1].name : null;
+  const linkConfig = useLatestRef({
+    enabled: settings.youtubeCountAsStudy,
+    folderName,
+    minSeconds: settings.studyMinLoggableSeconds,
+  });
+  const [recorder] = useState(
+    () =>
+      new StudyLinkRecorder({
+        listSubjects,
+        isStudyTimerRunning: async () => {
+          const t = await loadTimerState();
+          return t.phase === "work" && t.runningSince !== null;
+        },
+        logSession,
+        getConfig: () => linkConfig.current,
+      })
+  );
   const position = useMemo(() => positionInFolder(videos, video), [videos, video]);
   const suggestions = useMemo(() => suggestionsFor(video, videos), [video, videos]);
 
@@ -107,7 +131,7 @@ function WatchScreen({ video, folders, videos, onOpenVideo, onNavigateLibrary, o
 
   async function remove() {
     try {
-      await deleteVideo(video.id); // il tempo già guardato resta nel report
+      await deleteVideo(video.id); 
       onReload();
       onNavigateLibrary(video.folderId ?? "none");
     } catch (err) {
@@ -166,9 +190,7 @@ function WatchScreen({ video, folders, videos, onOpenVideo, onNavigateLibrary, o
                 if (video.durationSeconds === null) void setDuration(video.id, seconds).then(onReload).catch((e) => onError(String(e)));
               }}
               onProgress={(seconds) => void saveProgress(video.id, seconds).catch((e) => console.error(e))}
-              onWatchSegment={(startedAt, endedAt, seconds) =>
-                void logWatchSession(video.id, startedAt, endedAt, seconds).catch((e) => console.error("Sessione di visione non salvata:", e))
-              }
+              onWatchSegment={(_startedAt, endedAt, seconds) => recorder.add(endedAt, seconds, (e) => console.error("Tempo di studio non salvato:", e))}
               onEnded={() => void handleEnded()}
               onError={(code) => setPlayerError(describePlayerError(code))}
             />

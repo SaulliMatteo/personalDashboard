@@ -19,7 +19,7 @@ import { useTimer } from "../timer/TimerContext";
 
 /** Elenco materie (avvio, impostazioni, archiviazione) + materie archiviate + form per aggiungerne. */
 function SubjectList() {
-  const { phase, subjectId, subjects, todayBySubject, startWork, addSubject, updateSubject, archiveSubject, restoreSubject } =
+  const { phase, subjectId, subjects, todayBySubject, startWork, addSubject, updateSubject, renameSubject, archiveSubject, restoreSubject } =
     useTimer();
   const { settings } = useSettings();
 
@@ -169,6 +169,7 @@ function SubjectList() {
           color={colorForSubject(settingsSubject, settingsIndex)}
           locked={settingsSubject.id === subjectId}
           onChange={(patch) => updateSubject(settingsSubject.id, patch)}
+          onRename={(name) => renameSubject(settingsSubject.id, name)}
           onClose={() => setSettingsId(null)}
         />
       )}
