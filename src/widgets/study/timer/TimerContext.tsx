@@ -1,9 +1,11 @@
 import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from "react";
 import {
   listSubjects,
+  listArchivedSubjects,
   addSubject as addSubjectDb,
   updateSubject as updateSubjectDb,
-  deleteSubject as deleteSubjectDb,
+  archiveSubject as archiveSubjectDb,
+  restoreSubject as restoreSubjectDb,
   logSession,
   getSessionsBetween,
   loadTimerState,
@@ -17,10 +19,11 @@ import {
 } from "../data/studyRepository";
 import { useSettings } from "../../../core/settings/SettingsContext";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
-import { pickUnusedColor } from "../lib/colors";
+import { colorForSubject, pickUnusedColor } from "../lib/colors";
 import { playChime, notify } from "./alerts";
 
-export type AddSubjectResult = "ok" | "empty" | "duplicate" | "error";
+/** "archived" = esiste già una materia ARCHIVIATA con questo nome (si ripristina, non si ricrea). */
+export type AddSubjectResult = "ok" | "empty" | "duplicate" | "archived" | "error";
 
 interface TimerContextValue {
   /** True quando stato timer + materie sono stati caricati dal DB. */
@@ -50,7 +53,9 @@ interface TimerContextValue {
   stopOrSkip: () => Promise<void>;
   addSubject: (name: string, mode?: SubjectMode) => Promise<AddSubjectResult>;
   updateSubject: (id: number, patch: SubjectSettingsPatch) => Promise<void>;
-  removeSubject: (id: number) => Promise<void>;
+  /** Toglie la materia dal timer ma ne conserva lo storico nel report. */
+  archiveSubject: (id: number) => Promise<void>;
+  restoreSubject: (id: number) => Promise<void>;
 }
 
 const TimerContext = createContext<TimerContextValue | undefined>(undefined);
@@ -322,6 +327,9 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     if (subjectsRef.current.some((s) => s.name.toLowerCase() === trimmed.toLowerCase())) return "duplicate";
     const cfg = settingsRef.current;
     try {
+      // Il nome è univoco anche tra le archiviate: meglio dirlo che fallire sul vincolo UNIQUE.
+      const archived = await listArchivedSubjects();
+      if (archived.some((s) => s.name.toLowerCase() === trimmed.toLowerCase())) return "archived";
       // Una nuova materia nasce con i valori predefiniti delle impostazioni
       // e con un colore non ancora usato; poi si personalizza una per una.
       await addSubjectDb({
@@ -346,10 +354,18 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     setSubjects(await listSubjects());
   }
 
-  async function removeSubjectHandler(id: number) {
-    await deleteSubjectDb(id);
+  async function archiveSubjectHandler(id: number) {
+    const index = subjectsRef.current.findIndex((s) => s.id === id);
+    if (index < 0) return;
+    // Il colore mostrato ora viene fissato, così nel report resta lo stesso.
+    await archiveSubjectDb(id, colorForSubject(subjectsRef.current[index], index));
     setSubjects(await listSubjects());
     await refreshToday();
+  }
+
+  async function restoreSubjectHandler(id: number) {
+    await restoreSubjectDb(id);
+    setSubjects(await listSubjects());
   }
 
   return (
@@ -372,7 +388,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         stopOrSkip,
         addSubject: addSubjectHandler,
         updateSubject: updateSubjectHandler,
-        removeSubject: removeSubjectHandler,
+        archiveSubject: archiveSubjectHandler,
+        restoreSubject: restoreSubjectHandler,
       }}
     >
       {children}
