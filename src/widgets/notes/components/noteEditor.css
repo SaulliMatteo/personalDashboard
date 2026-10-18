@@ -1,0 +1,575 @@
+/* Editor del Quaderno: intestazione, toolbar, pagine, foglio, inchiostro. */
+
+.nq-editor {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nq-loading {
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 13.5px;
+}
+
+/* ---------- Intestazione ---------- */
+
+.nq-editor-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 22px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.nq-editor-titleblock {
+  flex: 1;
+  min-width: 0;
+}
+
+.nq-editor-titlerow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nq-title-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  font: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.nq-title-input::placeholder {
+  color: var(--text-muted);
+}
+
+.nq-editor-meta {
+  margin: 4px 0 8px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.nq-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.nq-save-status {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.nq-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.nq-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+}
+
+.nq-chip button {
+  all: unset;
+  display: flex;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.nq-chip button:hover {
+  color: var(--text-primary);
+}
+
+.nq-tag-input {
+  width: 74px;
+  background: transparent;
+  border: 1px dashed var(--border-subtle);
+  border-radius: 6px;
+  padding: 3px 8px;
+  color: var(--text-primary);
+  font-size: 11.5px;
+  outline: none;
+}
+
+.nq-tag-input:focus {
+  border-color: var(--border-accent);
+}
+
+/* ---------- Toolbar ---------- */
+
+.nq-toolbar,
+.nq-ink-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 18px;
+}
+
+.nq-toolbar {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.nq-tool {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 30px;
+  height: 30px;
+  border-radius: var(--radius-item);
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.nq-tool--wide {
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.nq-tool--wide svg {
+  font-size: 16px;
+}
+
+.nq-tool:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.nq-tool.is-on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.nq-tool:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.nq-tool-sep {
+  width: 1px;
+  height: 18px;
+  margin: 0 6px;
+  background: var(--border-subtle);
+}
+
+.nq-select {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  padding: 5px 8px;
+  color: var(--text-primary);
+  font-size: 12.5px;
+}
+
+.nq-select:disabled {
+  opacity: 0.4;
+}
+
+.nq-link-pop {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 8px;
+  background: var(--surface-2);
+  border-radius: var(--radius-item);
+}
+
+.nq-link-pop input {
+  width: 190px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 12.5px;
+}
+
+/* ---------- Corpo ---------- */
+
+.nq-editor-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.nq-pages {
+  flex: 0 0 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  padding: 14px 12px;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.nq-pages-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.nq-pages-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nq-thumb-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.nq-thumb-wrap.is-active {
+  color: var(--accent);
+}
+
+.nq-thumb {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 92px;
+  padding: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-1);
+  cursor: pointer;
+}
+
+.nq-thumb-wrap.is-active .nq-thumb {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.nq-thumb-kicker {
+  font-size: 7.5px;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nq-thumb-text {
+  font-size: 10px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.nq-thumb-ink {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.nq-thumb-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+
+.nq-thumb-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nq-thumb-tools button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.nq-thumb-tools button:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.nq-thumb-tools button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.nq-thumb-tools .nq-thumb-del {
+  width: auto;
+  padding: 0 4px;
+  font-size: 11px;
+}
+
+.nq-thumb-tools .nq-thumb-del.is-armed {
+  color: #e78080;
+}
+
+.nq-pages-hint {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.nq-canvas-area {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nq-ink-bar {
+  justify-content: center;
+  padding-bottom: 0;
+}
+
+.nq-ink-dot {
+  all: unset;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  margin: 0 3px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.nq-ink-dot.is-on {
+  border-color: var(--text-primary);
+}
+
+.nq-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px 20px;
+  scrollbar-width: thin;
+}
+
+.nq-paper-wrap {
+  display: flex;
+  justify-content: safe center;
+}
+
+/* ---------- Il foglio ----------
+   Tutte le misure sono in em: lo zoom cambia solo il font-size (--nq-zoom). */
+
+.nq-paper {
+  position: relative;
+  box-sizing: border-box;
+  flex: 0 1 58em;
+  width: 100%;
+  max-width: 58em;
+  min-height: 56em;
+  padding: 2.6em 3.4em 2.2em;
+  font-size: calc(15px * var(--nq-zoom, 1));
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.6em;
+}
+
+.nq-paper-head,
+.nq-paper-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  font-size: 0.68em;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.nq-paper-head {
+  margin-bottom: 1.8em;
+}
+
+.nq-paper-foot {
+  margin-top: 2.4em;
+}
+
+/* ---------- Contenuto (editor e anteprime) ---------- */
+
+.nq-doc {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.nq-doc--editor {
+  min-height: 36em;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+
+.nq-doc h1 {
+  margin: 0 0 0.35em;
+  font-size: 2.3em;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+
+.nq-doc h2 {
+  margin: 0.9em 0 0.35em;
+  font-size: 1.15em;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.nq-doc p,
+.nq-doc div {
+  margin: 0 0 0.55em;
+}
+
+.nq-doc ul,
+.nq-doc ol {
+  margin: 0 0 0.6em;
+  padding-left: 1.4em;
+}
+
+.nq-doc a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.nq-doc b,
+.nq-doc strong {
+  color: var(--text-primary);
+}
+
+/* Checklist: un blocco con data-check; il "cerchietto" è un ::before cliccabile. */
+.nq-doc [data-check] {
+  position: relative;
+  padding-left: 1.7em;
+}
+
+.nq-doc [data-check]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.3em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 1.05em;
+  height: 1.05em;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  font-size: 0.8em;
+  line-height: 1;
+  color: var(--on-accent);
+  cursor: pointer;
+}
+
+.nq-doc [data-check="1"]::before {
+  content: "✓";
+  background: var(--accent);
+}
+
+.nq-doc [data-check="1"] {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+/* ---------- Inchiostro ---------- */
+
+.nq-ink {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.nq-ink.is-active {
+  pointer-events: auto;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.nq-ink.is-eraser {
+  cursor: cell;
+}
+
+/* ---------- Barra di stato ---------- */
+
+.nq-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 20px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.nq-pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nq-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 52px;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--text-primary);
+  color: var(--bg-card);
+  font-size: 12.5px;
+  font-weight: 600;
+  pointer-events: none;
+}
