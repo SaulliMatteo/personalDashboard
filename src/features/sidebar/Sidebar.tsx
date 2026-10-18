@@ -7,8 +7,9 @@ import { useSettings } from "../../core/settings/SettingsContext";
 
 function Sidebar() {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { view, goToDashboard } = useNav();
+  const { view, goToDashboard, openWidgetDetail  } = useNav();
   const { settings } = useSettings();
+
 
   return (
     <aside className="sidebar">
@@ -23,7 +24,12 @@ function Sidebar() {
 
         <button className="nav-item">Tasks</button>
         <button className="nav-item">Projects</button>
-        <button className="nav-item">Notes</button>
+        <button
+          className={`nav-item${view.type === "widgetDetail" && view.widgetId === "notes" ? " active" : ""}`}
+          onClick={() => openWidgetDetail("notes")}
+        >
+          Notes
+        </button>
       </nav>
 
       <div className="sidebar-bottom">
