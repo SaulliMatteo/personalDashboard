@@ -154,6 +154,12 @@ export async function updateSubject(id: number, patch: SubjectSettingsPatch): Pr
   await db.execute(`UPDATE subjects SET ${assignments} WHERE id = ?`, [...keys.map((k) => patch[k] ?? null), id]);
 }
 
+/** Cambia il nome di una materia. Lancia un errore UNIQUE se il nome è già preso (il controllo "gentile" sta in TimerContext). */
+export async function renameSubject(id: number, name: string): Promise<void> {
+  const db = await getDatabase();
+  await db.execute(`UPDATE subjects SET name = ? WHERE id = ?`, [name.trim(), id]);
+}
+
 /**
  * Archivia una materia: sparisce dal timer ma le sue sessioni restano nel
  * report. Non esiste più una cancellazione definitiva (era il modo in cui

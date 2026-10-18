@@ -214,3 +214,25 @@
   gap: 14px;
   padding: 4px 18px 18px;
 }
+
+/* Campo "Nome" in cima al pop-up */
+.study-name-input {
+  flex: 1;
+  min-width: 140px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  padding: 7px 10px;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+}
+
+.study-name-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.study-name-input[aria-invalid="true"] {
+  border-color: var(--danger, #d95c5c);
+}

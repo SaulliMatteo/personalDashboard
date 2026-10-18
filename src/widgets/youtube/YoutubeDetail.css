@@ -76,6 +76,17 @@
   opacity: 0.5;
 }
 
+/* Le tendine native si aprono con i colori della dashboard (altrimenti, nel tema scuro, le opzioni sono bianco su bianco). */
+select.yt-input {
+  color-scheme: inherit;
+}
+
+.yt-input option,
+.yt-input optgroup {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
 textarea.yt-input {
   resize: vertical;
   line-height: 1.45;
@@ -114,7 +125,6 @@ textarea.yt-input {
 .yt-link-btn:focus-visible,
 .yt-row-main:focus-visible,
 .yt-folder-card-main:focus-visible,
-.yt-folder-new:focus-visible,
 .yt-hero-thumb-btn:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -758,32 +768,6 @@ textarea.yt-input {
   color: var(--on-accent);
 }
 
-.yt-folder-new {
-  all: unset;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 130px;
-  border: 1.5px dashed var(--border-accent);
-  border-radius: var(--radius-card);
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 150ms ease;
-}
-
-.yt-folder-new svg {
-  font-size: 24px;
-}
-
-.yt-folder-new:hover {
-  background: var(--accent-soft);
-}
-
 /* Mosaico di miniature: 1, 2 o 3 immagini nello spazio di una 16:9. */
 .yt-mosaic {
   display: grid;
@@ -828,7 +812,6 @@ textarea.yt-input {
 
 .yt-home,
 .yt-library,
-.yt-report,
 .yt-watch {
   display: flex;
   flex-direction: column;
@@ -839,38 +822,85 @@ textarea.yt-input {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
   gap: 16px;
-  align-items: start;
+  align-items: stretch; /* le due schede hanno la stessa altezza: decide la lista (3 righe) */
 }
 
+/* Coda: al massimo 3 righe visibili, il resto scorre. Righe ad altezza fissa, così "3" è esatto. */
 .yt-queue-list {
+  --row-h: 88px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  max-height: calc(var(--row-h) * 3 + 6px * 2);
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
-.yt-queue-more {
-  padding: 4px 2px 0;
+.yt-queue-list .yt-row {
+  flex-shrink: 0;
+  height: var(--row-h);
 }
 
+.yt-queue-list .yt-row-main {
+  height: 100%;
+}
+
+.yt-queue-list .yt-row-thumb {
+  width: 120px;
+}
+
+.yt-queue-list .yt-row-text {
+  overflow: hidden;
+}
+
+/* Hero: la miniatura prende l'altezza che resta (16:9 intero, mai tagliata), titolo e pulsante sotto sulla stessa riga. */
 .yt-hero {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-height: 0;
+}
+
+.yt-hero-stage {
+  flex: 1;
+  min-height: 140px;
+  display: flex;
+  justify-content: center;
+  position: relative;
 }
 
 .yt-hero-thumb-btn {
   all: unset;
   display: block;
+  height: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
   cursor: pointer;
 }
 
 .yt-hero-thumb {
   width: 100%;
+  height: 100%;
   border-radius: var(--radius-item);
+}
+
+.yt-hero-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.yt-hero-info {
+  min-width: 0;
 }
 
 .yt-hero-title {
   margin: 0 0 3px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   font-size: 15px;
   font-weight: 700;
   line-height: 1.35;
@@ -878,7 +908,7 @@ textarea.yt-input {
 }
 
 .yt-hero-btn {
-  align-self: flex-start;
+  flex-shrink: 0;
 }
 
 .yt-welcome {
@@ -1361,328 +1391,27 @@ textarea.yt-input {
   gap: 8px;
 }
 
-/* ---------- Report ---------- */
-
-.yt-report-nav {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.yt-report-title {
-  margin: 0 4px;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-  text-transform: capitalize;
-  white-space: nowrap;
-}
-
-.yt-nav-btn {
-  all: unset;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 18px;
-  color: var(--text-secondary);
-  background: var(--surface-1);
-  cursor: pointer;
-  transition: background 150ms ease, color 150ms ease;
-}
-
-.yt-nav-btn:hover:not(:disabled) {
-  background: var(--surface-3);
-  color: var(--text-primary);
-}
-
-.yt-nav-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.yt-nav-btn:focus-visible,
-.yt-today-btn:focus-visible,
-.yt-toggle button:focus-visible {
-  outline: 2px solid var(--accent);
-}
-
-.yt-today-btn {
-  all: unset;
-  box-sizing: border-box;
-  margin-left: 4px;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  color: var(--accent);
-  background: var(--accent-soft);
-  cursor: pointer;
-}
-
-.yt-today-btn:hover {
-  background: var(--border-accent);
-}
-
-.yt-toggle {
-  display: flex;
-  gap: 4px;
-  padding: 3px;
-  border-radius: var(--radius-item);
-  background: var(--surface-1);
-}
-
-.yt-toggle button {
-  all: unset;
-  box-sizing: border-box;
-  padding: 5px 14px;
-  border-radius: 6px;
-  font-size: 12.5px;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background 150ms ease, color 150ms ease;
-}
-
-.yt-toggle button.active {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
-.yt-stats {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.yt-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.yt-stat-value {
-  font-size: 24px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-}
-
-.yt-stat-sub {
-  font-size: 11.5px;
-  color: var(--text-muted);
-}
-
-.yt-stat-sub.is-up {
-  color: #5fcf94;
-}
-
-.yt-stat-sub.is-down {
-  color: #e78080;
-}
-
-.yt-report-empty {
-  text-align: center;
-  padding: 36px 18px;
-}
-
-.yt-chart {
-  display: flex;
-  gap: 10px;
-  height: 220px;
-}
-
-.yt-chart-axis {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: flex-end;
-  /* lascia sotto lo spazio dell'etichetta delle barre */
-  padding-bottom: 24px;
-  min-width: 44px;
-  font-size: 10.5px;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-muted);
-}
-
-/* Altezza zero: l'etichetta è centrata sulla linea del valore (alto e zero coincidono con i bordi delle barre). */
-.yt-chart-axis span {
-  height: 0;
-  line-height: 0;
-  white-space: nowrap;
-}
-
-.yt-bars {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-}
-
-.yt-bar-col {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.yt-bar-track {
-  flex: 1;
-  width: 100%;
-  max-width: 54px;
-  min-height: 0;
-  display: flex;
-  align-items: flex-end;
-  background: rgba(255, 255, 255, 0.035);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-:root[data-theme="light"] .yt-bar-track {
-  background: rgba(0, 0, 0, 0.04);
-}
-
-.yt-bar-stack {
-  width: 100%;
-  display: flex;
-  flex-direction: column-reverse;
-  transition: height 300ms ease;
-}
-
-.yt-bar-seg {
-  flex-basis: 0;
-  min-height: 2px;
-}
-
-.yt-bar-label {
-  height: 16px;
-  font-size: 11.5px;
-  color: var(--text-muted);
-  text-transform: capitalize;
-  white-space: nowrap;
-}
-
-.yt-bar-col.is-current .yt-bar-label {
-  color: var(--accent);
-  font-weight: 700;
-}
-
-.yt-bar-col.is-current .yt-bar-track {
-  box-shadow: 0 0 0 1px var(--border-accent);
-}
-
-.yt-share-bar {
-  display: flex;
-  height: 12px;
-  gap: 2px;
-  overflow: hidden;
-  border-radius: 6px;
-  background: var(--surface-1);
-}
-
-.yt-share-bar > span {
-  min-width: 3px;
-}
-
-.yt-share-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-  margin: 14px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.yt-share-legend li {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  font-size: 12.5px;
-  color: var(--text-secondary);
-}
-
-.yt-share-name {
-  margin-right: 8px;
-}
-
-.yt-table-scroll {
-  overflow-x: auto;
-}
-
-.yt-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12.5px;
-  font-variant-numeric: tabular-nums;
-}
-
-.yt-table th {
-  padding: 0 10px 10px;
-  text-align: right;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-.yt-table td {
-  padding: 10px;
-  text-align: right;
-  border-top: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-}
-
-.yt-table th:first-child,
-.yt-table td:first-child {
-  text-align: left;
-  padding-left: 2px;
-}
-
-.yt-table td:first-child {
-  color: var(--text-primary);
-}
-
-.yt-table td:first-child {
-  white-space: nowrap;
-}
-
-.yt-table .yt-dot {
-  vertical-align: middle;
-}
-
-.yt-table tfoot td {
-  font-weight: 700;
-  color: var(--text-primary);
-  border-top: 1px solid var(--border-accent);
-}
-
 /* ---------- Schermi stretti ---------- */
 
 @media (max-width: 900px) {
+  .yt-hero-stage {
+    flex: none;
+  }
+
+  .yt-hero-thumb-btn {
+    width: 100%;
+    height: auto;
+  }
+
   .yt-home-top,
   .yt-watch-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .yt-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 560px) {
   .yt-row-thumb {
     width: 88px;
-  }
-
-  .yt-stats {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1704,13 +1433,8 @@ textarea.yt-input {
   color: #b42323;
 }
 
-:root[data-theme="light"] .yt-validation--ok,
-:root[data-theme="light"] .yt-stat-sub.is-up {
+:root[data-theme="light"] .yt-validation--ok {
   color: #1f8a53;
-}
-
-:root[data-theme="light"] .yt-stat-sub.is-down {
-  color: #b42323;
 }
 
 :root[data-theme="light"] .yt-validation--warn {

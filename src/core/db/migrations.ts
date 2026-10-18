@@ -158,7 +158,7 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
     {
-    version: 4,
+    version: 7,
     description: "Quaderno: cartelle, note, pagine (testo + scrittura a mano)",
     statements: [
       `CREATE TABLE IF NOT EXISTS note_folders (
