@@ -3,6 +3,7 @@ import type { LayoutItem } from "../core/layout/layoutRepository";
 import { studyWidget } from "./study";
 import { fileTransferWidget } from "./filetransfer";
 import { youtubeWidget } from "./youtube";
+import { notesWidget } from "./notes";
 
 /**
  * L'UNICO elenco dei widget dell'app. Per aggiungerne uno:
@@ -12,7 +13,7 @@ import { youtubeWidget } from "./youtube";
  * Catalogo, dashboard, layout di default e provider si aggiornano da soli.
  * L'ordine determina anche l'ordine delle righe nel layout di default.
  */
-export const WIDGET_REGISTRY: WidgetDefinition[] = [studyWidget, fileTransferWidget, youtubeWidget];
+export const WIDGET_REGISTRY: WidgetDefinition[] = [studyWidget, fileTransferWidget, youtubeWidget, notesWidget];
 
 const widgetsById = new Map(WIDGET_REGISTRY.map((widget) => [widget.id, widget] as const));
 
