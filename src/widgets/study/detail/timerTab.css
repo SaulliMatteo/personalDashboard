@@ -187,6 +187,43 @@
   color: var(--text-muted);
 }
 
+/* Materie archiviate: nascoste dal timer, il loro storico resta nel report. */
+.study-archived {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.study-archived-toggle {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  margin-left: -6px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.study-archived-toggle:hover {
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.study-archived-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.study-subject-row--archived .study-subject-name {
+  color: var(--text-muted);
+}
+
 .study-add-subject {
   display: flex;
   gap: 8px;

@@ -14,6 +14,8 @@ export interface Subject {
   shortBreakMinutes: number;
   longBreakMinutes: number;
   cyclesBeforeLongBreak: number;
+  /** null = materia attiva; altrimenti quando è stata archiviata (ms). Le archiviate restano nel report. */
+  archivedAt: number | null;
 }
 
 /** Valori con cui nasce una materia (derivati dalle impostazioni dell'app). */
@@ -35,7 +37,11 @@ interface SubjectRow {
   short_break_minutes: number;
   long_break_minutes: number;
   cycles_before_long_break: number;
+  archived_at: number | null;
 }
+
+const SUBJECT_COLUMNS = `id, name, created_at, color, mode, work_minutes, short_break_minutes,
+  long_break_minutes, cycles_before_long_break, archived_at`;
 
 function mapSubjectRow(r: SubjectRow): Subject {
   return {
@@ -48,6 +54,7 @@ function mapSubjectRow(r: SubjectRow): Subject {
     shortBreakMinutes: r.short_break_minutes,
     longBreakMinutes: r.long_break_minutes,
     cyclesBeforeLongBreak: r.cycles_before_long_break,
+    archivedAt: r.archived_at,
   };
 }
 
@@ -85,13 +92,27 @@ export interface TimerState {
 // Materie
 // ---------------------------------------------------------------------
 
+/** Le materie ATTIVE: quelle che compaiono nel timer, nel widget e nell'elenco. */
 export async function listSubjects(): Promise<Subject[]> {
   const db = await getDatabase();
   const rows = await db.select<SubjectRow[]>(
-    `SELECT id, name, created_at, color, mode, work_minutes, short_break_minutes,
-            long_break_minutes, cycles_before_long_break
-     FROM subjects ORDER BY name COLLATE NOCASE`
+    `SELECT ${SUBJECT_COLUMNS} FROM subjects WHERE archived_at IS NULL ORDER BY name COLLATE NOCASE`
   );
+  return rows.map(mapSubjectRow);
+}
+
+export async function listArchivedSubjects(): Promise<Subject[]> {
+  const db = await getDatabase();
+  const rows = await db.select<SubjectRow[]>(
+    `SELECT ${SUBJECT_COLUMNS} FROM subjects WHERE archived_at IS NOT NULL ORDER BY name COLLATE NOCASE`
+  );
+  return rows.map(mapSubjectRow);
+}
+
+/** Attive + archiviate: serve al report per dare nome e colore anche alle materie archiviate. */
+export async function listAllSubjects(): Promise<Subject[]> {
+  const db = await getDatabase();
+  const rows = await db.select<SubjectRow[]>(`SELECT ${SUBJECT_COLUMNS} FROM subjects ORDER BY name COLLATE NOCASE`);
   return rows.map(mapSubjectRow);
 }
 
@@ -133,13 +154,26 @@ export async function updateSubject(id: number, patch: SubjectSettingsPatch): Pr
   await db.execute(`UPDATE subjects SET ${assignments} WHERE id = ?`, [...keys.map((k) => patch[k] ?? null), id]);
 }
 
-// Cancellazione esplicita: non ci affidiamo a ON DELETE CASCADE perché
-// PRAGMA foreign_keys è per-connessione e col pool di plugin-sql non è garantito.
-export async function deleteSubject(id: number): Promise<void> {
+/**
+ * Archivia una materia: sparisce dal timer ma le sue sessioni restano nel
+ * report. Non esiste più una cancellazione definitiva (era il modo in cui
+ * si perdeva lo storico). `effectiveColor` fissa il colore mostrato finora
+ * se la materia non ne aveva uno scelto, così nel report non cambia quando
+ * le altre materie cambiano posizione nell'elenco.
+ */
+export async function archiveSubject(id: number, effectiveColor: string): Promise<void> {
   const db = await getDatabase();
-  await db.execute(`DELETE FROM study_sessions WHERE subject_id = ?`, [id]);
+  await db.execute(`UPDATE subjects SET archived_at = ?, color = COALESCE(color, ?) WHERE id = ?`, [
+    Date.now(),
+    effectiveColor,
+    id,
+  ]);
   await db.execute(`UPDATE timer_state SET subject_id = NULL WHERE subject_id = ?`, [id]);
-  await db.execute(`DELETE FROM subjects WHERE id = ?`, [id]);
+}
+
+export async function restoreSubject(id: number): Promise<void> {
+  const db = await getDatabase();
+  await db.execute(`UPDATE subjects SET archived_at = NULL WHERE id = ?`, [id]);
 }
 
 // ---------------------------------------------------------------------
@@ -153,6 +187,13 @@ export async function logSession(subjectId: number, endedAt: number, durationSec
     `INSERT INTO study_sessions (subject_id, started_at, ended_at, duration_seconds) VALUES (?, ?, ?, ?)`,
     [subjectId, startedAt, endedAt, durationSeconds]
   );
+}
+
+/** Istante (ms) della sessione più vecchia, o null se non ce ne sono: il report lo usa per non farti tornare indietro nel vuoto. */
+export async function getFirstSessionTime(): Promise<number | null> {
+  const db = await getDatabase();
+  const rows = await db.select<{ first: number | null }[]>(`SELECT MIN(ended_at) AS first FROM study_sessions`);
+  return rows[0]?.first ?? null;
 }
 
 export async function getSessionsBetween(startMs: number, endMs: number): Promise<StudySession[]> {

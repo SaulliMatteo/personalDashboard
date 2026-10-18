@@ -1,73 +1,30 @@
+import {
+  buildBuckets as buildGenericBuckets,
+  periodRange,
+  type Bucket as GenericBucket,
+  type PeriodRange,
+  type ReportPeriod,
+} from "../../../core/report/periods";
 import type { StudySession } from "../data/studyRepository";
 
-export type ReportPeriod = "week" | "month";
+/**
+ * Il report di Studio usa la logica dei periodi condivisa (core/report/periods.ts):
+ * qui resta solo l'adattamento alle sessioni di studio, dove il "gruppo" è la materia.
+ */
+export { periodRange };
+export type { PeriodRange, ReportPeriod };
 
-export interface Bucket {
-  label: string;
-  start: number;
-  end: number;
-  seconds: number;
+export interface Bucket extends Omit<GenericBucket, "byGroup"> {
+  /** subjectId -> secondi in questa barra. */
   bySubject: Record<number, number>;
-  /** True per il giorno/settimana che contiene "adesso": viene evidenziato nel grafico. */
-  isCurrent: boolean;
 }
 
-/** Inizio (ms) del giorno locale spostato di offsetDays. Via Date(y,m,d+n) per restare corretto anche nei cambi ora legale. */
-function dayStart(offsetDays: number): number {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + offsetDays).getTime();
-}
-
-/** Quanti giorni copre il periodo scelto. */
-export function periodDays(period: ReportPeriod): number {
-  return period === "week" ? 7 : 35;
-}
-
-/** Intervallo [start, end) da caricare dal DB per il periodo. */
-export function reportRange(period: ReportPeriod): { start: number; end: number } {
-  return { start: dayStart(-(periodDays(period) - 1)), end: dayStart(1) };
-}
-
-function buildWeekBuckets(): Bucket[] {
-  const buckets: Bucket[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const start = dayStart(-i);
-    buckets.push({
-      label: new Date(start).toLocaleDateString("it-IT", { weekday: "short" }).replace(".", ""),
-      start,
-      end: dayStart(-i + 1),
-      seconds: 0,
-      bySubject: {},
-      isCurrent: i === 0,
-    });
-  }
-  return buckets;
-}
-
-function buildMonthBuckets(): Bucket[] {
-  const buckets: Bucket[] = [];
-  for (let i = 4; i >= 0; i--) {
-    const end = dayStart(1 - i * 7);
-    const start = dayStart(1 - i * 7 - 7);
-    buckets.push({
-      label: i === 0 ? "Questa sett." : `-${i} sett.`,
-      start,
-      end,
-      seconds: 0,
-      bySubject: {},
-      isCurrent: i === 0,
-    });
-  }
-  return buckets;
-}
-
-export function buildBuckets(period: ReportPeriod, sessions: StudySession[]): Bucket[] {
-  const buckets = period === "week" ? buildWeekBuckets() : buildMonthBuckets();
-  for (const session of sessions) {
-    const bucket = buckets.find((b) => session.endedAt >= b.start && session.endedAt < b.end);
-    if (!bucket) continue;
-    bucket.seconds += session.durationSeconds;
-    bucket.bySubject[session.subjectId] = (bucket.bySubject[session.subjectId] ?? 0) + session.durationSeconds;
-  }
-  return buckets;
+export function buildBuckets(
+  period: ReportPeriod,
+  range: PeriodRange,
+  sessions: StudySession[],
+  now: Date = new Date()
+): Bucket[] {
+  const items = sessions.map((s) => ({ endedAt: s.endedAt, durationSeconds: s.durationSeconds, groupId: s.subjectId }));
+  return buildGenericBuckets(period, range, items, now).map(({ byGroup, ...rest }) => ({ ...rest, bySubject: byGroup }));
 }
