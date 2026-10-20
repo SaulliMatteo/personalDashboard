@@ -1,13 +1,10 @@
-import { useState } from "react";
 import { MdOutlineSettings } from "react-icons/md";
 import "./sidebar.css";
-import SettingsModal from "../settings/SettingsModal";
 import { useNav } from "../../core/nav/NavContext";
 import { useSettings } from "../../core/settings/SettingsContext";
 
 function Sidebar() {
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const { view, goToDashboard, openWidgetDetail  } = useNav();
+  const { view, goToDashboard, openWidgetDetail, openSettings } = useNav();
   const { settings } = useSettings();
 
 
@@ -33,11 +30,14 @@ function Sidebar() {
       </nav>
 
       <div className="sidebar-bottom">
-        <button className="nav-item setting-button" onClick={() => setSettingsOpen(true)}>
+        <button
+          className={`nav-item setting-button${view.type === "settings" ? " active" : ""}`}
+          aria-current={view.type === "settings" ? "page" : undefined}
+          onClick={() => openSettings()}
+        >
           Impostazioni <MdOutlineSettings />
         </button>
       </div>
-      <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </aside>
   );
 }

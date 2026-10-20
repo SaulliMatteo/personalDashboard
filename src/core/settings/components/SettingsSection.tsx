@@ -1,12 +1,13 @@
-import { SETTING_DEFS, type SettingsGroup } from "../schema";
+import { SETTING_DEFS, type SettingKey, type SettingsGroup } from "../schema";
 import SettingsField from "./SettingsField";
 
 /**
  * Renderizza tutte le impostazioni di un gruppo, in automatico dallo
  * schema, raggruppate per `section` (nell'ordine in cui compaiono).
+ * `omit` toglie le chiavi che la pagina mostra con un controllo suo.
  */
-function SettingsSection({ group, className = "" }: { group: SettingsGroup; className?: string }) {
-  const defs = SETTING_DEFS.filter((def) => def.group === group);
+function SettingsSection({ group, omit = [], className = "" }: { group: SettingsGroup; omit?: SettingKey[]; className?: string }) {
+  const defs = SETTING_DEFS.filter((def) => def.group === group && !omit.includes(def.key));
   const sections = [...new Set(defs.map((def) => def.section))];
 
   return (

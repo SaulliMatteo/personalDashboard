@@ -61,6 +61,14 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
   },
 };
 
+/** Accent proposti nella scheda Aspetto (dal mockup impostazioni-aspetto.html); "+" apre il selettore libero. */
+export const ACCENT_PRESETS = [
+  { label: "Lunare", color: "#8EA6FF" },
+  { label: "Menta", color: "#7DD3B0" },
+  { label: "Ambra", color: "#F0B47A" },
+  { label: "Rosa", color: "#F29BC0" },
+] as const;
+
 export function isThemeId(value: unknown): value is ThemeId {
   return typeof value === "string" && (THEME_IDS as readonly string[]).includes(value);
 }
