@@ -1,5 +1,5 @@
 import type { WidgetDefinition } from "../../core/widgets/types";
-import { SIZE_TALL, SIZE_M_SQUARE } from "../../core/widgets/sizes";
+import { SIZE_W, SIZE_S, SIZE_T, SIZE_L } from "../../core/widgets/sizes";
 import YoutubeWidget from "./YoutubeWidget";
 import YoutubeDetail from "./YoutubeDetail";
 
@@ -8,10 +8,10 @@ export const youtubeWidget: WidgetDefinition = {
   name: "YouTube",
   description: "Salva i video da guardare per lo studio in cartelle, riproducili e prendi appunti a tempo; può contare il tempo come studio.",
   component: YoutubeWidget,
-  sizes: [SIZE_TALL, SIZE_M_SQUARE],
+  sizes: [SIZE_W, SIZE_S, SIZE_T, SIZE_L],
+  defaultPlacement: { x: 3, y: 0, w: 2, h: 1 },
   settingsGroup: "youtube",
-  // Nessun defaultPlacement: il widget si aggiunge a mano dal catalogo, quindi
-  // il layout esistente non viene toccato. Nessun provider: il video si ferma
+  // Nessun provider: il video si ferma
   // quando si lascia la pagina di dettaglio (la posizione viene salvata).
   detailComponent: YoutubeDetail,
 };

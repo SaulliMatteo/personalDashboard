@@ -60,7 +60,6 @@ export const DEFAULT_SETTINGS = {
   // ---- Dashboard ----
   showDashboardHeader: true,
   dashboardGreeting: "welcome" as "welcome" | "time" | "off",
-  gridMargin: 10,
   gridRows: 4,
   lockLayout: false,
   gridPushDelayMs: 600,
@@ -171,13 +170,12 @@ export const SETTING_DEFS: SettingDef[] = [
     options: [{ value: "welcome", label: "Welcome back" }, { value: "time", label: "In base all'ora del giorno" }, { value: "off", label: "Nessuno" }],
   },
 
-  { key: "gridMargin", group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 0, max: 40, step: 1, unit: "px", label: "Margine tra i widget" },
   { key: "gridRows", group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 4, max: 8, step: 1, label: "Righe disponibili", description: "Più righe = più spazio per i widget. Non scende mai sotto le righe già occupate." },
 
   { key: "lockLayout", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Blocca layout", description: "Impedisce di trascinare i widget." },
   { key: "gridPushDelayMs", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 1500, step: 50, unit: "ms", label: "Ritardo spinta widget", description: "Quanto tieni un widget sopra un altro prima che lo sposti." },
   { key: "dragThreshold", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 20, step: 1, unit: "px", label: "Distanza prima che parta il trascinamento", description: "Evita trascinamenti involontari quando clicchi." },
-  { key: "openDetailOnClick", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Apri i dettagli con un click sul widget" },
+  { key: "openDetailOnClick", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Apri il dettaglio con un doppio click sul widget" },
 
   { key: "showDragGhost", group: "dashboard", section: "Anteprima di spostamento", type: "boolean", label: "Mostra l'anteprima fantasma", description: "La copia sfocata che indica dove atterrerà il widget." },
   { key: "ghostOpacity", group: "dashboard", section: "Anteprima di spostamento", type: "number", control: "slider", min: 0.15, max: 0.8, step: 0.05, dependsOn: "showDragGhost", label: "Opacità" },

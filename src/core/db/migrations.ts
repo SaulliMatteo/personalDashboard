@@ -157,4 +157,15 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_video_watch_sessions_video ON video_watch_sessions(video_id)`,
     ],
   },
+  {
+    version: 7,
+    description: "Griglia 6 colonne con le nuove taglie: azzera i layout salvati",
+    statements: [
+      // Il passaggio alla griglia 6×4 (taglie S/W/T/M/STRIP/L/XL) rende non validi i
+      // layout a 4 colonne: non c'è una conversione sensata, si riparte dal default.
+      `DELETE FROM dashboard_layout`,
+      // Senza questo flag il LayoutProvider userebbe il layout vuoto invece del default.
+      `DELETE FROM meta WHERE key = 'layout_initialized'`,
+    ],
+  },
 ];
