@@ -6,7 +6,7 @@ import { listNotes, type NoteSummary } from "./data/notesRepository";
 import { formatWhen } from "./lib/html";
 import "./NotesWidget.css";
 
-/** Widget in dashboard: quante note ci sono e le ultime modificate. Il click apre il Quaderno. */
+/** Widget in dashboard: quante note ci sono e le ultime modificate. Il click apre il Notes. */
 function NotesWidget({ w, h }: WidgetProps) {
   const [notes, setNotes] = useState<NoteSummary[]>([]);
   const [ready, setReady] = useState(false);
@@ -37,12 +37,12 @@ function NotesWidget({ w, h }: WidgetProps) {
                 <MdOutlineDescription />
               </span>
               <div>
-                <strong>Quaderno</strong>
+                <strong>Notes</strong>
                 <span>{ready ? `${notes.length} ${notes.length === 1 ? "nota" : "note"}` : ""}</span>
               </div>
             </header>
             {ready && notes.length === 0 ? (
-              <p className="notes-widget-empty">Nessuna nota ancora. Apri il Quaderno per iniziare.</p>
+              <p className="notes-widget-empty">Nessuna nota ancora. Apri il Notes per iniziare.</p>
             ) : (
               <ul className="notes-widget-list">
                 {notes.slice(0, 4).map((note) => (

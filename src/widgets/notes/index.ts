@@ -5,7 +5,7 @@ import NotesDetail from "./NotesDetail";
 
 export const notesWidget: WidgetDefinition = {
   id: "notes",
-  name: "Quaderno",
+  name: "Notes",
   description: "Note organizzate in cartelle, con editor a pagine e scrittura a mano.",
   component: NotesWidget,
   sizes: [SIZE_S, SIZE_M_SQUARE],
