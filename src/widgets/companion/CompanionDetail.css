@@ -44,13 +44,14 @@
 
 /* ---- Palco con la faccia grande ---- */
 .companion-stage {
-  height: 280px;
-  padding: 10px;
+  display: flex;
+  height: 360px;
+  overflow: hidden;
   border-radius: var(--radius-card);
-  border: 1px solid var(--border-subtle);
-  background:
-    radial-gradient(ellipse at 50% 40%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 70%),
-    var(--bg-card);
+  border: var(--card-border);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+  transform: var(--card-transform);
 }
 
 .companion-stage-actions {
@@ -65,12 +66,14 @@
   justify-content: center;
   gap: 6px;
 
-  padding: 8px 12px;
-  border: 1px solid var(--border-subtle);
+  height: 36px;
+  padding: 0 12px;
+  border: var(--btn-ghost-border);
   border-radius: var(--radius-item);
-  background: var(--surface-1);
+  background: var(--btn-ghost-bg, transparent);
 
-  color: var(--text-secondary);
+  color: var(--btn-ghost-fg);
+  font-family: inherit;
   font-size: 13px;
   cursor: pointer;
   transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
@@ -91,8 +94,9 @@
 .companion-card {
   padding: 16px 18px;
   border-radius: var(--radius-card);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-card);
+  border: var(--card-border);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
 }
 
 .companion-card-title {

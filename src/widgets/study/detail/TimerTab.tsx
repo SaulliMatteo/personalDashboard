@@ -1,7 +1,8 @@
-import { useEffect, useState, type CSSProperties } from "react";
-import { MdPause, MdPlayArrow, MdSkipNext, MdStop } from "react-icons/md";
+import { createElement, useEffect, useState } from "react";
 import { useSettings } from "../../../core/settings/SettingsContext";
-import TimerRing from "../components/TimerRing";
+import { useThemeVariant } from "../../../core/theme/variants";
+import ProgressBar from "../../../ui/ProgressBar";
+import { STUDY_CARDS } from "../card/cards";
 import { getSessionsBetween, todayRangeMs } from "../data/studyRepository";
 import { formatHoursMinutes } from "../lib/format";
 import { useTimerView } from "../timer/useTimerView";
@@ -9,11 +10,9 @@ import SubjectList from "./SubjectList";
 import "./timerTab.css";
 
 function TimerTab() {
-  const {
-    activeSubject, isIdle, isWork, isStopwatch, isRunning, clockText, progress, ringColor, phaseLabel,
-    cycleCount, subjects, todayBySubject, pause, resume, stopOrSkip,
-  } = useTimerView();
+  const { subjects, todayBySubject } = useTimerView();
   const { settings } = useSettings();
+  const Card = useThemeVariant(STUDY_CARDS);
 
   const [todaySessionCount, setTodaySessionCount] = useState(0);
 
@@ -40,11 +39,6 @@ function TimerTab() {
     .filter((s) => s.seconds > 0)
     .sort((a, b) => b.seconds - a.seconds)[0];
 
-  // I puntini dei cicli hanno senso solo per un pomodoro in corso.
-  const cyclesBeforeLongBreak = Math.max(1, activeSubject?.cyclesBeforeLongBreak ?? 4);
-  const completedInSet = cycleCount % cyclesBeforeLongBreak;
-  const showDots = !isIdle && !isStopwatch && activeSubject !== null;
-
   return (
     <>
       <div className="study-detail-recap">
@@ -54,9 +48,7 @@ function TimerTab() {
           {goalSeconds > 0 && (
             <>
               <span className="study-stat-sub">Obiettivo {formatHoursMinutes(goalSeconds)}</span>
-              <div className="study-goal-track" role="progressbar" aria-valuenow={Math.round(goalProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
-                <div className="study-goal-bar" style={{ width: `${goalProgress * 100}%` }} />
-              </div>
+              <ProgressBar value={goalProgress} className="study-goal-bar" label="Avanzamento dell'obiettivo di oggi" />
             </>
           )}
         </div>
@@ -72,48 +64,8 @@ function TimerTab() {
       </div>
 
       <div className="study-detail-main">
-        <section className="study-timer-card" style={{ "--timer-glow": ringColor } as CSSProperties}>
-          <TimerRing progress={progress} size={168} strokeWidth={10} color={ringColor}>
-            <span className="study-timer-clock">{clockText}</span>
-            <span className="study-timer-phase">{phaseLabel}</span>
-            {activeSubject && (
-              <span className="study-timer-subject" style={{ color: ringColor }}>
-                {activeSubject.name}
-              </span>
-            )}
-          </TimerRing>
-
-          {showDots && (
-            <div className="study-cycle-dots" title={`${completedInSet} di ${cyclesBeforeLongBreak} pomodori prima della pausa lunga`}>
-              {Array.from({ length: cyclesBeforeLongBreak }).map((_, i) => (
-                <span
-                  key={i}
-                  className={`study-cycle-dot${i < completedInSet ? " is-filled" : ""}`}
-                  style={i < completedInSet ? { background: ringColor } : undefined}
-                />
-              ))}
-            </div>
-          )}
-
-          {!isIdle && (
-            <div className="study-timer-controls">
-              <button type="button" className="study-icon-btn" onClick={isRunning ? pause : resume} aria-label={isRunning ? "Metti in pausa" : "Riprendi"}>
-                {isRunning ? <MdPause /> : <MdPlayArrow />}
-              </button>
-              <button
-                type="button"
-                className="study-icon-btn study-icon-btn--muted"
-                onClick={stopOrSkip}
-                aria-label={isWork ? "Ferma" : "Salta pausa"}
-                title={isWork ? "Ferma e salva la sessione" : "Salta la pausa"}
-              >
-                {isWork ? <MdStop /> : <MdSkipNext />}
-              </button>
-            </div>
-          )}
-
-          {isIdle && <p className="study-timer-hint">Scegli una materia qui a fianco per iniziare.</p>}
-        </section>
+        {/* Il timer è la card 2×2 del tema: stesso quadrante e stessi pulsanti della dashboard. */}
+        <section className="study-timer-card">{createElement(Card, { size: "M" })}</section>
 
         <SubjectList />
       </div>
