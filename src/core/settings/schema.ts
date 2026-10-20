@@ -59,7 +59,7 @@ export const DEFAULT_SETTINGS = {
 
   // ---- Dashboard ----
   showDashboardHeader: true,
-  dashboardGreeting: "welcome" as "welcome" | "time" | "off",
+  dashboardGreeting: "time" as "welcome" | "time" | "off",
   gridRows: 4,
   lockLayout: false,
   gridPushDelayMs: 600,
@@ -167,7 +167,7 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "showDashboardHeader", group: "dashboard", section: "Intestazione", type: "boolean", label: "Mostra l'intestazione" },
   {
     key: "dashboardGreeting", group: "dashboard", section: "Intestazione", type: "select", dependsOn: "showDashboardHeader", label: "Saluto",
-    options: [{ value: "welcome", label: "Welcome back" }, { value: "time", label: "In base all'ora del giorno" }, { value: "off", label: "Nessuno" }],
+    options: [{ value: "time", label: "In base all'ora del giorno" }, { value: "welcome", label: "Ciao" }, { value: "off", label: "Nessuno (titolo «Dashboard»)" }],
   },
 
   { key: "gridRows", group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 4, max: 8, step: 1, label: "Righe disponibili", description: "Più righe = più spazio per i widget. Non scende mai sotto le righe già occupate." },

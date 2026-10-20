@@ -11,6 +11,13 @@ import { useSyncExternalStore } from "react";
  *
  * Solo memoria: niente DB, niente rete.
  */
+
+/** Una sessione di studio conclusa oggi, in millisecondi epoch. */
+export interface StudySpan {
+  start: number;
+  end: number;
+}
+
 export interface ActivityStatus {
   /** Timer di Studio in fase di lavoro E in corsa. */
   studying: boolean;
@@ -20,6 +27,10 @@ export interface ActivityStatus {
   onBreak: boolean;
   /** Un video del widget YouTube in riproduzione. */
   watchingVideo: boolean;
+  /** Secondi di studio registrati oggi (sessioni concluse). Li usano intestazione e barra laterale. */
+  studyTodaySeconds: number;
+  /** Sessioni di studio concluse oggi, in ordine di tempo (linea "La tua giornata"). */
+  studyTodaySpans: readonly StudySpan[];
 }
 
 export type ActivityEvent =
@@ -31,7 +42,14 @@ export type ActivityEvent =
   | { type: "videoEnded" }
   | { type: "fileReceived"; count: number };
 
-const IDLE: ActivityStatus = { studying: false, studyPaused: false, onBreak: false, watchingVideo: false };
+const IDLE: ActivityStatus = {
+  studying: false,
+  studyPaused: false,
+  onBreak: false,
+  watchingVideo: false,
+  studyTodaySeconds: 0,
+  studyTodaySpans: [],
+};
 
 let status: ActivityStatus = IDLE;
 const statusListeners = new Set<() => void>();
