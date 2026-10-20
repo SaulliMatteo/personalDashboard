@@ -15,13 +15,16 @@ src/
 │   ├─ layout/               griglia: contesto, repository, compactor (spinta ritardata)
 │   ├─ nav/                  vista corrente (dashboard / catalogo / dettaglio widget)
 │   ├─ widgets/              tipi (WidgetDefinition), taglie, WidgetFrame (cornice comune)
+│   ├─ activity/             bacheca delle attività: i widget pubblicano (studio, video, file)
+│   │                        e chi vuole ascolta, senza importarsi a vicenda
 │   └─ hooks/                hook generici (useLatestRef)
 ├─ features/                 schermate dell'app (dashboard, catalogo, impostazioni, sidebar)
 ├─ widgets/                  un widget = una cartella
 │   ├─ registry.ts           l'UNICO elenco dei widget
 │   ├─ WidgetProviders.tsx   monta i provider richiesti dai widget
 │   ├─ weather/ tasks/ calendar/ notes/
-│   └─ study/                widget Studio (vedi sotto)
+│   ├─ study/                widget Studio (vedi sotto)
+│   └─ companion/            widget Companion (vedi sotto)
 ├─ ui/                       componenti riusabili senza logica di dominio
 │                            (BackButton, ConfirmButton, NumberField, BorderGlow)
 └─ styles/                   tokens.css (colori/raggi/font), base.css, tailwind.css
@@ -41,6 +44,31 @@ study/
 ├─ data/studyRepository.ts   tutte le query SQL di Studio
 └─ lib/                      format.ts, colors.ts, report.ts (funzioni pure)
 ```
+
+### Il widget Companion (`widgets/companion/`)
+
+```
+companion/
+├─ index.ts                  WidgetDefinition (taglie 1×1, 2×1, 2×2; provider; pagina)
+├─ CompanionContext.tsx      UN cervello + UN animatore per tutta l'app; polling dei segnali
+│                            di sistema; tutti i canvas leggono lo stesso fotogramma
+├─ CompanionWidget.tsx/.css  widget in dashboard
+├─ CompanionDetail.tsx/.css  pagina: anteprima, personalità, animazioni on/off, impostazioni
+├─ components/CompanionFace  canvas + ciclo di disegno (~30 fps) + fumetto
+├─ engine/                   logica PURA, testabile senza browser
+│   ├─ face.ts               parametri della faccia ed emozioni (preset numerici)
+│   ├─ brain.ts              decide umore, sguardo, reazioni, fumetti (orologio e random iniettati)
+│   ├─ animator.ts           interpola, battiti di ciglia, sguardo, respiro, saltelli
+│   ├─ animations.ts         catalogo delle animazioni accendibili/spegnibili
+│   ├─ personalities.ts      personalità e frasi
+│   └─ appCategory.ts        app in primo piano → categoria (musica, codice, video…)
+├─ render/                   stili grafici: ledRenderer.ts (matrice LED), styles.ts (registro)
+└─ data/systemApi.ts         invoke("companion_snapshot") → src-tauri/src/companion.rs (Windows)
+```
+
+Flusso: eventi/stato (activityBus, sistema, mouse) → `brain` (poche volte al minuto) →
+`animator` (ogni fotogramma) → `render/<stile>` (disegna i parametri).
+Per un nuovo stile grafico basta un renderer che disegni gli stessi parametri.
 
 ## Regole di dipendenza (non violarle)
 
@@ -70,6 +98,12 @@ sale in `core/` o `ui/`.
 2. Stesso file: una voce in `SETTING_DEFS` (gruppo, sezione, etichetta, tipo). Il controllo compare da solo.
 3. Leggila con `useSettings()`. Nessuna migrazione: sono righe chiave/valore e le chiavi mancanti usano il default.
    Valori non validi nel DB vengono sostituiti dal default (`sanitizeSettings`).
+
+### Far reagire il Companion a qualcosa di nuovo
+1. Nel widget che "sa" la cosa: `publishActivity({...})` (stato) o `emitActivityEvent({...})` (momento),
+   da `core/activity/activityBus.ts` (aggiungi il tipo lì).
+2. In `widgets/companion/engine/brain.ts`: gestiscilo in `handleEvent` o `decideBehavior`.
+3. Se serve una frase: una chiave in `personalities.ts` per ogni personalità.
 
 ### Cambiare lo schema del DB
 Aggiungi un elemento **in fondo** a `core/db/migrations.ts` (`version` = ultima + 1).
