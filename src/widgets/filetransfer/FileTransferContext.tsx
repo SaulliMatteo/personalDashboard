@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { emitActivityEvent } from "../../core/activity/activityBus";
 import {
   FT_PORT,
   getServerInfo,
@@ -45,9 +46,14 @@ export function FileTransferProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<FileEntry[]>([]);
 
+  // True dopo il primo elenco letto CON SUCCESSO: solo da lì si contano i file "nuovi".
+  const listedOnceRef = useRef(false);
+
   const refreshFiles = useCallback(async () => {
     try {
-      setFiles(await listFiles());
+      const list = await listFiles();
+      listedOnceRef.current = true;
+      setFiles(list);
     } catch (e) {
       setError(String(e));
     }
@@ -61,6 +67,7 @@ export function FileTransferProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         setRunning(info.running);
         setAddress(info.address);
+        listedOnceRef.current = true;
         setFiles(list);
       } catch (e) {
         if (!cancelled) setError(String(e));
@@ -73,6 +80,19 @@ export function FileTransferProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  // File nuovi arrivati dal telefono: evento per chi ascolta (es. il Companion).
+  // Il primo elenco caricato fa solo da riferimento.
+  const knownNamesRef = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (!ready || !listedOnceRef.current) return;
+    const names = new Set(files.map((f) => f.name));
+    const known = knownNamesRef.current;
+    knownNamesRef.current = names;
+    if (known === null) return;
+    const added = [...names].filter((n) => !known.has(n)).length;
+    if (added > 0) emitActivityEvent({ type: "fileReceived", count: added });
+  }, [ready, files]);
 
   useEffect(() => {
     if (!running) return;

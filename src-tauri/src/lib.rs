@@ -1,3 +1,4 @@
+mod companion;
 mod file_transfer;
 
 use tauri::Manager;
@@ -15,6 +16,7 @@ pub fn run() {
             file_transfer::ft_list_files,
             file_transfer::ft_read_preview,
             file_transfer::ft_open_folder,
+            companion::companion_snapshot,
         ])
         .on_window_event(|window, event| {
             // Chiudendo la finestra il server C va fermato, altrimenti la
