@@ -21,6 +21,7 @@ import {
 } from "../data/studyRepository";
 import { useSettings } from "../../../core/settings/SettingsContext";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
+import { emitActivityEvent, publishActivity } from "../../../core/activity/activityBus";
 import { colorForSubject, pickUnusedColor } from "../lib/colors";
 import { playChime, notify } from "./alerts";
 
@@ -155,6 +156,29 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Pubblica lo stato del timer per chi ascolta (es. il Companion), senza conoscerlo.
+  useEffect(() => {
+    const running = state.runningSince !== null;
+    const isBreak = state.phase === "short_break" || state.phase === "long_break";
+    publishActivity({
+      studying: state.phase === "work" && running,
+      onBreak: isBreak && running,
+      studyPaused: state.phase !== "idle" && !running,
+    });
+  }, [state.phase, state.runningSince]);
+
+  // Obiettivo giornaliero superato: evento UNA volta, nel momento in cui si passa la soglia
+  // (non al caricamento se era già superato).
+  const prevTodayTotalRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!ready) return;
+    const total = Object.values(todayBySubject).reduce((sum, v) => sum + v, 0);
+    const goal = settings.studyDailyGoalMinutes * 60;
+    const prev = prevTodayTotalRef.current;
+    prevTodayTotalRef.current = total;
+    if (prev !== null && goal > 0 && prev < goal && total >= goal) emitActivityEvent({ type: "goalReached" });
+  }, [ready, todayBySubject, settings.studyDailyGoalMinutes]);
+
   // Refresh periodico di "studiato oggi": copre anche l'app aperta a cavallo della mezzanotte.
   useEffect(() => {
     const interval = setInterval(refreshToday, 60_000);
@@ -197,6 +221,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         setState(newState);
         await saveTimerState(newState);
         const breakLabel = isLong ? "una pausa lunga" : "una pausa breve";
+        emitActivityEvent({ type: "pomodoroDone" });
         alertPhaseChange(
           "Pomodoro completato",
           subjectName ? `Hai studiato ${subjectName}. Inizia ${breakLabel}.` : `Inizia ${breakLabel}.`
@@ -213,6 +238,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         };
         setState(newState);
         await saveTimerState(newState);
+        emitActivityEvent({ type: "breakOver" });
         alertPhaseChange("Pausa finita", subjectName ? `Si riprende a studiare ${subjectName}.` : "Si riprende a studiare.");
       } else {
         // Fase "work" senza materia (es. materia cancellata): niente da
@@ -276,6 +302,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     };
     setState(newState);
     await saveTimerState(newState);
+    emitActivityEvent({ type: "studyStarted" });
   }
 
   function pause() {
@@ -308,6 +335,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       }
       setState(IDLE_STATE);
       await saveTimerState(IDLE_STATE);
+      emitActivityEvent({ type: "studyStopped", seconds: studied });
     } else {
       // Salta pausa: nessun log (le pause non sono tempo di studio),
       // si riparte subito con un nuovo "work" sulla stessa materia.
