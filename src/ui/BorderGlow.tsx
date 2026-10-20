@@ -6,8 +6,6 @@ export interface BorderGlowProps {
   className?: string;
   edgeSensitivity?: number;
   glowColor?: string;
-  backgroundColor?: string;
-  borderRadius?: number;
   glowRadius?: number;
   glowIntensity?: number;
   coneSpread?: number;
@@ -50,16 +48,6 @@ function buildGradientVars(colors: string[]): Record<string, string> {
   return vars;
 }
 
-function isLightColor(color: string): boolean {
-  const value = color.trim().replace('#', '');
-  if (!/^[\da-f]{3}([\da-f]{3})?$/i.test(value)) return false;
-  const hex = value.length === 3 ? value.split('').map(char => char + char).join('') : value;
-  const red = parseInt(hex.slice(0, 2), 16);
-  const green = parseInt(hex.slice(2, 4), 16);
-  const blue = parseInt(hex.slice(4, 6), 16);
-  return red * 0.2126 + green * 0.7152 + blue * 0.0722 > 180;
-}
-
 function easeOutCubic(x: number) { return 1 - Math.pow(1 - x, 3); }
 function easeInCubic(x: number) { return x * x * x; }
 
@@ -96,13 +84,11 @@ function BorderGlow({
   className = '',
   edgeSensitivity = 30,
   glowColor = '40 80 80',
-  backgroundColor = '#120F17',
-  borderRadius = 28,
   glowRadius = 40,
   glowIntensity = 1.0,
   coneSpread = 25,
   animated = false,
-  colors = ['#c084fc', '#f472b6', '#38bdf8'],
+  colors = ['currentColor'],
   fillOpacity = 0.5,
   enabled = true,
 }: BorderGlowProps) {
@@ -180,17 +166,14 @@ function BorderGlow({
   }, [effectiveAnimated]);
 
   const glowVars = buildGlowVars(glowColor, effectiveGlowIntensity);
-  const lightSurface = isLightColor(backgroundColor);
 
   return (
     <div
       ref={cardRef}
       onPointerMove={handlePointerMove}
-      className={`border-glow-card${lightSurface ? ' border-glow-card--light' : ''} ${className}`}
+      className={`border-glow-card ${className}`}
       style={{
-        '--card-bg': backgroundColor,
         '--edge-sensitivity': edgeSensitivity,
-        '--border-radius': `${borderRadius}px`,
         '--glow-padding': `${effectiveGlowRadius}px`,
         '--cone-spread': coneSpread,
         '--fill-opacity': fillOpacity,

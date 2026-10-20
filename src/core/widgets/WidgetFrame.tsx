@@ -1,36 +1,35 @@
 import BorderGlow, { type BorderGlowProps } from "../../ui/BorderGlow";
 import { useSettings } from "../settings/SettingsContext";
 import { GLOW_PALETTES } from "../settings/schema";
-import { resolveTheme, useSystemPrefersLight } from "../settings/theme";
+import { useTheme } from "../theme/useTheme";
 
 /**
- * Cornice comune di tutti i widget. Legge le impostazioni (glow, tema,
- * raggio, animazioni) e le passa a BorderGlow; un widget può comunque
- * sovrascrivere qualunque prop: <WidgetFrame colors={[...]}>.
+ * Cornice comune di tutti i widget. Sfondo, bordo e raggio vengono dai token
+ * del tema; il glow si accende solo nei temi che lo prevedono (Notte) e se
+ * l'utente non l'ha spento. Un widget può comunque sovrascrivere qualunque
+ * prop: <WidgetFrame colors={[...]}>.
  */
 function WidgetFrame({ children, ...overrides }: BorderGlowProps) {
   const { settings } = useSettings();
-  const systemPrefersLight = useSystemPrefersLight();
-  const isLight = resolveTheme(settings.theme, systemPrefersLight) === "light";
+  const theme = useTheme();
+  const glow = theme.glow && settings.glowEnabled;
 
   const colors =
     settings.glowPalette === "accent"
-      ? [settings.accentColor]
+      ? [settings.accentOverride ? settings.accentColor : theme.defaultAccent]
       : [...GLOW_PALETTES[settings.glowPalette].colors];
 
   return (
     <BorderGlow
-      backgroundColor={isLight ? "#ffffff" : "#000000"}
-      borderRadius={settings.cardRadius}
       colors={colors}
-      enabled={settings.glowEnabled}
+      enabled={glow}
       glowColor={`${settings.glowHue} 80 80`}
       glowIntensity={settings.glowIntensity}
       glowRadius={settings.glowRadius}
       edgeSensitivity={settings.glowEdgeSensitivity}
       coneSpread={settings.glowConeSpread}
       fillOpacity={settings.glowFillOpacity}
-      animated={settings.glowEnabled && settings.animationsEnabled && settings.glowSweepOnLoad}
+      animated={glow && settings.animationsEnabled && settings.glowSweepOnLoad}
       {...overrides}
     >
       {children}

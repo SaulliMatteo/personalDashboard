@@ -132,7 +132,7 @@
      blend-mode): timer e anello restano ben leggibili. */
   background:
     linear-gradient(165deg, color-mix(in srgb, var(--timer-glow, transparent) 13%, transparent), transparent 65%),
-    rgba(255, 255, 255, 0.025);
+    var(--surface-1);
   border: 1px solid color-mix(in srgb, var(--timer-glow, transparent) 28%, transparent);
   transition: background 300ms ease, border-color 300ms ease;
 }

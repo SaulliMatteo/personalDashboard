@@ -12,7 +12,6 @@ import {
 import { DEFAULT_SETTINGS, isValidSetting, type AppSettings, type SettingKey } from "./schema";
 import { loadSettings, saveSettingsPatch, clearSettings } from "./settingsRepository";
 import { applySettingsToDocument } from "./applySettings";
-import { resolveTheme, useSystemPrefersLight } from "./theme";
 
 // Gli slider emettono molti valori al secondo: li raccogliamo e scriviamo
 // una volta sola quando l'utente si ferma.
@@ -51,13 +50,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Con tema "Segui il sistema" si ricalcola anche quando cambia il sistema.
-  const systemPrefersLight = useSystemPrefersLight();
-
-  // Applica tema/colori/font/ecc. PRIMA del paint, per evitare un flash.
+  // Applica tema/colori/ecc. PRIMA del paint, per evitare un flash.
   useLayoutEffect(() => {
-    if (settings) applySettingsToDocument(settings, resolveTheme(settings.theme, systemPrefersLight));
-  }, [settings, systemPrefersLight]);
+    if (settings) applySettingsToDocument(settings);
+  }, [settings]);
 
   const flush = useCallback(() => {
     if (timer.current !== null) {

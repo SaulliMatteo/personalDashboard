@@ -109,7 +109,7 @@ function FileTransferDetail() {
               <div className="ft-label">SCANSIONA PER COLLEGARTI</div>
               {/* Il QR resta bianco su fondo bianco in ogni tema: i lettori lo richiedono. */}
               <div className="ft-qr-code">
-                <QRCodeSVG value={`http://${address}/`} size={120} level="M" bgColor="#ffffff" fgColor="#0f4c81" />
+                <QRCodeSVG value={`http://${address}/`} size={120} level="M" bgColor="transparent" fgColor="currentColor" />
               </div>
             </div>
           )}

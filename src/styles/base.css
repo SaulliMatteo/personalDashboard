@@ -23,9 +23,21 @@ body {
 
 body {
   font-family: var(--font-family);
+  font-size: var(--body-size);
+  line-height: var(--line-height);
 
   background: var(--bg);
   color: var(--text-primary);
+}
+
+button {
+  font: inherit;
+}
+
+/* Focus da tastiera visibile in tutti i temi. */
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 
 /* ---------- Header di pagina (Dashboard, Catalogo, Dettagli) ---------- */
@@ -56,8 +68,7 @@ body {
 
   padding: var(--widget-padding);
 
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  /* Sfondo, bordo e ombra li disegna la cornice (.border-glow-card). */
   border-radius: var(--radius-card);
 
   overflow: hidden;

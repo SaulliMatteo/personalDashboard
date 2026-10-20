@@ -23,7 +23,7 @@ const GAZE_X = 2.6;
 const GAZE_Y = 1.9;
 
 export interface LedOptions {
-  /** Colore dei punti accesi (qualunque colore CSS risolto, es. "#f2f2f4"). */
+  /** Colore dei punti accesi (qualunque colore CSS risolto, letto dai token del tema). */
   color: string;
   /** Opacità dei punti spenti. */
   offAlpha: number;

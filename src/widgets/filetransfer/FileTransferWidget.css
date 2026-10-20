@@ -36,12 +36,12 @@
 }
 
 .ft-status.is-online {
-  color: #34d399;
+  color: var(--success);
 }
 
 .ft-status.is-online .ft-status-dot {
-  background: #34d399;
-  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.15);
+  background: var(--success);
+  box-shadow: 0 0 0 4px var(--success-soft);
 }
 
 .ft-widget-count {

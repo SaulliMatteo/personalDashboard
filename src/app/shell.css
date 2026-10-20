@@ -45,6 +45,12 @@
   background: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
+/* Contenitore della pagina di dettaglio: serve solo a portare i token del
+   pigmento (tema Opaco), non deve cambiare il layout. */
+.detail-scope {
+  display: contents;
+}
+
 /* Impostazione "Posizione della barra laterale": destra */
 :root[data-sidebar="right"] .app {
   flex-direction: row-reverse;

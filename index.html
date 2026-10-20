@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -9,14 +9,27 @@
          bundle JS (niente schermo bianco) e React la fa sparire a caricamento
          finito (src/app/splash.ts). Stili inline di proposito: devono
          funzionare prima che parta qualunque altro CSS. -->
+    <!-- Tema dell'ultimo avvio (cache scritta da applySettings.ts), applicato
+         prima di qualunque render: niente flash del tema sbagliato. -->
+    <script>
+      try {
+        var t = localStorage.getItem("pd-theme");
+        if (t === "notte" || t === "opaco" || t === "quaderno" || t === "fosforo") document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
     <style>
-      html, body { margin: 0; height: 100%; background: #0b0b0e; }
+      /* Colori della splash per tema: copiano i token di src/styles/tokens.css
+         (qui servono prima che arrivi il CSS del bundle). */
+      :root { --s-bg: #090C15; --s-accent: #8EA6FF; --s-card: #151B2E; --s-line: #1F2740; --s-text: #E9ECF5; --s-muted: #9AA2BA; --s-radius: 9px; }
+      :root[data-theme="opaco"] { --s-bg: #D8D5CD; --s-accent: #22251F; --s-card: #C9C5BB; --s-line: transparent; --s-text: #22251F; --s-muted: #4D5047; --s-radius: 12px; }
+      :root[data-theme="quaderno"] { --s-bg: #FCFDFF; --s-accent: #2340A0; --s-card: #FFFFFF; --s-line: #C9D3E3; --s-text: #1B2433; --s-muted: #556178; --s-radius: 4px; }
+      :root[data-theme="fosforo"] { --s-bg: #110709; --s-accent: #F4E9E4; --s-card: #1A0D0F; --s-line: rgba(255,214,206,.12); --s-text: #F2E6E1; --s-muted: #B39C97; --s-radius: 6px; }
+      html, body { margin: 0; height: 100%; background: var(--s-bg); }
       #splash {
-        --s-accent: #6c8dff; --s-card: #131318; --s-line: rgba(255,255,255,.07);
         position: fixed; inset: 0; z-index: 9999;
         display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
-        background: #0b0b0e; color: #8a8a92;
-        font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: var(--s-bg); color: var(--s-muted);
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
         transition: opacity 420ms ease, transform 420ms ease;
       }
       #splash.is-leaving { opacity: 0; transform: scale(1.03); pointer-events: none; }
@@ -24,7 +37,7 @@
         display: grid; grid-template-columns: repeat(4, 34px); grid-auto-rows: 34px; gap: 8px;
       }
       .splash-tile {
-        border-radius: 9px; background: var(--s-card); border: 1px solid var(--s-line);
+        border-radius: var(--s-radius); background: var(--s-card); border: 1px solid var(--s-line);
         animation: splash-wave 2.1s ease-in-out infinite;
         animation-delay: calc(var(--d) * 170ms);
       }
@@ -43,7 +56,7 @@
         }
       }
       .splash-text { text-align: center; line-height: 1.5; }
-      .splash-name { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .01em; color: #f2f2f4; }
+      .splash-name { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .01em; color: var(--s-text); }
       #splash-status { margin: 4px 0 0; font-size: 12.5px; min-height: 19px; }
       @media (prefers-reduced-motion: reduce) {
         .splash-tile { animation: none; }
