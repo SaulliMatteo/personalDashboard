@@ -128,10 +128,19 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     const { start, end } = todayRangeMs();
     const sessions = await getSessionsBetween(start, end);
     const totals: Record<number, number> = {};
+    let total = 0;
     for (const session of sessions) {
       totals[session.subjectId] = (totals[session.subjectId] ?? 0) + session.durationSeconds;
+      total += session.durationSeconds;
     }
     setTodayBySubject(totals);
+    // Per intestazione e barra laterale della dashboard, che non conoscono lo Studio.
+    publishActivity({
+      studyTodaySeconds: total,
+      studyTodaySpans: sessions
+        .map((session) => ({ start: session.startedAt, end: session.endedAt }))
+        .sort((a, b) => a.start - b.start),
+    });
   }
 
   // Caricamento iniziale. Il DB è già pronto: DatabaseGate (app/) non

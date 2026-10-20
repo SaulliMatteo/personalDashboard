@@ -1,0 +1,147 @@
+/* Intestazione della dashboard, una forma per tema (mockup notte/opaco/quaderno/fosforo.html). */
+
+.dh {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  color: var(--text-primary);
+}
+
+.dh h1 {
+  margin: 0;
+}
+
+.dh p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+/* ---------- Notte: saluto sottile, data e ora; a destra la giornata di studio ---------- */
+.dh--notte {
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.dh--notte h1 {
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+.dh--notte p {
+  margin-top: 2px;
+}
+
+.dh-timeline {
+  flex: 0 1 520px;
+  min-width: 300px;
+}
+
+.dh-timeline-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dh-timeline-track {
+  position: relative;
+  height: 26px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.dh-timeline-span {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+.dh-timeline-now {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--text-primary);
+}
+
+.dh-timeline-hours {
+  position: relative;
+  height: 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.dh-timeline-hours span {
+  position: absolute;
+  top: 2px;
+  transform: translateX(-50%);
+}
+
+/* ---------- Opaco: saluto grande, data a destra ---------- */
+.dh--opaco {
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.dh--opaco h1 {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.dh--opaco p {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* ---------- Quaderno: saluto scritto a mano, data e studio di oggi accanto ---------- */
+.dh--quaderno {
+  align-items: baseline;
+  gap: 18px;
+}
+
+.dh--quaderno h1 {
+  font-family: var(--font-title);
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+/* ---------- Fosforo: saluto e data, orologio a punti a destra ---------- */
+.dh--fosforo {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.dh--fosforo h1 {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.dh--fosforo p {
+  margin-top: 2px;
+}
+
+.dh-clock {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: var(--display-weight);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dh--quaderno h1,
+.dh-clock {
+  color: var(--accent);
+}
