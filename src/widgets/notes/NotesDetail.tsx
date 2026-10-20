@@ -18,6 +18,7 @@ import FolderPanel from "./components/FolderPanel";
 import FolderTree from "./components/FolderTree";
 import NoteCollection, { type LayoutMode, type SortKey } from "./components/NoteCollection";
 import NoteEditor from "./components/NoteEditor";
+import { takePendingNote } from "./lib/launch";
 import {
   addFolder,
   createNote,
@@ -92,6 +93,13 @@ function NotesDetail() {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  // Il widget può chiedere di aprire subito una nota (lib/launch.ts). In
+  // StrictMode l'effetto gira due volte: la prima lettura consuma la richiesta.
+  useEffect(() => {
+    const id = takePendingNote();
+    if (id !== null) setOpenId(id);
+  }, []);
 
   // ---------------- Dati derivati ----------------
 

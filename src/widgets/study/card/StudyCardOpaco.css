@@ -1,0 +1,211 @@
+/* Studio, tema Opaco (temi-dashboard/docs/design/temi/opaco.html e widget-1x1.html). */
+
+.widget.so {
+  container-type: size;
+  display: flex;
+  flex-direction: column;
+  padding: 28px;
+  color: var(--text-primary);
+}
+
+/* ---------- 1×1 ---------- */
+.widget.so--S {
+  padding: 0;
+}
+
+.so-cell {
+  width: 100%;
+  height: 100%;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.so-cell-time {
+  font-size: min(52px, calc((100cqw - 28px) / (var(--chars) * 0.56)));
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Tempo enorme e barra ---------- */
+.so-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.so-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.so-cycles {
+  display: flex;
+  gap: 5px;
+}
+
+.so-cycle {
+  width: 22px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--pg-dark);
+}
+
+.so-cycle.is-done {
+  background: var(--pg-ink);
+}
+
+.so-cycle.is-current {
+  background: var(--pg-half);
+}
+
+.so-focus {
+  margin-top: auto;
+  min-width: 0;
+}
+
+.so-focus-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.so-focus-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.so-time {
+  /* 150px nel mockup; si riduce se la cella è più stretta o più bassa. */
+  font-size: min(150px, calc((100cqw - 56px) / (var(--chars) * 0.56)), calc(100cqh - 190px));
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  line-height: 0.82;
+  margin: 10px 0 18px -0.04em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.so-bar {
+  height: 16px;
+  border-radius: 8px;
+  background: var(--pg-dark);
+  overflow: hidden;
+}
+
+.so-bar > div {
+  height: 100%;
+  border-radius: 8px;
+  background: var(--pg-ink);
+}
+
+.so-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 22px;
+  min-width: 0;
+}
+
+.so-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-height: 78px;
+  overflow: hidden;
+}
+
+.so-chip {
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 18px;
+  background: var(--pg-mid);
+  color: var(--pg-ink);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.so-chip.is-active {
+  background: var(--pg-ink);
+  color: var(--pg-light);
+}
+
+.so-chip:disabled {
+  cursor: default;
+}
+
+.so-empty {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.so-controls {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+}
+
+.so .study-btn {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.so .study-btn--primary {
+  background: var(--pg-ink);
+  color: var(--pg-light);
+}
+
+.so .study-btn--secondary {
+  background: var(--pg-mid);
+  color: var(--pg-ink);
+}
+
+.so .study-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---------- 2×2: tutto centrato ---------- */
+.widget.so--M {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 22px;
+}
+
+.so--M .so-focus {
+  margin-top: 0;
+  width: 100%;
+}
+
+.so--M .so-focus-line {
+  justify-content: center;
+}
+
+.so--M .so-time {
+  margin-left: 0;
+  font-size: min(150px, calc((100cqw - 56px) / (var(--chars) * 0.56)), calc(100cqh - 160px));
+}

@@ -462,6 +462,15 @@
   --focus-ring: 2px solid var(--accent);
 }
 
+/* Card "post-it" (il Companion in Quaderno): l'unico elemento ruotato. */
+:root[data-theme="quaderno"] .card-postit {
+  --card-bg: var(--postit-bg);
+  --card-border: 0;
+  --card-shadow: var(--postit-shadow);
+  --radius-card: 3px;
+  --card-transform: rotate(-1.2deg);
+}
+
 /* ==========================================================================
    FOSFORO: scuro, moduli hardware con display a punti
    ========================================================================== */
