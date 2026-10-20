@@ -54,7 +54,7 @@ study/
 
 ```
 youtube/
-├─ index.ts                  WidgetDefinition (taglie 1×2 e 2×2; nessun provider: il video si ferma
+├─ index.ts                  WidgetDefinition (taglie 2×1, 1×1, 1×2, 3×2; nessun provider: il video si ferma
 │                            lasciando la pagina, la posizione viene salvata)
 ├─ YoutubeWidget.tsx/.css    widget in dashboard
 ├─ YoutubeDetail.tsx/.css    pagina con tre schermate: HomeScreen, LibraryScreen, WatchScreen
@@ -76,7 +76,7 @@ Va spostato in `core/` (o fatto passare dall'activityBus) quando si tocca quella
 
 ```
 notes/
-├─ index.ts                  WidgetDefinition (taglie 1×1 e 2×2; si apre anche dalla sidebar)
+├─ index.ts                  WidgetDefinition (taglie 3×1, 1×1, 2×2; si apre anche dalla sidebar)
 ├─ NotesWidget.tsx/.css      widget in dashboard
 ├─ NotesDetail.tsx/.css      pagina: cartelle a sinistra, elenco note, editor
 ├─ components/               FolderPanel, FolderTree, NoteCollection, NoteEditor,
@@ -167,4 +167,4 @@ Colonna in una nuova migrazione → campo in `Subject`/`SubjectRow`/`PATCH_COLUM
 - Stato "ultimo valore" dentro callback di lunga durata (interval, listener): `useLatestRef`.
 - Le query SQL stanno solo nei `*Repository.ts`; i componenti non scrivono SQL.
 - Impostazioni = preferenze dell'app (schema). Dati e metadati interni = tabelle/`meta`.
-- Un click su un controllo dentro un widget deve fare `e.stopPropagation()` (il click sul widget apre il dettaglio).
+- Il dettaglio di un widget si apre con il **doppio click** sulla cella (Dashboard.tsx). Il doppio click su un controllo interno (button, link, input) viene ignorato; un pulsante che occupa tutta la cella (1×1) va marcato `data-cell-action` perché il doppio click apra comunque il dettaglio. I controlli continuano a fare `e.stopPropagation()` sul click.

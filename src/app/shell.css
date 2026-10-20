@@ -20,8 +20,10 @@
   flex-direction: column;
 
   min-width: 0;
+  gap: var(--main-gap);
 
-  padding: 18px 20px;
+  padding: var(--main-padding);
+  background: var(--main-bg);
 
   overflow-y: auto;
   overflow-x: hidden;

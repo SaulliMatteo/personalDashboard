@@ -70,6 +70,9 @@
   --radius-card: 22px;
   --widget-padding: 22px;
   --grid-gap: 14px;
+  /* Spazio interno dell'area principale e distanza intestazione-griglia. */
+  --main-padding: 26px 32px 28px;
+  --main-gap: 20px;
 
   /* Pannello interno: display, celle delle note, disco del quadrante. */
   --panel-bg: #0B0F1C;
@@ -120,6 +123,15 @@
   --chip-fg: var(--accent-strong);
   --slot-border: 1px dashed #2A3350;
   --slot-bg: transparent;
+  --slot-fg: #9AA2BA;
+  --slot-gap: 6px;
+  --slot-font-size: 13px;
+  --slot-weight: 400;
+  --slot-svg-display: block;
+  --slot-svg-stroke: 1.6;
+  --slot-text-display: none;
+  --slot-plus-font: inherit;
+  --slot-plus-size: 30px;
 
   --nav-active-bg: #161C2E;
   --nav-active-fg: #E9ECF5;
@@ -175,6 +187,9 @@
   --radius-card: 28px;
   --widget-padding: 22px;
   --grid-gap: 12px;
+  /* Spazio interno dell'area principale e distanza intestazione-griglia. */
+  --main-padding: 26px 30px 28px 8px;
+  --main-gap: 18px;
 
   --panel-bg: #E2DED5;
   --panel-border: 0;
@@ -224,6 +239,15 @@
   --chip-fg: #22251F;
   --slot-border: 2px dashed #9E9A90;
   --slot-bg: transparent;
+  --slot-fg: #4D5047;
+  --slot-gap: 2px;
+  --slot-font-size: 14px;
+  --slot-weight: 500;
+  --slot-svg-display: none;
+  --slot-svg-stroke: 1.6;
+  --slot-text-display: block;
+  --slot-plus-font: inherit;
+  --slot-plus-size: 30px;
 
   --nav-active-bg: #22251F;
   --nav-active-fg: #ECE9E2;
@@ -348,6 +372,9 @@
   --radius-card: 8px;
   --widget-padding: 22px;
   --grid-gap: 18px;
+  /* Spazio interno dell'area principale e distanza intestazione-griglia. */
+  --main-padding: 22px 32px 28px 68px;
+  --main-gap: 16px;
 
   --panel-bg: #FFFFFF;
   --panel-border: 1px solid #DCE6F5;
@@ -397,6 +424,15 @@
   --chip-fg: var(--accent);
   --slot-border: 2px dashed #9AA7BD;
   --slot-bg: rgba(255, 255, 255, 0.6);
+  --slot-fg: #556178;
+  --slot-gap: 2px;
+  --slot-font-size: 13px;
+  --slot-weight: 400;
+  --slot-svg-display: none;
+  --slot-svg-stroke: 1.6;
+  --slot-text-display: block;
+  --slot-plus-font: "Caveat Variable", cursive;
+  --slot-plus-size: 38px;
 
   --nav-active-bg: #EEF2FB;
   --nav-active-fg: #2340A0;
@@ -459,6 +495,9 @@
   --radius-card: 14px;
   --widget-padding: 14px;
   --grid-gap: 12px;
+  /* Spazio interno dell'area principale e distanza intestazione-griglia. */
+  --main-padding: 24px 32px 28px 16px;
+  --main-gap: 18px;
 
   --panel-bg: transparent;
   --panel-border: 1px solid rgba(255, 214, 206, 0.12);
@@ -508,6 +547,15 @@
   --chip-fg: #110709;
   --slot-border: 1px dashed rgba(255, 214, 206, 0.22);
   --slot-bg: transparent;
+  --slot-fg: #B39C97;
+  --slot-gap: 6px;
+  --slot-font-size: 12px;
+  --slot-weight: 400;
+  --slot-svg-display: block;
+  --slot-svg-stroke: 1.5;
+  --slot-text-display: none;
+  --slot-plus-font: inherit;
+  --slot-plus-size: 30px;
 
   --nav-active-bg: #F4E9E4;
   --nav-active-fg: #110709;

@@ -1,9 +1,10 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import GridLayout, { useContainerWidth } from "react-grid-layout";
-import { calcGridColWidth } from "react-grid-layout/core";
+import { calcGridItemPosition } from "react-grid-layout/core";
 import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE prima del nostro
 import "./dashboard.css";
 import { useSettings } from "../../core/settings/SettingsContext";
+import { useTheme } from "../../core/theme/useTheme";
 import { useLayout } from "../../core/layout/LayoutContext";
 import { useNav } from "../../core/nav/NavContext";
 import { createDragCompactor, finalizeLayout, clampToBounds } from "../../core/layout/compactor";
@@ -12,36 +13,59 @@ import { GRID_COLS, MIN_ROW_HEIGHT } from "../../core/layout/gridConfig";
 import { getWidget, widgetPigment } from "../../widgets/registry";
 import { useGhostPreview, useForceEndDragOnBlur } from "./useGhostPreview";
 import DashboardHeader from "./DashboardHeader";
+import AddWidgetSlot from "./AddWidgetSlot";
+
+// La griglia non ha margine esterno: riempie l'area di .main come nei mockup.
+const NO_PADDING = [0, 0] as const;
+
+/**
+ * Altezza disponibile del contenitore e spazio fra i widget (token --grid-gap
+ * del tema). Si rimisura al resize della finestra e quando cambia il tema.
+ */
+function useGridMetrics(element: HTMLElement | null, themeId: string) {
+  const [metrics, setMetrics] = useState({ height: 0, gap: 14 });
+  useEffect(() => {
+    if (!element) return;
+    const measure = () => {
+      const gap = parseFloat(getComputedStyle(element).getPropertyValue("--grid-gap")) || 14;
+      const height = element.clientHeight;
+      setMetrics((prev) => (prev.height === height && prev.gap === gap ? prev : { height, gap }));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [element, themeId]);
+  return metrics;
+}
+
+/** True se il doppio click arriva da un controllo interno (non deve aprire il dettaglio). */
+function fromInnerControl(e: MouseEvent<HTMLElement>): boolean {
+  const control = (e.target as HTMLElement).closest("button, a, input, textarea, select, [role='button']");
+  // data-cell-action: pulsante che occupa tutta la cella (1×1), il doppio click apre comunque il dettaglio.
+  return control !== null && !control.hasAttribute("data-cell-action");
+}
 
 function Dashboard() {
   // width: larghezza del contenitore (px), ricalcolata al resize della finestra.
   // mounted: evita di renderizzare la griglia con width 0 al primo frame.
   const { width, containerRef, mounted } = useContainerWidth();
   const { settings } = useSettings();
-  const { layout, setLayout, rows, ready } = useLayout();
-  const { openWidgetDetail } = useNav();
+  const theme = useTheme();
+  const { layout, setLayout, rows, ready, findFreeSlot } = useLayout();
+  const { openWidgetDetail, goToCatalog } = useNav();
 
-  const margin = settings.gridMargin;
-  const marginTuple = [margin, margin] as const;
+  const [gridElement, setGridElement] = useState<HTMLDivElement | null>(null);
+  const { height, gap } = useGridMetrics(gridElement, theme.id);
+  const marginTuple = [gap, gap] as const;
 
-  // Altezza di riga PROPORZIONALE alla larghezza di colonna, calcolata con
-  // la stessa funzione della libreria per restare coerenti con lei.
-  const colWidth = width
-    ? calcGridColWidth({
-        containerWidth: width,
-        cols: GRID_COLS,
-        margin: marginTuple,
-        containerPadding: marginTuple,
-        rowHeight: 1,
-        maxRows: rows,
-      })
-    : 0;
-  const rowHeight = Math.max(MIN_ROW_HEIGHT, colWidth * 0.5);
+  // La griglia riempie la finestra: le righe si dividono l'altezza disponibile.
+  // Sotto MIN_ROW_HEIGHT si lascia scorrere .main invece di schiacciare i widget.
+  const rowHeight = Math.max(MIN_ROW_HEIGHT, height > 0 ? (height - gap * (rows - 1)) / rows : MIN_ROW_HEIGHT);
 
-  // containerPadding = margin è il default della libreria quando non viene passato.
   const positionParams = {
     margin: marginTuple,
-    containerPadding: marginTuple,
+    containerPadding: NO_PADDING,
     cols: GRID_COLS,
     rowHeight,
     maxRows: rows,
@@ -61,23 +85,36 @@ function Dashboard() {
   const dragOriginRef = useRef<{ id: string; layout: LayoutItem[] } | null>(null);
   const suppressLayoutChangeRef = useRef(false);
 
-  // Distingue un click "secco" (apre il dettaglio) dal click che chiude un
-  // drag (non deve navigare): un vero click non fa mai scattare onDrag.
+  // Distingue un doppio click "secco" (apre il dettaglio) da quello che
+  // chiude un drag (non deve navigare): un vero click non fa mai scattare onDrag.
   const wasDraggingRef = useRef(false);
 
   const GhostComponent = dragTarget && settings.showDragGhost ? getWidget(dragTarget.i)?.component : undefined;
+
+  // Slot "Aggiungi widget": prima cella libera, nascosto durante un drag.
+  const freeCell = ready && !dragTarget ? findFreeSlot({ w: 1, h: 1 }) : null;
+  const slotPos =
+    freeCell && width
+      ? calcGridItemPosition({ ...positionParams, containerWidth: width }, freeCell.x, freeCell.y, 1, 1)
+      : null;
 
   return (
     <>
       <DashboardHeader />
 
-      {/* position: relative (vedi .grid-container): il ghost si posiziona rispetto a questo contenitore. */}
-      <div ref={containerRef} className="grid-container">
-        {mounted && ready && (
+      {/* position: relative (vedi .grid-container): ghost e slot si posizionano rispetto a questo contenitore. */}
+      <div
+        ref={(el) => {
+          containerRef.current = el;
+          setGridElement(el);
+        }}
+        className="grid-container"
+      >
+        {mounted && ready && height > 0 && (
           <GridLayout
             className={`widget-grid${settings.lockLayout ? " is-locked" : ""}`}
             layout={layout}
-            gridConfig={{ cols: GRID_COLS, rowHeight, margin: [margin, margin], maxRows: rows }}
+            gridConfig={{ cols: GRID_COLS, rowHeight, margin: [gap, gap], containerPadding: [0, 0], maxRows: rows }}
             // Dimensioni fisse per taglia: si cambia taglia dal catalogo.
             resizeConfig={{ enabled: false }}
             // Lascia che la griglia occupi tutto lo spazio, così si può
@@ -137,11 +174,12 @@ function Dashboard() {
                 <div
                   key={item.i}
                   data-pigment={widgetPigment(item.i)}
-                  onClick={() => {
+                  onDoubleClick={(e) => {
                     if (wasDraggingRef.current) {
                       wasDraggingRef.current = false;
                       return;
                     }
+                    if (fromInnerControl(e)) return;
                     if (settings.openDetailOnClick && widget.detailComponent) openWidgetDetail(item.i);
                   }}
                 >
@@ -152,10 +190,18 @@ function Dashboard() {
           </GridLayout>
         )}
 
+        {slotPos && (
+          <AddWidgetSlot
+            style={{ width: slotPos.width, height: slotPos.height, transform: `translate(${slotPos.left}px, ${slotPos.top}px)` }}
+            onClick={goToCatalog}
+          />
+        )}
+
         {/* Overlay "ghost": solo durante un drag attivo. */}
         {dragTarget && ghostPos && GhostComponent && (
           <div
             className="widget-ghost"
+            data-pigment={widgetPigment(dragTarget.i)}
             style={{
               width: ghostPos.width,
               height: ghostPos.height,
@@ -164,9 +210,7 @@ function Dashboard() {
               transform: `translate3d(${ghostPos.left}px, ${ghostPos.top}px, 0)`,
             }}
           >
-            <div data-pigment={widgetPigment(dragTarget.i)} style={{ height: "100%" }}>
-              <GhostComponent w={dragTarget.w} h={dragTarget.h} />
-            </div>
+            <GhostComponent w={dragTarget.w} h={dragTarget.h} />
           </div>
         )}
       </div>
