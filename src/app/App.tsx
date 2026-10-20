@@ -5,6 +5,7 @@ import WidgetProviders from "../widgets/WidgetProviders";
 import { getWidget, widgetPigment } from "../widgets/registry";
 import Dashboard from "../features/dashboard/Dashboard";
 import WidgetCatalog from "../features/catalog/WidgetCatalog";
+import SettingsPage from "../features/settings/SettingsPage";
 import DatabaseGate from "./DatabaseGate";
 import AppShell from "./AppShell";
 import BootGate from "./BootGate";
@@ -17,6 +18,8 @@ function CurrentView() {
     content = <Dashboard />;
   } else if (view.type === "catalog") {
     content = <WidgetCatalog />;
+  } else if (view.type === "settings") {
+    content = <SettingsPage section={view.section} />;
   } else {
     // Qualunque widget con una pagina propria si aggancia qui registrando
     // `detailComponent` nella sua definizione, senza toccare questo switch.

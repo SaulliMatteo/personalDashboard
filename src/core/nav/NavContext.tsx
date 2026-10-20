@@ -8,12 +8,15 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from "re
 export type AppView =
   | { type: "dashboard" }
   | { type: "catalog" }
+  | { type: "settings"; section: string }
   | { type: "widgetDetail"; widgetId: string };
 
 interface NavContextValue {
   view: AppView;
   goToDashboard: () => void;
   goToCatalog: () => void;
+  /** Apre la pagina Impostazioni su una sezione (default "appearance"; per un widget "widget:<id>"). */
+  openSettings: (section?: string) => void;
   openWidgetDetail: (widgetId: string) => void;
 }
 
@@ -27,6 +30,7 @@ export function NavProvider({ children }: { children: ReactNode }) {
       view,
       goToDashboard: () => setView({ type: "dashboard" }),
       goToCatalog: () => setView({ type: "catalog" }),
+      openSettings: (section = "appearance") => setView({ type: "settings", section }),
       openWidgetDetail: (widgetId) => setView({ type: "widgetDetail", widgetId }),
     }),
     [view]

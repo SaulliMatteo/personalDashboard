@@ -35,6 +35,29 @@
   --success-soft: color-mix(in srgb, var(--success) 15%, transparent);
 
   --ease-out-back: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Anteprime dei temi nella scheda Aspetto: restano uguali qualunque sia il
+     tema attivo (impostazioni-aspetto.html). bg = foglio, a = card grande, b = card piccole. */
+  --preview-notte-bg: #0A0D16;
+  --preview-notte-a: #8EA6FF;
+  --preview-notte-b: #151B2B;
+  --preview-notte-border: 0;
+  --preview-notte-radius: 6px;
+  --preview-opaco-bg: #D8D5CD;
+  --preview-opaco-a: #A9B59C;
+  --preview-opaco-b: #9DB0C0;
+  --preview-opaco-border: 0;
+  --preview-opaco-radius: 8px;
+  --preview-quaderno-bg: #FCFDFF;
+  --preview-quaderno-a: #FFF1A8;
+  --preview-quaderno-b: #FFFFFF;
+  --preview-quaderno-border: 1px solid #C9D3E3;
+  --preview-quaderno-radius: 2px;
+  --preview-fosforo-bg: #1A090C;
+  --preview-fosforo-a: #0B0405;
+  --preview-fosforo-b: #24100F;
+  --preview-fosforo-border: 1px solid rgba(255, 214, 206, 0.2);
+  --preview-fosforo-radius: 4px;
 }
 
 /* ==========================================================================
