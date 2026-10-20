@@ -1,4 +1,4 @@
-/* Widget Quaderno in dashboard (1x1 = contatore, 2x2 = ultime note). */
+/* Widget Notes in dashboard (1x1 = contatore, 2x2 = ultime note). */
 
 .notes-widget {
   display: flex;

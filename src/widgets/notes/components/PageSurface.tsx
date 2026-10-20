@@ -1,5 +1,5 @@
 import { useLayoutEffect, type CSSProperties, type ClipboardEvent, type KeyboardEvent, type MouseEvent, type RefObject } from "react";
-import type { InkStroke, NotePage } from "../data/notesRepository";
+import type { InkStroke, NotePage, PageBackground } from "../data/notesRepository";
 import { currentBlock } from "../lib/editorDom";
 import { sanitizeHtml } from "../lib/html";
 import InkLayer, { type InkTool } from "./InkLayer";
@@ -8,6 +8,7 @@ interface PageSurfaceProps {
   page: NotePage;
   pageNumber: number;
   zoom: number;
+  background: PageBackground;
   mode: "text" | "ink";
   tool: InkTool;
   color: string;
@@ -69,7 +70,7 @@ function PageSurface(props: PageSurfaceProps) {
 
   return (
     <div className="nq-paper-wrap">
-      <div className="nq-paper" style={{ "--nq-zoom": props.zoom / 100 } as CSSProperties}>
+      <div className="nq-paper" data-bg={props.background} style={{ "--nq-zoom": props.zoom / 100 } as CSSProperties}>
         <div className="nq-paper-head">
           <span>{props.kicker}</span>
           <span>{props.dateLabel}</span>
