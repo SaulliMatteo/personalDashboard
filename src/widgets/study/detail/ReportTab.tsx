@@ -20,7 +20,7 @@ const PERIODS: { id: ReportPeriod; label: string }[] = [
 ];
 
 /** Colore per sessioni di una materia che non esiste più (non dovrebbe capitare: serve a far quadrare comunque i totali). */
-const UNKNOWN_COLOR = "#8a8a92";
+const UNKNOWN_COLOR = "var(--text-muted)";
 
 function ReportTab() {
   // `subjects` = solo le materie ATTIVE (come nel timer): servono per mantenere i colori

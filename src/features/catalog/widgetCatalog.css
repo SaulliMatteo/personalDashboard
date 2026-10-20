@@ -36,7 +36,7 @@
 
 .widget-catalog-card:hover {
   border-color: var(--border-accent);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-pop);
 }
 
 .widget-catalog-card-head {
@@ -71,13 +71,13 @@
 }
 
 .widget-catalog-status.is-available {
-  background: rgba(70, 200, 140, 0.14);
-  color: #55d19a;
+  background: var(--success-soft);
+  color: var(--success-text);
 }
 
 .widget-catalog-status.is-full {
-  background: rgba(230, 100, 100, 0.14);
-  color: #e78080;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .widget-catalog-description {
@@ -162,6 +162,6 @@
 }
 
 .widget-catalog-btn--danger {
-  background: rgba(230, 100, 100, 0.16);
-  color: #f0a0a0;
+  background: var(--danger-soft);
+  color: var(--danger);
 }

@@ -58,13 +58,13 @@
 }
 
 .nq-btn--danger {
-  color: #e78080;
+  color: var(--danger);
 }
 
 .nq-btn--danger.is-armed {
-  background: #e78080;
+  background: var(--danger);
   border-color: transparent;
-  color: #1a0b0b;
+  color: var(--on-danger);
 }
 
 .nq-btn--small {
@@ -297,7 +297,7 @@
 }
 
 .nq-sync svg {
-  color: #55d19a;
+  color: var(--success-text);
 }
 
 /* ---------- Albero cartelle ---------- */
@@ -714,8 +714,8 @@
   padding: 18px 20px 0;
   overflow: hidden;
   pointer-events: none; /* i link dell'anteprima non devono mai navigare */
-  -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent);
-  mask-image: linear-gradient(to bottom, #000 78%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, black 78%, transparent);
+  mask-image: linear-gradient(to bottom, black 78%, transparent);
 }
 
 .nq-card-kicker {
@@ -934,7 +934,7 @@
   height: 30px;
   border-radius: 50%;
   border: 2px solid transparent;
-  color: #fff;
+  color: var(--media-fg);
   font-size: 16px;
   cursor: pointer;
   transition: transform 120ms ease;
@@ -1089,7 +1089,7 @@
   border: 1px solid var(--border-accent);
   border-radius: 10px;
   background: var(--bg-card);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow-pop);
   color: var(--text-primary);
   font-size: 13px;
   pointer-events: none;

@@ -89,8 +89,8 @@
   height: 28px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.58);
-  color: #fff;
+  background: var(--media-scrim);
+  color: var(--media-fg);
   font-size: 18px;
   transition: background 150ms ease, transform 150ms ease;
 }
@@ -108,7 +108,7 @@
   bottom: 0;
   left: 0;
   height: 3px;
-  background: rgba(255, 255, 255, 0.28);
+  background: var(--media-track);
 }
 
 .yt-widget-progress > span {

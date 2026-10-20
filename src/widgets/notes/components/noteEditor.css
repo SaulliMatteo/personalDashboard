@@ -354,7 +354,7 @@
 }
 
 .nq-thumb-tools .nq-thumb-del.is-armed {
-  color: #e78080;
+  color: var(--danger);
 }
 
 .nq-pages-hint {

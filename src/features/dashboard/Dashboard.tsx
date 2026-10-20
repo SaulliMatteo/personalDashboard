@@ -9,7 +9,7 @@ import { useNav } from "../../core/nav/NavContext";
 import { createDragCompactor, finalizeLayout, clampToBounds } from "../../core/layout/compactor";
 import { saveLayout, type LayoutItem } from "../../core/layout/layoutRepository";
 import { GRID_COLS, MIN_ROW_HEIGHT } from "../../core/layout/gridConfig";
-import { getWidget } from "../../widgets/registry";
+import { getWidget, widgetPigment } from "../../widgets/registry";
 import { useGhostPreview, useForceEndDragOnBlur } from "./useGhostPreview";
 import DashboardHeader from "./DashboardHeader";
 
@@ -36,7 +36,7 @@ function Dashboard() {
         maxRows: rows,
       })
     : 0;
-  const rowHeight = Math.max(MIN_ROW_HEIGHT, colWidth * settings.gridRowHeightRatio);
+  const rowHeight = Math.max(MIN_ROW_HEIGHT, colWidth * 0.5);
 
   // containerPadding = margin è il default della libreria quando non viene passato.
   const positionParams = {
@@ -136,6 +136,7 @@ function Dashboard() {
               return (
                 <div
                   key={item.i}
+                  data-pigment={widgetPigment(item.i)}
                   onClick={() => {
                     if (wasDraggingRef.current) {
                       wasDraggingRef.current = false;
@@ -163,7 +164,9 @@ function Dashboard() {
               transform: `translate3d(${ghostPos.left}px, ${ghostPos.top}px, 0)`,
             }}
           >
-            <GhostComponent w={dragTarget.w} h={dragTarget.h} />
+            <div data-pigment={widgetPigment(dragTarget.i)} style={{ height: "100%" }}>
+              <GhostComponent w={dragTarget.w} h={dragTarget.h} />
+            </div>
           </div>
         )}
       </div>

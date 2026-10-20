@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useSettings } from "../../../core/settings/SettingsContext";
-import { resolveTheme, useSystemPrefersLight } from "../../../core/settings/theme";
+import { useTheme } from "../../../core/theme/useTheme";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import { useCompanion } from "../CompanionContext";
 import { DEFAULT_STYLE } from "../render/styles";
@@ -26,22 +26,22 @@ const FRAME_MS = 1000 / 30;
 function CompanionFace({ showBubble = true, bubbleSize = "normal", padding, className = "" }: CompanionFaceProps) {
   const { sampleFrame, snapshot } = useCompanion();
   const { settings } = useSettings();
-  const systemPrefersLight = useSystemPrefersLight();
-  const isLight = resolveTheme(settings.theme, systemPrefersLight) === "light";
+  const theme = useTheme();
+  const isLight = theme.scheme === "light";
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Colore dei LED: accent, oppure il colore del testo del tema (letto dal CSS).
-  const colorRef = useRef("#f2f2f4");
+  // Colore dei LED: accent oppure il colore della faccia del tema, letti dal CSS
+  // dell'elemento stesso (così in Opaco valgono i token del pigmento).
+  const colorRef = useRef("");
   useEffect(() => {
-    if (settings.companionColor === "accent") {
-      colorRef.current = settings.accentColor;
-    } else {
-      const css = getComputedStyle(document.documentElement).getPropertyValue("--text-primary").trim();
-      colorRef.current = css || (isLight ? "#1a1a1e" : "#f2f2f4");
-    }
-  }, [settings.companionColor, settings.accentColor, isLight]);
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    const token = settings.companionColor === "accent" ? "--accent" : "--face-on";
+    const css = getComputedStyle(wrap).getPropertyValue(token).trim();
+    if (css) colorRef.current = css;
+  }, [settings.companionColor, settings.accentColor, settings.accentOverride, theme.id]);
 
   const drawOpts = useLatestRef({ isLight, showMouth: settings.companionShowMouth, padding });
 

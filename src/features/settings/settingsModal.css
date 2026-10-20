@@ -1,7 +1,7 @@
 .settings-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--overlay);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
@@ -22,7 +22,7 @@
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-pop);
   overflow: hidden;
   animation: modal-pop 180ms var(--ease-out-back);
 }
@@ -105,8 +105,8 @@
 }
 
 .settings-btn.is-armed {
-  background: #e78080;
-  color: #1a0b0b;
+  background: var(--danger);
+  color: var(--on-danger);
 }
 
 .settings-btn:disabled {

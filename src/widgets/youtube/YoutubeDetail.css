@@ -147,19 +147,19 @@ textarea.yt-input {
 }
 
 .yt-btn--danger {
-  background: rgba(230, 100, 100, 0.16);
-  color: #f0a0a0;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .yt-btn--danger:hover:not(:disabled) {
-  background: rgba(230, 100, 100, 0.28);
-  color: #f5b5b5;
+  background: var(--danger-strong);
+  color: var(--danger);
 }
 
 /* Il ConfirmButton aggiunge .is-armed al secondo passaggio. */
 .yt-btn.is-armed {
-  background: #e78080;
-  color: #1a0b0b;
+  background: var(--danger);
+  color: var(--on-danger);
 }
 
 .yt-icon-btn {
@@ -194,13 +194,13 @@ textarea.yt-input {
 }
 
 .yt-icon-btn--danger:hover {
-  background: rgba(230, 100, 100, 0.16);
-  color: #f0a0a0;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .yt-icon-btn.is-armed {
-  background: #e78080;
-  color: #1a0b0b;
+  background: var(--danger);
+  color: var(--on-danger);
 }
 
 .yt-link-btn {
@@ -236,8 +236,8 @@ textarea.yt-input {
 }
 
 .yt-banner--error {
-  background: rgba(230, 100, 100, 0.12);
-  color: #e78080;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .yt-banner button {
@@ -337,7 +337,7 @@ textarea.yt-input {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   background: var(--bg-card);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-pop);
 }
 
 .yt-search-hit {
@@ -506,8 +506,8 @@ textarea.yt-input {
   height: 34px;
   transform: translate(-50%, -50%) scale(0.9);
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
+  background: var(--media-scrim);
+  color: var(--media-fg);
   font-size: 22px;
   opacity: 0;
   transition: opacity 150ms ease, transform 150ms ease, background 150ms ease;
@@ -536,8 +536,8 @@ textarea.yt-input {
   bottom: 8px;
   padding: 1px 6px;
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.72);
-  color: #fff;
+  background: var(--media-scrim);
+  color: var(--media-fg);
   font-size: 11px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -549,7 +549,7 @@ textarea.yt-input {
   bottom: 0;
   left: 0;
   height: 3px;
-  background: rgba(255, 255, 255, 0.28);
+  background: var(--media-track);
 }
 
 .yt-thumb-progress > span {
@@ -752,8 +752,8 @@ textarea.yt-input {
   position: absolute;
   top: 14px;
   right: 14px;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
+  background: var(--media-scrim);
+  color: var(--media-fg);
   opacity: 0;
   transition: opacity 150ms ease, background 150ms ease;
 }
@@ -947,7 +947,7 @@ textarea.yt-input {
   aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: var(--radius-card);
-  background: #000;
+  background: var(--media-bg);
 }
 
 .yt-player-iframe {
@@ -1205,7 +1205,7 @@ textarea.yt-input {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--overlay);
   backdrop-filter: blur(2px);
   animation: yt-fade 150ms ease-out;
 }
@@ -1224,7 +1224,7 @@ textarea.yt-input {
   border-radius: var(--radius-card);
   background: var(--bg-card);
   color: var(--text-primary);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-pop);
   animation: yt-pop 180ms var(--ease-out-back);
 }
 
@@ -1338,15 +1338,15 @@ textarea.yt-input {
 }
 
 .yt-validation--ok {
-  color: #5fcf94;
+  color: var(--success-text);
 }
 
 .yt-validation--bad {
-  color: #e78080;
+  color: var(--danger);
 }
 
 .yt-validation--warn {
-  color: var(--study-break, #f5a35c);
+  color: var(--study-break);
 }
 
 .yt-preview {
@@ -1413,30 +1413,4 @@ textarea.yt-input {
   .yt-row-thumb {
     width: 88px;
   }
-}
-
-/* ---------- Tema chiaro: stati con contrasto sufficiente su sfondo bianco ---------- */
-
-:root[data-theme="light"] .yt-btn--danger,
-:root[data-theme="light"] .yt-icon-btn--danger:hover {
-  background: rgba(200, 60, 60, 0.12);
-  color: #b42323;
-}
-
-:root[data-theme="light"] .yt-btn--danger:hover:not(:disabled) {
-  background: rgba(200, 60, 60, 0.2);
-  color: #9a1c1c;
-}
-
-:root[data-theme="light"] .yt-banner--error,
-:root[data-theme="light"] .yt-validation--bad {
-  color: #b42323;
-}
-
-:root[data-theme="light"] .yt-validation--ok {
-  color: #1f8a53;
-}
-
-:root[data-theme="light"] .yt-validation--warn {
-  color: #b86a1d;
 }

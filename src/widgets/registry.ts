@@ -1,5 +1,6 @@
 import type { WidgetDefinition } from "../core/widgets/types";
 import type { LayoutItem } from "../core/layout/layoutRepository";
+import { pigmentFor, type Pigment } from "../core/theme/themes";
 import { studyWidget } from "./study";
 import { fileTransferWidget } from "./filetransfer";
 import { youtubeWidget } from "./youtube";
@@ -20,6 +21,11 @@ const widgetsById = new Map(WIDGET_REGISTRY.map((widget) => [widget.id, widget] 
 
 export function getWidget(id: string): WidgetDefinition | undefined {
   return widgetsById.get(id);
+}
+
+/** Pigmento del widget nel tema Opaco (attributo `data-pigment` della sua cella e della sua pagina). */
+export function widgetPigment(id: string): Pigment {
+  return pigmentFor(id, Math.max(0, WIDGET_REGISTRY.findIndex((widget) => widget.id === id)));
 }
 
 /**
