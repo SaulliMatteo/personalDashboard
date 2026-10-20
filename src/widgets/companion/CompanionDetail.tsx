@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { createElement, useEffect } from "react";
 import { MdPlayArrow, MdChatBubbleOutline, MdFavoriteBorder } from "react-icons/md";
 import { useNav } from "../../core/nav/NavContext";
 import { useSettings } from "../../core/settings/SettingsContext";
@@ -6,7 +6,8 @@ import { useActivityStatus } from "../../core/activity/activityBus";
 import SettingsSection from "../../core/settings/components/SettingsSection";
 import BackButton from "../../ui/BackButton";
 import { useCompanion } from "./CompanionContext";
-import CompanionFace from "./components/CompanionFace";
+import { useThemeVariant } from "../../core/theme/variants";
+import { COMPANION_CARDS } from "./card/cards";
 import { BEHAVIOR_LABELS } from "./engine/brain";
 import { ANIMATIONS, ANIMATION_CATEGORIES } from "./engine/animations";
 import { PERSONALITIES, PERSONALITY_IDS } from "./engine/personalities";
@@ -36,6 +37,7 @@ function CompanionDetail() {
   const { goToDashboard } = useNav();
   const { settings, updateSetting } = useSettings();
   const activity = useActivityStatus();
+  const Card = useThemeVariant(COMPANION_CARDS);
   const { snapshot, foreground, idleSeconds, systemSupported, disabled, poke, chatter, previewAnimation, setAnimationEnabled, retain } = useCompanion();
 
   // Tiene vivo il Companion anche se il widget non è in dashboard.
@@ -63,9 +65,8 @@ function CompanionDetail() {
 
       <div className="companion-detail-grid">
         <aside className="companion-detail-side">
-          <div className="companion-stage">
-            <CompanionFace bubbleSize="large" maxPointSize={12} />
-          </div>
+          {/* La card 2×2 del tema, con la faccia dal vivo. card-postit: in Quaderno è un post-it. */}
+          <div className="companion-stage card-postit">{createElement(Card, { size: "M" })}</div>
           <div className="companion-stage-actions">
             <button type="button" className="companion-btn" onClick={poke}>
               <MdFavoriteBorder /> Accarezza

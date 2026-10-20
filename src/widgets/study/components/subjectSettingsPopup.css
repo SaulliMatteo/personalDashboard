@@ -151,8 +151,8 @@
   max-height: 90vh;
   overflow-y: auto;
 
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--card-bg);
+  border: var(--card-border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-pop);
 }

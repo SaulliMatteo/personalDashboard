@@ -6,9 +6,10 @@
   min-height: 0;
   display: flex;
   overflow: hidden;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--card-bg);
+  border: var(--card-border);
   border-radius: var(--radius-card);
+  box-shadow: var(--card-shadow);
 }
 
 .nq-loading {
@@ -852,7 +853,8 @@
   flex-direction: column;
   min-height: 0;
   border-left: 1px solid var(--border-subtle);
-  background: var(--bg-card);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
 }
 
 .nq-panel-head {
@@ -1088,7 +1090,7 @@
   padding: 7px 12px;
   border: 1px solid var(--border-accent);
   border-radius: 10px;
-  background: var(--bg-card);
+  background: var(--card-bg);
   box-shadow: var(--shadow-pop);
   color: var(--text-primary);
   font-size: 13px;

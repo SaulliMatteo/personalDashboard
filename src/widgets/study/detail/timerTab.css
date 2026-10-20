@@ -18,74 +18,27 @@
 
 .study-timer-card,
 .study-subjects-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--card-bg);
+  border: var(--card-border);
   border-radius: var(--radius-card);
   padding: 22px;
+  box-shadow: var(--card-shadow);
 }
 
+/* Ospita la card 2×2 del tema (quadrante e pulsanti), che si disegna da sola. */
 .study-timer-card {
-  position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-
-  
-  background:
-    radial-gradient(circle at 50% 30%, var(--timer-glow, var(--accent)) 0%, transparent 62%),
-    var(--bg-card);
-  background-blend-mode: soft-light;
+  padding: 0;
+  overflow: hidden;
 }
 
-.study-timer-clock {
-  font-size: 34px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-  line-height: 1.1;
-}
 
-.study-timer-phase {
-  margin-top: 4px;
-  font-size: 12.5px;
-  color: var(--text-muted);
-}
 
-.study-timer-subject {
-  margin-top: 2px;
-  font-size: 12px;
-  font-weight: 600;
-}
 
-.study-cycle-dots {
-  display: flex;
-  gap: 7px;
-}
 
-.study-cycle-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--surface-3);
-  transition: background 200ms ease;
-}
 
-.study-cycle-dot.is-filled {
-  background: var(--accent);
-}
 
-.study-timer-controls {
-  display: flex;
-  gap: 12px;
-}
 
-.study-timer-hint {
-  margin: 0;
-  font-size: 12.5px;
-  color: var(--text-muted);
-  text-align: center;
-}
 
 .study-icon-btn {
   all: unset;
@@ -323,17 +276,58 @@
   color: var(--danger);
 }
 
-.study-goal-track {
-  height: 5px;
-  margin-top: 6px;
-  border-radius: 999px;
-  background: var(--ring-track);
-  overflow: hidden;
-}
 
 .study-goal-bar {
-  height: 100%;
-  border-radius: 999px;
-  background: var(--accent);
-  transition: width 300ms ease;
+  margin-top: 6px;
+}
+
+/* ---------- Righe delle materie nella forma del tema (come nelle card) ---------- */
+.study-subject-row {
+  min-height: 44px;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+}
+
+.study-subject-row.is-active {
+  border-color: var(--row-active-border, transparent);
+  background: var(--row-active-bg);
+}
+
+/* Opaco: la riga attiva è un blocco d'inchiostro, testo chiaro. */
+:root[data-theme="opaco"] .study-subject-row {
+  border-radius: 22px;
+}
+
+:root[data-theme="opaco"] .study-subject-row.is-active,
+:root[data-theme="opaco"] .study-subject-row.is-active .study-subject-time,
+:root[data-theme="opaco"] .study-subject-row.is-active .study-subject-mode,
+:root[data-theme="opaco"] .study-subject-row.is-active .study-row-gear,
+:root[data-theme="opaco"] .study-subject-row.is-active .study-subject-name {
+  color: var(--on-accent);
+}
+
+/* Quaderno: righe sul foglio, la materia attiva passata con l'evidenziatore. */
+:root[data-theme="quaderno"] .study-subjects-list {
+  gap: 0;
+}
+
+:root[data-theme="quaderno"] .study-subject-row {
+  border: 0;
+  border-bottom: 1px solid var(--divider);
+  border-radius: 0;
+}
+
+:root[data-theme="quaderno"] .study-subject-row.is-active {
+  background: transparent;
+}
+
+:root[data-theme="quaderno"] .study-subject-row.is-active .study-subject-name > span {
+  padding: 0 2px;
+  background: var(--highlight-mark);
+  font-weight: 600;
+}
+
+/* Nella pagina il quadrante di Notte sta al centro del pannello, non in alto. */
+.study-timer-card .sn--M .sn-timer {
+  flex: 0 0 auto;
 }

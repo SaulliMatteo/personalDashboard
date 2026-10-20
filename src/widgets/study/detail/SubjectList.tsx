@@ -82,7 +82,9 @@ function SubjectList() {
                 <MdSettings />
               </button>
               <span className="study-subject-dot" style={{ background: colorForSubject(subject, index) }} />
-              <span className="study-subject-name">{subject.name}</span>
+              <span className="study-subject-name">
+                <span>{subject.name}</span>
+              </span>
               <span className="study-subject-mode" title={subject.mode === "stopwatch" ? "Cronometro" : "Pomodoro"}>
                 {subject.mode === "stopwatch" ? <MdOutlineAvTimer /> : <MdOutlineHourglassBottom />}
               </span>

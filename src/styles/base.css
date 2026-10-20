@@ -46,17 +46,41 @@ button {
   flex-shrink: 0;
 }
 
+/* Intestazione delle pagine (dettaglio dei widget, catalogo): stesso titolo
+   del saluto della dashboard nel tema (features/dashboard/dashboardHeader.css). */
 .dashboard-header h1 {
   margin: 0;
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
   color: var(--text-primary);
 }
 
 .dashboard-header p {
-  margin: 4px 0 0;
-  font-size: 13.5px;
-  color: var(--text-muted);
+  margin: 2px 0 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="opaco"] .dashboard-header h1 {
+  font-size: 34px;
+  font-weight: 800;
+}
+
+:root[data-theme="quaderno"] .dashboard-header h1 {
+  font-family: var(--font-title);
+  font-size: 44px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.1;
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .dashboard-header h1 {
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 /* ---------- Cornice comune dei widget (dentro <WidgetFrame>) ---------- */
