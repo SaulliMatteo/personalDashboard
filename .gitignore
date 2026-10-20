@@ -46,3 +46,6 @@ lerna-debug.log*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Istruzioni locali per Claude
+CLAUDE.local.md

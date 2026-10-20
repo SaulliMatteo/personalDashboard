@@ -157,4 +157,55 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_video_watch_sessions_video ON video_watch_sessions(video_id)`,
     ],
   },
+  {
+    version: 7,
+    description: "Notes: cartelle, note, pagine (testo + scrittura a mano)",
+    statements: [
+      `CREATE TABLE IF NOT EXISTS note_folders (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         parent_id INTEGER,
+         name TEXT NOT NULL,
+         color TEXT,
+         icon TEXT NOT NULL DEFAULT 'folder',
+         created_at INTEGER NOT NULL
+       )`,
+      `CREATE TABLE IF NOT EXISTS notes (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         folder_id INTEGER,
+         title TEXT NOT NULL DEFAULT '',
+         tags TEXT NOT NULL DEFAULT '[]',
+         starred INTEGER NOT NULL DEFAULT 0,
+         created_at INTEGER NOT NULL,
+         updated_at INTEGER NOT NULL,
+         deleted_at INTEGER
+       )`,
+      `CREATE TABLE IF NOT EXISTS note_pages (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         note_id INTEGER NOT NULL,
+         position INTEGER NOT NULL,
+         content TEXT NOT NULL DEFAULT '',
+         ink TEXT NOT NULL DEFAULT '[]'
+       )`,
+      `CREATE INDEX IF NOT EXISTS idx_notes_folder ON notes(folder_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_note_pages_note ON note_pages(note_id, position)`,
+    ],
+  },
+  {
+    version: 8,
+    description: "Notes: sfondo pagina, copia su disco, allegati",
+    statements: [
+      `ALTER TABLE note_pages ADD COLUMN background TEXT NOT NULL DEFAULT 'none'`,
+      `ALTER TABLE notes ADD COLUMN disk_path TEXT`,
+      `ALTER TABLE notes ADD COLUMN synced_at INTEGER`,
+      `CREATE TABLE IF NOT EXISTS note_attachments (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         note_id INTEGER NOT NULL,
+         name TEXT NOT NULL,
+         size INTEGER NOT NULL,
+         created_at INTEGER NOT NULL
+       )`,
+      `CREATE INDEX IF NOT EXISTS idx_note_attachments_note ON note_attachments(note_id)`,
+    ],
+  },
+
 ];

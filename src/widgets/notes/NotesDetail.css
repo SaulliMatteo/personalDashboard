@@ -1,4 +1,4 @@
-/* Pagina Quaderno: guscio, barra laterale, raccolta, pannello cartella.
+/* Pagina Notes: guscio, barra laterale, raccolta, pannello cartella.
    Usa solo i token di styles/tokens.css, così il tema chiaro funziona da solo. */
 
 .nq {
@@ -1104,4 +1104,153 @@
 body.nq-dragging,
 body.nq-dragging * {
   cursor: grabbing !important;
+}
+
+/* ---------- Schermo diviso ---------- */
+
+.nq-split {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.nq-pane {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nq-pane--side {
+  border-left: 1px solid var(--border-subtle);
+}
+
+/* ---------- Pulsante "Nuova nota" con modelli ---------- */
+
+.nq-split-btn {
+  display: inline-flex;
+}
+
+.nq-split-btn .nq-btn:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.nq-split-caret {
+  padding: 8px 6px !important;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid color-mix(in srgb, var(--on-accent) 25%, transparent) !important;
+}
+
+/* ---------- Finestra "Cartella su disco" ---------- */
+
+.nq-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+.nq-modal {
+  width: min(480px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.nq-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 20px 20px;
+}
+
+.nq-modal-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.nq-modal-toggle input {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+
+.nq-modal-toggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+
+.nq-modal-toggle em {
+  font-style: normal;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.nq-modal code,
+.nq-panel-hint code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-size: 0.92em;
+}
+
+.nq-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- Avvisi e file trascinati dal desktop ---------- */
+
+.nq-notice {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 200;
+  max-width: min(520px, 90vw);
+  transform: translateX(-50%);
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--text-primary);
+  color: var(--bg-card);
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.nq-drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  pointer-events: none;
+}
+
+.nq-drop-overlay div {
+  padding: 28px 40px;
+  border: 2px dashed var(--accent);
+  border-radius: 18px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
 }
