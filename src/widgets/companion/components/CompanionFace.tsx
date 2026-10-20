@@ -1,19 +1,31 @@
 import { useEffect, useRef } from "react";
 import { useSettings } from "../../../core/settings/SettingsContext";
 import { useTheme } from "../../../core/theme/useTheme";
+import { useThemeVariant, type ThemeVariants } from "../../../core/theme/variants";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import { useCompanion } from "../CompanionContext";
-import { DEFAULT_STYLE } from "../render/styles";
+import { COMPANION_STYLES, type CompanionStyle } from "../render/styles";
 import "./CompanionFace.css";
 
 interface CompanionFaceProps {
   /** Mostra il fumetto sopra la faccia. */
   showBubble?: boolean;
   bubbleSize?: "small" | "normal" | "large";
-  /** Spazio intorno alla faccia, in punti della matrice. */
-  padding?: number;
+  /** Grandezza massima di un punto della faccia, in pixel CSS: limita quanto crescono gli occhi. */
+  maxPointSize?: number;
   className?: string;
 }
+
+/** Come viene disegnata la faccia in ogni tema (mockup: card del Companion). */
+const FACE_STYLES: ThemeVariants<CompanionStyle> = {
+  notte: COMPANION_STYLES.soft,
+  opaco: COMPANION_STYLES.pill,
+  quaderno: COMPANION_STYLES.pill,
+  fosforo: COMPANION_STYLES.led,
+};
+
+/** Nei mockup un punto della faccia è grande circa 7px (occhi di ~46×64 nella card 2×2). */
+const MAX_POINT_SIZE = 7;
 
 /** ~30 fotogrammi al secondo bastano e costano la metà. */
 const FRAME_MS = 1000 / 30;
@@ -23,11 +35,11 @@ const FRAME_MS = 1000 / 30;
  * uno contemporaneamente (widget + fantasma del drag + pagina): leggono
  * tutti lo stesso fotogramma dal provider.
  */
-function CompanionFace({ showBubble = true, bubbleSize = "normal", padding, className = "" }: CompanionFaceProps) {
+function CompanionFace({ showBubble = true, bubbleSize = "normal", maxPointSize = MAX_POINT_SIZE, className = "" }: CompanionFaceProps) {
   const { sampleFrame, snapshot } = useCompanion();
   const { settings } = useSettings();
   const theme = useTheme();
-  const isLight = theme.scheme === "light";
+  const style = useThemeVariant(FACE_STYLES);
 
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -43,7 +55,7 @@ function CompanionFace({ showBubble = true, bubbleSize = "normal", padding, clas
     if (css) colorRef.current = css;
   }, [settings.companionColor, settings.accentColor, settings.accentOverride, theme.id]);
 
-  const drawOpts = useLatestRef({ isLight, showMouth: settings.companionShowMouth, padding });
+  const drawOpts = useLatestRef({ style, showMouth: settings.companionShowMouth, maxPointSize });
 
   // Dimensioni reali del canvas = dimensioni CSS × densità dello schermo.
   useEffect(() => {
@@ -77,7 +89,8 @@ function CompanionFace({ showBubble = true, bubbleSize = "normal", padding, clas
       if (!canvas) return;
       const frame = sampleFrame(t, canvas.getBoundingClientRect());
       const o = drawOpts.current;
-      DEFAULT_STYLE.draw(canvas, frame, { color: colorRef.current, isLight: o.isLight, showMouth: o.showMouth, padding: o.padding });
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      o.style.draw(canvas, frame, { color: colorRef.current, showMouth: o.showMouth, dpr, maxPointSize: o.maxPointSize });
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);

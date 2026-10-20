@@ -223,7 +223,7 @@ export const SETTING_DEFS: SettingDef[] = [
       { value: "grumpy", label: "Brontolone" },
     ],
   },
-  { key: "companionColor", group: "companion", section: "Aspetto", type: "select", label: "Colore dei LED", options: [{ value: "text", label: "Bianco (segue il tema)" }, { value: "accent", label: "Colore accent" }] },
+  { key: "companionColor", group: "companion", section: "Aspetto", type: "select", label: "Colore della faccia", options: [{ value: "text", label: "Quello del tema" }, { value: "accent", label: "Colore accent" }] },
   { key: "companionShowMouth", group: "companion", section: "Aspetto", type: "boolean", label: "Mostra la bocca" },
 
   { key: "companionBubbles", group: "companion", section: "Fumetti ed emozioni", type: "boolean", label: "Fumetti", description: "Frasi brevi quando succede qualcosa o, ogni tanto, spontanee." },

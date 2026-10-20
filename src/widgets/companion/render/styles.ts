@@ -1,17 +1,20 @@
 import type { FaceFrame } from "../engine/animator";
 import { drawLedFace } from "./ledRenderer";
+import { drawSolidFace } from "./solidRenderer";
 
 /**
- * Stili grafici disponibili. Oggi solo "led"; per aggiungerne uno basta un
- * renderer con questa firma (riceve gli stessi parametri della faccia) e
- * una voce qui, più l'opzione nell'impostazione quando ce ne sarà più d'uno.
+ * Stili grafici della faccia. Ogni tema ne sceglie uno (CompanionFace.tsx):
+ * il comportamento è lo stesso, cambia solo come vengono disegnate le
+ * forme di faceShape.ts. Per aggiungerne uno basta un renderer con questa
+ * firma e una voce qui.
  */
 export interface StyleDrawOptions {
   color: string;
-  isLight: boolean;
   showMouth: boolean;
-  /** Spazio libero intorno alla faccia, in "punti". */
-  padding?: number;
+  /** Pixel reali per pixel CSS. */
+  dpr: number;
+  /** Grandezza massima di un punto della faccia, in pixel CSS. */
+  maxPointSize: number;
 }
 
 export interface CompanionStyle {
@@ -20,13 +23,28 @@ export interface CompanionStyle {
   draw: (canvas: HTMLCanvasElement, frame: FaceFrame, options: StyleDrawOptions) => void;
 }
 
-export const COMPANION_STYLES: Record<string, CompanionStyle> = {
+/** Margine intorno alla faccia, in punti: tiene gli occhi proporzionati alla card come nei mockup. */
+const FACE_PADDING = 8;
+
+function solid(id: string, label: string, roundness: number): CompanionStyle {
+  return {
+    id,
+    label,
+    draw: (canvas, frame, o) =>
+      drawSolidFace(canvas, frame, { color: o.color, showMouth: o.showMouth, roundness, padding: FACE_PADDING, maxScale: o.maxPointSize * o.dpr }),
+  };
+}
+
+export const COMPANION_STYLES = {
+  /** Notte: occhi pieni con gli angoli morbidi (l'alone è nel CSS della card). */
+  soft: solid("soft", "Forme morbide", 0.78),
+  /** Opaco e Quaderno: occhi a pillola, come macchie d'inchiostro. */
+  pill: solid("pill", "Pillole", 1),
+  /** Fosforo: matrice di punti; i punti spenti li disegna la texture del display. */
   led: {
     id: "led",
     label: "Matrice LED",
     draw: (canvas, frame, o) =>
-      drawLedFace(canvas, frame, { color: o.color, offAlpha: o.isLight ? 0.1 : 0.075, showMouth: o.showMouth, padding: o.padding }),
+      drawLedFace(canvas, frame, { color: o.color, offAlpha: 0, showMouth: o.showMouth, padding: FACE_PADDING, maxPitch: o.maxPointSize * o.dpr }),
   },
-};
-
-export const DEFAULT_STYLE = COMPANION_STYLES.led;
+} satisfies Record<string, CompanionStyle>;
