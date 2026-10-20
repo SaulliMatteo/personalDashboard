@@ -222,6 +222,36 @@ export async function getSessionsBetween(startMs: number, endMs: number): Promis
   }));
 }
 
+export interface DailyTotal {
+  /** Inizio della giornata locale (ms). */
+  dayStart: number;
+  seconds: number;
+}
+
+/**
+ * Secondi studiati in ciascuno degli ultimi `days` giorni, oggi compreso
+ * (dal più vecchio a oggi). I giorni senza sessioni valgono 0.
+ */
+export async function getDailyTotals(days: number): Promise<DailyTotal[]> {
+  const { start: todayStart } = todayRangeMs();
+  // Confini giorno per giorno con Date: un giorno non è sempre 24 h (ora legale).
+  const starts: number[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(todayStart);
+    d.setDate(d.getDate() - i);
+    starts.push(d.getTime());
+  }
+  const end = todayStart + 24 * 60 * 60 * 1000;
+  const sessions = await getSessionsBetween(starts[0], end);
+  const totals = starts.map((dayStart) => ({ dayStart, seconds: 0 }));
+  for (const session of sessions) {
+    let index = starts.length - 1;
+    while (index > 0 && session.endedAt < starts[index]) index--;
+    totals[index].seconds += session.durationSeconds;
+  }
+  return totals;
+}
+
 // ---------------------------------------------------------------------
 // Stato del timer (riga singola, id = 1)
 // ---------------------------------------------------------------------

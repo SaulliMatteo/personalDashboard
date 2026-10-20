@@ -11,7 +11,7 @@
   position: relative;
   border-radius: var(--radius-card);
   isolation: isolate;
-  transform: translate3d(0, 0, 0.01px);
+  transform: var(--card-transform) translate3d(0, 0, 0.01px);
   display: grid;
   border: var(--card-border);
   background: var(--card-bg);
@@ -129,6 +129,8 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: auto;
+  /* Il contenuto deve stare nella cella: mai una scrollbar dentro un widget. */
+  overflow: hidden;
+  border-radius: inherit;
   z-index: 1;
 }

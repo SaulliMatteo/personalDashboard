@@ -117,6 +117,21 @@ export function formatWhen(ts: number): string {
   return `${shortDate(d)}, ${time}`;
 }
 
+/** "adesso" · "5 min fa" · "2 ore fa" · "ieri" · "lunedì" · "13 ott": quando, a colpo d'occhio. */
+export function relativeWhen(ts: number, now = Date.now()): string {
+  const minutes = Math.floor((now - ts) / 60000);
+  const today = startOfToday();
+  if (ts >= today) {
+    if (minutes < 1) return "adesso";
+    if (minutes < 60) return `${minutes} min fa`;
+    const hours = Math.floor(minutes / 60);
+    return hours === 1 ? "1 ora fa" : `${hours} ore fa`;
+  }
+  if (ts >= today - DAY_MS) return "ieri";
+  if (ts >= today - 6 * DAY_MS) return new Date(ts).toLocaleDateString("it-IT", { weekday: "long" });
+  return shortDate(new Date(ts));
+}
+
 /** "oggi" · "ieri" · "il 13 ott" */
 export function relativeDay(ts: number): string {
   const today = startOfToday();

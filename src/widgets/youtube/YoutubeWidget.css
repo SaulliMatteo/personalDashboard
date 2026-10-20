@@ -1,146 +1,393 @@
-.yt-widget {
+/* YouTube (card "YouTube" dei mockup e widget-1x1.html). Le misure che
+   cambiano da tema a tema sono variabili; la struttura è una sola. */
+
+.widget.ytw {
+  --yt-pad: 18px;
+  --yt-gap: 18px;
+  --yt-thumb-radius: 14px;
+  --yt-play: 46px;
+  --yt-cell-play: 46px;
+
   display: flex;
-  flex-direction: column;
+  padding: var(--yt-pad);
+  gap: var(--yt-gap);
+  color: var(--text-primary);
 }
 
-.yt-widget-header {
+:root[data-theme="opaco"] .widget.ytw {
+  --yt-thumb-radius: 20px;
+  --yt-play: 56px;
+  --yt-cell-play: 56px;
+}
+
+:root[data-theme="quaderno"] .widget.ytw {
+  --yt-thumb-radius: 6px;
+  --yt-play: 50px;
+  --yt-cell-play: 50px;
+}
+
+:root[data-theme="fosforo"] .widget.ytw {
+  --yt-pad: 14px;
+  --yt-gap: 14px;
+  --yt-thumb-radius: var(--radius-display);
+}
+
+/* ---------- Miniatura: sempre 16:9 ---------- */
+.ytw-thumb,
+.ytw-cell {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-
-.yt-widget-state {
-  min-width: 0;
+  justify-content: center;
+  padding: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 11px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-muted);
-}
-
-.yt-widget-empty {
-  margin: 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--text-muted);
-}
-
-/* Corpo: la miniatura prende tutta l'altezza disponibile (la riga della griglia è bassa). */
-.yt-widget-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  align-items: stretch;
-  gap: 12px;
-}
-
-.yt-widget-thumb {
-  all: unset;
-  position: relative;
-  box-sizing: border-box;
-  flex: 0 0 auto;
-  height: 100%;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  border-radius: var(--radius-item);
-  background: var(--surface-2);
+  border: var(--display-border);
+  background: var(--display-texture, none), var(--thumb-bg);
+  color: var(--thumb-play-fg);
   cursor: pointer;
 }
 
-/* 1×2: miniatura in alto a tutta larghezza (prende l'altezza che resta), testo sotto. */
-.yt-widget--tall .yt-widget-body {
-  flex-direction: column;
-  gap: 8px;
+:root[data-theme="notte"] .ytw-thumb,
+:root[data-theme="notte"] .ytw-cell,
+:root[data-theme="opaco"] .ytw-thumb,
+:root[data-theme="opaco"] .ytw-cell {
+  border: 0;
 }
 
-.yt-widget--tall .yt-widget-thumb {
-  flex: 1 1 0;
-  width: 100%;
-  height: auto;
-  min-height: 0;
-  aspect-ratio: auto;
-}
-
-.yt-widget--tall .yt-widget-text {
+.ytw-thumb {
   flex: 0 0 auto;
-  justify-content: flex-start;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--yt-thumb-radius);
 }
 
-.yt-widget-thumb img {
-  display: block;
+.ytw-thumb img,
+.ytw-cell-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* hqdefault è 4:3 con barre nere: così si vede solo il 16:9 vero */
+  object-fit: cover;
 }
 
-.yt-widget-play {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+.ytw-play {
+  position: relative;
+  width: var(--yt-play);
+  height: var(--yt-play);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: var(--media-scrim);
-  color: var(--media-fg);
-  font-size: 18px;
-  transition: background 150ms ease, transform 150ms ease;
+  border: var(--thumb-play-border, 0);
+  background: var(--thumb-play-bg);
+  color: var(--thumb-play-fg);
 }
 
-.yt-widget-thumb:hover .yt-widget-play,
-.yt-widget-thumb:focus-visible .yt-widget-play {
-  background: var(--accent);
-  color: var(--on-accent);
-  transform: translate(-50%, -50%) scale(1.08);
-}
-
-.yt-widget-progress {
+.ytw-badge {
   position: absolute;
+  right: 8px;
+  bottom: 10px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--thumb-badge-bg);
+  color: var(--media-fg);
+  font-size: 11px;
+}
+
+/* Il badge della durata c'è solo nel mockup di Notte. */
+:root:not([data-theme="notte"]) .ytw-badge {
+  display: none;
+}
+
+/* Avanzamento dentro la miniatura (Notte); negli altri temi c'è la barra sotto. */
+.ytw-thumb-track {
+  position: absolute;
+  left: 0;
   right: 0;
   bottom: 0;
-  left: 0;
   height: 3px;
-  background: var(--media-track);
+  background: var(--thumb-track);
 }
 
-.yt-widget-progress > span {
+.ytw-thumb-track > span {
   display: block;
   height: 100%;
   background: var(--accent);
 }
 
-.yt-widget-text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 3px;
+:root:not([data-theme="notte"]) .ytw-thumb-track,
+:root[data-theme="notte"] .ytw-bar {
+  display: none;
 }
 
-.yt-widget-title {
+/* ---------- 1×1: la cella è il pulsante "riprendi" ---------- */
+.widget.ytw--S {
+  padding: 0;
+}
+
+.ytw-cell {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.ytw-cell .ytw-play {
+  width: var(--yt-cell-play);
+  height: var(--yt-cell-play);
+}
+
+.ytw-cell:disabled {
+  cursor: default;
+}
+
+/* Notte: il play senza cerchio, grande, sulla miniatura. */
+:root[data-theme="notte"] .ytw-cell .ytw-play {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+:root[data-theme="notte"] .ytw-cell .ytw-play svg {
+  width: 26px;
+  height: 26px;
+}
+
+:root[data-theme="quaderno"] .ytw-cell {
+  border-radius: var(--radius-card);
+}
+
+:root[data-theme="quaderno"] .ytw-cell .ytw-play svg {
+  width: 18px;
+  height: 18px;
+}
+
+:root[data-theme="fosforo"] .ytw-cell .ytw-play svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ---------- Testi ---------- */
+.ytw-title {
+  font-weight: 500;
+  line-height: 1.35;
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.3;
-  color: var(--text-primary);
 }
 
-.yt-widget-channel {
+.ytw-position {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ytw-heading {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.ytw-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.widget.ytw--empty {
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---------- 2×1: miniatura a sinistra, titolo e posizione a destra ---------- */
+.widget.ytw--W {
+  align-items: center;
+}
+
+/* La miniatura resta 16:9 e lascia sempre spazio al titolo. */
+.ytw--W .ytw-thumb {
+  width: 52%;
+  max-height: 100%;
+}
+
+.ytw-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ---------- 1×2: miniatura sopra, testi sotto ---------- */
+.widget.ytw--T {
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- 3×2: due colonne ---------- */
+.widget.ytw--L {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  column-gap: var(--yt-gap);
+}
+
+.ytw-col {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ytw-col--left {
+  gap: 10px;
+}
+
+.ytw-col--left .ytw-position {
+  margin-top: -6px;
+}
+
+.ytw-col--right {
+  gap: 8px;
+}
+
+.ytw-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.ytw-count,
+.ytw-next-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ytw-next-label {
+  margin-top: auto;
+}
+
+.ytw-next-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--divider);
+  font-size: 13px;
+}
+
+.ytw-next-row:last-child {
+  padding-bottom: 0;
+}
+
+.ytw-next-title {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11.5px;
-  color: var(--text-muted);
+}
+
+.ytw-next-time {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+}
+
+/* Opaco: titolo grande a destra, "Poi:" sotto; posizione in grassetto. */
+:root[data-theme="opaco"] .ytw-col--left {
+  gap: 12px;
+}
+
+:root[data-theme="opaco"] .ytw-col--left .ytw-position {
+  margin-top: 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+:root[data-theme="opaco"] .ytw-col--right {
+  gap: 0;
+  padding: 4px 4px 4px 0;
+}
+
+:root[data-theme="opaco"] .ytw-heading {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+:root[data-theme="opaco"] .ytw-col--right .ytw-title {
+  margin-top: auto;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  -webkit-line-clamp: 3;
+}
+
+.ytw-then {
+  margin-top: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Quaderno: titolo del widget a mano, titolo del video a destra. */
+:root[data-theme="quaderno"] .ytw-heading {
+  font-family: var(--font-title);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .ytw-col--left .ytw-position {
+  margin-top: 0;
+  font-size: 13px;
+}
+
+:root[data-theme="quaderno"] .ytw-col--right {
+  gap: 6px;
+}
+
+:root[data-theme="quaderno"] .ytw-col--right .ytw-title {
+  margin-top: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+:root[data-theme="quaderno"] .ytw-next-row {
+  padding: 8px 0;
+}
+
+:root[data-theme="quaderno"] .ytw-next-row:last-child {
+  padding-bottom: 0;
+}
+
+/* Fosforo: testi più piccoli nella colonna destra, titolo normale. */
+:root[data-theme="fosforo"] .ytw-title {
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+:root[data-theme="fosforo"] .ytw-col--right {
+  gap: 6px;
+  font-size: 12px;
+}
+
+:root[data-theme="fosforo"] .ytw-heading {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+:root[data-theme="fosforo"] .ytw-next-row {
+  padding: 8px 0;
+  font-size: 12px;
+}
+
+:root[data-theme="fosforo"] .ytw-next-row:last-child {
+  padding-bottom: 0;
+}
+
+/* Opaco 1×1: la cella è il pigmento stesso, col play nel cerchio d'inchiostro. */
+:root[data-theme="opaco"] .ytw-cell {
+  background: transparent;
 }

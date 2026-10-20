@@ -1,83 +1,90 @@
 import type { MouseEvent } from "react";
-import { MdOutlineInsertDriveFile, MdPlayArrow, MdStop } from "react-icons/md";
 import WidgetFrame from "../../core/widgets/WidgetFrame";
 import type { WidgetProps } from "../../core/widgets/types";
+import { sizeKey } from "../../core/widgets/sizes";
+import { useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
+import { PlayIcon, StopIcon } from "../../ui/icons";
 import { useFileTransfer } from "./FileTransferContext";
 import { extensionOf, formatSize } from "./lib/format";
 import "./FileTransferWidget.css";
 
-const LATEST_FILES_IN_LARGE = 3;
+const LATEST_FILES = 3;
 
+// Etichetta dello stato: in Fosforo è da display ("On"), negli altri temi per esteso.
+const STATUS_LABELS: ThemeVariants<[string, string]> = {
+  notte: ["Online", "Offline"],
+  opaco: ["Online", "Offline"],
+  quaderno: ["Online", "Offline"],
+  fosforo: ["On", "Off"],
+};
+
+// Raggio degli angoli dell'icona "ferma", come nei mockup.
+const STOP_ROUND = { notte: 2, opaco: 3, quaderno: 2, fosforo: 0 };
+
+/**
+ * Card del File transfer (temi-dashboard/docs/design/temi/*.html): la
+ * struttura è la stessa in tutti i temi, cambiano font e colori (CSS).
+ * 1×1: solo il numero di file ricevuti e il punto di stato.
+ */
 function FileTransferWidget({ w, h }: WidgetProps) {
   const { running, address, busy, files, ready, startServer, stopServer } = useFileTransfer();
+  const [onLabel, offLabel] = useThemeVariant(STATUS_LABELS);
+  const stopRound = useThemeVariant(STOP_ROUND);
+  const size = sizeKey(w, h);
+  const count = ready ? files.length : "–";
 
-  const isWide = w >= 2;
-  const isLarge = w >= 2 && h >= 2;
-
-  // Il click sul widget apre la pagina di dettaglio: i controlli lo fermano.
   function handleToggle(e: MouseEvent) {
     e.stopPropagation();
     if (busy) return;
     void (running ? stopServer() : startServer());
   }
 
-  const toggle = (
-    <button
-      type="button"
-      className={`ft-widget-toggle${running ? " is-running" : ""}`}
-      onClick={handleToggle}
-      disabled={busy}
-      aria-label={running ? "Ferma il server" : "Avvia il server"}
-      title={running ? "Ferma il server" : "Avvia il server"}
-    >
-      {running ? <MdStop /> : <MdPlayArrow />}
-    </button>
-  );
+  if (size === "S") {
+    return (
+      <WidgetFrame>
+        <article className={`widget ftw ftw--S${running ? " is-online" : ""}`} aria-label={`File transfer: ${count} file ricevuti, ${running ? "online" : "offline"}`}>
+          <span className="ftw-num">{count}</span>
+          <span className="ftw-dot" aria-hidden="true" />
+          <span className="ftw-cap">file</span>
+        </article>
+      </WidgetFrame>
+    );
+  }
 
-  const statusLabel = running ? "Online" : "Offline";
-
+  const toggleLabel = running ? "Ferma il server" : "Avvia il server";
   return (
     <WidgetFrame>
-      <article className={`widget ft-widget ${isLarge ? "ft-widget--large" : isWide ? "ft-widget--wide" : "ft-widget--small"}`}>
-        <div className="widget-header ft-widget-header">
-          <h2>File Transfer</h2>
-          <span className={`ft-status${running ? " is-online" : ""}`}>
-            <span className="ft-status-dot" />
-            {statusLabel}
+      <article className={`widget ftw ftw--${size}${running ? " is-online" : ""}`}>
+        <header className="ftw-head">
+          <span className="ftw-title">File</span>
+          <span className="ftw-status">
+            <span className="ftw-dot" aria-hidden="true" />
+            {running ? onLabel : offLabel}
           </span>
+        </header>
+
+        <div className="ftw-main">
+          <div>
+            <div className="ftw-num">{count}</div>
+            <div className="ftw-label">ricevuti</div>
+          </div>
+          <div className="ftw-side">
+            <span className="ftw-address">{running && address ? `http://${address}` : "Server fermo"}</span>
+            <button type="button" className="ftw-toggle" onClick={handleToggle} disabled={busy} aria-label={toggleLabel} title={toggleLabel}>
+              {running ? <StopIcon size={13} round={stopRound} /> : <PlayIcon size={15} />}
+            </button>
+          </div>
         </div>
 
-        {!isWide ? (
-          <div className="ft-widget-small-body">
-            <div className="ft-widget-count">{ready ? files.length : "–"}</div>
-            <div className="ft-widget-play-align">
-              <p className="ft-widget-caption">file ricevuti</p>
-              {toggle}
-            </div>
-          </div>
-        ) : (
-          <div className="ft-widget-main">
-            <div className="ft-widget-info">
-              <div className="ft-widget-count">{ready ? files.length : "–"}</div>
-              <p className="ft-widget-caption">file ricevuti</p>
-            </div>
-            <div className="ft-widget-side">
-              {running && address ? <code className="ft-widget-address">http://{address}</code> : <span className="ft-widget-hint">Server fermo</span>}
-              {toggle}
-            </div>
-          </div>
-        )}
-
-        {isLarge && (
-          <ul className="ft-widget-files">
+        {size === "M" && (
+          <ul className="ftw-files">
             {files.length === 0 ? (
-              <li className="ft-widget-empty">I file inviati dal dispositivo appariranno qui.</li>
+              <li className="ftw-files-empty">I file inviati dal dispositivo appariranno qui.</li>
             ) : (
-              files.slice(0, LATEST_FILES_IN_LARGE).map((file) => (
+              files.slice(0, LATEST_FILES).map((file) => (
                 <li key={file.name}>
-                  <MdOutlineInsertDriveFile className="ft-widget-file-icon" />
-                  <span className="ft-widget-file-name">{file.name}</span>
-                  <span className="ft-widget-file-meta">
+                  <span className="ftw-file-name">{file.name}</span>
+                  <span className="ftw-file-meta">
                     {extensionOf(file.name)} · {formatSize(file.size)}
                   </span>
                 </li>

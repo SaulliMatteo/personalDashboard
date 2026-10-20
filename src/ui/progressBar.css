@@ -1,0 +1,50 @@
+/* Barra di avanzamento, una forma per tema (temi-dashboard/docs/design/temi/). */
+
+.pbar {
+  position: relative;
+  flex: 0 0 auto;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.pbar-fill {
+  height: 100%;
+  width: calc(var(--p) * 100%);
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+/* Opaco: spessa, a pillola. */
+:root[data-theme="opaco"] .pbar {
+  height: 10px;
+  border-radius: 5px;
+}
+
+/* Quaderno: contorno a penna con riempimento in inchiostro. */
+:root[data-theme="quaderno"] .pbar {
+  height: 8px;
+  border: 1.5px solid var(--text-primary);
+  border-radius: 6px;
+  background: transparent;
+}
+
+:root[data-theme="quaderno"] .pbar-fill {
+  border-radius: 0;
+}
+
+/* Fosforo: celle separate da 6px, accese o spente. Si accendono celle intere. */
+:root[data-theme="fosforo"] .pbar {
+  --cell: 14px;
+  --cell-gap: 3px;
+  height: 6px;
+  border-radius: 0;
+  background: repeating-linear-gradient(90deg, var(--dot-off) 0 var(--cell), transparent var(--cell) calc(var(--cell) + var(--cell-gap)));
+}
+
+:root[data-theme="fosforo"] .pbar-fill {
+  width: round(up, calc(var(--p) * 100%), calc(var(--cell) + var(--cell-gap)));
+  max-width: 100%;
+  background: repeating-linear-gradient(90deg, var(--dot-on) 0 var(--cell), transparent var(--cell) calc(var(--cell) + var(--cell-gap)));
+}

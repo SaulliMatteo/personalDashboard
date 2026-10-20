@@ -5,7 +5,7 @@ import { useTimer } from "./TimerContext";
 
 const PHASE_LABEL: Record<string, string> = {
   idle: "Pronto",
-  work: "In studio",
+  work: "Concentrazione",
   short_break: "Pausa breve",
   long_break: "Pausa lunga",
 };
