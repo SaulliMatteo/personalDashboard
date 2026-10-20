@@ -1,7 +1,7 @@
 // Da aggiungere IN FONDO all'array MIGRATIONS di src/core/db/migrations.ts
   {
     version: 4,
-    description: "Quaderno: cartelle, note, pagine (testo + scrittura a mano)",
+    description: "Notes: cartelle, note, pagine (testo + scrittura a mano)",
     statements: [
       `CREATE TABLE IF NOT EXISTS note_folders (
          id INTEGER PRIMARY KEY AUTOINCREMENT,

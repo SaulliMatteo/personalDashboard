@@ -13,31 +13,43 @@ import {
   MdFormatUnderlined,
   MdLink,
   MdOutlineBackspace,
+  MdOutlineAttachFile,
   MdOutlineBorderColor,
-  MdOutlineContentCopy,
+  MdOutlineFileDownload,
   MdOutlineEdit,
   MdOutlineGesture,
   MdOutlineStarBorder,
+  MdOutlineVerticalSplit,
   MdRedo,
   MdRemove,
   MdStar,
   MdUndo,
 } from "react-icons/md";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
+import { open as openDialog } from "@tauri-apps/plugin-dialog";
+import { openPath } from "@tauri-apps/plugin-opener";
 import ConfirmButton from "../../../ui/ConfirmButton";
 import {
   addPage,
+  deleteAttachment,
   deletePage,
   getPages,
+  listAttachments,
   reorderPages,
   savePage,
+  setPageBackground,
   updateNote,
+  type Attachment,
   type InkStroke,
   type NotePage,
   type NoteSummary,
+  type PageBackground,
 } from "../data/notesRepository";
+import { noteToMarkdown, renderNoteImage, renderNotePdf, saveBytes, saveText } from "../lib/exportNote";
+import { attachmentAbsolutePath, removeAttachmentFile, slugify } from "../lib/vault";
+import { BACKGROUND_OPTIONS } from "../lib/templates";
 import { normalizeUrl, toggleChecklist } from "../lib/editorDom";
-import { formatWhen, htmlToMarkdown, htmlToText, monthYearUpper, wordCount } from "../lib/html";
+import { formatWhen, htmlToText, monthYearUpper, wordCount } from "../lib/html";
 import type { InkTool } from "./InkLayer";
 import PageSurface from "./PageSurface";
 import "./noteEditor.css";
@@ -49,12 +61,39 @@ interface NoteEditorProps {
   onChanged: () => void;
   onToggleStar: () => void;
   onTrash: () => void;
+  /** Cambia quando una nota riceve nuovi allegati dall'esterno (trascinamento di file). */
+  attachVersion: number;
+  onAttachPaths: (noteId: number, paths: string[]) => void;
+  /** Apre un'altra nota affiancata (solo nel pannello principale). */
+  onSplit?: (noteId: number) => void;
+  splitCandidates?: NoteSummary[];
+  /** Pannello stretto (schermo diviso): niente colonna delle pagine. */
+  compact?: boolean;
+  onClosePane?: () => void;
+}
+
+function formatBytes(size: number): string {
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(0)} KB`;
+  return `${(size / 1024 / 1024).toFixed(1)} MB`;
 }
 
 const INK_SIZES = [1, 2, 3, 5, 8];
 const INK_COLORS = ["#6c8dff", "#f472b6", "#34d399", "#fbbf24", "#f2f2f4"];
 
-function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteEditorProps) {
+function NoteEditor({
+  note,
+  pathLabel,
+  onChanged,
+  onToggleStar,
+  onTrash,
+  attachVersion,
+  onAttachPaths,
+  onSplit,
+  splitCandidates = [],
+  compact = false,
+  onClosePane,
+}: NoteEditorProps) {
   const [title, setTitle] = useState(note.title);
   const [pages, setPages] = useState<NotePage[]>([]);
   const [ready, setReady] = useState(false);
@@ -71,6 +110,11 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
   const [linkUrl, setLinkUrl] = useState("");
   const [tagDraft, setTagDraft] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [menu, setMenu] = useState<"export" | "split" | null>(null);
+  const [lightExport, setLightExport] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [splitQuery, setSplitQuery] = useState("");
 
   // pagesRef rispecchia SEMPRE `pages` in modo sincrono: i salvataggi con
   // debounce e il flush allo smontaggio leggono da qui, mai da uno state vecchio.
@@ -97,6 +141,18 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
       cancelled = true;
     };
   }, [note.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    listAttachments(note.id)
+      .then((list) => {
+        if (!cancelled) setAttachments(list);
+      })
+      .catch((error) => console.error("Errore nel caricamento degli allegati:", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [note.id, attachVersion]);
 
   const flush = useCallback(async () => {
     if (timer.current !== null) {
@@ -268,7 +324,7 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
 
   async function handleAddPage() {
     await flush();
-    const created = await addPage(note.id);
+    const created = await addPage(note.id, page?.background ?? "none");
     const next = [...pagesRef.current, created];
     pagesRef.current = next;
     setPages(next);
@@ -300,16 +356,79 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
     onChanged();
   }
 
-  async function exportMarkdown() {
+  async function changeBackground(background: PageBackground) {
+    if (!page) return;
+    const next = pagesRef.current.map((p) => (p.id === page.id ? { ...p, background } : p));
+    pagesRef.current = next;
+    setPages(next);
+    await setPageBackground(page.id, note.id, background);
+    setSavedAt(Date.now());
+    onChanged();
+  }
+
+  async function exportAs(kind: "pdf" | "png" | "jpg" | "md" | "copy") {
+    setMenu(null);
     await flush();
-    const body = pagesRef.current.map((p) => htmlToMarkdown(p.content)).join("\n\n---\n\n");
+    const list = pagesRef.current;
+    const meta = { title, kicker: (pathLabel || "Senza cartella").toUpperCase(), createdAt: note.createdAt };
+    const base = slugify(title || "nota");
+    setBusy(true);
     try {
-      await navigator.clipboard.writeText(`# ${title || "Senza titolo"}\n\n${body}`);
-      showToast("Markdown copiato negli appunti");
-    } catch {
-      showToast("Impossibile copiare negli appunti");
+      if (kind === "copy") {
+        await navigator.clipboard.writeText(noteToMarkdown(title, list));
+        showToast("Markdown copiato negli appunti");
+      } else if (kind === "md") {
+        if (await saveText(`${base}.md`, "md", "Markdown", noteToMarkdown(title, list))) showToast("Markdown salvato");
+      } else if (kind === "pdf") {
+        const bytes = await renderNotePdf(list, meta, { scale: 2, light: lightExport });
+        if (await saveBytes(`${base}.pdf`, "pdf", "PDF", bytes)) showToast("PDF salvato");
+      } else {
+        const bytes = await renderNoteImage(list, meta, kind === "png" ? "png" : "jpeg", { scale: 3, light: lightExport });
+        if (await saveBytes(`${base}.${kind}`, kind, kind === "png" ? "Immagine PNG" : "Immagine JPG", bytes)) {
+          showToast("Immagine salvata");
+        }
+      }
+    } catch (error) {
+      console.error("Esportazione non riuscita:", error);
+      showToast("Esportazione non riuscita");
+    } finally {
+      setBusy(false);
     }
   }
+
+  async function pickFiles() {
+    try {
+      const picked = await openDialog({ multiple: true });
+      if (!picked) return;
+      onAttachPaths(note.id, Array.isArray(picked) ? picked : [picked]);
+    } catch (error) {
+      console.error("Selezione file non riuscita:", error);
+    }
+  }
+
+  async function openAttachment(attachment: Attachment) {
+    if (!note.diskPath) {
+      showToast("La copia su disco non è ancora pronta, riprova tra un attimo");
+      return;
+    }
+    try {
+      await openPath(await attachmentAbsolutePath(note.diskPath, attachment.name));
+    } catch (error) {
+      console.error("Impossibile aprire l'allegato:", error);
+      showToast("Impossibile aprire il file");
+    }
+  }
+
+  async function removeAttachment(attachment: Attachment) {
+    if (note.diskPath) await removeAttachmentFile(note.diskPath, attachment.name);
+    await deleteAttachment(attachment.id);
+    setAttachments((list) => list.filter((a) => a.id !== attachment.id));
+  }
+
+  const splitQ = splitQuery.trim().toLowerCase();
+  const splitList = splitCandidates
+    .filter((n) => n.id !== note.id && n.title.toLowerCase().includes(splitQ))
+    .slice(0, 30);
 
   if (!ready || !page) return <p className="nq-loading">Caricamento…</p>;
 
@@ -320,7 +439,7 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
   const kicker = (pathLabel || "Senza cartella").toUpperCase();
 
   return (
-    <div className="nq-editor">
+    <div className={`nq-editor${compact ? " nq-editor--compact" : ""}`}>
       <header className="nq-editor-head">
         <div className="nq-editor-titleblock">
           <div className="nq-editor-titlerow">
@@ -366,10 +485,93 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
 
         <div className="nq-editor-actions">
           <span className="nq-save-status">{savedLabel}</span>
-          <button type="button" className="nq-btn" onClick={() => void exportMarkdown()}>
-            <MdOutlineContentCopy /> Copia Markdown
-          </button>
+
+          {onSplit && (
+            <div className="nq-menu-anchor">
+              <button
+                type="button"
+                className="nq-btn"
+                onClick={() => {
+                  setSplitQuery("");
+                  setMenu(menu === "split" ? null : "split");
+                }}
+              >
+                <MdOutlineVerticalSplit /> Affianca
+              </button>
+              {menu === "split" && (
+                <>
+                  <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+                  <div className="nq-menu nq-menu--right nq-menu--list">
+                    <input
+                      autoFocus
+                      className="nq-menu-search"
+                      placeholder="Cerca una nota da affiancare…"
+                      value={splitQuery}
+                      onChange={(e) => setSplitQuery(e.target.value)}
+                    />
+                    {splitList.map((n) => (
+                      <button
+                        key={n.id}
+                        type="button"
+                        onClick={() => {
+                          setMenu(null);
+                          onSplit(n.id);
+                        }}
+                      >
+                        <strong>{n.title || "Senza titolo"}</strong>
+                        <span>{formatWhen(n.updatedAt)}</span>
+                      </button>
+                    ))}
+                    {splitList.length === 0 && <p className="nq-menu-empty">Nessuna nota trovata.</p>}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          <div className="nq-menu-anchor">
+            <button type="button" className="nq-btn" disabled={busy} onClick={() => setMenu(menu === "export" ? null : "export")}>
+              <MdOutlineFileDownload /> {busy ? "Esporto…" : "Esporta"}
+            </button>
+            {menu === "export" && (
+              <>
+                <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+                <div className="nq-menu nq-menu--right">
+                  <button type="button" onClick={() => void exportAs("pdf")}>
+                    <strong>PDF</strong>
+                    <span>Una pagina PDF per ogni pagina della nota</span>
+                  </button>
+                  <button type="button" onClick={() => void exportAs("png")}>
+                    <strong>Immagine PNG</strong>
+                    <span>Alta risoluzione, tutte le pagine in verticale</span>
+                  </button>
+                  <button type="button" onClick={() => void exportAs("jpg")}>
+                    <strong>Immagine JPG</strong>
+                    <span>Più leggera del PNG</span>
+                  </button>
+                  <button type="button" onClick={() => void exportAs("md")}>
+                    <strong>Markdown (.md)</strong>
+                    <span>Solo testo, senza la scrittura a mano</span>
+                  </button>
+                  <button type="button" onClick={() => void exportAs("copy")}>
+                    <strong>Copia Markdown</strong>
+                    <span>Negli appunti</span>
+                  </button>
+                  <label className="nq-menu-check">
+                    <input type="checkbox" checked={lightExport} onChange={(e) => setLightExport(e.target.checked)} />
+                    Sfondo chiaro (consigliato per stampare)
+                  </label>
+                </div>
+              </>
+            )}
+          </div>
+
           <ConfirmButton className="nq-btn nq-btn--danger" label="Cestino" confirmLabel="Sicuro?" onConfirm={onTrash} />
+          {onClosePane && (
+            <button type="button" className="nq-icon-btn" onClick={onClosePane} aria-label="Chiudi riquadro">
+              <MdClose />
+            </button>
+          )}
         </div>
       </header>
 
@@ -412,6 +614,9 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
           </span>
         )}
         <span className="nq-tool-sep" />
+        <button type="button" className="nq-tool nq-tool--wide" onClick={() => void pickFiles()}>
+          <MdOutlineAttachFile /> Allega file
+        </button>
         <button
           type="button"
           className={`nq-tool nq-tool--wide${mode === "ink" ? " is-on" : ""}`}
@@ -419,10 +624,37 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
         >
           <MdOutlineGesture /> Scrittura a mano
         </button>
+        <select
+          className="nq-select nq-select--end"
+          value={page.background}
+          onChange={(e) => void changeBackground(e.target.value as PageBackground)}
+          aria-label="Sfondo della pagina"
+        >
+          {BACKGROUND_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
       </div>
 
+      {attachments.length > 0 && (
+        <div className="nq-attachments">
+          {attachments.map((a) => (
+            <span key={a.id} className="nq-attach">
+              <button type="button" onClick={() => void openAttachment(a)} title="Apri">
+                <MdOutlineAttachFile /> {a.name} <em>{formatBytes(a.size)}</em>
+              </button>
+              <button type="button" onClick={() => void removeAttachment(a)} aria-label={`Rimuovi ${a.name}`}>
+                <MdClose />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className="nq-editor-body">
-        <aside className="nq-pages">
+        <aside className="nq-pages" hidden={compact}>
           <div className="nq-pages-head">
             <span>PAGINE</span>
             <span>{pages.length}</span>
@@ -485,6 +717,7 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
               page={page}
               pageNumber={index + 1}
               zoom={zoom}
+              background={page.background}
               mode={mode}
               tool={tool}
               color={color}
@@ -504,7 +737,14 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
               Pagina {index + 1} di {pages.length}
               <button type="button" className="nq-icon-btn" disabled={index >= pages.length - 1} onClick={() => setIndex(index + 1)} aria-label="Pagina successiva"><MdChevronRight /></button>
             </span>
-            <span>{wordCount(page.content)} parole · Italiano</span>
+            <span className="nq-pager">
+              {wordCount(page.content)} parole · Italiano
+              {compact && (
+                <button type="button" className="nq-icon-btn" onClick={() => void handleAddPage()} aria-label="Aggiungi pagina" title="Aggiungi pagina">
+                  <MdAdd />
+                </button>
+              )}
+            </span>
             <span className="nq-pager">
               <button type="button" className="nq-icon-btn" disabled={zoom <= 60} onClick={() => setZoom(zoom - 10)} aria-label="Riduci zoom"><MdRemove /></button>
               {zoom}%
