@@ -87,11 +87,25 @@ export const DEFAULT_SETTINGS = {
 
   // ---- Widget: YouTube ----
   youtubeCountAsStudy: false,
+
+  // ---- Widget: Companion ----
+  companionName: "Pixel",
+  companionPersonality: "cheerful" as "cheerful" | "calm" | "sleepy" | "grumpy",
+  companionColor: "text" as "text" | "accent",
+  companionShowMouth: true,
+  companionBubbles: true,
+  companionBubbleRate: "normal" as "rare" | "normal" | "often",
+  companionRandomEmotes: true,
+  companionEmoteRate: "normal" as "rare" | "normal" | "often",
+  companionIdleMinutes: 5,
+  companionWatchForegroundApp: true,
+  /** Animazioni spente, "id,id,…". Si modifica dalla pagina del Companion: nessuna voce in SETTING_DEFS. */
+  companionDisabledAnimations: "",
 };
 
 export type AppSettings = typeof DEFAULT_SETTINGS;
 export type SettingKey = keyof AppSettings;
-export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube";
+export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion";
 
 interface BaseDef {
   key: SettingKey;
@@ -211,6 +225,39 @@ export const SETTING_DEFS: SettingDef[] = [
     label: "Conta i video come tempo di studio",
     description:
       "Mentre guardi un video, il tempo in riproduzione si aggiunge allo studio della materia che ha lo stesso nome della cartella in cui il video è salvato (solo la cartella diretta; maiuscole e accenti non contano). Non conta se nessuna materia attiva ha quel nome, né mentre il timer dello Studio sta lavorando.",
+  },
+
+  // ======================= WIDGET: COMPANION =======================
+  // Personalità e animazioni singole si scelgono anche dalla pagina del Companion.
+  { key: "companionName", group: "companion", section: "Aspetto", type: "text", maxLength: 16, placeholder: "Pixel", label: "Nome" },
+  {
+    key: "companionPersonality", group: "companion", section: "Aspetto", type: "select", label: "Personalità",
+    options: [
+      { value: "cheerful", label: "Allegro" },
+      { value: "calm", label: "Calmo" },
+      { value: "sleepy", label: "Dormiglione" },
+      { value: "grumpy", label: "Brontolone" },
+    ],
+  },
+  { key: "companionColor", group: "companion", section: "Aspetto", type: "select", label: "Colore dei LED", options: [{ value: "text", label: "Bianco (segue il tema)" }, { value: "accent", label: "Colore accent" }] },
+  { key: "companionShowMouth", group: "companion", section: "Aspetto", type: "boolean", label: "Mostra la bocca" },
+
+  { key: "companionBubbles", group: "companion", section: "Fumetti ed emozioni", type: "boolean", label: "Fumetti", description: "Frasi brevi quando succede qualcosa o, ogni tanto, spontanee." },
+  {
+    key: "companionBubbleRate", group: "companion", section: "Fumetti ed emozioni", type: "select", dependsOn: "companionBubbles", label: "Quanto chiacchiera",
+    options: [{ value: "rare", label: "Poco" }, { value: "normal", label: "Normale" }, { value: "often", label: "Tanto" }],
+  },
+  { key: "companionRandomEmotes", group: "companion", section: "Fumetti ed emozioni", type: "boolean", label: "Emozioni casuali" },
+  {
+    key: "companionEmoteRate", group: "companion", section: "Fumetti ed emozioni", type: "select", dependsOn: "companionRandomEmotes", label: "Frequenza delle emozioni",
+    options: [{ value: "rare", label: "Rara" }, { value: "normal", label: "Normale" }, { value: "often", label: "Frequente" }],
+  },
+
+  { key: "companionIdleMinutes", group: "companion", section: "Comportamento", type: "number", control: "input", min: 1, max: 120, step: 1, label: "Si addormenta dopo (min)", description: "Minuti senza mouse e tastiera. Non dorme mentre studi o guardi un video." },
+  {
+    key: "companionWatchForegroundApp", group: "companion", section: "Comportamento", type: "boolean",
+    label: "Osserva l'app in primo piano (Windows)",
+    description: "Legge nome e titolo della finestra attiva per capire se stai ascoltando musica, programmando o guardando un video. Tutto resta sul PC: niente viene salvato né inviato.",
   },
 ];
 
