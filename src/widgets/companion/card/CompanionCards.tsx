@@ -36,7 +36,7 @@ function Bubble({ className }: { className: string }) {
 }
 
 function Face({ className = "" }: { className?: string }) {
-  return <CompanionFace className={`cc-face ${className}`} showBubble={false} padding={2} />;
+  return <CompanionFace className={`cc-face ${className}`} showBubble={false} />;
 }
 
 /** Notte: faccia in un pannello interno con un alone tenue, nome e stato sotto. */

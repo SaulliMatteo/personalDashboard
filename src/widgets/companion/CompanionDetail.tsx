@@ -64,7 +64,7 @@ function CompanionDetail() {
       <div className="companion-detail-grid">
         <aside className="companion-detail-side">
           <div className="companion-stage">
-            <CompanionFace bubbleSize="large" padding={3} />
+            <CompanionFace bubbleSize="large" maxPointSize={12} />
           </div>
           <div className="companion-stage-actions">
             <button type="button" className="companion-btn" onClick={poke}>
