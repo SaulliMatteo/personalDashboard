@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSettings } from "../../../core/settings/SettingsContext";
 import { listSubjects, loadTimerState, logSession } from "../../study/data/studyRepository";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
+import { emitActivityEvent, publishActivity } from "../../../core/activity/activityBus";
 import { StudyLinkRecorder } from "../lib/studyLink";
 import { MdChevronRight, MdOutlineCheckCircle, MdOutlineDriveFileMove, MdCheckCircle } from "react-icons/md";
 import ConfirmButton from "../../../ui/ConfirmButton";
@@ -62,6 +63,8 @@ function suggestionsFor(video: SavedVideo, videos: readonly SavedVideo[]): Saved
 }
 
 function WatchScreen({ video, folders, videos, onOpenVideo, onNavigateLibrary, onReload, onError }: WatchScreenProps) {
+  // Uscendo dalla pagina il player sparisce senza dire "pausa": lo diciamo noi.
+  useEffect(() => () => publishActivity({ watchingVideo: false }), []);
   const playerRef = useRef<PlayerHandle | null>(null);
   // Letti una sola volta per montaggio: il player non si ricarica se cambiano dopo.
   const [startSeconds] = useState(() => resumePoint(video));
@@ -191,7 +194,15 @@ function WatchScreen({ video, folders, videos, onOpenVideo, onNavigateLibrary, o
               }}
               onProgress={(seconds) => void saveProgress(video.id, seconds).catch((e) => console.error(e))}
               onWatchSegment={(_startedAt, endedAt, seconds) => recorder.add(endedAt, seconds, (e) => console.error("Tempo di studio non salvato:", e))}
-              onEnded={() => void handleEnded()}
+              onPlayingChange={(playing) => {
+                // Per il Companion (e chiunque ascolti): "sto guardando un video".
+                publishActivity({ watchingVideo: playing });
+              }}
+              onEnded={() => {
+                publishActivity({ watchingVideo: false });
+                emitActivityEvent({ type: "videoEnded" });
+                void handleEnded();
+              }}
               onError={(code) => setPlayerError(describePlayerError(code))}
             />
           </div>
