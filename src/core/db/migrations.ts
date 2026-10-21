@@ -207,5 +207,55 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_note_attachments_note ON note_attachments(note_id)`,
     ],
   },
+    {
+    version: 9,
+    description: "Riparazione: YouTube (cartelle, video, note), archived_at e sessioni di visione per DB già oltre la v4",
+    statements: [
+      `ALTER TABLE subjects ADD COLUMN archived_at INTEGER`,
+
+      `CREATE TABLE IF NOT EXISTS video_folders (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         parent_id INTEGER,
+         name TEXT NOT NULL,
+         color TEXT,
+         created_at INTEGER NOT NULL
+       )`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_video_folders_sibling_name
+         ON video_folders(COALESCE(parent_id, 0), name COLLATE NOCASE)`,
+      `CREATE TABLE IF NOT EXISTS saved_videos (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         youtube_id TEXT NOT NULL UNIQUE,
+         title TEXT NOT NULL,
+         channel TEXT NOT NULL DEFAULT '',
+         thumbnail_url TEXT,
+         duration_seconds INTEGER,
+         folder_id INTEGER,
+         position INTEGER NOT NULL DEFAULT 0,
+         watched INTEGER NOT NULL DEFAULT 0,
+         position_seconds INTEGER NOT NULL DEFAULT 0,
+         created_at INTEGER NOT NULL,
+         last_watched_at INTEGER
+       )`,
+      `CREATE INDEX IF NOT EXISTS idx_saved_videos_folder ON saved_videos(folder_id, position)`,
+      `CREATE TABLE IF NOT EXISTS video_notes (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         video_id INTEGER NOT NULL,
+         timestamp_seconds INTEGER NOT NULL,
+         text TEXT NOT NULL,
+         created_at INTEGER NOT NULL
+       )`,
+      `CREATE INDEX IF NOT EXISTS idx_video_notes_video ON video_notes(video_id, timestamp_seconds)`,
+
+      `CREATE TABLE IF NOT EXISTS video_watch_sessions (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         video_id INTEGER NOT NULL,
+         started_at INTEGER NOT NULL,
+         ended_at INTEGER NOT NULL,
+         duration_seconds INTEGER NOT NULL
+       )`,
+      `CREATE INDEX IF NOT EXISTS idx_video_watch_sessions_ended_at ON video_watch_sessions(ended_at)`,
+      `CREATE INDEX IF NOT EXISTS idx_video_watch_sessions_video ON video_watch_sessions(video_id)`,
+    ],
+  },
 
 ];
