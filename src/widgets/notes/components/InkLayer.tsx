@@ -1,11 +1,9 @@
 import { useEffect, useRef, type PointerEvent } from "react";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import type { InkStroke } from "../data/notesRepository";
+import { REF_WIDTH, drawStrokes } from "../lib/ink";
 
 export type InkTool = "pen" | "highlighter" | "eraser";
-
-/** Larghezza di riferimento: gli spessori salvati valgono per una pagina larga 900px. */
-const REF_WIDTH = 900;
 
 function paint(canvas: HTMLCanvasElement, strokes: readonly InkStroke[]) {
   const dpr = window.devicePixelRatio || 1;
@@ -21,22 +19,7 @@ function paint(canvas: HTMLCanvasElement, strokes: readonly InkStroke[]) {
   if (!ctx) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-
-  for (const s of strokes) {
-    if (s.points.length === 0) continue;
-    ctx.globalAlpha = s.tool === "highlighter" ? 0.35 : 1;
-    ctx.strokeStyle = s.color;
-    ctx.lineWidth = s.size * (s.tool === "highlighter" ? 5 : 1) * (w / REF_WIDTH);
-    ctx.beginPath();
-    const [x0, y0] = s.points[0];
-    ctx.moveTo(x0 * w, y0 * w);
-    if (s.points.length === 1) ctx.lineTo(x0 * w + 0.01, y0 * w);
-    for (let i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i][0] * w, s.points[i][1] * w);
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
+  drawStrokes(ctx, w, strokes);
 }
 
 interface InkLayerProps {

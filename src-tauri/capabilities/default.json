@@ -2,13 +2,23 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "enables the default permissions",
-  "windows": [
-    "main"
-  ],
+  "windows": ["main"],
   "permissions": [
     "core:default",
     "sql:default",
     "sql:allow-execute",
-    "notification:default"
+    "notification:default",
+    "dialog:default",
+    "opener:default",
+    { "identifier": "opener:allow-open-path", "allow": [{ "path": "$DOCUMENT/Notes" }, { "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-read-file", "allow": [{ "path": "$DESKTOP/**" }, { "path": "$DOCUMENT/**" }, { "path": "$DOWNLOAD/**" }, { "path": "$PICTURE/**" }, { "path": "$HOME/**" }] },
+    { "identifier": "fs:allow-read-text-file", "allow": [{ "path": "$DESKTOP/**" }, { "path": "$DOCUMENT/**" }, { "path": "$DOWNLOAD/**" }, { "path": "$PICTURE/**" }, { "path": "$HOME/**" }] },
+    { "identifier": "fs:allow-read-dir", "allow": [{ "path": "$DOCUMENT/Notes" }, { "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-exists", "allow": [{ "path": "$DOCUMENT/Notes" }, { "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-mkdir", "allow": [{ "path": "$DOCUMENT/Notes" }, { "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-write-file", "allow": [{ "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-write-text-file", "allow": [{ "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-rename", "allow": [{ "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-remove", "allow": [{ "path": "$DOCUMENT/Notes/**" }] }
   ]
 }

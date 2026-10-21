@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
+import { getCurrentWebview } from "@tauri-apps/api/webview";
+import { readFile, readTextFile } from "@tauri-apps/plugin-fs";
+import { openPath } from "@tauri-apps/plugin-opener";
 import {
   MdOutlineCreateNewFolder,
   MdDeleteOutline,
   MdOutlineDescription,
   MdOutlineHistory,
   MdOutlineCheckCircle,
+  MdOutlineFolderOpen,
   MdOutlineStarBorder,
   MdOutlineVerticalSplit,
   MdSearch,
@@ -15,11 +19,13 @@ import {
 import { useLatestRef } from "../../core/hooks/useLatestRef";
 import { useSettings } from "../../core/settings/useSettings";
 import FolderPanel from "./components/FolderPanel";
+import VaultPanel from "./components/VaultPanel";
 import FolderTree from "./components/FolderTree";
 import NoteCollection, { type LayoutMode, type SortKey } from "./components/NoteCollection";
 import NoteEditor from "./components/NoteEditor";
 import { takePendingNote } from "./lib/launch";
 import {
+  addAttachment,
   addFolder,
   createNote,
   deleteFolders,
@@ -27,6 +33,7 @@ import {
   emptyTrash,
   listFolders,
   listNotes,
+  markAllUnsynced,
   restoreNote,
   trashNote,
   updateFolder,
@@ -37,6 +44,20 @@ import {
 import type { DragItem } from "./lib/drag";
 import { folderIcon } from "./lib/folders";
 import { htmlToText } from "./lib/html";
+import { markdownToHtml, parseFrontmatter, parseMetaString, parseMetaTags, plainTextToHtml } from "./lib/markdown";
+import { buildFromTemplate } from "./lib/templates";
+import {
+  VAULT_DIR,
+  baseName,
+  ensureVaultDir,
+  importVault,
+  isVaultEnabled,
+  removeNoteDir,
+  saveAttachmentFile,
+  setVaultEnabled,
+  syncPending,
+  vaultAbsolutePath,
+} from "./lib/vault";
 import "./NotesDetail.css";
 
 type View =
@@ -48,6 +69,7 @@ type View =
   | { kind: "tag"; tag: string };
 
 const RECENT_LIMIT = 12;
+const MAX_ATTACHMENT_BYTES = 50 * 1024 * 1024;
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -59,7 +81,7 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-/** Pagina "Quaderno": cartelle, raccolta di note ed editor. */
+/** Pagina "Notes": cartelle, raccolta di note ed editor. */
 function NotesDetail() {
   const { settings } = useSettings();
 
@@ -78,6 +100,14 @@ function NotesDetail() {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const [drag, setDrag] = useState<{ item: DragItem; x: number; y: number } | null>(null);
   const [dropKey, setDropKey] = useState<string | null>(null);
+  const [splitId, setSplitId] = useState<number | null>(null);
+  const [vaultOn, setVaultOn] = useState(false);
+  const [vaultPanel, setVaultPanel] = useState(false);
+  const [vaultBusy, setVaultBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [attachVersion, setAttachVersion] = useState(0);
+  const [extDrag, setExtDrag] = useState(false);
+  const syncing = useRef(false);
 
   const reload = useCallback(async () => {
     try {
@@ -86,7 +116,7 @@ function NotesDetail() {
       setNotes(n);
       setLoaded(true);
     } catch (error) {
-      console.error("Errore nel caricamento del Quaderno:", error);
+      console.error("Errore nel caricamento del Notes:", error);
     }
   }, []);
 
@@ -192,14 +222,16 @@ function NotesDetail() {
 
   const selectedFolder = view.kind === "folder" ? folderById.get(view.id) ?? null : null;
   const openNote = openId !== null ? notes.find((n) => n.id === openId && n.deletedAt === null) ?? null : null;
+  const splitNote =
+    openNote && splitId !== null && splitId !== openId ? live.find((n) => n.id === splitId) ?? null : null;
   const customizeFolder = customizeId !== null ? folderById.get(customizeId) ?? null : null;
 
   // ---------------- Azioni ----------------
 
-  async function handleNewNote() {
+  async function handleNewNote(templateId?: string) {
     const folderId = view.kind === "folder" ? view.id : null;
     try {
-      const id = await createNote(folderId);
+      const id = await createNote(folderId, templateId ? buildFromTemplate(templateId) : undefined);
       setQuery("");
       await reload();
       setOpenId(id);
@@ -414,13 +446,205 @@ function NotesDetail() {
   }
 
   async function handleDeleteForever(id: number) {
+    const note = notes.find((n) => n.id === id);
+    if (vaultOn && note?.diskPath) await removeNoteDir(note.diskPath);
     await deleteNoteForever(id);
     await reload();
   }
 
   async function handleEmptyTrash() {
+    if (vaultOn) for (const n of trashed) if (n.diskPath) await removeNoteDir(n.diskPath);
     await emptyTrash(trashed.map((n) => n.id));
     await reload();
+  }
+
+  // ---------------- Avvisi, copia su disco, file dal desktop ----------------
+
+  function showNotice(text: string) {
+    setNotice(text);
+    window.setTimeout(() => setNotice(null), 4000);
+  }
+
+  useEffect(() => {
+    void isVaultEnabled().then(setVaultOn).catch(() => undefined);
+  }, []);
+
+  // Con la copia su disco attiva, dopo ogni modifica si riscrivono SOLO le note cambiate.
+  useEffect(() => {
+    if (!vaultOn || !loaded) return;
+    const timer = window.setTimeout(async () => {
+      if (syncing.current) return;
+      syncing.current = true;
+      try {
+        const written = await syncPending(notes, folders);
+        if (written > 0) await reload();
+      } catch (error) {
+        console.error("Copia su disco non riuscita:", error);
+        showNotice("Copia su disco non riuscita: controlla i permessi dei plugin (dettagli nella console).");
+      } finally {
+        syncing.current = false;
+      }
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [vaultOn, loaded, notes, folders, reload]);
+
+  async function toggleVault(enabled: boolean) {
+    try {
+      await setVaultEnabled(enabled);
+      setVaultOn(enabled);
+      if (enabled) {
+        await markAllUnsynced();
+        await reload();
+      }
+    } catch (error) {
+      console.error("Impossibile cambiare l'impostazione:", error);
+    }
+  }
+
+  async function runVaultTask(task: () => Promise<string>) {
+    setVaultBusy(true);
+    try {
+      const message = await task();
+      if (message) showNotice(message);
+    } catch (error) {
+      console.error("Operazione sulla cartella non riuscita:", error);
+      showNotice("Operazione non riuscita: controlla i permessi dei plugin (dettagli nella console).");
+    } finally {
+      setVaultBusy(false);
+    }
+  }
+
+  async function attachPaths(noteId: number, paths: string[]) {
+    try {
+      if (!vaultOn) {
+        await setVaultEnabled(true); // gli allegati vivono nella cartella su disco
+        setVaultOn(true);
+      }
+      let fresh = (await listNotes()).find((n) => n.id === noteId);
+      if (!fresh) return;
+      if (!fresh.diskPath) {
+        await syncPending([fresh], folders);
+        fresh = (await listNotes()).find((n) => n.id === noteId);
+      }
+      if (!fresh?.diskPath) throw new Error("Cartella della nota non creata");
+
+      let added = 0;
+      for (const path of paths) {
+        const bytes = await readFile(path);
+        if (bytes.length > MAX_ATTACHMENT_BYTES) {
+          showNotice(`«${baseName(path)}» supera i 50 MB e non è stato allegato.`);
+          continue;
+        }
+        const finalName = await saveAttachmentFile(fresh.diskPath, baseName(path), bytes);
+        await addAttachment(noteId, finalName, bytes.length);
+        added++;
+      }
+      if (added > 0) {
+        setAttachVersion((v) => v + 1);
+        showNotice(added === 1 ? "File allegato." : `${added} file allegati.`);
+        await reload();
+      }
+    } catch (error) {
+      console.error("Allegato non riuscito:", error);
+      showNotice("Impossibile allegare il file: controlla i permessi di lettura (dettagli nella console).");
+    }
+  }
+
+  async function createNoteFromFile(path: string, folderId: number | null): Promise<number> {
+    const name = baseName(path);
+    const title = name.replace(/\.[^.]+$/, "") || name;
+    const plain = (content: string) => [{ content, ink: [], background: "none" as const }];
+
+    if (/\.txt$/i.test(name)) {
+      return createNote(folderId, { title, tags: [], pages: plain(plainTextToHtml(await readTextFile(path))) });
+    }
+    if (/\.(md|markdown)$/i.test(name)) {
+      const { meta, body } = parseFrontmatter(await readTextFile(path));
+      return createNote(folderId, {
+        title: parseMetaString(meta.title) ?? title,
+        tags: parseMetaTags(meta.tags),
+        pages: plain(markdownToHtml(body)),
+      });
+    }
+    const safe = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const id = await createNote(folderId, { title, tags: [], pages: plain(`<p>File allegato: ${safe}</p>`) });
+    await attachPaths(id, [path]);
+    return id;
+  }
+
+  async function handleExternalDrop(paths: string[]) {
+    if (paths.length === 0) return;
+    if (openIdRef.current !== null) {
+      await attachPaths(openIdRef.current, paths);
+      return;
+    }
+    const folderId = view.kind === "folder" ? view.id : null;
+    try {
+      let last: number | null = null;
+      for (const path of paths) last = await createNoteFromFile(path, folderId);
+      await reload();
+      showNotice(paths.length === 1 ? "Nota creata dal file." : `${paths.length} note create dai file.`);
+      if (paths.length === 1 && last !== null) setOpenId(last);
+    } catch (error) {
+      console.error("Creazione della nota dal file non riuscita:", error);
+      showNotice("Impossibile creare la nota dal file (controlla i permessi di lettura).");
+    }
+  }
+
+  const dropRef = useLatestRef(handleExternalDrop);
+
+  // File trascinati dal desktop dentro la finestra (evento nativo di Tauri).
+  useEffect(() => {
+    let cancelled = false;
+    let unlisten: (() => void) | null = null;
+    getCurrentWebview()
+      .onDragDropEvent((event) => {
+        const payload = event.payload;
+        if (payload.type === "enter" || payload.type === "over") setExtDrag(true);
+        else if (payload.type === "leave") setExtDrag(false);
+        else {
+          setExtDrag(false);
+          void dropRef.current(payload.paths);
+        }
+      })
+      .then((fn) => {
+        if (cancelled) fn();
+        else unlisten = fn;
+      })
+      .catch((error) => console.error("Trascinamento di file dal sistema non disponibile:", error));
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [dropRef]);
+
+  function renderEditor(note: NoteSummary, compact: boolean, onClosePane?: () => void) {
+    return (
+      <NoteEditor
+        key={`${onClosePane ? "side" : "main"}-${note.id}`}
+        note={note}
+        pathLabel={pathOf(note.folderId)}
+        onChanged={() => void reload()}
+        onToggleStar={() => void handleToggleStar(note)}
+        onTrash={() => {
+          onClosePane?.();
+          void handleTrash(note.id);
+        }}
+        attachVersion={attachVersion}
+        onAttachPaths={(id, paths) => void attachPaths(id, paths)}
+        onSplit={
+          compact
+            ? undefined
+            : (id) => {
+                setSplitId(id);
+                setSideOpen(false);
+              }
+        }
+        splitCandidates={live}
+        compact={compact}
+        onClosePane={onClosePane}
+      />
+    );
   }
 
   // ---------------- Intestazione della raccolta ----------------
@@ -566,8 +790,11 @@ function NotesDetail() {
             <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "trash" ? " is-active" : ""}`} onClick={() => goTo({ kind: "trash" })}>
               <MdDeleteOutline /> <span>Cestino</span> {trashed.length > 0 && <em>{trashed.length}</em>}
             </button>
+            <button type="button" className="nq-nav-item" onClick={() => setVaultPanel(true)}>
+              <MdOutlineFolderOpen /> <span>Cartella su disco</span> {vaultOn && <em>attiva</em>}
+            </button>
             <p className="nq-sync">
-              <MdOutlineCheckCircle /> Salvato su questo dispositivo
+              <MdOutlineCheckCircle /> {vaultOn ? "Copia su disco attiva" : "Salvato su questo dispositivo"}
             </p>
           </div>
         </aside>
@@ -615,14 +842,14 @@ function NotesDetail() {
 
         <div className="nq-body">
           {openNote ? (
-            <NoteEditor
-              key={openNote.id}
-              note={openNote}
-              pathLabel={pathOf(openNote.folderId)}
-              onChanged={() => void reload()}
-              onToggleStar={() => void handleToggleStar(openNote)}
-              onTrash={() => void handleTrash(openNote.id)}
-            />
+            splitNote ? (
+              <div className="nq-split">
+                <div className="nq-pane">{renderEditor(openNote, true)}</div>
+                <div className="nq-pane nq-pane--side">{renderEditor(splitNote, true, () => setSplitId(null))}</div>
+              </div>
+            ) : (
+              renderEditor(openNote, false)
+            )
           ) : (
             <NoteCollection
               title={header.title}
@@ -643,13 +870,53 @@ function NotesDetail() {
               onRestore={(id) => void handleRestore(id)}
               onDeleteForever={(id) => void handleDeleteForever(id)}
               onEmptyTrash={() => void handleEmptyTrash()}
-              onNew={() => void handleNewNote()}
+              onNew={(templateId) => void handleNewNote(templateId)}
               onDragStart={startDrag}
               onCustomize={selectedFolder && !searching ? () => setCustomizeId(selectedFolder.id) : undefined}
             />
           )}
         </div>
       </section>
+
+      {extDrag && (
+        <div className="nq-drop-overlay">
+          <div>{openNote ? "Rilascia per allegare alla nota" : "Rilascia per creare una nota dal file"}</div>
+        </div>
+      )}
+
+      {notice && <div className="nq-notice">{notice}</div>}
+
+      {vaultPanel && (
+        <VaultPanel
+          enabled={vaultOn}
+          busy={vaultBusy}
+          pathLabel={`Documenti/${VAULT_DIR}`}
+          onToggle={(on) => void toggleVault(on)}
+          onSyncAll={() =>
+            void runVaultTask(async () => {
+              await markAllUnsynced();
+              await reload();
+              return "Riscrittura avviata.";
+            })
+          }
+          onImport={() =>
+            void runVaultTask(async () => {
+              const known = new Set(notes.flatMap((n) => (n.diskPath ? [n.diskPath] : [])));
+              const count = await importVault(known, folders);
+              await reload();
+              return count > 0 ? `Importate ${count} note dalla cartella.` : "Nessuna nota nuova da importare.";
+            })
+          }
+          onOpenFolder={() =>
+            void runVaultTask(async () => {
+              await ensureVaultDir();
+              await openPath(await vaultAbsolutePath());
+              return "";
+            })
+          }
+          onClose={() => setVaultPanel(false)}
+        />
+      )}
 
       {drag &&
         createPortal(

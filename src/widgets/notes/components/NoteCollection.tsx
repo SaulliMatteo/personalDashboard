@@ -2,6 +2,7 @@ import { useMemo, useState, type PointerEvent, type ReactNode } from "react";
 import {
   MdAdd,
   MdDeleteOutline,
+  MdExpandMore,
   MdOutlineGridView,
   MdOutlineRestoreFromTrash,
   MdOutlineStarBorder,
@@ -13,6 +14,7 @@ import ConfirmButton from "../../../ui/ConfirmButton";
 import type { NoteSummary } from "../data/notesRepository";
 import type { DragItem } from "../lib/drag";
 import { formatWhen, relativeDay, sanitizeHtml } from "../lib/html";
+import { TEMPLATES } from "../lib/templates";
 
 export type SortKey = "updated" | "created" | "title";
 export type LayoutMode = "grid" | "list";
@@ -38,7 +40,8 @@ interface NoteCollectionProps {
   onRestore: (id: number) => void;
   onDeleteForever: (id: number) => void;
   onEmptyTrash: () => void;
-  onNew: () => void;
+  /** Senza argomento = nota vuota; altrimenti l'id di un modello. */
+  onNew: (templateId?: string) => void;
   /** Avvia il trascinamento di una nota verso una cartella. */
   onDragStart?: (e: PointerEvent<HTMLElement>, item: DragItem) => void;
   /** Presente solo per le cartelle. */
@@ -61,6 +64,7 @@ function sortNotes(notes: NoteSummary[], sort: SortKey): NoteSummary[] {
 function NoteCollection(props: NoteCollectionProps) {
   const { notes, isTrash, mode } = props;
   const [tab, setTab] = useState<"all" | "starred">("all");
+  const [templateMenu, setTemplateMenu] = useState(false);
 
   const visible = useMemo(() => {
     const filtered = tab === "starred" && !isTrash ? notes.filter((n) => n.starred) : notes;
@@ -105,9 +109,41 @@ function NoteCollection(props: NoteCollectionProps) {
               onConfirm={props.onEmptyTrash}
             />
           ) : (
-            <button type="button" className="nq-btn nq-btn--primary" onClick={props.onNew}>
-              <MdAdd /> Nuova nota
-            </button>
+            <div className="nq-menu-anchor nq-split-btn">
+              <button type="button" className="nq-btn nq-btn--primary" onClick={() => props.onNew()}>
+                <MdAdd /> Nuova nota
+              </button>
+              <button
+                type="button"
+                className="nq-btn nq-btn--primary nq-split-caret"
+                onClick={() => setTemplateMenu((v) => !v)}
+                aria-label="Crea da un modello"
+                title="Crea da un modello"
+              >
+                <MdExpandMore />
+              </button>
+              {templateMenu && (
+                <>
+                  <div className="nq-menu-backdrop" onClick={() => setTemplateMenu(false)} />
+                  <div className="nq-menu nq-menu--right">
+                    <p className="nq-menu-title">Crea da un modello</p>
+                    {TEMPLATES.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => {
+                          setTemplateMenu(false);
+                          props.onNew(t.id);
+                        }}
+                      >
+                        <strong>{t.label}</strong>
+                        <span>{t.description}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </header>
