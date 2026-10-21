@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <direct.h>
 
 #define LINE_MAX_LEN   4096
 #define CHUNK          65536
@@ -167,9 +166,9 @@ static void serve_static_file(SOCKET s, const char *web_dir, const char *req_pat
         return;
     }
 
-    _fseeki64(f, 0, SEEK_END);
-    uint64_t size = (uint64_t)_ftelli64(f);
-    _fseeki64(f, 0, SEEK_SET);
+    file_seek(f, 0, SEEK_END);
+    uint64_t size = (uint64_t)file_tell(f);
+    file_seek(f, 0, SEEK_SET);
 
     send_cors_and_status(s, 200, "OK");
     char header[256];
@@ -202,7 +201,7 @@ static void handle_upload(SOCKET s, const http_request *req, const char *upload_
         strcpy(file_name, "upload.bin");
     }
 
-    _mkdir(upload_dir);
+    make_dir(upload_dir);
     char full_path[1024];
     snprintf(full_path, sizeof(full_path), "%s/%s", upload_dir, file_name);
 

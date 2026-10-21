@@ -40,6 +40,10 @@
     "resources": {
       "filetransfer/public/": "filetransfer-public/"
     },
+    "macOS": {
+      "signingIdentity": "-",
+      "minimumSystemVersion": "11.0"
+    },
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }

@@ -36,9 +36,9 @@ export interface BrainConfig {
 
 export interface BrainInput {
   activity: ActivityStatus;
-  /** App in primo piano (solo Windows e solo se l'utente lo permette), null se ignota o se è la dashboard stessa. */
+  /** App in primo piano (Windows e macOS, solo se l'utente lo permette), null se ignota o se è la dashboard stessa. */
   foreground: ForegroundApp | null;
-  /** Secondi dall'ultimo input dell'utente (di sistema su Windows, della finestra altrove). */
+  /** Secondi dall'ultimo input dell'utente (di sistema su Windows e macOS, della finestra altrove). */
   idleSeconds: number;
   /** La finestra della dashboard ha il focus. */
   appFocused: boolean;
