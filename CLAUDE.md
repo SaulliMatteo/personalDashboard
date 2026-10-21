@@ -52,13 +52,23 @@ Debito noto: `widgets/youtube/screens/WatchScreen.tsx` importa `study/data/study
   passa a `SettingsSection` un `overrides` con il select (es. `headerSlot1/2` in `tabs/DashboardTab.tsx`).
 - Metadati interni dell'app: store chiave/valore `core/db/meta.ts`, non le impostazioni.
 
-**Backend nativo** (`src-tauri/`): `src/lib.rs` registra plugin (sql, notification, log in debug) e comandi.
-- File Transfer: server HTTP in C su Winsock (`filetransfer/c/`), compilato da `build.rs` con `cc` **solo su Windows**,
-  esposto con i comandi `ft_*` di `src/file_transfer.rs`; va fermato alla chiusura della finestra.
-- Companion: `companion_snapshot` in `src/companion.rs` (inattività e app in primo piano via `windows-sys`).
+**Backend nativo** (`src-tauri/`): `src/lib.rs` registra plugin (sql, notification, fs/dialog/opener usati dal
+Quaderno, log in debug) e comandi.
+- File Transfer: server HTTP in C (`filetransfer/c/`; Winsock su Windows, socket POSIX su macOS/Linux, tutte le
+  differenze in `platform.h`), compilato da `build.rs` con `cc` (che imposta `cfg(ft_native)`), esposto con i comandi
+  `ft_*` di `src/file_transfer.rs`; va fermato alla chiusura della finestra. Su macOS la 5000 è di AirPlay: il server
+  prova le porte successive.
+- Companion (Pixy): `companion_snapshot` in `src/companion.rs` (inattività, app in primo piano e descrizione
+  dell'eseguibile via `windows-sys`; su macOS inattività da CoreGraphics e app via `NSWorkspace`, con il bundle `.app`
+  come "processo" e titolo vuoto). Lato frontend la catena è `engine/appCategory.ts` (classifica l'app) →
+  `engine/brain.ts` (sceglie la posa, puro) → `engine/poses.ts` (com'è fatta, con varianti per personalità) →
+  `engine/animator.ts` (fotogrammi) → `render/` (campo SDF della faccia + costumi; LED in Fosforo, pieno negli altri temi).
 - Lato frontend, ogni widget chiama `invoke()` da un solo file `data/*Api.ts`; allo stesso modo l'unica chiamata
   in rete (`fetch`) è `widgets/weather/data/weatherApi.ts`.
-- Su sistemi non Windows l'app deve compilare e i widget mostrano un errore chiaro.
+- Sui sistemi non supportati (oggi: oltre Windows e macOS, il Companion su Linux) l'app deve compilare e i widget
+  mostrano un errore chiaro.
+- Release: `.github/workflows/release.yml` (tag `v*` o avvio manuale) compila `.dmg` universale + installer Windows
+  in una Release in bozza. macOS con firma ad-hoc (niente account Apple): istruzioni di sblocco nel README.
 
 **Temi e stile**: 4 temi (`core/theme/themes.ts`), scelti con `data-theme` su `<html>`; ogni tema ridefinisce i
 token di `src/styles/tokens.css` (colori, `--card-*`, `--panel-*`, `--radius-*`, `--font-display`, `--btn-*`…).

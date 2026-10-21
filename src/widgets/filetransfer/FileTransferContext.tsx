@@ -122,7 +122,8 @@ export function FileTransferProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({
-      ready, running, address, port: FT_PORT, busy, error, files,
+      // La porta reale può essere diversa da FT_PORT se quella era occupata.
+      ready, running, address, port: address ? Number(address.split(":").pop()) : FT_PORT, busy, error, files,
       startServer, stopServer, refreshFiles, openFolder, clearError,
     }),
     [ready, running, address, busy, error, files, startServer, stopServer, refreshFiles, openFolder, clearError]

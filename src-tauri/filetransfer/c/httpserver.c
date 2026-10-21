@@ -9,10 +9,8 @@
 #include "network.h"
 #include "http.h"
 
-#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <process.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -21,7 +19,8 @@
 #define PATH_MAX_LEN       1024
 
 static SOCKET g_listen_socket = INVALID_SOCKET;
-static HANDLE g_accept_thread = NULL;
+static thread_t g_accept_thread;
+static int g_accept_running = 0;
 static char g_web_dir[PATH_MAX_LEN] = DEFAULT_WEB_DIR;
 static char g_upload_dir[PATH_MAX_LEN] = DEFAULT_UPLOAD_DIR;
 
@@ -42,7 +41,7 @@ static int copy_dir(char *dst, size_t dst_size, const char *src) {
     return 0;
 }
 
-static unsigned __stdcall client_thread(void *arg) {
+static THREAD_FUNC client_thread(void *arg) {
     client_args *args = (client_args *)arg;
     SOCKET client = args->client;
     free(args);
@@ -50,16 +49,15 @@ static unsigned __stdcall client_thread(void *arg) {
     return 0;
 }
 
-static unsigned __stdcall accept_loop(void *arg) {
+static THREAD_FUNC accept_loop(void *arg) {
     SOCKET srv = (SOCKET)(uintptr_t)arg;
 
     for (;;) {
         struct sockaddr_in cli;
-        int len = sizeof(cli);
+        net_len_t len = sizeof(cli);
         SOCKET c = accept(srv, (struct sockaddr *)&cli, &len);
         if (c == INVALID_SOCKET) {
-            int error = WSAGetLastError();
-            if (error == WSAENOTSOCK || error == WSAEINVAL || error == WSAECONNABORTED) break;
+            if (net_listen_closed(net_last_error())) break;
             continue;
         }
 
@@ -68,11 +66,12 @@ static unsigned __stdcall accept_loop(void *arg) {
             closesocket(c);
             continue;
         }
+        net_prepare_client(c);
         args->client = c;
 
-        HANDLE h = (HANDLE)_beginthreadex(NULL, 0, client_thread, args, 0, NULL);
-        if (h) {
-            CloseHandle(h);
+        thread_t h;
+        if (thread_start(&h, client_thread, args) == 0) {
+            thread_detach(h);
         } else {
             free(args);
             closesocket(c);
@@ -94,13 +93,13 @@ int http_server_start_with_dirs(int port, const char *web_dir, const char *uploa
         return -1;
     }
 
-    BOOL yes = TRUE;
+    int yes = 1;
     setsockopt(srv, SOL_SOCKET, SO_REUSEADDR, (const char *)&yes, sizeof(yes));
 
     struct sockaddr_in addr = {0};
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    addr.sin_port = htons((u_short)port);
+    addr.sin_port = htons((unsigned short)port);
 
     if (bind(srv, (struct sockaddr *)&addr, sizeof(addr)) == SOCKET_ERROR) {
         closesocket(srv);
@@ -115,13 +114,13 @@ int http_server_start_with_dirs(int port, const char *web_dir, const char *uploa
     }
 
     g_listen_socket = srv;
-    g_accept_thread = (HANDLE)_beginthreadex(NULL, 0, accept_loop, (void *)(uintptr_t)srv, 0, NULL);
-    if (!g_accept_thread) {
+    if (thread_start(&g_accept_thread, accept_loop, (void *)(uintptr_t)srv) != 0) {
         closesocket(srv);
         g_listen_socket = INVALID_SOCKET;
         net_cleanup();
         return -1;
     }
+    g_accept_running = 1;
 
     return 0;
 }
@@ -132,14 +131,14 @@ int http_server_start(int port) {
 
 void http_server_stop(void) {
     if (g_listen_socket != INVALID_SOCKET) {
+        net_shutdown(g_listen_socket);
         closesocket(g_listen_socket);
         g_listen_socket = INVALID_SOCKET;
     }
 
-    if (g_accept_thread) {
-        WaitForSingleObject(g_accept_thread, 2000);
-        CloseHandle(g_accept_thread);
-        g_accept_thread = NULL;
+    if (g_accept_running) {
+        thread_join(g_accept_thread);
+        g_accept_running = 0;
     }
 
 }

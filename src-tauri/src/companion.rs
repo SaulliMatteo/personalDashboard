@@ -10,7 +10,7 @@
 //!
 //! Niente viene salvato o inviato in rete: il frontend lo classifica in
 //! categorie ("musica", "codice", …) e butta via il titolo.
-//! Implementato solo per Windows; sugli altri sistemi ritorna campi vuoti
+//! Implementato per Windows e macOS; sugli altri sistemi ritorna campi vuoti
 //! e il frontend ripiega sull'inattività della sola finestra.
 
 use serde::Serialize;
@@ -33,7 +33,7 @@ pub struct CompanionSnapshot {
     /// None = non disponibile su questo sistema.
     pub idle_seconds: Option<u64>,
     pub foreground: Option<ForegroundInfo>,
-    /// True se il sistema supporta questi segnali (oggi solo Windows).
+    /// True se il sistema supporta questi segnali (Windows e macOS).
     pub supported: bool,
 }
 
@@ -207,11 +207,62 @@ mod platform {
     }
 }
 
-#[cfg(not(windows))]
+#[cfg(target_os = "macos")]
+mod platform {
+    use super::{CompanionSnapshot, ForegroundInfo};
+    use objc2_app_kit::NSWorkspace;
+
+    #[link(name = "CoreGraphics", kind = "framework")]
+    extern "C" {
+        fn CGEventSourceSecondsSinceLastEventType(state: i32, event_type: u32) -> f64;
+    }
+    /// kCGEventSourceStateCombinedSessionState: input di tutta la sessione, non solo nostro.
+    const COMBINED_SESSION_STATE: i32 = 0;
+    /// kCGAnyInputEventType.
+    const ANY_INPUT_EVENT: u32 = u32::MAX;
+
+    pub fn snapshot(include_foreground: bool) -> CompanionSnapshot {
+        CompanionSnapshot {
+            idle_seconds: idle_seconds(),
+            foreground: if include_foreground { foreground() } else { None },
+            supported: true,
+        }
+    }
+
+    fn idle_seconds() -> Option<u64> {
+        // SAFETY: funzione pura di CoreGraphics, nessun permesso richiesto.
+        let secs = unsafe { CGEventSourceSecondsSinceLastEventType(COMBINED_SESSION_STATE, ANY_INPUT_EVENT) };
+        (secs.is_finite() && secs >= 0.0).then_some(secs as u64)
+    }
+
+    /// Su macOS il titolo della finestra richiederebbe il permesso "Registrazione
+    /// schermo": non lo chiediamo, quindi resta vuoto. Come "processo" si passa il
+    /// percorso del bundle (es. "/Applications/Visual Studio Code.app"), perché
+    /// l'eseguibile dentro il bundle ha spesso un nome generico (es. "Electron").
+    fn foreground() -> Option<ForegroundInfo> {
+        let app = NSWorkspace::sharedWorkspace().frontmostApplication()?;
+        let process = app
+            .bundleURL()
+            .or_else(|| app.executableURL())
+            .and_then(|url| url.path())
+            .map(|path| path.to_string())
+            .unwrap_or_default();
+        let description = app.localizedName().map(|name| name.to_string()).unwrap_or_default();
+        let pid = app.processIdentifier();
+        Some(ForegroundInfo {
+            process,
+            description,
+            title: String::new(),
+            is_self: pid >= 0 && pid as u32 == std::process::id(),
+        })
+    }
+}
+
+#[cfg(not(any(windows, target_os = "macos")))]
 mod platform {
     use super::CompanionSnapshot;
 
-    // macOS/Linux: da implementare in futuro (CGEventSource / NSWorkspace).
+    // Linux: da implementare in futuro.
     pub fn snapshot(_include_foreground: bool) -> CompanionSnapshot {
         CompanionSnapshot::default()
     }

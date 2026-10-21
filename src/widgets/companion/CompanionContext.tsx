@@ -155,7 +155,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
     };
   }, [pushInput]);
 
-  // --- Segnali di sistema (Windows) + inattività. Solo se il Companion è in uso.
+  // --- Segnali di sistema (Windows e macOS) + inattività. Solo se il Companion è in uso.
   useEffect(() => {
     if (!active) return;
     let cancelled = false;

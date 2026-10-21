@@ -9,19 +9,25 @@
 #include <stdio.h>
 
 int net_init(void) {
+#ifdef _WIN32
     WSADATA wsa;
     return WSAStartup(MAKEWORD(2, 2), &wsa);
+#else
+    return 0;
+#endif
 }
 
 void net_cleanup(void) {
+#ifdef _WIN32
     WSACleanup();
+#endif
 }
 
 int send_all(SOCKET s, const void *buf, size_t len) {
     const char *p = (const char *)buf;
     while (len > 0) {
         int chunk = len > 65536 ? 65536 : (int)len;
-        int n = send(s, p, chunk, 0);
+        int n = send(s, p, chunk, SEND_FLAGS);
         if (n == SOCKET_ERROR) return -1;
         p += n;
         len -= (size_t)n;
