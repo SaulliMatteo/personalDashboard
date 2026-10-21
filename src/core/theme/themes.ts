@@ -87,6 +87,8 @@ const PIGMENT_BY_WIDGET: Record<string, Pigment> = {
   filetransfer: "senape",
   youtube: "malva",
   notes: "carta",
+  clock: "senape",
+  date: "salvia",
 };
 
 /** Pigmento di un widget; `index` (posizione nel registry) serve solo per i widget nuovi. */

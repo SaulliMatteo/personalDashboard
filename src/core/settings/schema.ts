@@ -60,6 +60,10 @@ export const DEFAULT_SETTINGS = {
   // ---- Dashboard ----
   showDashboardHeader: true,
   dashboardGreeting: "time" as "welcome" | "time" | "off",
+  // Spazi in alto a destra dell'intestazione: "auto" = come il mockup del tema,
+  // "none" = vuoto, altrimenti l'id di un widget con `mini` (vedi features/dashboard/HeaderSlots).
+  headerSlot1: "auto",
+  headerSlot2: "none",
   gridRows: 4,
   lockLayout: false,
   gridPushDelayMs: 600,
@@ -169,6 +173,10 @@ export const SETTING_DEFS: SettingDef[] = [
     key: "dashboardGreeting", group: "dashboard", section: "Intestazione", type: "select", dependsOn: "showDashboardHeader", label: "Saluto",
     options: [{ value: "time", label: "In base all'ora del giorno" }, { value: "welcome", label: "Ciao" }, { value: "off", label: "Nessuno (titolo «Dashboard»)" }],
   },
+  // Le opzioni vengono dal registry dei widget (che core non conosce): la scheda Dashboard
+  // le mostra come select con SettingsField; qui basta la validazione da testo.
+  { key: "headerSlot1", group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Spazio in alto a destra", description: "Un mini widget accanto al saluto." },
+  { key: "headerSlot2", group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Secondo spazio", description: "Un altro mini widget, affiancato al primo." },
 
   { key: "gridRows", group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 4, max: 8, step: 1, label: "Righe disponibili", description: "Più righe = più spazio per i widget. Non scende mai sotto le righe già occupate." },
 

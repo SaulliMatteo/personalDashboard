@@ -1,0 +1,50 @@
+/* Spazi dell'intestazione: i mini affiancati, a destra del saluto. */
+
+.dh-slots {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 28px;
+  min-height: 36px;
+  margin-left: auto;
+}
+
+.dh-slot {
+  display: flex;
+  align-items: flex-end;
+  min-width: 0;
+}
+
+/* Il pulsante per cambiare gli spazi sta a sinistra dei mini, nello spazio libero accanto al
+   saluto, e compare solo passando sull'intestazione (o con il focus): non sposta nulla. */
+.dh-slots-edit {
+  position: absolute;
+  right: calc(100% + 10px);
+  bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: var(--btn-ghost-border);
+  border-radius: var(--radius-item);
+  background: var(--btn-ghost-bg);
+  color: var(--btn-ghost-fg);
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.dh:hover .dh-slots-edit,
+.dh-slots-edit:focus-visible {
+  opacity: 1;
+}
+
+.dh-slots-edit:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
