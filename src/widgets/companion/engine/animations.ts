@@ -21,10 +21,10 @@ export const ANIMATION_CATEGORIES: { id: AnimationCategory; label: string; descr
   { id: "life", label: "Vita di fondo", description: "Piccoli movimenti sempre attivi: sono loro a farlo sembrare vivo." },
   { id: "emotes", label: "Emozioni casuali", description: "Ogni tanto ne pesca una, con una frequenza che dipende dalla personalità." },
   { id: "study", label: "Studio", description: "Reazioni al timer del widget Studio." },
-  { id: "video", label: "Video", description: "Mentre guardi un video nel widget YouTube (o, su Windows, nel browser e nei player)." },
+  { id: "video", label: "Video", description: "Mentre guardi un video nel widget YouTube (o nei player del PC; su Windows anche nel browser)." },
   { id: "weather", label: "Meteo", description: "Con il widget Meteo attivo: ogni tanto si trasforma, per qualche secondo." },
   { id: "night", label: "Notte", description: "Pigiama prima di mezzanotte, coperte dopo." },
-  { id: "apps", label: "App (Windows)", description: "Cambia posa in base all'app che stai usando. Le categorie si correggono nella scheda \"App viste\"." },
+  { id: "apps", label: "App (Windows e macOS)", description: "Cambia posa in base all'app che stai usando. Le categorie si correggono nella scheda \"App viste\"." },
   { id: "system", label: "Sistema", description: "Usano segnali del PC, elaborati solo in locale e mai salvati." },
 ];
 

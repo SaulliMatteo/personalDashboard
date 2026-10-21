@@ -17,7 +17,7 @@ use tauri::{AppHandle, Manager, State};
 #[cfg(not(debug_assertions))]
 use tauri::path::BaseDirectory;
 
-#[cfg(target_os = "windows")]
+#[cfg(ft_native)]
 extern "C" {
     fn http_server_start_with_dirs(
         port: i32,
@@ -28,6 +28,9 @@ extern "C" {
 }
 
 const PORT: u16 = 5000;
+/// Porte provate dopo `PORT` se è occupata (su macOS la 5000 è di AirPlay).
+#[cfg_attr(not(ft_native), allow(dead_code))]
+const PORT_ATTEMPTS: u16 = 10;
 const TEXT_EXTENSIONS: &[&str] = &[
     "txt", "md", "json", "csv", "log", "c", "h", "js", "ts", "tsx", "jsx", "html", "css", "xml",
     "ini", "cfg", "yaml", "yml",
@@ -88,7 +91,7 @@ fn received_dir(app: &AppHandle) -> Result<PathBuf, String> {
 
 /// Cartella con la pagina web che l'iPad apre. In sviluppo è quella nei
 /// sorgenti, nell'app installata è la risorsa inclusa nel bundle.
-#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+#[cfg_attr(not(ft_native), allow(dead_code))]
 fn web_dir(app: &AppHandle) -> Result<PathBuf, String> {
     #[cfg(debug_assertions)]
     let dir = {
@@ -112,14 +115,14 @@ fn web_dir(app: &AppHandle) -> Result<PathBuf, String> {
 
 /// Percorso -> stringa C. Tauri su Windows può dare percorsi "verbatim"
 /// (\\?\C:\...), in cui '/' non viene convertito in '\': tolgo il prefisso.
-#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+#[cfg_attr(not(ft_native), allow(dead_code))]
 fn make_c_string(path: &PathBuf) -> Result<std::ffi::CString, String> {
     let s = path.to_string_lossy();
     let clean: &str = s.strip_prefix(r"\\?\").unwrap_or(s.as_ref());
     std::ffi::CString::new(clean.as_bytes()).map_err(|_| format!("Percorso non valido: {}", path.display()))
 }
 
-#[cfg_attr(not(target_os = "windows"), allow(dead_code))]
+#[cfg_attr(not(ft_native), allow(dead_code))]
 fn get_local_ip() -> io::Result<String> {
     let socket = UdpSocket::bind("0.0.0.0:0")?;
     socket.connect("8.8.8.8:80")?;
@@ -127,7 +130,7 @@ fn get_local_ip() -> io::Result<String> {
 }
 
 fn stop_native() {
-    #[cfg(target_os = "windows")]
+    #[cfg(ft_native)]
     unsafe {
         http_server_stop();
     }
@@ -157,23 +160,22 @@ pub fn ft_start_server(app: AppHandle, state: State<FileTransferState>, port: Op
         return Err("Il server è già in esecuzione.".into());
     }
 
-    #[cfg(not(target_os = "windows"))]
+    #[cfg(not(ft_native))]
     {
         let _ = (app, port);
-        return Err("Il server C integrato è supportato solo su Windows.".into());
+        return Err("Il server integrato è supportato solo su Windows, macOS e Linux.".into());
     }
 
-    #[cfg(target_os = "windows")]
+    #[cfg(ft_native)]
     {
         let web_c = make_c_string(&web_dir(&app)?)?;
         let upload_c = make_c_string(&received_dir(&app)?)?;
 
-        let result = unsafe { http_server_start_with_dirs(port as i32, web_c.as_ptr(), upload_c.as_ptr()) };
-        if result != 0 {
-            return Err(format!(
-                "Impossibile avviare il server sulla porta {port}. La porta potrebbe essere già occupata."
-            ));
-        }
+        // Se la porta è occupata prova le successive.
+        let last = port.saturating_add(PORT_ATTEMPTS - 1);
+        let port = (port..=last)
+            .find(|&p| unsafe { http_server_start_with_dirs(p as i32, web_c.as_ptr(), upload_c.as_ptr()) } == 0)
+            .ok_or_else(|| format!("Impossibile avviare il server: le porte da {port} a {last} sono occupate."))?;
 
         let ip = get_local_ip().unwrap_or_else(|_| "127.0.0.1".to_string());
         let address = format!("{ip}:{port}");
