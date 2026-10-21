@@ -31,7 +31,7 @@ random iniettati apposta per poter essere testate senza browser.
 
 **Tutto è guidato dal registry.** `src/widgets/registry.ts` è l'unico elenco dei widget; ogni widget esporta una
 `WidgetDefinition` (`core/widgets/types.ts`: taglie, `defaultPlacement`, `detailComponent`, `provider`,
-`settingsGroup`). Catalogo, dashboard, layout di default, provider e scheda Impostazioni > Widget derivano da lì:
+`settingsGroup`, `mini` per gli spazi dell'intestazione). Catalogo, dashboard, layout di default, provider e scheda Impostazioni > Widget derivano da lì:
 aggiungere un widget = cartella `src/widgets/<nome>/` + una riga nel registry.
 
 **Regole di dipendenza**: `app → features, widgets, core`; `features → core, widgets/registry, ui`;
@@ -63,6 +63,7 @@ componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è 
 
 - Se non sei sicuro chiedi sempre conferme e chiarimenti, non cercare di indovinare a caso.
 - Nessuna risorsa caricata da internet a runtime (font compresi: pacchetti `@fontsource` locali).
+  Unica eccezione, opzionale: i dati del widget Meteo (Open-Meteo), solo se l'utente imposta la città e lo usa.
 
 ## Design
 

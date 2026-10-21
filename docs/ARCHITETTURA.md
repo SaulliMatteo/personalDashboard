@@ -32,7 +32,9 @@ src/
 │   ├─ filetransfer/         widget File Transfer (vedi docs/FILE_TRANSFER.md)
 │   ├─ youtube/              widget YouTube (vedi sotto)
 │   ├─ notes/                widget Quaderno (vedi sotto)
-│   └─ companion/            widget Companion (vedi sotto)
+│   ├─ companion/            widget Companion (vedi sotto)
+│   ├─ clock/, date/         Orario e Giorno: solo 1×1 + mini dell'intestazione
+│   └─ weather/              Meteo (Open-Meteo, opzionale): 1×1 + mini, provider con cache
 ├─ ui/                       componenti riusabili senza logica di dominio
 │                            (BackButton, ConfirmButton, NumberField, BorderGlow, ProgressBar per tema)
 └─ styles/                   tokens.css (colori/raggi/font), base.css, tailwind.css
@@ -146,6 +148,14 @@ sale in `core/` o `ui/`.
 Le impostazioni sono una pagina (`openSettings(sezione)` di `NavContext`): Aspetto, Dashboard, Widget (una
 sezione per ogni widget con `settingsGroup`, id `widget:<id>`) e Generale.
 
+### Aggiungere un mini (spazi in alto a destra della dashboard)
+1. Nel widget: `mini/<Nome>Mini.tsx` + `<Nome>Mini.css` accanto, stessa forma degli altri mini (elemento visivo a
+   sinistra, due righe di testo: 13px testo primario + 12px secondario; numeri con `--font-display`).
+2. Nella sua `WidgetDefinition`: `mini: <Nome>Mini`. Compare da solo tra le scelte di Impostazioni > Dashboard.
+3. Deve funzionare nei 4 temi e stare in ~56px di altezza. Doppio click sullo spazio = dettaglio (se c'è).
+Gli spazi sono `headerSlot1`/`headerSlot2` nello schema (`"auto"` = come il mockup del tema, vedi
+`features/dashboard/HeaderSlots.tsx`).
+
 ### Far reagire il Companion a qualcosa di nuovo
 1. Nel widget che "sa" la cosa: `publishActivity({...})` (stato) o `emitActivityEvent({...})` (momento),
    da `core/activity/activityBus.ts` (aggiungi il tipo lì).
@@ -186,5 +196,7 @@ Colonna in una nuova migrazione → campo in `Subject`/`SubjectRow`/`PATCH_COLUM
   contesto (errore "useX deve essere usato dentro <XProvider>") e il lint `only-export-components` resta pulito.
 - Stato "ultimo valore" dentro callback di lunga durata (interval, listener): `useLatestRef`.
 - Le query SQL stanno solo nei `*Repository.ts`; i componenti non scrivono SQL.
+- Rete: solo il Meteo va in internet, solo se attivato (città impostata e widget o mini in uso), e solo da
+  `widgets/weather/data/weatherApi.ts` (come `invoke()` in `data/*Api.ts`). Cache nel `meta` (`weather_cache`).
 - Impostazioni = preferenze dell'app (schema). Dati e metadati interni = tabelle/`meta`.
 - Il dettaglio di un widget si apre con il **doppio click** sulla cella (Dashboard.tsx). Il doppio click su un controllo interno (button, link, input) viene ignorato; un pulsante che occupa tutta la cella (1×1) va marcato `data-cell-action` perché il doppio click apra comunque il dettaglio. I controlli continuano a fare `e.stopPropagation()` sul click.
