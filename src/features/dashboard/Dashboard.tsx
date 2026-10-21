@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import GridLayout, { useContainerWidth } from "react-grid-layout";
 import { calcGridItemPosition } from "react-grid-layout/core";
 import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE prima del nostro
@@ -14,6 +14,7 @@ import { getWidget, widgetPigment } from "../../widgets/registry";
 import { useGhostPreview, useForceEndDragOnBlur } from "./useGhostPreview";
 import DashboardHeader from "./DashboardHeader";
 import AddWidgetSlot from "./AddWidgetSlot";
+import { fromInnerControl } from "./fromInnerControl";
 
 // La griglia non ha margine esterno: riempie l'area di .main come nei mockup.
 const NO_PADDING = [0, 0] as const;
@@ -37,13 +38,6 @@ function useGridMetrics(element: HTMLElement | null, themeId: string) {
     return () => observer.disconnect();
   }, [element, themeId]);
   return metrics;
-}
-
-/** True se il doppio click arriva da un controllo interno (non deve aprire il dettaglio). */
-function fromInnerControl(e: MouseEvent<HTMLElement>): boolean {
-  const control = (e.target as HTMLElement).closest("button, a, input, textarea, select, [role='button']");
-  // data-cell-action: pulsante che occupa tutta la cella (1×1), il doppio click apre comunque il dettaglio.
-  return control !== null && !control.hasAttribute("data-cell-action");
 }
 
 function Dashboard() {

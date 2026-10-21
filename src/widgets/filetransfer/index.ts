@@ -2,6 +2,7 @@ import type { WidgetDefinition } from "../../core/widgets/types";
 import { SIZE_S, SIZE_W, SIZE_M } from "../../core/widgets/sizes";
 import FileTransferWidget from "./FileTransferWidget";
 import FileTransferDetail from "./FileTransferDetail";
+import FileTransferMini from "./mini/FileTransferMini";
 import { FileTransferProvider } from "./FileTransferContext";
 
 export const fileTransferWidget: WidgetDefinition = {
@@ -12,6 +13,7 @@ export const fileTransferWidget: WidgetDefinition = {
   sizes: [SIZE_S, SIZE_W, SIZE_M],
   defaultPlacement: { x: 2, y: 1, w: 1, h: 1 },
   detailComponent: FileTransferDetail,
+  mini: FileTransferMini,
   // Lo stato del server deve restare allineato anche fuori dalla dashboard.
   provider: FileTransferProvider,
 };

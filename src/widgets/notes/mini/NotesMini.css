@@ -1,0 +1,46 @@
+/* Note nell'intestazione: numero grande e l'ultima nota modificata. */
+
+.notes-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 260px;
+  min-width: 0;
+  color: var(--text-primary);
+}
+
+.notes-mini-num {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: var(--display-weight);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.notes-mini-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.notes-mini-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+:root[data-theme="quaderno"] .notes-mini-num,
+:root[data-theme="fosforo"] .notes-mini-num {
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .notes-mini-num {
+  font-size: 44px;
+}

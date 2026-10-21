@@ -15,6 +15,8 @@ export interface StyleDrawOptions {
   dpr: number;
   /** Grandezza massima di un punto della faccia, in pixel CSS. */
   maxPointSize: number;
+  /** Margine intorno alla faccia, in punti (default FACE_PADDING). */
+  padding?: number;
 }
 
 export interface CompanionStyle {
@@ -24,14 +26,14 @@ export interface CompanionStyle {
 }
 
 /** Margine intorno alla faccia, in punti: tiene gli occhi proporzionati alla card come nei mockup. */
-const FACE_PADDING = 8;
+export const FACE_PADDING = 8;
 
 function solid(id: string, label: string, roundness: number): CompanionStyle {
   return {
     id,
     label,
     draw: (canvas, frame, o) =>
-      drawSolidFace(canvas, frame, { color: o.color, showMouth: o.showMouth, roundness, padding: FACE_PADDING, maxScale: o.maxPointSize * o.dpr }),
+      drawSolidFace(canvas, frame, { color: o.color, showMouth: o.showMouth, roundness, padding: o.padding ?? FACE_PADDING, maxScale: o.maxPointSize * o.dpr }),
   };
 }
 
@@ -45,6 +47,6 @@ export const COMPANION_STYLES = {
     id: "led",
     label: "Matrice LED",
     draw: (canvas, frame, o) =>
-      drawLedFace(canvas, frame, { color: o.color, offAlpha: 0, showMouth: o.showMouth, padding: FACE_PADDING, maxPitch: o.maxPointSize * o.dpr }),
+      drawLedFace(canvas, frame, { color: o.color, offAlpha: 0, showMouth: o.showMouth, padding: o.padding ?? FACE_PADDING, maxPitch: o.maxPointSize * o.dpr }),
   },
 } satisfies Record<string, CompanionStyle>;

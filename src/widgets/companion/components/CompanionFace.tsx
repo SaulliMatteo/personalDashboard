@@ -13,6 +13,8 @@ interface CompanionFaceProps {
   bubbleSize?: "small" | "normal" | "large";
   /** Grandezza massima di un punto della faccia, in pixel CSS: limita quanto crescono gli occhi. */
   maxPointSize?: number;
+  /** Margine intorno alla faccia, in punti: più piccolo nei riquadri piccoli (es. il mini dell'intestazione). */
+  padding?: number;
   className?: string;
 }
 
@@ -35,7 +37,7 @@ const FRAME_MS = 1000 / 30;
  * uno contemporaneamente (widget + fantasma del drag + pagina): leggono
  * tutti lo stesso fotogramma dal provider.
  */
-function CompanionFace({ showBubble = true, bubbleSize = "normal", maxPointSize = MAX_POINT_SIZE, className = "" }: CompanionFaceProps) {
+function CompanionFace({ showBubble = true, bubbleSize = "normal", maxPointSize = MAX_POINT_SIZE, padding, className = "" }: CompanionFaceProps) {
   const { sampleFrame, snapshot } = useCompanion();
   const { settings } = useSettings();
   const theme = useTheme();
@@ -55,7 +57,7 @@ function CompanionFace({ showBubble = true, bubbleSize = "normal", maxPointSize 
     if (css) colorRef.current = css;
   }, [settings.companionColor, settings.accentColor, settings.accentOverride, theme.id]);
 
-  const drawOpts = useLatestRef({ style, showMouth: settings.companionShowMouth, maxPointSize });
+  const drawOpts = useLatestRef({ style, showMouth: settings.companionShowMouth, maxPointSize, padding });
 
   // Dimensioni reali del canvas = dimensioni CSS × densità dello schermo.
   useEffect(() => {
@@ -90,7 +92,7 @@ function CompanionFace({ showBubble = true, bubbleSize = "normal", maxPointSize 
       const frame = sampleFrame(t, canvas.getBoundingClientRect());
       const o = drawOpts.current;
       const dpr = Math.min(2, window.devicePixelRatio || 1);
-      o.style.draw(canvas, frame, { color: colorRef.current, showMouth: o.showMouth, dpr, maxPointSize: o.maxPointSize });
+      o.style.draw(canvas, frame, { color: colorRef.current, showMouth: o.showMouth, dpr, maxPointSize: o.maxPointSize, padding: o.padding });
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
