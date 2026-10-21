@@ -1,4 +1,6 @@
 .app {
+  position: relative;
+  overflow: hidden;
   display: flex;
   width: 100%;
   min-width: 800px;
@@ -20,8 +22,10 @@
   flex-direction: column;
 
   min-width: 0;
+  gap: var(--main-gap);
 
-  padding: 18px 20px;
+  padding: var(--main-padding);
+  background: var(--main-bg);
 
   overflow-y: auto;
   overflow-x: hidden;
@@ -45,12 +49,65 @@
   background: color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
+/* Contenitore della pagina di dettaglio: serve solo a portare i token del
+   pigmento (tema Opaco), non deve cambiare il layout. */
+.detail-scope {
+  display: contents;
+}
+
 /* Impostazione "Posizione della barra laterale": destra */
 :root[data-sidebar="right"] .app {
   flex-direction: row-reverse;
 }
 
 :root[data-sidebar="right"] .sidebar {
-  border-right: none;
-  border-left: 1px solid var(--border-subtle);
+  border-right: 0;
+  border-left: var(--sidebar-border);
+}
+
+/* ---------- Decorazioni di sfondo per tema ---------- */
+.app-deco {
+  display: none;
+}
+
+/* Fosforo: cerchio pieno in basso a destra e cerchio sottile in alto (mockup fosforo.html). */
+:root[data-theme="fosforo"] .app-deco {
+  display: block;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.app-deco-fill,
+.app-deco-ring {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.app-deco-fill {
+  width: 1700px;
+  height: 1700px;
+  right: -1000px;
+  bottom: -1250px;
+  background: var(--deco-fill);
+}
+
+.app-deco-ring {
+  width: 1180px;
+  height: 1180px;
+  right: -520px;
+  top: -700px;
+  border: var(--deco-ring);
+}
+
+.app > .sidebar,
+.app > .main {
+  position: relative;
+}
+
+/* Quaderno: la riga rossa del margine, ferma mentre il foglio scorre. */
+:root[data-theme="quaderno"] .main {
+  background:
+    linear-gradient(90deg, transparent 42px, var(--paper-margin) 42px 44px, transparent 44px),
+    var(--main-bg);
 }

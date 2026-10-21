@@ -49,7 +49,11 @@ import { noteToMarkdown, renderNoteImage, renderNotePdf, saveBytes, saveText } f
 import { attachmentAbsolutePath, removeAttachmentFile, slugify } from "../lib/vault";
 import { BACKGROUND_OPTIONS } from "../lib/templates";
 import { normalizeUrl, toggleChecklist } from "../lib/editorDom";
+<<<<<<< HEAD
+import { formatWhen, htmlToMarkdown, htmlToText, monthYear, wordCount } from "../lib/html";
+=======
 import { formatWhen, htmlToText, monthYearUpper, wordCount } from "../lib/html";
+>>>>>>> 9b447ac02f45ac0982561293ea1cd68cf30bfe7f
 import type { InkTool } from "./InkLayer";
 import PageSurface from "./PageSurface";
 import "./noteEditor.css";
@@ -436,7 +440,7 @@ function NoteEditor({
     ? "Salvataggio…"
     : `Salvato automaticamente · ${new Date(savedAt).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`;
 
-  const kicker = (pathLabel || "Senza cartella").toUpperCase();
+  const kicker = pathLabel || "Senza cartella";
 
   return (
     <div className={`nq-editor${compact ? " nq-editor--compact" : ""}`}>
@@ -656,7 +660,7 @@ function NoteEditor({
       <div className="nq-editor-body">
         <aside className="nq-pages" hidden={compact}>
           <div className="nq-pages-head">
-            <span>PAGINE</span>
+            <span>Pagine</span>
             <span>{pages.length}</span>
           </div>
           <div className="nq-pages-list">
@@ -723,8 +727,8 @@ function NoteEditor({
               color={color}
               size={size}
               kicker={kicker}
-              dateLabel={monthYearUpper(note.createdAt)}
-              footerLabel={`${kicker} · ${(title || "Senza titolo").toUpperCase()}`}
+              dateLabel={monthYear(note.createdAt)}
+              footerLabel={`${kicker} · ${title || "Senza titolo"}`}
               editorRef={editorRef}
               onContent={(html) => patchPage(page.id, { content: html })}
               onInk={handleInk}

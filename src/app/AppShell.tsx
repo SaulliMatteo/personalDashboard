@@ -10,6 +10,11 @@ import "./shell.css";
 function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="app">
+      {/* Decorazione di sfondo del tema (oggi solo Fosforo: due cerchi). */}
+      <div className="app-deco" aria-hidden="true">
+        <span className="app-deco-fill" />
+        <span className="app-deco-ring" />
+      </div>
       <Sidebar />
       <main className="main">{children}</main>
     </div>

@@ -114,7 +114,7 @@ function NotesPanel({ video, playerRef, onError, onChanged }: NotesPanelProps) {
 
       <form className="yt-composer" onSubmit={(e) => void submit(e)}>
         <div className="yt-composer-time">
-          <span className="yt-label">AGGIUNGI NOTA AL MINUTO</span>
+          <span className="yt-label">Aggiungi una nota al minuto</span>
           <span className="yt-composer-chip">{now === null ? "—" : formatTimestamp(now)}</span>
         </div>
         <textarea

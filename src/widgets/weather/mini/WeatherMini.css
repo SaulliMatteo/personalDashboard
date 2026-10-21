@@ -1,0 +1,78 @@
+/* Meteo nell'intestazione: icona, temperatura grande e due righe di testo. */
+
+.weather-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 280px;
+  min-width: 0;
+  color: var(--text-primary);
+}
+
+.weather-mini-icon {
+  display: flex;
+  font-size: 24px;
+  color: var(--text-secondary);
+}
+
+.weather-mini-temp {
+  flex: 0 0 auto;
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: var(--display-weight);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.weather-mini.is-stale .weather-mini-temp {
+  opacity: 0.6;
+}
+
+.weather-mini-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.weather-mini-text > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.weather-mini-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.weather-mini-setup {
+  height: 32px;
+  padding: 0 14px;
+  border: var(--btn-ghost-border);
+  border-radius: var(--radius-item);
+  background: var(--btn-ghost-bg);
+  color: var(--btn-ghost-fg);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.weather-mini-setup:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+:root[data-theme="quaderno"] .weather-mini-temp,
+:root[data-theme="fosforo"] .weather-mini-temp {
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .weather-mini-temp {
+  /* Il ° scritto a mano sporge oltre la sua casella. */
+  padding-right: 0.15em;
+  font-size: 44px;
+}

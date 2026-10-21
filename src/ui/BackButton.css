@@ -4,13 +4,15 @@
   gap: 6px;
   flex-shrink: 0;
 
-  border: 1px solid var(--border-subtle);
+  height: 36px;
+  border: var(--btn-ghost-border);
   border-radius: var(--radius-item);
-  background: transparent;
+  background: var(--btn-ghost-bg, transparent);
 
-  padding: 8px 14px;
+  padding: 0 14px;
 
-  color: var(--text-secondary);
+  color: var(--btn-ghost-fg);
+  font-family: inherit;
   font-size: 13.5px;
   cursor: pointer;
 
@@ -18,7 +20,10 @@
 }
 
 .detail-back-btn:hover {
-  background: var(--surface-2);
   color: var(--text-primary);
-  border-color: var(--border-accent);
+}
+
+.detail-back-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }

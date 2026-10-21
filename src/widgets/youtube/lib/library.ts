@@ -194,6 +194,16 @@ export function pickVideoToContinue(videos: readonly SavedVideo[]): SavedVideo |
   return next;
 }
 
+/** "Da guardare": prima i video iniziati (l'ultimo aperto per primo), poi i mai aperti dal più vecchio. */
+export function videoQueue(videos: readonly SavedVideo[]): SavedVideo[] {
+  const pending = videos.filter((v) => !v.watched);
+  const started = pending
+    .filter((v) => v.positionSeconds > 0)
+    .sort((a, b) => (b.lastWatchedAt ?? 0) - (a.lastWatchedAt ?? 0) || b.id - a.id);
+  const fresh = pending.filter((v) => v.positionSeconds <= 0).sort((a, b) => a.createdAt - b.createdAt || a.id - b.id);
+  return [...started, ...fresh];
+}
+
 /**
  * Il video successivo per la riproduzione automatica: nella stessa cartella, dopo quello
  * corrente nell'ordine della lista, il primo non ancora guardato. Niente giro completo:
