@@ -159,7 +159,7 @@ function NoteCollection(props: NoteCollectionProps) {
       ) : (
         <div className={mode === "grid" ? "nq-grid" : "nq-list"}>
           {visible.map((note) => {
-            const kicker = props.pathOf(note.folderId).toUpperCase();
+            const kicker = props.pathOf(note.folderId);
             const actions = isTrash ? (
               <span className="nq-note-actions">
                 <button type="button" className="nq-icon-btn" onClick={(e) => { e.stopPropagation(); props.onRestore(note.id); }} aria-label="Ripristina" title="Ripristina">
@@ -201,7 +201,7 @@ function NoteCollection(props: NoteCollectionProps) {
                 >
                   <div className="nq-row-main">
                     <h3>{note.title || "Senza titolo"}</h3>
-                    <span className="nq-row-kicker">{kicker || "SENZA CARTELLA"}</span>
+                    <span className="nq-row-kicker">{kicker || "Senza cartella"}</span>
                   </div>
                   {note.tags[0] && <span className="nq-chip">{note.tags[0]}</span>}
                   <span className="nq-row-meta">
@@ -220,7 +220,7 @@ function NoteCollection(props: NoteCollectionProps) {
                 onPointerDown={(e) => startNoteDrag(e, note)}
               >
                 <div className="nq-card-preview">
-                  <div className="nq-card-kicker">{kicker || "SENZA CARTELLA"}</div>
+                  <div className="nq-card-kicker">{kicker || "Senza cartella"}</div>
                   <div className="nq-doc nq-doc--card" dangerouslySetInnerHTML={{ __html: previews.get(note.id) ?? "" }} />
                 </div>
                 <footer className="nq-card-foot">

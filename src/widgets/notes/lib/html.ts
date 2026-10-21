@@ -140,6 +140,8 @@ export function relativeDay(ts: number): string {
   return `il ${shortDate(new Date(ts))}`;
 }
 
-export function monthYearUpper(ts: number): string {
-  return new Date(ts).toLocaleDateString("it-IT", { month: "long", year: "numeric" }).toUpperCase();
+/** "Ottobre 2026". */
+export function monthYear(ts: number): string {
+  const text = new Date(ts).toLocaleDateString("it-IT", { month: "long", year: "numeric" });
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
