@@ -264,7 +264,7 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "companionIdleMinutes", group: "companion", section: "Comportamento", type: "number", control: "input", min: 1, max: 120, step: 1, label: "Si addormenta dopo (min)", description: "Minuti senza mouse e tastiera. Non dorme mentre studi o guardi un video." },
   {
     key: "companionWatchForegroundApp", group: "companion", section: "Comportamento", type: "boolean",
-    label: "Osserva l'app in primo piano (Windows)",
+    label: "Osserva l'app in primo piano (Windows e macOS)",
     description: "Legge nome e titolo della finestra attiva per capire se stai ascoltando musica, programmando o guardando un video. Tutto resta sul PC: niente viene salvato né inviato.",
   },
   {

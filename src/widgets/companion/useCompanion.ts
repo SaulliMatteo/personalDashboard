@@ -19,10 +19,10 @@ export interface SeenApp {
 
 export interface CompanionContextValue {
   snapshot: BrainSnapshot;
-  /** App in primo piano riconosciuta (solo Windows, se permesso). */
+  /** App in primo piano riconosciuta (Windows e macOS, se permesso). */
   foreground: ForegroundApp | null;
   idleSeconds: number;
-  /** True se i segnali di sistema (Windows) arrivano davvero. */
+  /** True se i segnali di sistema (Windows e macOS) arrivano davvero. */
   systemSupported: boolean;
   /** Ultime app viste in primo piano, la più recente prima. */
   seenApps: SeenApp[];

@@ -125,7 +125,7 @@ function CompanionDetail() {
 
   let foregroundText: string;
   if (!settings.companionWatchForegroundApp) foregroundText = "Disattivato";
-  else if (!systemSupported) foregroundText = "Disponibile solo nell'app per Windows";
+  else if (!systemSupported) foregroundText = "Disponibile solo nell'app per Windows e macOS";
   else if (!foreground) foregroundText = "La dashboard (o non riconosciuta)";
   else foregroundText = `${foreground.label} · ${CATEGORY_LABELS[foreground.category]}`;
 

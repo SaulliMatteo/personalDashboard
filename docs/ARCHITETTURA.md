@@ -113,7 +113,7 @@ companion/
 │                            descrizione dell'eseguibile, scelta manuale dell'utente)
 ├─ render/                   stili grafici: ledRenderer.ts (matrice LED), solidRenderer.ts, styles.ts (registro);
 │                            costumes.ts (forme dei costumi: fiamma, coperta, libro…) e sdf.ts (distanze)
-└─ data/systemApi.ts         invoke("companion_snapshot") → src-tauri/src/companion.rs (Windows)
+└─ data/systemApi.ts         invoke("companion_snapshot") → src-tauri/src/companion.rs (Windows, macOS)
 ```
 
 Dati che Pixy legge dall'activityBus oltre a studio e video: `studySubjectName` (Studio), `weatherTemperature`
