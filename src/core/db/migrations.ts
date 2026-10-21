@@ -221,7 +221,7 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_note_attachments_note ON note_attachments(note_id)`,
     ],
   },
-    {
+  {
     version: 10,
     description: "Riparazione: YouTube (cartelle, video, note), archived_at e sessioni di visione per DB già oltre la v4",
     statements: [
