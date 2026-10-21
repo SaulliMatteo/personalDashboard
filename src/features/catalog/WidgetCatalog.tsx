@@ -2,8 +2,8 @@ import { useState } from "react";
 import "./widgetCatalog.css";
 import { WIDGET_REGISTRY } from "../../widgets/registry";
 import type { WidgetDefinition, WidgetSize } from "../../core/widgets/types";
-import { useLayout } from "../../core/layout/LayoutContext";
-import { useNav } from "../../core/nav/NavContext";
+import { useLayout } from "../../core/layout/useLayout";
+import { useNav } from "../../core/nav/useNav";
 import BackButton from "../../ui/BackButton";
 import WidgetSettingsButton from "./WidgetSettingsButton";
 

@@ -3,12 +3,14 @@
 //! Un solo comando, `companion_snapshot`, chiamato dal frontend ogni ~2 s:
 //!  - secondi dall'ultimo input di mouse/tastiera (di TUTTO il sistema, non
 //!    solo della nostra finestra), per capire se l'utente è via;
-//!  - processo e titolo della finestra in primo piano, solo se il frontend
-//!    lo chiede (impostazione "Osserva l'app in primo piano").
+//!  - processo, descrizione dell'eseguibile e titolo della finestra in primo
+//!    piano, solo se il frontend lo chiede (impostazione "Osserva l'app in
+//!    primo piano"). La descrizione (es. "Opera Internet Browser") aiuta a
+//!    classificare anche le app che il frontend non conosce per nome.
 //!
 //! Niente viene salvato o inviato in rete: il frontend lo classifica in
 //! categorie ("musica", "codice", …) e butta via il titolo.
-//! Implementato solo per Windows; sugli altri sistemi ritorna campi vuoti
+//! Implementato per Windows e macOS; sugli altri sistemi ritorna campi vuoti
 //! e il frontend ripiega sull'inattività della sola finestra.
 
 use serde::Serialize;
@@ -18,6 +20,8 @@ use serde::Serialize;
 pub struct ForegroundInfo {
     /// Percorso completo dell'eseguibile (es. "C:\\...\\Code.exe").
     pub process: String,
+    /// "Descrizione file" dalle informazioni di versione dell'eseguibile (vuota se manca).
+    pub description: String,
     pub title: String,
     /// La finestra in primo piano è la dashboard stessa.
     pub is_self: bool,
@@ -29,7 +33,7 @@ pub struct CompanionSnapshot {
     /// None = non disponibile su questo sistema.
     pub idle_seconds: Option<u64>,
     pub foreground: Option<ForegroundInfo>,
-    /// True se il sistema supporta questi segnali (oggi solo Windows).
+    /// True se il sistema supporta questi segnali (Windows e macOS).
     pub supported: bool,
 }
 
@@ -41,7 +45,10 @@ pub fn companion_snapshot(include_foreground: bool) -> CompanionSnapshot {
 #[cfg(windows)]
 mod platform {
     use super::{CompanionSnapshot, ForegroundInfo};
+    use std::collections::HashMap;
+    use std::sync::{Mutex, OnceLock};
     use windows_sys::Win32::Foundation::CloseHandle;
+    use windows_sys::Win32::Storage::FileSystem::{GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW};
     use windows_sys::Win32::System::SystemInformation::GetTickCount;
     use windows_sys::Win32::System::Threading::{
         OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION,
@@ -99,8 +106,10 @@ mod platform {
             }
         };
 
+        let process = process_path(pid).unwrap_or_default();
         Some(ForegroundInfo {
-            process: process_path(pid).unwrap_or_default(),
+            description: cached_description(&process),
+            process,
             title,
             is_self: pid == std::process::id(),
         })
@@ -127,13 +136,133 @@ mod platform {
         }
         Some(String::from_utf16_lossy(&buf[..size as usize]))
     }
+
+    /// La descrizione non cambia finché l'eseguibile è lo stesso: si legge
+    /// una volta per percorso (il polling arriva ogni ~2 s).
+    fn cached_description(path: &str) -> String {
+        if path.is_empty() {
+            return String::new();
+        }
+        static CACHE: OnceLock<Mutex<HashMap<String, String>>> = OnceLock::new();
+        let cache = CACHE.get_or_init(|| Mutex::new(HashMap::new()));
+        if let Ok(map) = cache.lock() {
+            if let Some(found) = map.get(path) {
+                return found.clone();
+            }
+        }
+        let description = file_description(path).unwrap_or_default();
+        if let Ok(mut map) = cache.lock() {
+            // Limite di sicurezza: in una sessione si aprono poche decine di programmi.
+            if map.len() > 256 {
+                map.clear();
+            }
+            map.insert(path.to_string(), description.clone());
+        }
+        description
+    }
+
+    fn file_description(path: &str) -> Option<String> {
+        let wide: Vec<u16> = path.encode_utf16().chain(std::iter::once(0)).collect();
+        // SAFETY: `wide` è una stringa UTF-16 terminata da zero.
+        let size = unsafe { GetFileVersionInfoSizeW(wide.as_ptr(), std::ptr::null_mut()) };
+        if size == 0 {
+            return None;
+        }
+        let mut data = vec![0u8; size as usize];
+        // SAFETY: il buffer ha esattamente la dimensione chiesta dall'API.
+        let ok = unsafe { GetFileVersionInfoW(wide.as_ptr(), 0, size, data.as_mut_ptr().cast()) };
+        if ok == 0 {
+            return None;
+        }
+
+        // Lingua e codepage della prima traduzione (es. 0409 04B0).
+        let mut ptr: *mut core::ffi::c_void = std::ptr::null_mut();
+        let mut len: u32 = 0;
+        let query: Vec<u16> = r"\VarFileInfo\Translation".encode_utf16().chain(std::iter::once(0)).collect();
+        // SAFETY: `data` contiene il blocco letto sopra; ptr/len sono puntatori validi.
+        let ok = unsafe { VerQueryValueW(data.as_ptr().cast(), query.as_ptr(), &mut ptr, &mut len) };
+        if ok == 0 || len < 4 || ptr.is_null() {
+            return None;
+        }
+        // SAFETY: l'API garantisce almeno `len` byte validi dentro `data`: qui ne leggiamo 4.
+        let (lang, codepage) = unsafe {
+            let pair = ptr as *const u16;
+            (std::ptr::read_unaligned(pair), std::ptr::read_unaligned(pair.add(1)))
+        };
+
+        let key = format!(r"\StringFileInfo\{lang:04x}{codepage:04x}\FileDescription");
+        let query: Vec<u16> = key.encode_utf16().chain(std::iter::once(0)).collect();
+        let mut ptr: *mut core::ffi::c_void = std::ptr::null_mut();
+        let mut len: u32 = 0;
+        // SAFETY: come sopra.
+        let ok = unsafe { VerQueryValueW(data.as_ptr().cast(), query.as_ptr(), &mut ptr, &mut len) };
+        if ok == 0 || len == 0 || ptr.is_null() {
+            return None;
+        }
+        // SAFETY: `len` caratteri UTF-16 (terminatore compreso) dentro `data`.
+        let chars = unsafe { std::slice::from_raw_parts(ptr as *const u16, len as usize) };
+        let text = String::from_utf16_lossy(chars);
+        let text = text.trim_end_matches('\0').trim();
+        (!text.is_empty()).then(|| text.to_string())
+    }
 }
 
-#[cfg(not(windows))]
+#[cfg(target_os = "macos")]
+mod platform {
+    use super::{CompanionSnapshot, ForegroundInfo};
+    use objc2_app_kit::NSWorkspace;
+
+    #[link(name = "CoreGraphics", kind = "framework")]
+    extern "C" {
+        fn CGEventSourceSecondsSinceLastEventType(state: i32, event_type: u32) -> f64;
+    }
+    /// kCGEventSourceStateCombinedSessionState: input di tutta la sessione, non solo nostro.
+    const COMBINED_SESSION_STATE: i32 = 0;
+    /// kCGAnyInputEventType.
+    const ANY_INPUT_EVENT: u32 = u32::MAX;
+
+    pub fn snapshot(include_foreground: bool) -> CompanionSnapshot {
+        CompanionSnapshot {
+            idle_seconds: idle_seconds(),
+            foreground: if include_foreground { foreground() } else { None },
+            supported: true,
+        }
+    }
+
+    fn idle_seconds() -> Option<u64> {
+        // SAFETY: funzione pura di CoreGraphics, nessun permesso richiesto.
+        let secs = unsafe { CGEventSourceSecondsSinceLastEventType(COMBINED_SESSION_STATE, ANY_INPUT_EVENT) };
+        (secs.is_finite() && secs >= 0.0).then_some(secs as u64)
+    }
+
+    /// Su macOS il titolo della finestra richiederebbe il permesso "Registrazione
+    /// schermo": non lo chiediamo, quindi resta vuoto. Come "processo" si passa il
+    /// percorso del bundle (es. "/Applications/Visual Studio Code.app"), perché
+    /// l'eseguibile dentro il bundle ha spesso un nome generico (es. "Electron").
+    fn foreground() -> Option<ForegroundInfo> {
+        let app = NSWorkspace::sharedWorkspace().frontmostApplication()?;
+        let process = app
+            .bundleURL()
+            .or_else(|| app.executableURL())
+            .and_then(|url| url.path())
+            .map(|path| path.to_string())
+            .unwrap_or_default();
+        let description = app.localizedName().map(|name| name.to_string()).unwrap_or_default();
+        let pid = app.processIdentifier();
+        Some(ForegroundInfo {
+            process,
+            description,
+            title: String::new(),
+            is_self: pid >= 0 && pid as u32 == std::process::id(),
+        })
+    }
+}
+
+#[cfg(not(any(windows, target_os = "macos")))]
 mod platform {
     use super::CompanionSnapshot;
 
-    // macOS/Linux: da implementare in futuro (CGEventSource / NSWorkspace).
+    // Linux: da implementare in futuro.
     pub fn snapshot(_include_foreground: bool) -> CompanionSnapshot {
         CompanionSnapshot::default()
     }

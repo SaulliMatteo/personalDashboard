@@ -1,0 +1,38 @@
+/* Giorno nell'intestazione: numero grande e due righe di testo accanto. */
+
+.date-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+}
+
+.date-mini-day {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: var(--display-weight);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.date-mini-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.date-mini-text > span:first-child {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+:root[data-theme="quaderno"] .date-mini-day,
+:root[data-theme="fosforo"] .date-mini-day {
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .date-mini-day {
+  font-size: 44px;
+}

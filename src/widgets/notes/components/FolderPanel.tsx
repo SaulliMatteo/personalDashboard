@@ -113,7 +113,7 @@ function FolderPanel({ folder, parentName, noteCount, onSave, onAddSubfolder, on
         </div>
 
         <div className="nq-panel-field">
-          <span className="nq-panel-label nq-panel-label--muted">ANTEPRIMA</span>
+          <span className="nq-panel-label nq-panel-label--muted">Anteprima</span>
           <div className="nq-preview">
             <span className="nq-preview-icon" style={{ color: tint, background: `color-mix(in srgb, ${tint} 16%, transparent)` }}>
               <Icon />

@@ -1,7 +1,7 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#include <winsock2.h>
+#include "platform.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -9,8 +9,8 @@
 #pragma comment(lib, "ws2_32.lib")
 #endif
 
-int  net_init(void);      /* WSAStartup: 0 = ok */
-void net_cleanup(void);   /* WSACleanup */
+int  net_init(void);      /* WSAStartup su Windows, nulla altrove: 0 = ok */
+void net_cleanup(void);   /* WSACleanup su Windows */
 
 /* Inviano/ricevono ESATTAMENTE len byte (TCP puo' spezzarli). 0 = ok, -1 = errore */
 int send_all(SOCKET s, const void *buf, size_t len);

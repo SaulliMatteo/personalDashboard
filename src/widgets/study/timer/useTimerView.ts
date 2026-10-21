@@ -1,11 +1,11 @@
-import { useSettings } from "../../../core/settings/SettingsContext";
+import { useSettings } from "../../../core/settings/useSettings";
 import { colorForSubject } from "../lib/colors";
 import { formatClock, formatStopwatch } from "../lib/format";
-import { useTimer } from "./TimerContext";
+import { useTimer } from "./useTimer";
 
 const PHASE_LABEL: Record<string, string> = {
   idle: "Pronto",
-  work: "In studio",
+  work: "Concentrazione",
   short_break: "Pausa breve",
   long_break: "Pausa lunga",
 };

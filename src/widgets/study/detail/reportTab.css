@@ -1,10 +1,11 @@
 /* Scheda Report: riepilogo, grafico a barre impilate, classifica materie. */
 
 .study-report {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--card-bg);
+  border: var(--card-border);
   border-radius: var(--radius-card);
   padding: 22px;
+  box-shadow: var(--card-shadow);
 }
 
 .study-report-header {
@@ -157,7 +158,7 @@
   display: flex;
   align-items: flex-end;
 
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--surface-1);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -237,4 +238,48 @@
   text-align: right;
   font-variant-numeric: tabular-nums;
   color: var(--text-muted);
+}
+
+/* ---------- Barre nella forma del tema (come "Ultimi 7 giorni" nelle card) ---------- */
+.study-bar-track {
+  background: var(--bar-off);
+}
+
+.study-report-row-bar {
+  background: var(--track);
+}
+
+/* Opaco: colonne piene e tonde. */
+:root[data-theme="opaco"] .study-bar-track {
+  border-radius: 14px;
+}
+
+/* Quaderno: barre disegnate a penna, aperte in basso, sulla riga di base. */
+:root[data-theme="quaderno"] .study-bar-track {
+  box-sizing: border-box;
+  border: 1.5px solid var(--accent);
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  background: transparent;
+}
+
+:root[data-theme="quaderno"] .study-bars {
+  border-bottom: 2px solid var(--accent);
+}
+
+:root[data-theme="quaderno"] .study-bar-label {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1;
+  text-transform: none;
+}
+
+/* Fosforo: barre spezzate in celle da 6px, come i display a punti. */
+:root[data-theme="fosforo"] .study-bar-track {
+  border-radius: 2px;
+}
+
+:root[data-theme="fosforo"] .study-bar-stack {
+  -webkit-mask: repeating-linear-gradient(to top, currentColor 0 6px, transparent 6px 8px);
+  mask: repeating-linear-gradient(to top, currentColor 0 6px, transparent 6px 8px);
 }

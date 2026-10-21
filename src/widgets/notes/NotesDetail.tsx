@@ -17,12 +17,13 @@ import {
   MdChevronRight,
 } from "react-icons/md";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
-import { useSettings } from "../../core/settings/SettingsContext";
+import { useSettings } from "../../core/settings/useSettings";
 import FolderPanel from "./components/FolderPanel";
 import VaultPanel from "./components/VaultPanel";
 import FolderTree from "./components/FolderTree";
 import NoteCollection, { type LayoutMode, type SortKey } from "./components/NoteCollection";
 import NoteEditor from "./components/NoteEditor";
+import { takePendingNote } from "./lib/launch";
 import {
   addAttachment,
   addFolder,
@@ -122,6 +123,13 @@ function NotesDetail() {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  // Il widget può chiedere di aprire subito una nota (lib/launch.ts). In
+  // StrictMode l'effetto gira due volte: la prima lettura consuma la richiesta.
+  useEffect(() => {
+    const id = takePendingNote();
+    if (id !== null) setOpenId(id);
+  }, []);
 
   // ---------------- Dati derivati ----------------
 
@@ -719,7 +727,7 @@ function NotesDetail() {
           </nav>
 
           <div className="nq-section-head">
-            <span>LE TUE CARTELLE</span>
+            <span>Le tue cartelle</span>
             <button type="button" className="nq-icon-btn" onClick={() => setNewFolder({ parentId: null })} aria-label="Nuova cartella" title="Nuova cartella">
               <MdOutlineCreateNewFolder />
             </button>
@@ -760,7 +768,7 @@ function NotesDetail() {
             {allTags.length > 0 && (
               <>
                 <div className="nq-section-head">
-                  <span>TAG</span>
+                  <span>Tag</span>
                 </div>
                 <div className="nq-tags">
                   {allTags.map((tag) => (

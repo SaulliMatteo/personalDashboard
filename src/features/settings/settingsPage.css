@@ -1,0 +1,408 @@
+/* Pagina Impostazioni (mockup impostazioni-aspetto.html): sezioni a sinistra, contenuto a destra. */
+
+.sp {
+  flex: 1 0 auto;
+  display: flex;
+  min-height: 100%;
+  border: var(--modal-border);
+  border-radius: var(--radius-card);
+  background: var(--modal-bg);
+  color: var(--text-primary);
+}
+
+/* ---------- Elenco delle sezioni ---------- */
+.sp-nav {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  flex: 0 0 200px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 24px 14px;
+}
+
+/* La riga verticale va per tutta l'altezza anche se l'elenco è sticky. */
+.sp-content {
+  border-left: 1px solid var(--divider);
+}
+
+.sp-title {
+  margin: 0 0 14px;
+  padding: 0 10px;
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sp-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sp-nav-item {
+  height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--nav-fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sp-nav-item:hover {
+  color: var(--text-primary);
+}
+
+.sp-nav-item.is-active {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-fg);
+  font-weight: 500;
+}
+
+.sp-nav-item--sub {
+  height: 34px;
+  padding-left: 24px;
+  font-size: 13px;
+}
+
+.sp-nav-item:focus-visible,
+.sp-btn:focus-visible,
+.sp-link:focus-visible,
+.sp-theme:focus-visible,
+.sp-swatch:focus-visible,
+.sp-swatch--custom:focus-within {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- Contenuto ---------- */
+.sp-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding: 28px 32px 32px;
+}
+
+.sp-content > * {
+  max-width: 920px;
+}
+
+.sp-head h2 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sp-head p {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+}
+
+.sp-head--row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.sp-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ---------- Schede dei temi ---------- */
+.sp-themes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.sp-theme {
+  margin: 1px;
+  padding: 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sp-theme.is-selected {
+  margin: 0;
+  border: 2px solid var(--accent);
+}
+
+.sp-theme-preview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 63px;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--pv-bg);
+}
+
+.sp-theme-preview > span {
+  border: var(--pv-border);
+  border-radius: var(--pv-radius);
+  background: var(--pv-b);
+}
+
+.sp-theme-preview > .sp-theme-a {
+  grid-column: 1 / 3;
+  grid-row: 1 / 3;
+  background: var(--pv-a);
+}
+
+.sp-theme-b {
+  grid-column: 3 / 5;
+  grid-row: 1 / 2;
+}
+
+.sp-theme-c {
+  grid-column: 3 / 4;
+  grid-row: 2 / 3;
+}
+
+.sp-theme--notte {
+  --pv-bg: var(--preview-notte-bg);
+  --pv-a: var(--preview-notte-a);
+  --pv-b: var(--preview-notte-b);
+  --pv-border: var(--preview-notte-border);
+  --pv-radius: var(--preview-notte-radius);
+}
+
+.sp-theme--opaco {
+  --pv-bg: var(--preview-opaco-bg);
+  --pv-a: var(--preview-opaco-a);
+  --pv-b: var(--preview-opaco-b);
+  --pv-border: var(--preview-opaco-border);
+  --pv-radius: var(--preview-opaco-radius);
+}
+
+.sp-theme--quaderno {
+  --pv-bg: var(--preview-quaderno-bg);
+  --pv-a: var(--preview-quaderno-a);
+  --pv-b: var(--preview-quaderno-b);
+  --pv-border: var(--preview-quaderno-border);
+  --pv-radius: var(--preview-quaderno-radius);
+}
+
+.sp-theme--fosforo {
+  --pv-bg: var(--preview-fosforo-bg);
+  --pv-a: var(--preview-fosforo-a);
+  --pv-b: var(--preview-fosforo-b);
+  --pv-border: var(--preview-fosforo-border);
+  --pv-radius: var(--preview-fosforo-radius);
+}
+
+.sp-theme-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 12px 4px 0;
+  font-weight: 600;
+}
+
+.sp-theme-scheme {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.sp-theme-desc {
+  display: block;
+  padding: 2px 4px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ---------- Colore accent ---------- */
+.sp-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sp-block-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.sp-block-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.sp-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  font: inherit;
+  cursor: pointer;
+}
+
+.sp-link:disabled {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.sp-swatches {
+  display: flex;
+  gap: 10px;
+}
+
+.sp-swatch {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.sp-swatch.is-selected {
+  border: 2px solid var(--text-primary);
+}
+
+.sp-swatch--custom {
+  border: 1px dashed var(--text-muted);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+/* Il selettore di colore nativo resta, invisibile, sopra il cerchio. */
+.sp-swatch--custom input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* ---------- Riga informativa (Griglia) ---------- */
+.sp-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-top: 18px;
+  border-top: 1px solid var(--divider);
+}
+
+.sp-info-title {
+  font-weight: 500;
+}
+
+.sp-info-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.sp-info-value {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* ---------- Pulsanti ---------- */
+.sp-btn {
+  height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+  font: inherit;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.sp-btn--ghost {
+  border: var(--btn-ghost-border);
+  background: transparent;
+  color: var(--btn-ghost-fg);
+}
+
+.sp-btn--danger {
+  border: 1px solid var(--danger);
+  background: transparent;
+  color: var(--danger);
+}
+
+.sp-btn--danger.is-armed {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.sp-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------- Backup ---------- */
+.settings-backup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0 16px;
+}
+
+.settings-backup-text {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  resize: vertical;
+  user-select: text;
+}
+
+.settings-backup-actions {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 1100px) {
+  .sp-themes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Quaderno: i titoli sono scritti a mano, il corsivo va ingrandito per leggersi. */
+:root[data-theme="quaderno"] .sp-title {
+  font-size: 32px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .sp-head h2 {
+  font-size: 28px;
+  line-height: 1.1;
+  color: var(--accent);
+}

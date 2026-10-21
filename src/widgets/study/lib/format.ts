@@ -1,3 +1,5 @@
+import type { SubjectMode } from "../data/studyRepository";
+
 /** Secondi -> "MM:SS", per il countdown. */
 export function formatClock(totalSeconds: number): string {
   const safe = Math.max(0, Math.round(totalSeconds));
@@ -17,11 +19,22 @@ export function formatStopwatch(totalSeconds: number): string {
   return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 }
 
-/** Secondi -> "1h 23m" oppure "34m", per i totali studiati. */
+/** Secondi -> "1h 23m", "2h 05m" oppure "34m", per i totali studiati. */
 export function formatHoursMinutes(totalSeconds: number): string {
   const totalMinutes = Math.round(totalSeconds / 60);
   const h = Math.floor(totalMinutes / 60);
   const m = totalMinutes % 60;
   if (h === 0) return `${m}m`;
-  return `${h}h ${m}m`;
+  return `${h}h ${String(m).padStart(2, "0")}m`;
 }
+
+/** Secondi -> "2h05" oppure "45m": la forma compatta dei numeri a puntini (Fosforo). */
+export function formatHoursMinutesCompact(totalSeconds: number): string {
+  const totalMinutes = Math.round(totalSeconds / 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h === 0) return `${m}m`;
+  return `${h}h${String(m).padStart(2, "0")}`;
+}
+
+export const MODE_LABEL: Record<SubjectMode, string> = { pomodoro: "Pomodoro", stopwatch: "Cronometro" };
