@@ -15,13 +15,16 @@ src/
 │   ├─ db/                   client SQLite, migrazioni versionate, store chiave/valore "meta"
 │   ├─ settings/             schema.ts = UNICA fonte di verità delle impostazioni
 │   ├─ layout/               griglia: contesto, repository, compactor (spinta ritardata)
-│   ├─ nav/                  vista corrente (dashboard / catalogo / dettaglio widget)
+│   ├─ nav/                  vista corrente (dashboard / catalogo / dettaglio widget / impostazioni)
+│   ├─ theme/                themes.ts (i 4 temi, pigmenti Opaco, ACCENT_PRESETS), variants.ts (useThemeVariant)
 │   ├─ widgets/              tipi (WidgetDefinition), taglie, WidgetFrame (cornice comune)
 │   ├─ activity/             bacheca delle attività: i widget pubblicano (studio, video, file)
 │   │                        e chi vuole ascolta, senza importarsi a vicenda
+│   │                        (lo Studio pubblica anche studyTodaySeconds/Spans per intestazione e sidebar)
 │   ├─ report/               periods.ts: periodi (settimana/mese/anno) e barre per i grafici di report
-│   └─ hooks/                hook generici (useLatestRef)
-├─ features/                 schermate dell'app (dashboard, catalogo, impostazioni, sidebar)
+│   └─ hooks/                hook generici (useLatestRef, useNow)
+├─ features/                 schermate dell'app (dashboard + intestazione, catalogo, sidebar,
+│                            settings/SettingsPage.tsx: pagina Impostazioni con le schede in tabs/)
 ├─ widgets/                  un widget = una cartella
 │   ├─ registry.ts           l'UNICO elenco dei widget
 │   ├─ WidgetProviders.tsx   monta i provider richiesti dai widget
@@ -31,7 +34,7 @@ src/
 │   ├─ notes/                widget Quaderno (vedi sotto)
 │   └─ companion/            widget Companion (vedi sotto)
 ├─ ui/                       componenti riusabili senza logica di dominio
-│                            (BackButton, ConfirmButton, NumberField, BorderGlow)
+│                            (BackButton, ConfirmButton, NumberField, BorderGlow, ProgressBar per tema)
 └─ styles/                   tokens.css (colori/raggi/font), base.css, tailwind.css
 ```
 
@@ -142,6 +145,9 @@ sale in `core/` o `ui/`.
 3. Leggila con `useSettings()`. Nessuna migrazione: sono righe chiave/valore e le chiavi mancanti usano il default.
    Valori non validi nel DB vengono sostituiti dal default (`sanitizeSettings`).
 
+Le impostazioni sono una pagina (`openSettings(sezione)` di `NavContext`): Aspetto, Dashboard, Widget (una
+sezione per ogni widget con `settingsGroup`, id `widget:<id>`) e Generale.
+
 ### Far reagire il Companion a qualcosa di nuovo
 1. Nel widget che "sa" la cosa: `publishActivity({...})` (stato) o `emitActivityEvent({...})` (momento),
    da `core/activity/activityBus.ts` (aggiungi il tipo lì).
@@ -158,6 +164,18 @@ Non modificare mai una migrazione già rilasciata. Gli statement devono poter es
 - Usa sempre i token (`--bg-card`, `--surface-1/2/3`, `--accent`, `--on-accent`, `--text-*`): così il tema chiaro funziona da solo.
 - Ogni componente ha il suo `.css` accanto; niente CSS globale fuori da `styles/`.
 - Come appare il timer (colori, testo, anello): `widgets/study/timer/useTimerView.ts`, usato da widget e pagina.
+- I temi sono 4 (Notte, Opaco, Quaderno, Fosforo): `data-theme` su `<html>`, un blocco di token per tema in
+  `tokens.css`. I mockup in `temi-dashboard/docs/design/temi/` sono la fonte di verità.
+- Quando un pezzo cambia **forma** per tema (non solo colore) si usa `useThemeVariant(map)` di
+  `core/theme/variants.ts` con una `ThemeVariants<T>` (una voce per tema), mai `if (theme === …)`.
+  Se la variante è un componente, si rende con `createElement(Variant, props)` (regola lint `static-components`).
+- Le card per tema dei widget stanno in `card/cards.ts` (es. `STUDY_CARDS`, `COMPANION_CARDS`): la pagina di
+  dettaglio riusa la card M del tema, così è identica alla dashboard.
+- In Opaco ogni widget ha un pigmento (`data-pigment`, mappa in `themes.ts`) che ridefinisce i token nel suo riquadro
+  e nella sua pagina di dettaglio (`.detail-scope`). In Quaderno `.card-postit` dà l'aspetto del post-it.
+- Token di forma utili: `--card-*`, `--panel-*`, `--radius-item` (pillola in Opaco/Fosforo, non usarlo per
+  righe alte), `--btn-ghost-*`/`--btn-primary-*`, `--row-active-*`, `--display-texture`/`--display-border`,
+  `--thumb-*` (miniature video), `--main-bg` (in Quaderno è il foglio a quadretti).
 
 ### Aggiungere una proprietà a una materia
 Colonna in una nuova migrazione → campo in `Subject`/`SubjectRow`/`PATCH_COLUMNS` (`study/data/studyRepository.ts`)
