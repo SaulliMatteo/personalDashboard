@@ -89,6 +89,7 @@ const PIGMENT_BY_WIDGET: Record<string, Pigment> = {
   notes: "carta",
   clock: "senape",
   date: "salvia",
+  weather: "blu",
 };
 
 /** Pigmento di un widget; `index` (posizione nel registry) serve solo per i widget nuovi. */

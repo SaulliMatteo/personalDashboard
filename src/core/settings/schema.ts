@@ -105,11 +105,15 @@ export const DEFAULT_SETTINGS = {
   companionWatchForegroundApp: true,
   /** Animazioni spente, "id,id,…". Si modifica dalla pagina del Companion: nessuna voce in SETTING_DEFS. */
   companionDisabledAnimations: "",
+
+  // ---- Widget: Meteo ----
+  /** Vuota = meteo spento: nessuna richiesta in rete. */
+  weatherCity: "",
 };
 
 export type AppSettings = typeof DEFAULT_SETTINGS;
 export type SettingKey = keyof AppSettings;
-export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion";
+export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion" | "weather";
 
 interface BaseDef {
   key: SettingKey;
@@ -217,6 +221,12 @@ export const SETTING_DEFS: SettingDef[] = [
     label: "Conta i video come tempo di studio",
     description:
       "Mentre guardi un video, il tempo in riproduzione si aggiunge allo studio della materia che ha lo stesso nome della cartella in cui il video è salvato (solo la cartella diretta; maiuscole e accenti non contano). Non conta se nessuna materia attiva ha quel nome, né mentre il timer dello Studio sta lavorando.",
+  },
+
+  // ======================= WIDGET: METEO =======================
+  {
+    key: "weatherCity", group: "weather", section: "Località", type: "text", maxLength: 60, placeholder: "Es. Milano", label: "Città",
+    description: "Il meteo usa internet (Open-Meteo, gratuito e senza account) solo se il widget o il suo mini sono in uso e la città è impostata.",
   },
 
   // ======================= WIDGET: COMPANION =======================

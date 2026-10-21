@@ -8,6 +8,7 @@ import { notesWidget } from "./notes";
 import { companionWidget } from "./companion";
 import { clockWidget } from "./clock";
 import { dateWidget } from "./date";
+import { weatherWidget } from "./weather";
 
 /**
  * L'UNICO elenco dei widget dell'app. Per aggiungerne uno:
@@ -17,7 +18,7 @@ import { dateWidget } from "./date";
  * Catalogo, dashboard, layout di default e provider si aggiornano da soli.
  * L'ordine determina anche l'ordine delle righe nel layout di default.
  */
-export const WIDGET_REGISTRY: WidgetDefinition[] = [studyWidget, fileTransferWidget, youtubeWidget, notesWidget, companionWidget, clockWidget, dateWidget];
+export const WIDGET_REGISTRY: WidgetDefinition[] = [studyWidget, fileTransferWidget, youtubeWidget, notesWidget, companionWidget, clockWidget, dateWidget, weatherWidget];
 
 const widgetsById = new Map(WIDGET_REGISTRY.map((widget) => [widget.id, widget] as const));
 
