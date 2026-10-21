@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { useLayout } from "../core/layout/LayoutContext";
+import { useLayout } from "../core/layout/useLayout";
 import { hideSplash, setSplashStatus } from "./splash";
 
 // Rete di sicurezza: se il layout non si carica mai (errore già loggato in

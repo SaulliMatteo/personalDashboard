@@ -242,7 +242,7 @@
   padding: 0 4px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: normal;
   color: var(--text-muted);
 }
 
@@ -290,7 +290,7 @@
 
 .nq-thumb-kicker {
   font-size: 7.5px;
-  letter-spacing: 0.05em;
+  letter-spacing: normal;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -354,7 +354,7 @@
 }
 
 .nq-thumb-tools .nq-thumb-del.is-armed {
-  color: #e78080;
+  color: var(--danger);
 }
 
 .nq-pages-hint {
@@ -429,7 +429,7 @@
   justify-content: space-between;
   gap: 1em;
   font-size: 0.68em;
-  letter-spacing: 0.06em;
+  letter-spacing: normal;
   color: var(--text-muted);
 }
 
@@ -581,6 +581,29 @@
   pointer-events: none;
 }
 
+<<<<<<< HEAD
+/* ---------- Il foglio nel linguaggio del tema ---------- */
+
+/* Quaderno: foglio a quadretti con il margine rosso, come lo sfondo dell'app. */
+:root[data-theme="quaderno"] .nq-paper {
+  background: linear-gradient(90deg, transparent 2.2em, var(--paper-margin) 2.2em calc(2.2em + 1.5px), transparent calc(2.2em + 1.5px)),
+    var(--main-bg);
+  border: var(--display-border);
+  border-radius: 0.4em;
+}
+
+/* Opaco: un foglio di carta pieno, senza bordo. */
+:root[data-theme="opaco"] .nq-paper {
+  border: 0;
+  border-radius: 1.2em;
+}
+
+/* Fosforo: pannello del display, con la trama a punti. */
+:root[data-theme="fosforo"] .nq-paper {
+  background: var(--display-texture, none), var(--bg-card);
+  border: var(--display-border);
+  border-radius: var(--radius-panel);
+=======
 /* ---------- Sfondi della pagina (in em: seguono lo zoom) ---------- */
 
 .nq-paper[data-bg="dots"] {
@@ -779,4 +802,5 @@
 
 .nq-editor--compact .nq-paper {
   padding: 2em 2em 1.6em;
+>>>>>>> 9b447ac02f45ac0982561293ea1cd68cf30bfe7f
 }

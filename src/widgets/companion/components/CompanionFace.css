@@ -26,7 +26,7 @@
   border-radius: 10px;
   border: 1px solid var(--border-accent);
   background: color-mix(in srgb, var(--bg-card) 88%, var(--accent) 12%);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-pop);
 
   color: var(--text-primary);
   font-size: 12px;

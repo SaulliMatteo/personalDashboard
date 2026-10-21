@@ -1,7 +1,7 @@
 #ifndef HTTP_H
 #define HTTP_H
 
-#include <winsock2.h>
+#include "platform.h"
 
 #define HTTP_MAX_PATH   512
 #define HTTP_MAX_NAME   256

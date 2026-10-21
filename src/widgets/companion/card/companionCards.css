@@ -1,0 +1,366 @@
+/* Card del Companion nei quattro temi (vedi CompanionCards.tsx). */
+
+.cc-face {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Fumetto: compare, resta, svanisce (durata impostata inline). */
+.cc-bubble {
+  max-width: calc(100% - 24px);
+  pointer-events: none;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  animation-name: cc-bubble-life;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes cc-bubble-life {
+  0% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  6%,
+  90% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Testi di nome e stato non vanno mai a capo. */
+.cn-name,
+.cn-status,
+.co-text > *,
+.co-head > *,
+.cq-name,
+.cq-status,
+.cf-text > *,
+.cf-head > * {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==================== Notte ==================== */
+.widget.cn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+}
+
+.widget.cn--S {
+  padding: 8px;
+}
+
+.cn-panel {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-panel);
+  border: var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.cn-halo {
+  position: absolute;
+  width: 230px;
+  height: 230px;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--face-halo) 0%, transparent 68%);
+}
+
+.cn-panel .cc-face {
+  position: relative;
+  align-self: stretch;
+}
+
+.cn-bubble {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 6px 12px;
+  border-radius: var(--bubble-radius);
+  background: var(--bubble-bg);
+  color: var(--bubble-fg);
+  font-size: 12px;
+}
+
+.cn-foot {
+  display: flex;
+  flex-direction: column;
+  padding: 0 4px;
+}
+
+.cn-name {
+  font-weight: 500;
+}
+
+.cn-status {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 2×1: riquadro della faccia a sinistra, nome e stato a destra. */
+.widget.cn--W {
+  flex-direction: row;
+  align-items: center;
+}
+
+.cn--W .cn-panel {
+  flex: 0 0 auto;
+  height: 100%;
+  aspect-ratio: 1;
+}
+
+.cn--W .cn-foot {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ==================== Opaco ==================== */
+.widget.co {
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+}
+
+.widget.co--S {
+  padding: 22px 18px;
+}
+
+.co-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.co-head h2,
+.co-text h2 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.co-status {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.co-bubble-slot {
+  min-height: 34px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.co-bubble {
+  padding: 8px 14px;
+  border-radius: var(--bubble-radius);
+  background: var(--bubble-bg);
+  color: var(--bubble-fg);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.widget.co--W {
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 22px;
+}
+
+.co--W .co-face-box {
+  flex: 0 0 auto;
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1;
+}
+
+.co-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ==================== Quaderno ==================== */
+.widget.cq {
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  color: var(--text-primary);
+}
+
+.widget.cq--S {
+  padding: 22px 18px;
+}
+
+.cq-bubble-slot {
+  min-height: 30px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cq-bubble {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--bubble-fg);
+  text-align: right;
+}
+
+.cq-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.cq-name {
+  /* Il corsivo sporge oltre la sua larghezza: un filo di spazio evita che venga tagliato. */
+  padding-right: 0.2em;
+  font-family: var(--font-title);
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.cq-status {
+  font-size: 13px;
+  color: var(--postit-text);
+}
+
+.widget.cq--W {
+  flex-direction: row;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 22px;
+}
+
+.cq--W .cq-face-box {
+  flex: 0 0 auto;
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1;
+}
+
+.cq-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==================== Fosforo ==================== */
+.widget.cf {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+}
+
+.widget.cf--S {
+  padding: 0;
+  background: var(--display-bg);
+}
+
+.cf--S .cc-face {
+  margin: 12px;
+}
+
+.cf-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.cf-status {
+  color: var(--text-secondary);
+}
+
+.cf-screen {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-display);
+  border: var(--display-border);
+  background: var(--display-texture), var(--display-bg);
+}
+
+.cf-screen .cc-face {
+  position: relative;
+  align-self: stretch;
+}
+
+.cf-lens-ring,
+.cf-lens {
+  position: absolute;
+  border-radius: 50%;
+  aspect-ratio: 1;
+}
+
+.cf-lens-ring {
+  height: min(250px, 92%);
+  border: var(--lens-ring);
+}
+
+.cf-lens {
+  height: min(222px, 82%);
+  border: var(--display-border);
+  background: var(--display-bg);
+}
+
+.cf-bubble {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  padding: 5px 10px;
+  border: var(--bubble-border);
+  border-radius: 13px;
+  background: var(--bubble-bg);
+  color: var(--bubble-fg);
+  font-size: 12px;
+}
+
+.widget.cf--W {
+  flex-direction: row;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.cf--W .cf-screen {
+  flex: 0 0 auto;
+  aspect-ratio: 1;
+}
+
+.cf-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}

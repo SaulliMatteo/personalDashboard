@@ -3,7 +3,7 @@ import { MdAdd, MdPlayArrow } from "react-icons/md";
 import VideoRow from "../components/VideoRow";
 import VideoThumb from "../components/VideoThumb";
 import type { SavedVideo, VideoFolder } from "../data/youtubeRepository";
-import { folderPath, pickVideoToContinue } from "../lib/library";
+import { folderPath, pickVideoToContinue, videoQueue } from "../lib/library";
 import { formatTimestamp } from "../lib/youtube";
 
 interface HomeScreenProps {
@@ -13,19 +13,9 @@ interface HomeScreenProps {
   onAddVideo: () => void;
 }
 
-/** "Da guardare": prima i video iniziati (l'ultimo aperto per primo), poi i mai aperti dal più vecchio. */
-function queueOf(videos: readonly SavedVideo[]): SavedVideo[] {
-  const pending = videos.filter((v) => !v.watched);
-  const started = pending
-    .filter((v) => v.positionSeconds > 0)
-    .sort((a, b) => (b.lastWatchedAt ?? 0) - (a.lastWatchedAt ?? 0) || b.id - a.id);
-  const fresh = pending.filter((v) => v.positionSeconds <= 0).sort((a, b) => a.createdAt - b.createdAt || a.id - b.id);
-  return [...started, ...fresh];
-}
-
 function HomeScreen({ folders, videos, onOpenVideo, onAddVideo }: HomeScreenProps) {
   const hero = useMemo(() => pickVideoToContinue(videos), [videos]);
-  const queue = useMemo(() => queueOf(videos).filter((v) => v.id !== hero?.id), [videos, hero]);
+  const queue = useMemo(() => videoQueue(videos).filter((v) => v.id !== hero?.id), [videos, hero]);
   const labelOf = (v: SavedVideo) => folderPath(folders, v.folderId).map((f) => f.name).join(" / ");
   const pendingCount = videos.filter((v) => !v.watched).length;
 
@@ -61,7 +51,9 @@ function HomeScreen({ folders, videos, onOpenVideo, onAddVideo }: HomeScreenProp
           </section>
 
           <section className="yt-card yt-hero">
-            <span className="yt-label">RIPRENDI DA QUI</span>
+            <div className="yt-section-title">
+              <h3>Riprendi da qui</h3>
+            </div>
             {hero ? (
               <>
                 <div className="yt-hero-stage">

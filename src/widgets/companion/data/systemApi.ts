@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 /** Risposta di `companion_snapshot` (src-tauri/src/companion.rs). */
 export interface SystemSnapshot {
   idleSeconds: number | null;
-  foreground: { process: string; title: string; isSelf: boolean } | null;
+  foreground: { process: string; description: string; title: string; isSelf: boolean } | null;
   supported: boolean;
 }
 

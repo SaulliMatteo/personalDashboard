@@ -3,7 +3,7 @@ import { MdClose } from "react-icons/md";
 import NumberField from "../../../ui/NumberField";
 import type { Subject, SubjectSettingsPatch } from "../data/studyRepository";
 import { SUBJECT_COLORS } from "../lib/colors";
-import type { AddSubjectResult } from "../timer/TimerContext";
+import type { AddSubjectResult } from "../timer/useTimer";
 import ModeToggle from "./ModeToggle";
 import "./subjectSettingsPopup.css";
 

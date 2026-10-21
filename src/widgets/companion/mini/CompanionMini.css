@@ -1,0 +1,27 @@
+/* Companion nell'intestazione: faccia in un riquadro piccolo e due righe di testo. */
+
+.companion-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.companion-mini-face {
+  flex: 0 0 auto;
+  width: 76px;
+  height: 52px;
+}
+
+.companion-mini-text {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+.companion-mini-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
