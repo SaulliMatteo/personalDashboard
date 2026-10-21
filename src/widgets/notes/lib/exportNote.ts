@@ -1,7 +1,7 @@
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import type { NotePage } from "../data/notesRepository";
-import { htmlToMarkdown, sanitizeHtml } from "./html";
+import { htmlToMarkdown, monthYear, sanitizeHtml } from "./html";
 import { drawStrokes } from "./ink";
 
 export interface ExportMeta {
@@ -71,7 +71,7 @@ function buildStage(page: NotePage, number: number, meta: ExportMeta, light: boo
   const [headLeft, headRight] = Array.from(paper.querySelectorAll(".nq-paper-head span"));
   const [footLeft, footRight] = Array.from(paper.querySelectorAll(".nq-paper-foot span"));
   headLeft.textContent = meta.kicker;
-  headRight.textContent = monthYearUpper(meta.createdAt);
+  headRight.textContent = monthYear(meta.createdAt).toUpperCase();
   footLeft.textContent = `${meta.kicker} · ${(meta.title || "Senza titolo").toUpperCase()}`;
   footRight.textContent = String(number).padStart(2, "0");
 

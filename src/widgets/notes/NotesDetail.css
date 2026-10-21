@@ -18,6 +18,62 @@
   font-size: 13.5px;
 }
 
+/* Caricamento fallito: cosa è successo e un pulsante per riprovare. */
+.nq-load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.nq-load-error strong {
+  color: var(--danger);
+  font-size: 14px;
+}
+
+/* ---------- Avvisi e file trascinati dal desktop ---------- */
+
+.nq-notice {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 200;
+  max-width: min(520px, 90vw);
+  transform: translateX(-50%);
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--text-primary);
+  color: var(--bg-card);
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.nq-drop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  pointer-events: none;
+}
+
+.nq-drop-overlay div {
+  padding: 28px 40px;
+  border: 2px dashed var(--accent);
+  border-radius: 18px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+}
+
 /* ---------- Pulsanti e controlli condivisi ---------- */
 
 .nq-btn {
