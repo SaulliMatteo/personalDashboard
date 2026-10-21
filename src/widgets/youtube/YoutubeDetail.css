@@ -1,10 +1,26 @@
 /* Pagina YouTube: stessi token del resto dell'app (tema chiaro/scuro e accent automatici). */
 
 .yt-detail {
+  /* Miniature con lo stesso raggio della card YouTube del tema (YoutubeWidget.css);
+     righe e note come pannelli, non come pillole. */
+  --yt-media-radius: 14px;
+
   display: flex;
   flex-direction: column;
   gap: 16px;
   flex-shrink: 0;
+}
+
+:root[data-theme="opaco"] .yt-detail {
+  --yt-media-radius: 20px;
+}
+
+:root[data-theme="quaderno"] .yt-detail {
+  --yt-media-radius: 6px;
+}
+
+:root[data-theme="fosforo"] .yt-detail {
+  --yt-media-radius: var(--radius-display);
 }
 
 .yt-detail-header {
@@ -28,10 +44,9 @@
 }
 
 .yt-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .yt-muted {
@@ -230,7 +245,7 @@ textarea.yt-input {
   justify-content: space-between;
   gap: 10px;
   padding: 9px 12px;
-  border-radius: var(--radius-item);
+  border-radius: var(--radius-panel);
   background: var(--accent-soft);
   color: var(--text-secondary);
   font-size: 12.5px;
@@ -348,7 +363,7 @@ textarea.yt-input {
   flex-direction: column;
   gap: 2px;
   padding: 8px 10px;
-  border-radius: var(--radius-item);
+  border-radius: var(--radius-panel);
   cursor: pointer;
 }
 
@@ -419,6 +434,27 @@ textarea.yt-input {
   color: var(--text-primary);
 }
 
+.yt-hero .yt-section-title {
+  margin-bottom: 0;
+}
+
+/* Titoli delle schede nel linguaggio del tema, come le card della dashboard. */
+:root[data-theme="opaco"] .yt-section-title h3 {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+:root[data-theme="quaderno"] .yt-section-title h3 {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .yt-section-title h3 {
+  font-weight: 500;
+}
+
 .yt-empty-note {
   padding: 8px 2px;
 }
@@ -478,8 +514,8 @@ textarea.yt-input {
   position: relative;
   overflow: hidden;
   aspect-ratio: 16 / 9;
-  border-radius: var(--radius-item);
-  background: var(--surface-2);
+  border-radius: var(--yt-media-radius);
+  background: var(--display-texture, none), var(--thumb-bg);
 }
 
 .yt-thumb img {
@@ -526,6 +562,9 @@ textarea.yt-input {
 
 .yt-hero .yt-thumb-play {
   opacity: 1;
+  border: var(--thumb-play-border, 0);
+  background: var(--thumb-play-bg);
+  color: var(--thumb-play-fg);
   width: 48px;
   height: 48px;
   font-size: 30px;
@@ -573,7 +612,7 @@ textarea.yt-input {
   gap: 6px;
   padding-right: 4px;
   border: 1px solid transparent;
-  border-radius: var(--radius-item);
+  border-radius: var(--radius-panel);
   background: var(--surface-1);
   transition: background 150ms ease, border-color 150ms ease;
 }
@@ -777,7 +816,7 @@ textarea.yt-input {
   gap: 2px;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: var(--radius-item);
+  border-radius: var(--yt-media-radius);
   background: var(--surface-2);
 }
 
@@ -884,7 +923,7 @@ textarea.yt-input {
 .yt-hero-thumb {
   width: 100%;
   height: 100%;
-  border-radius: var(--radius-item);
+  border-radius: var(--yt-media-radius);
 }
 
 .yt-hero-bottom {
@@ -1077,7 +1116,7 @@ textarea.yt-input {
   gap: 8px;
   padding: 12px;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-item);
+  border-radius: var(--radius-panel);
   background: var(--surface-1);
 }
 
@@ -1127,7 +1166,7 @@ textarea.yt-input {
   align-items: flex-start;
   gap: 10px;
   padding: 10px;
-  border-radius: var(--radius-item);
+  border-radius: var(--radius-panel);
   background: var(--surface-1);
 }
 
@@ -1357,7 +1396,7 @@ textarea.yt-input {
   align-items: center;
   gap: 12px;
   padding: 8px;
-  border-radius: var(--radius-item);
+  border-radius: var(--yt-media-radius);
   background: var(--surface-1);
 }
 
