@@ -49,11 +49,7 @@ import { noteToMarkdown, renderNoteImage, renderNotePdf, saveBytes, saveText } f
 import { attachmentAbsolutePath, removeAttachmentFile, slugify } from "../lib/vault";
 import { BACKGROUND_OPTIONS } from "../lib/templates";
 import { normalizeUrl, toggleChecklist } from "../lib/editorDom";
-<<<<<<< HEAD
 import { formatWhen, htmlToMarkdown, htmlToText, monthYear, wordCount } from "../lib/html";
-=======
-import { formatWhen, htmlToText, monthYearUpper, wordCount } from "../lib/html";
->>>>>>> 9b447ac02f45ac0982561293ea1cd68cf30bfe7f
 import type { InkTool } from "./InkLayer";
 import PageSurface from "./PageSurface";
 import "./noteEditor.css";
