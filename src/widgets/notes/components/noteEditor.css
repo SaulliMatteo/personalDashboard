@@ -585,6 +585,29 @@
   pointer-events: none;
 }
 
+/* ---------- Il foglio nel linguaggio del tema ---------- */
+
+/* Quaderno: foglio a quadretti con il margine rosso, come lo sfondo dell'app. */
+:root[data-theme="quaderno"] .nq-paper {
+  background: linear-gradient(90deg, transparent 2.2em, var(--paper-margin) 2.2em calc(2.2em + 1.5px), transparent calc(2.2em + 1.5px)),
+    var(--main-bg);
+  border: var(--display-border);
+  border-radius: 0.4em;
+}
+
+/* Opaco: un foglio di carta pieno, senza bordo. */
+:root[data-theme="opaco"] .nq-paper {
+  border: 0;
+  border-radius: 1.2em;
+}
+
+/* Fosforo: pannello del display, con la trama a punti. */
+:root[data-theme="fosforo"] .nq-paper {
+  background: var(--display-texture, none), var(--bg-card);
+  border: var(--display-border);
+  border-radius: var(--radius-panel);
+}
+
 /* ---------- Sfondi della pagina (in em: seguono lo zoom) ---------- */
 
 .nq-paper[data-bg="dots"] {
