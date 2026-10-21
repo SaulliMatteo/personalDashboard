@@ -2,3 +2,7 @@
 # will have compiled files and executables
 /target/
 /gen/schemas
+# Build Android (output di Gradle, si rigenera)
+src-tauri/gen/android/app/build/
+src-tauri/gen/android/build/
+src-tauri/gen/android/.gradle/
