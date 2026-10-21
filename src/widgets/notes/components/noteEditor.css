@@ -581,7 +581,6 @@
   pointer-events: none;
 }
 
-<<<<<<< HEAD
 /* ---------- Il foglio nel linguaggio del tema ---------- */
 
 /* Quaderno: foglio a quadretti con il margine rosso, come lo sfondo dell'app. */
@@ -603,7 +602,8 @@
   background: var(--display-texture, none), var(--bg-card);
   border: var(--display-border);
   border-radius: var(--radius-panel);
-=======
+}
+
 /* ---------- Sfondi della pagina (in em: seguono lo zoom) ---------- */
 
 .nq-paper[data-bg="dots"] {
@@ -802,5 +802,4 @@
 
 .nq-editor--compact .nq-paper {
   padding: 2em 2em 1.6em;
->>>>>>> 9b447ac02f45ac0982561293ea1cd68cf30bfe7f
 }

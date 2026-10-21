@@ -145,3 +145,8 @@ export function monthYear(ts: number): string {
   const text = new Date(ts).toLocaleDateString("it-IT", { month: "long", year: "numeric" });
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+/** "OTTOBRE 2026" (intestazione delle note esportate). */
+export function monthYearUpper(ts: number): string {
+  return new Date(ts).toLocaleDateString("it-IT", { month: "long", year: "numeric" }).toUpperCase();
+}
