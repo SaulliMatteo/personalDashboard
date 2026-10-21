@@ -89,8 +89,6 @@ notes/
 └─ lib/                      drag.ts, editorDom.ts, folders.ts, html.ts (sanitizeHtml)
 ```
 
-`migration-v4.txt` è solo un appunto della migrazione 4, già presente in `core/db/migrations.ts`.
-
 ### Il widget Companion (`widgets/companion/`)
 
 ```
