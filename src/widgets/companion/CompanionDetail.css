@@ -181,13 +181,191 @@
   color: var(--text-muted);
 }
 
-/* ---- Animazioni ---- */
-.companion-anim-group {
-  margin-top: 18px;
+/* ---- Schede della colonna principale ---- */
+.companion-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-card);
+  border: var(--card-border);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
 }
 
-.companion-anim-group-title {
+.companion-tab {
+  flex: 1;
+  min-width: 110px;
+  height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.companion-tab:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.companion-tab.is-active {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-fg);
+  font-weight: 600;
+}
+
+.companion-tab:focus-visible,
+.companion-cat:focus-visible,
+.companion-pose:focus-visible,
+.companion-small-btn:focus-visible,
+.companion-anim-try:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.companion-detail-panel {
+  min-width: 0;
+}
+
+.companion-note-top {
+  margin: 0 0 12px;
+}
+
+/* Sotto il palco: cosa sta facendo, o quale posa della galleria mostra. */
+.companion-now {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 20px;
+  margin: -4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.companion-now-count {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Animazioni: gruppi ---- */
+.companion-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.companion-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.companion-cat:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.companion-cat.is-active {
+  border-color: var(--border-accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.companion-cat-count {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+  font-size: 10.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.companion-group-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 0 4px;
+}
+
+.companion-group-title {
   margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.companion-group-desc {
+  margin: 3px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.companion-group-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.companion-small-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 11px;
+  border: var(--btn-ghost-border);
+  border-radius: var(--radius-item);
+  background: var(--btn-ghost-bg, transparent);
+  color: var(--btn-ghost-fg);
+  font-family: inherit;
+  font-size: 12.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.companion-small-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--border-accent);
+}
+
+.companion-small-btn.is-primary {
+  border: var(--btn-primary-border);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+}
+
+.companion-small-btn.is-primary:hover {
+  filter: brightness(1.08);
+}
+
+.companion-sub-title {
+  margin: 16px 0 8px;
   font-size: 11.5px;
   font-weight: 700;
   text-transform: uppercase;
@@ -195,12 +373,65 @@
   color: var(--text-muted);
 }
 
-.companion-anim-group-desc {
-  margin: 4px 0 8px;
-  font-size: 12px;
-  color: var(--text-muted);
+/* ---- Galleria delle pose ---- */
+.companion-gallery-group:first-child .companion-sub-title {
+  margin-top: 12px;
 }
 
+.companion-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.companion-sub-title + .companion-gallery {
+  margin-top: 0;
+}
+
+.companion-pose {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 10px 6px 7px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.companion-pose-icon {
+  flex-shrink: 0;
+  font-size: 16px;
+  color: var(--text-muted);
+  transition: color 150ms ease;
+}
+
+.companion-pose:hover {
+  background: var(--surface-2);
+}
+
+.companion-pose:hover .companion-pose-icon {
+  color: var(--accent);
+}
+
+.companion-pose.is-playing {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.companion-pose.is-playing .companion-pose-icon {
+  color: var(--accent);
+}
+
+/* ---- Animazioni: interruttori ---- */
 .companion-anim-list {
   list-style: none;
   margin: 0;
@@ -234,9 +465,46 @@
   cursor: pointer;
 }
 
-.companion-anim-toggle input {
-  margin-top: 2px;
-  accent-color: var(--accent);
+/* Interruttore come quello delle Impostazioni (settings-switch), più piccolo. */
+.companion-switch {
+  appearance: none;
+  flex-shrink: 0;
+  position: relative;
+  width: 32px;
+  height: 19px;
+  margin: 1px 0 0;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--track);
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.companion-switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: transform 150ms ease, background-color 150ms ease;
+}
+
+.companion-switch:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.companion-switch:checked::after {
+  transform: translateX(13px);
+  background: var(--on-accent);
+}
+
+.companion-switch:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .companion-anim-text {
@@ -261,13 +529,15 @@
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  padding: 4px 8px 4px 5px;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border: 1px solid var(--border-subtle);
   border-radius: 999px;
   background: transparent;
   color: var(--text-secondary);
-  font-size: 11.5px;
+  font-size: 16px;
   cursor: pointer;
   transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
 }
@@ -280,4 +550,26 @@
 
 .companion-settings {
   margin-top: 0;
+}
+
+/* App viste: nome a sinistra, scelta della categoria a destra. */
+.companion-app {
+  justify-content: space-between;
+}
+
+.companion-app-select {
+  flex-shrink: 0;
+  max-width: 50%;
+  padding: 4px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+}
+
+.companion-app-select:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }

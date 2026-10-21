@@ -27,6 +27,16 @@ export interface ActivityStatus {
   onBreak: boolean;
   /** Un video del widget YouTube in riproduzione. */
   watchingVideo: boolean;
+  /** La pagina di un video del widget YouTube è aperta ma il video è fermo. */
+  videoPaused: boolean;
+  /** Punto del video del widget YouTube, 0..1 (null = nessun video aperto o durata ignota). */
+  videoProgress: number | null;
+  /** Durata del video del widget YouTube aperto, in secondi (null = ignota). */
+  videoDurationSeconds: number | null;
+  /** Nome della materia del timer di Studio avviato (null = nessuna). */
+  studySubjectName: string | null;
+  /** Temperatura attuale del widget Meteo, in °C (null = meteo spento o non ancora arrivato). */
+  weatherTemperature: number | null;
   /** Secondi di studio registrati oggi (sessioni concluse). Li usano intestazione e barra laterale. */
   studyTodaySeconds: number;
   /** Sessioni di studio concluse oggi, in ordine di tempo (linea "La tua giornata"). */
@@ -47,6 +57,11 @@ const IDLE: ActivityStatus = {
   studyPaused: false,
   onBreak: false,
   watchingVideo: false,
+  videoPaused: false,
+  videoProgress: null,
+  videoDurationSeconds: null,
+  studySubjectName: null,
+  weatherTemperature: null,
   studyTodaySeconds: 0,
   studyTodaySpans: [],
 };

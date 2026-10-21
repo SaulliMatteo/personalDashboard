@@ -1,5 +1,7 @@
 import type { FaceFrame } from "../engine/animator";
 import type { EyeParams, GlyphId } from "../engine/face";
+import { COSTUMES, type CostumeDot } from "./costumes";
+import { lit, sdRoundBox } from "./sdf";
 
 /**
  * Geometria della faccia, comune a tutti gli stili grafici. Le forme sono
@@ -20,12 +22,6 @@ const GAZE_X = 2.6;
 const GAZE_Y = 1.9;
 
 // ----------------------------------------------------------------- forme
-
-function sdRoundBox(px: number, py: number, hx: number, hy: number, r: number): number {
-  const qx = Math.abs(px) - hx + r;
-  const qy = Math.abs(py) - hy + r;
-  return Math.min(Math.max(qx, qy), 0) + Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) - r;
-}
 
 /** Cuore con la punta in (0,0) e i lobi verso y = 1 (Inigo Quilez). */
 function sdHeart(x: number, y: number): number {
@@ -143,7 +139,24 @@ export interface FaceField {
   brightness: (fx: number, fy: number, sharpness?: number) => number;
 }
 
-/** Prepara le forme di un fotogramma: occhi, bocca, rossore e bagliore. */
+/** Spostamento del costume: segue la testa (e, per gli occhiali, anche lo sguardo); quelli "fissi" no. */
+function costumeOffset(frame: FaceFrame): [number, number] {
+  const c = frame.costume ? COSTUMES[frame.costume.id] : null;
+  if (!c || c.fixed) return [0, 0];
+  const k = c.gazeFollow ? 1 : c.head ? 0.5 : 0;
+  return [frame.offsetX + frame.gazeX * GAZE_X * k, frame.offsetY + frame.gazeY * GAZE_Y * k * 0.9];
+}
+
+/** Punti singoli del costume (testo, simboli, particelle), già spostati e sfumati. */
+export function costumeDots(frame: FaceFrame): CostumeDot[] {
+  const costume = frame.costume;
+  const dots = costume ? COSTUMES[costume.id].dots : undefined;
+  if (!costume || !dots) return [];
+  const [dx, dy] = costumeOffset(frame);
+  return dots(costume.t).map(([x, y, a]) => [Math.round(x + dx), Math.round(y + dy), a * costume.alpha]);
+}
+
+/** Prepara le forme di un fotogramma: occhi, bocca, rossore, bagliore e costume. */
 export function faceField(frame: FaceFrame, options: FaceFieldOptions): FaceField {
   const roundness = options.roundness ?? 0.55;
   const { face } = frame;
@@ -156,12 +169,15 @@ export function faceField(frame: FaceFrame, options: FaceFieldOptions): FaceFiel
   const mcx = FACE_W / 2 + gx * 0.5 + frame.offsetX;
   const mcy = MOUTH_CY + gy * 0.45 + frame.offsetY;
   const showMouth = options.showMouth && face.mouthWidth > 0.04;
+  const costume = frame.costume;
+  const def = costume ? COSTUMES[costume.id] : null;
+  const [cdx, cdy] = costumeOffset(frame);
 
   return {
     brightness(fx, fy, sharpness = 1) {
       let d = Math.min(eyeDistance(fx, fy, lcx, ecy, face.left, 1, roundness), eyeDistance(fx, fy, rcx, ecy, face.right, -1, roundness));
       if (showMouth) d = Math.min(d, mouthDistance(fx, fy, mcx, mcy, face.mouthCurve, face.mouthOpen, face.mouthWidth));
-      let b = Math.max(0, Math.min(1, 0.55 - d * sharpness));
+      let b = lit(d, sharpness);
 
       // Rossore: due macchie tenui sotto gli occhi.
       if (face.blush > 0.02 && b < 0.3) {
@@ -177,7 +193,15 @@ export function faceField(frame: FaceFrame, options: FaceFieldOptions): FaceFiel
         b *= 1 - frame.glow * 0.38 + frame.glow * 0.38 * band * 1.6;
         b = Math.min(1, b);
       }
-      return b;
+
+      if (!costume || !def) return b;
+      const cx = fx - cdx;
+      const cy = fy - cdy;
+      const cb = def.shape(cx, cy, costume.t, sharpness, costume.value) * costume.alpha;
+      // La faccia diventa la forma: occhi e bocca restano forati (con un piccolo bordo per leggerli).
+      if (def.form) return Math.max(b * (1 - costume.alpha), cb * (1 - lit(d - 0.9, sharpness)));
+      const occ = def.occlude ? def.occlude(cx, cy, costume.t) * costume.alpha : 0;
+      return Math.max(b * (1 - occ), cb);
     },
   };
 }

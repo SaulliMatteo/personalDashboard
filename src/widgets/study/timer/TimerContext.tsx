@@ -129,12 +129,14 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const running = state.runningSince !== null;
     const isBreak = state.phase === "short_break" || state.phase === "long_break";
+    const subject = state.phase === "idle" ? null : (subjects.find((x) => x.id === state.subjectId)?.name ?? null);
     publishActivity({
       studying: state.phase === "work" && running,
       onBreak: isBreak && running,
       studyPaused: state.phase !== "idle" && !running,
+      studySubjectName: subject,
     });
-  }, [state.phase, state.runningSince]);
+  }, [state.phase, state.runningSince, state.subjectId, subjects]);
 
   // Obiettivo giornaliero superato: evento UNA volta, nel momento in cui si passa la soglia
   // (non al caricamento se era già superato).

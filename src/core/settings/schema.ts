@@ -93,7 +93,7 @@ export const DEFAULT_SETTINGS = {
   youtubeCountAsStudy: false,
 
   // ---- Widget: Companion ----
-  companionName: "Pixel",
+  companionName: "Pixy",
   companionPersonality: "cheerful" as "cheerful" | "calm" | "sleepy" | "grumpy",
   companionColor: "text" as "text" | "accent",
   companionShowMouth: true,
@@ -105,6 +105,12 @@ export const DEFAULT_SETTINGS = {
   companionWatchForegroundApp: true,
   /** Animazioni spente, "id,id,…". Si modifica dalla pagina del Companion: nessuna voce in SETTING_DEFS. */
   companionDisabledAnimations: "",
+  /** Sopra questa temperatura (°C, dal widget Meteo) ogni tanto diventa una fiamma. */
+  companionHotC: 28,
+  /** Sotto questa temperatura (°C, dal widget Meteo) ogni tanto diventa un fiocco di neve. */
+  companionColdC: 5,
+  /** Categorie scelte a mano per le app, "processo=categoria;…". Si modifica dalla pagina del Companion: nessuna voce in SETTING_DEFS. */
+  companionAppCategories: "",
 
   // ---- Widget: Meteo ----
   /** Vuota = meteo spento: nessuna richiesta in rete. */
@@ -231,7 +237,7 @@ export const SETTING_DEFS: SettingDef[] = [
 
   // ======================= WIDGET: COMPANION =======================
   // Personalità e animazioni singole si scelgono anche dalla pagina del Companion.
-  { key: "companionName", group: "companion", section: "Aspetto", type: "text", maxLength: 16, placeholder: "Pixel", label: "Nome" },
+  { key: "companionName", group: "companion", section: "Aspetto", type: "text", maxLength: 16, placeholder: "Pixy", label: "Nome" },
   {
     key: "companionPersonality", group: "companion", section: "Aspetto", type: "select", label: "Personalità",
     options: [
@@ -260,6 +266,14 @@ export const SETTING_DEFS: SettingDef[] = [
     key: "companionWatchForegroundApp", group: "companion", section: "Comportamento", type: "boolean",
     label: "Osserva l'app in primo piano (Windows)",
     description: "Legge nome e titolo della finestra attiva per capire se stai ascoltando musica, programmando o guardando un video. Tutto resta sul PC: niente viene salvato né inviato.",
+  },
+  {
+    key: "companionHotC", group: "companion", section: "Meteo", type: "number", control: "input", min: 15, max: 45, step: 1, label: "Caldo da (°C)",
+    description: "Sopra questa temperatura ogni tanto diventa una fiamma. Serve il widget Meteo con la città impostata, in dashboard o nell'intestazione.",
+  },
+  {
+    key: "companionColdC", group: "companion", section: "Meteo", type: "number", control: "input", min: -20, max: 20, step: 1, label: "Freddo da (°C)",
+    description: "Sotto questa temperatura ogni tanto diventa un fiocco di neve.",
   },
 ];
 
@@ -306,6 +320,8 @@ const LEGACY_THEMES: Record<string, ThemeId> = { dark: "notte", light: "quaderno
  * (che altrimenti li scarterebbe facendoli tornare al default).
  */
 function convertLegacySettings(raw: Record<string, unknown>): Record<string, unknown> {
+  // "Pixel" era il nome predefinito del Companion: chi non l'aveva cambiato diventa Pixy.
+  if (raw.companionName === "Pixel") raw = { ...raw, companionName: "Pixy" };
   const theme = raw.theme;
   if (typeof theme !== "string" || isThemeId(theme)) return raw;
   const mapped = LEGACY_THEMES[theme];

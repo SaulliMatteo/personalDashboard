@@ -5,11 +5,12 @@ import { useSettings } from "../../core/settings/useSettings";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
 import { CompanionBrain, type BrainConfig, type BrainInput } from "./engine/brain";
 import { FaceAnimator, type FaceFrame } from "./engine/animator";
-import { classifyApp, type ForegroundApp } from "./engine/appCategory";
+import { classifyApp, parseAppCategories, serializeAppCategories, type AppCategory, type ForegroundApp } from "./engine/appCategory";
 import { parseDisabled, serializeDisabled } from "./engine/animations";
+import type { PoseId } from "./engine/poses";
 import { PERSONALITIES } from "./engine/personalities";
 import { readSystemSnapshot } from "./data/systemApi";
-import { COMPANION_WIDGET_ID, CompanionContext, type CompanionContextValue } from "./useCompanion";
+import { COMPANION_WIDGET_ID, CompanionContext, type CompanionContextValue, type SeenApp } from "./useCompanion";
 
 /**
  * UN SOLO Companion per tutta l'app: cervello + animatore vivono qui e i
@@ -22,6 +23,9 @@ const TICK_MS = 250;
 const POLL_MS = 2000;
 /** Per quanto tempo dopo l'ultimo movimento il Companion guarda ancora il mouse. */
 const POINTER_FRESH_MS = 2500;
+/** Quante app ricorda (solo in memoria) per la lista "App viste" della pagina. */
+const SEEN_APPS_MAX = 10;
+const NO_CHOICES = new Map<string, AppCategory>();
 
 function makeInitialInput(): BrainInput {
   return {
@@ -53,6 +57,8 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       emoteRate: settings.companionEmoteRate,
       idleMinutes: settings.companionIdleMinutes,
       userName: settings.userName,
+      hotC: settings.companionHotC,
+      coldC: settings.companionColdC,
     }),
     [
       settings.companionPersonality,
@@ -63,6 +69,8 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       settings.companionEmoteRate,
       settings.companionIdleMinutes,
       settings.userName,
+      settings.companionHotC,
+      settings.companionColdC,
     ]
   );
 
@@ -78,6 +86,9 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   const [idleSeconds, setIdleSeconds] = useState(0);
   const [systemSupported, setSystemSupported] = useState(false);
   const [retainCount, setRetainCount] = useState(0);
+  const [seenApps, setSeenApps] = useState<SeenApp[]>([]);
+  const appChoices = useMemo(() => parseAppCategories(settings.companionAppCategories), [settings.companionAppCategories]);
+  const appChoicesRef = useLatestRef(appChoices);
 
   const placed = layout.some((item) => item.i === COMPANION_WIDGET_ID);
   const active = placed || retainCount > 0;
@@ -159,13 +170,23 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
 
       const localIdle = Math.floor((Date.now() - lastLocalInputRef.current) / 1000);
       const idle = snap?.idleSeconds ?? localIdle;
-      const fg =
-        snap?.foreground && !snap.foreground.isSelf && cfg.companionWatchForegroundApp
-          ? classifyApp(snap.foreground.process, snap.foreground.title)
-          : null;
+      const raw = snap?.foreground && !snap.foreground.isSelf && cfg.companionWatchForegroundApp ? snap.foreground : null;
+      // La categoria "automatica" serve alla lista "App viste": lì l'utente vede cosa ha capito e la corregge.
+      const auto = raw ? classifyApp(raw.process, raw.description, raw.title, NO_CHOICES) : null;
+      const fg = raw && auto && appChoicesRef.current.has(auto.processKey) ? classifyApp(raw.process, raw.description, raw.title, appChoicesRef.current) : auto;
 
       setIdleSeconds(idle);
-      setForeground((prev) => (prev?.category === fg?.category && prev?.label === fg?.label ? prev : fg));
+      setForeground((prev) =>
+        prev?.processKey === fg?.processKey && prev?.category === fg?.category && prev?.appId === fg?.appId && prev?.label === fg?.label ? prev : fg
+      );
+      if (auto && auto.processKey) {
+        setSeenApps((prev) => {
+          const first = prev[0];
+          if (first && first.processKey === auto.processKey && first.autoCategory === auto.category && first.label === auto.label) return prev;
+          const rest = prev.filter((a) => a.processKey !== auto.processKey);
+          return [{ processKey: auto.processKey, label: auto.label, autoCategory: auto.category }, ...rest].slice(0, SEEN_APPS_MAX);
+        });
+      }
       pushInput({ idleSeconds: idle, foreground: fg });
     }
 
@@ -175,7 +196,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [active, pushInput, settingsRef, settings.companionWatchForegroundApp]);
+  }, [active, pushInput, settingsRef, appChoicesRef, settings.companionWatchForegroundApp]);
 
   // --- Orologio del cervello: scadenze, emozioni casuali, chiacchiere.
   useEffect(() => {
@@ -224,11 +245,23 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   );
 
   const setAnimationEnabled = useCallback(
-    (id: string, enabled: boolean) => {
+    (id: string | string[], enabled: boolean) => {
       const next = parseDisabled(settingsRef.current.companionDisabledAnimations);
-      if (enabled) next.delete(id);
-      else next.add(id);
+      for (const one of Array.isArray(id) ? id : [id]) {
+        if (enabled) next.delete(one);
+        else next.add(one);
+      }
       updateSetting("companionDisabledAnimations", serializeDisabled(next));
+    },
+    [settingsRef, updateSetting]
+  );
+
+  const setAppCategory = useCallback(
+    (processKey: string, category: AppCategory | null) => {
+      const next = new Map(parseAppCategories(settingsRef.current.companionAppCategories));
+      if (category) next.set(processKey, category);
+      else next.delete(processKey);
+      updateSetting("companionAppCategories", serializeAppCategories(next));
     },
     [settingsRef, updateSetting]
   );
@@ -245,6 +278,10 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       },
       previewAnimation: (id: string) => {
         brain.previewAnimation(id);
+        setVersion(brain.version);
+      },
+      previewPose: (pose: PoseId, durationMs?: number) => {
+        brain.previewPose(pose, durationMs);
         setVersion(brain.version);
       },
       retain: () => {
@@ -264,12 +301,15 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       foreground,
       idleSeconds,
       systemSupported,
+      seenApps,
+      appChoices,
+      setAppCategory,
       disabled,
       sampleFrame,
       setAnimationEnabled,
       ...actions,
     }),
-    [snapshot, foreground, idleSeconds, systemSupported, disabled, sampleFrame, setAnimationEnabled, actions]
+    [snapshot, foreground, idleSeconds, systemSupported, seenApps, appChoices, setAppCategory, disabled, sampleFrame, setAnimationEnabled, actions]
   );
 
   return <CompanionContext.Provider value={value}>{children}</CompanionContext.Provider>;

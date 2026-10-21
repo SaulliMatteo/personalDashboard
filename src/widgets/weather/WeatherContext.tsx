@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { publishActivity } from "../../core/activity/activityBus";
 import { useLayout } from "../../core/layout/useLayout";
 import { useSettings } from "../../core/settings/useSettings";
 import { useNow } from "../../core/hooks/useNow";
@@ -76,6 +77,12 @@ export function WeatherProvider({ children }: { children: ReactNode }) {
   const current = weather && weather.city === city ? weather : null;
   const error = failure && failure.city === city ? failure.message : null;
   const stale = current !== null && (error !== null || now.getTime() - current.fetchedAt > STALE_MS);
+
+  // Per chi ascolta (es. il Companion, che si trasforma col caldo e col freddo), senza conoscere il Meteo.
+  const temperature = current ? current.current.temperature : null;
+  useEffect(() => {
+    publishActivity({ weatherTemperature: enabled ? temperature : null });
+  }, [enabled, temperature]);
 
   const value = useMemo(
     () => ({ enabled, weather: current, stale, error, loading }),

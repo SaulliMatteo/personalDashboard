@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSettings } from "../../../core/settings/useSettings";
 import { listSubjects, loadTimerState, logSession } from "../../study/data/studyRepository";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
-import { emitActivityEvent, publishActivity } from "../../../core/activity/activityBus";
+import { emitActivityEvent, getActivity, publishActivity } from "../../../core/activity/activityBus";
 import { StudyLinkRecorder } from "../lib/studyLink";
 import { MdChevronRight, MdOutlineCheckCircle, MdOutlineDriveFileMove, MdCheckCircle } from "react-icons/md";
 import ConfirmButton from "../../../ui/ConfirmButton";
@@ -64,7 +64,14 @@ function suggestionsFor(video: SavedVideo, videos: readonly SavedVideo[]): Saved
 
 function WatchScreen({ video, folders, videos, onOpenVideo, onNavigateLibrary, onReload, onError }: WatchScreenProps) {
   // Uscendo dalla pagina il player sparisce senza dire "pausa": lo diciamo noi.
-  useEffect(() => () => publishActivity({ watchingVideo: false }), []);
+  useEffect(
+    () => () => publishActivity({ watchingVideo: false, videoPaused: false, videoProgress: null, videoDurationSeconds: null }),
+    []
+  );
+  // Video nuovo: durata nota (se c'è) e avanzamento da rileggere.
+  useEffect(() => {
+    publishActivity({ videoDurationSeconds: video.durationSeconds, videoProgress: null });
+  }, [video.id, video.durationSeconds]);
   const playerRef = useRef<PlayerHandle | null>(null);
   // Letti una sola volta per montaggio: il player non si ricarica se cambiano dopo.
   const [startSeconds] = useState(() => resumePoint(video));
@@ -190,16 +197,21 @@ function WatchScreen({ video, folders, videos, onOpenVideo, onNavigateLibrary, o
               }}
               onRateChange={setRate}
               onDuration={(seconds) => {
+                publishActivity({ videoDurationSeconds: seconds });
                 if (video.durationSeconds === null) void setDuration(video.id, seconds).then(onReload).catch((e) => onError(String(e)));
               }}
-              onProgress={(seconds) => void saveProgress(video.id, seconds).catch((e) => console.error(e))}
+              onProgress={(seconds) => {
+                const duration = getActivity().videoDurationSeconds ?? video.durationSeconds;
+                if (duration) publishActivity({ videoProgress: Math.min(1, seconds / duration) });
+                void saveProgress(video.id, seconds).catch((e) => console.error(e));
+              }}
               onWatchSegment={(_startedAt, endedAt, seconds) => recorder.add(endedAt, seconds, (e) => console.error("Tempo di studio non salvato:", e))}
               onPlayingChange={(playing) => {
                 // Per il Companion (e chiunque ascolti): "sto guardando un video".
-                publishActivity({ watchingVideo: playing });
+                publishActivity({ watchingVideo: playing, videoPaused: !playing });
               }}
               onEnded={() => {
-                publishActivity({ watchingVideo: false });
+                publishActivity({ watchingVideo: false, videoPaused: false, videoProgress: 1 });
                 emitActivityEvent({ type: "videoEnded" });
                 void handleEnded();
               }}
