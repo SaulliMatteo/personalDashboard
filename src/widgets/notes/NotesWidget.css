@@ -289,3 +289,13 @@
   font-size: 13px;
   color: var(--text-secondary);
 }
+
+/* Caricamento fallito: "!" al posto del numero e il messaggio al posto delle note.
+   :root davanti per vincere sui colori per tema (:root[data-theme] .nw-num). */
+:root .nw .nw-error,
+:root .nw--error .nw-num,
+:root .nw--error .nw-cap,
+:root .nw--error .nw-count,
+:root .nw--error .nw-side-label {
+  color: var(--danger);
+}
