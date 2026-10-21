@@ -214,7 +214,7 @@ function WatchScreen({ video, folders, videos, onOpenVideo, onNavigateLibrary, o
 
           <div className="yt-player-bar">
             <label className="yt-player-control">
-              <span className="yt-label">VELOCITÀ</span>
+              <span className="yt-label">Velocità</span>
               <select
                 className="yt-input yt-rate"
                 value={rate}

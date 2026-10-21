@@ -51,7 +51,9 @@ function HomeScreen({ folders, videos, onOpenVideo, onAddVideo }: HomeScreenProp
           </section>
 
           <section className="yt-card yt-hero">
-            <span className="yt-label">RIPRENDI DA QUI</span>
+            <div className="yt-section-title">
+              <h3>Riprendi da qui</h3>
+            </div>
             {hero ? (
               <>
                 <div className="yt-hero-stage">
