@@ -26,9 +26,47 @@ export type PhraseKey =
   | "music"
   | "game"
   | "chat"
-  | "poke";
+  | "poke"
+  | "study_math"
+  | "study_science"
+  | "study_lang"
+  | "study_history"
+  | "study_art"
+  | "study_code"
+  | "video_popcorn"
+  | "video_cinema"
+  | "video_paused"
+  | "video_bored"
+  | "video_late"
+  | "video_scared"
+  | "video_moved"
+  | "office"
+  | "design"
+  | "browser"
+  | "discord"
+  | "lol"
+  | "youtube"
+  | "live"
+  | "call"
+  | "minecraft"
+  | "shooter"
+  | "excel"
+  | "slides"
+  | "blender"
+  | "ai"
+  | "explorer"
+  | "hot"
+  | "cold";
 
 export type PersonalityId = "cheerful" | "calm" | "sleepy" | "grumpy";
+
+export interface FaceTweak {
+  lidTop?: number;
+  lidBottom?: number;
+  tilt?: number;
+  /** Solo se la bocca è visibile. */
+  mouthCurve?: number;
+}
 
 export interface Personality {
   id: PersonalityId;
@@ -44,6 +82,12 @@ export interface Personality {
   chattiness: number;
   /** Intervallo tra due battiti di ciglia, in ms. */
   blinkMs: [number, number];
+  /** Velocità di tutte le animazioni (costumi, movimenti, appisolamenti): 1 = normale. */
+  tempo: number;
+  /** Ampiezza dei movimenti di tutta la faccia (saltelli, dondolii…). */
+  motionAmp: number;
+  /** Ritocco che la personalità dà a ogni espressione (sommato ai parametri, vedi animator.ts). */
+  faceTweak: FaceTweak;
   phrases: Record<PhraseKey, string[]>;
 }
 
@@ -63,6 +107,9 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
     emoteRate: 1.2,
     chattiness: 1.2,
     blinkMs: [2400, 5500],
+    tempo: 1.15,
+    motionAmp: 1.25,
+    faceTweak: { mouthCurve: 0.15 },
     phrases: {
       greet_morning: ["Buongiorno{,name}! ☀", "Pronto per oggi{,name}?", "Che bella giornata per combinare qualcosa!"],
       greet_afternoon: ["Buon pomeriggio{,name}!", "Eccoti! Mi mancavi.", "Si riparte?"],
@@ -79,12 +126,42 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       file_received: ["È arrivato un file!", "Posta in arrivo! 📦"],
       welcome_back: ["Bentornato! Com'è andata con {app}?", "Eccoti{,name}! Tutto bene con {app}?", "Bentornato{,name}!"],
       sleep: ["Zzz…", "Faccio un pisolino…"],
-      night: ["Si sta facendo tardi…", "Dormire fa bene alla memoria, sai?"],
+      night: ["Si sta facendo tardi…", "Dormire fa bene alla memoria, sai?", "Ancora cinque minuti di chiacchiere?"],
       coding: ["Codice! Che stai costruendo?", "Niente bug oggi, ok?"],
       music: ["Bella questa! ♪", "Si balla!"],
       game: ["Si gioca? Fai vedere!", "Vai, vinci!"],
       chat: ["Salutami tutti!", "Chiacchiere?"],
       poke: ["Ehi! 😄", "Hihi, solletico!", "Ciao ciao!"],
+      study_math: ["Facciamo due conti!", "1+1=2, e il resto lo sai tu!"],
+      study_science: ["Esperimento in corso!", "Scienza! Che bello!"],
+      study_lang: ["Parola per parola!", "Che bella lingua!"],
+      study_history: ["C'era una volta…", "Viaggio nel tempo!"],
+      study_art: ["Che capolavoro!"],
+      study_code: ["Compila? Compila!", "Codice e caffè!"],
+      video_popcorn: ["Popcorn pronti!", "Me ne passi uno?"],
+      video_cinema: ["Effetti speciali!!", "Si spengono le luci…"],
+      video_paused: ["Si riparte? Si riparte?"],
+      video_bored: ["Dai che manca poco!"],
+      video_late: ["Un altro episodio!"],
+      video_scared: ["Non guardo, non guardo!"],
+      video_moved: ["Che bello… *sniff*"],
+      office: ["Scriviamo bene, eh!"],
+      design: ["Ooh, che colori!"],
+      browser: ["Cosa cerchi?", "Navighiamo!"],
+      discord: ["Saluta tutti da parte mia!"],
+      lol: ["Pentakill! (prima o poi)", "Non fare feed!"],
+      youtube: ["Ancora un video e basta, eh!"],
+      live: ["Siamo in diretta!"],
+      call: ["Sorridi, sei in camera!"],
+      minecraft: ["Scaviamo fino ai diamanti!"],
+      shooter: ["Headshot!", "Grande colpo!"],
+      excel: ["Quante formule!"],
+      slides: ["Che slide!"],
+      blender: ["Il cubo di default!"],
+      ai: ["Salutamelo!"],
+      explorer: ["Dove l'avevi messo?"],
+      hot: ["Che caldo! Mi sciolgo…", "Che caldo! Ma che bello il sole!"],
+      cold: ["Neve! Facciamo un pupazzo?", "Brrr… copriti bene!"],
     },
   },
   calm: {
@@ -96,6 +173,9 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
     emoteRate: 0.6,
     chattiness: 0.6,
     blinkMs: [3500, 7500],
+    tempo: 0.6,
+    motionAmp: 0.55,
+    faceTweak: { lidTop: 0.08, lidBottom: 0.1 },
     phrases: {
       greet_morning: ["Buongiorno.", "Una giornata nuova."],
       greet_afternoon: ["Buon pomeriggio.", "Ciao."],
@@ -117,7 +197,37 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       music: ["Bella musica."],
       game: ["Divertiti."],
       chat: ["Buona chiacchierata."],
-      poke: ["Oh. Ciao.", "Sono qui."],
+      poke: ["Oh. Ciao.", "Sono qui.", "Oh… grazie."],
+      study_math: ["Un conto alla volta."],
+      study_science: ["Osserviamo con calma."],
+      study_lang: ["Con calma, parola per parola."],
+      study_history: ["Un passo alla volta nel tempo."],
+      study_art: ["Che armonia."],
+      study_code: ["Una riga alla volta."],
+      video_popcorn: ["Un chicco alla volta."],
+      video_cinema: ["Buona visione."],
+      video_paused: ["Quando sei pronto."],
+      video_bored: ["Prendiamoci il nostro tempo."],
+      video_late: ["È tardi. Ancora un po'?"],
+      video_scared: ["Oh. Questo non me l'aspettavo."],
+      video_moved: ["Commovente."],
+      office: ["Con ordine."],
+      design: ["Che armonia di colori."],
+      browser: ["Con calma."],
+      discord: ["Salutameli tutti."],
+      lol: ["Concentrati sulla lane."],
+      youtube: ["Buona visione."],
+      live: ["Siamo in onda."],
+      call: ["Sei in camera."],
+      minecraft: ["Un blocco alla volta."],
+      shooter: ["Respira. Mira."],
+      excel: ["Una cella alla volta."],
+      slides: ["Poche parole, chiare."],
+      blender: ["Bella forma."],
+      ai: ["Curioso."],
+      explorer: ["Lo troviamo."],
+      hot: ["Fa caldo. Beviamo qualcosa di fresco."],
+      cold: ["Che pace, l'inverno."],
     },
   },
   sleepy: {
@@ -129,8 +239,11 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
     emoteRate: 0.9,
     chattiness: 0.8,
     blinkMs: [1800, 4200],
+    tempo: 0.8,
+    motionAmp: 0.8,
+    faceTweak: { lidTop: 0.22 },
     phrases: {
-      greet_morning: ["Mmh… già mattina?", "Buon… *sbadiglio* …giorno."],
+      greet_morning: ["Mmh… già mattina?", "Buon… *sbadiglio* …giorno.", "Mmh… ciao… già sveglio?"],
       greet_afternoon: ["Ciao… stavo quasi dormendo.", "Pomeriggio, ora della pennichella."],
       greet_evening: ["Sera… quasi ora di nanna."],
       greet_night: ["Zzz… ah, sei tu.", "È notte, dormiamo?"],
@@ -150,7 +263,37 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       music: ["Mettine una più lenta, ninna nanna?"],
       game: ["Sveglia! Si gioca!"],
       chat: ["Chiacchiere… zzz."],
-      poke: ["Eh? Sono sveglio!", "Mh… cinque minuti…"],
+      poke: ["Eh? Sono sveglio!", "Mh… cinque minuti…", "Eh?! Chi… ah, sei tu. Zzz"],
+      study_math: ["Conto… le pecore…"],
+      study_science: ["Esperimento: quanto resisto sveglio."],
+      study_lang: ["Leggo… leggo… zz… leggo!"],
+      study_history: ["C'era una volta… zzz"],
+      study_art: ["Disegno… una pecora… per dormire."],
+      study_code: ["Compila… mentre dormo."],
+      video_popcorn: ["Popcorn… e nanna…"],
+      video_cinema: ["Con gli occhiali non vedi se dormo…"],
+      video_paused: ["Pausa = pisolino."],
+      video_bored: ["Zzz…"],
+      video_late: ["Non dormo! Stavo… pensando."],
+      video_scared: ["Qui sotto si sta bene… zz"],
+      video_moved: ["Non piango, sbadiglio…"],
+      office: ["Le righe si muovono…"],
+      design: ["Disegna… una pecora… per dormire."],
+      browser: ["Scorri… piano…"],
+      discord: ["Chiamata… lunga… zz"],
+      lol: ["Respawn… e pisolino."],
+      youtube: ["Sto guardando, giuro…"],
+      live: ["Diretta… notturna…"],
+      call: ["Spegni la camera se dormo…"],
+      minecraft: ["È notte… serve un letto."],
+      shooter: ["Mira… *sbadiglio*"],
+      excel: ["Le celle… sono pecore…"],
+      slides: ["Slide… lente…"],
+      blender: ["Gira… gira… zz"],
+      ai: ["Chiedigli un caffè."],
+      explorer: ["Magari è in Download… zz"],
+      hot: ["Troppo caldo per stare sveglio…"],
+      cold: ["Mi sveglio a primavera…"],
     },
   },
   grumpy: {
@@ -162,8 +305,11 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
     emoteRate: 0.9,
     chattiness: 1,
     blinkMs: [2600, 6000],
+    tempo: 1,
+    motionAmp: 1,
+    faceTweak: { tilt: 0.18, mouthCurve: -0.22 },
     phrases: {
-      greet_morning: ["Ah, sei tu. Buongiorno, immagino.", "Mattina. Che entusiasmo."],
+      greet_morning: ["Ah, sei tu. Buongiorno, immagino.", "Mattina. Che entusiasmo.", "Ah. Sei tu."],
       greet_afternoon: ["Finalmente. Ti aspettavo.", "Pomeriggio. Combiniamo qualcosa?"],
       greet_evening: ["Sera. Oggi hai fatto qualcosa?"],
       greet_night: ["Ma a quest'ora?!", "Tu non dormi mai?"],
@@ -178,12 +324,42 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       file_received: ["Un file. Che emozione."],
       welcome_back: ["Ah, ti sei ricordato di me. Divertente {app}, eh?", "Bentornato. Ci hai messo."],
       sleep: ["Zzz… (non svegliarmi)"],
-      night: ["Vai a dormire. Sul serio."],
+      night: ["Vai a dormire. Sul serio.", "Vai a letto. Ora."],
       coding: ["Speriamo compili.", "Hai scritto i test? No, eh."],
       music: ["Gusti discutibili. ♪"],
       game: ["Ah, giochiamo invece di lavorare."],
       chat: ["Meno chat, più lavoro."],
-      poke: ["Non toccare.", "Che vuoi?", "…ok, ciao."],
+      poke: ["Non toccare.", "Che vuoi?", "…ok, ciao.", "Ehi! Giù le mani."],
+      study_math: ["Studia, non guardare me."],
+      study_science: ["Non far esplodere niente."],
+      study_lang: ["Pronuncia meglio."],
+      study_history: ["Le date. Imparale."],
+      study_art: ["Il kerning è sbagliato."],
+      study_code: ["Hai scritto i test? No, eh."],
+      video_popcorn: ["Questi popcorn sono freddi."],
+      video_cinema: ["Il libro era meglio."],
+      video_paused: ["Premi play. Adesso."],
+      video_bored: ["Ancora?! Basta!"],
+      video_late: ["Domani ti svegli tardi. Te lo dico."],
+      video_scared: ["Che spavento stupido."],
+      video_moved: ["Non sto piangendo. È polvere."],
+      office: ["C'è un refuso. Lo so e basta."],
+      design: ["Il kerning è sbagliato."],
+      browser: ["Un'altra scheda? Un'altra?!"],
+      discord: ["Chi ha il microfono acceso?!"],
+      lol: ["Report. Report tutti."],
+      youtube: ["Un altro video «e basta», certo."],
+      live: ["Chat, comportatevi bene."],
+      call: ["Hai il microfono spento. Di nuovo."],
+      minecraft: ["Attento ai creeper."],
+      shooter: ["Mi ha colpito DA DOVE?"],
+      excel: ["#RIF! Te l'avevo detto."],
+      slides: ["Troppo testo nella slide."],
+      blender: ["Il render ci mette una vita."],
+      ai: ["Io sono più simpatico."],
+      explorer: ["Sempre tutto nei Download, eh?"],
+      hot: ["Questo caldo è INSOPPORTABILE."],
+      cold: ["Chi ha spento il riscaldamento?!"],
     },
   },
 };

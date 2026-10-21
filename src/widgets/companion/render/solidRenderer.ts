@@ -1,5 +1,5 @@
 import type { FaceFrame } from "../engine/animator";
-import { FACE_H, FACE_W, GLYPH_BITS, faceField, glyphPlacement } from "./faceShape";
+import { FACE_H, FACE_W, GLYPH_BITS, costumeDots, faceField, glyphPlacement } from "./faceShape";
 
 /**
  * Stile "forme piene": occhi e bocca sono macchie di colore pieno con il
@@ -94,6 +94,18 @@ export function drawSolidFace(canvas: HTMLCanvasElement, frame: FaceFrame, optio
   ctx.imageSmoothingEnabled = true;
   ctx.drawImage(buffer.canvas, 0, 0, sw, sh, originX - MARGIN * scale, originY - MARGIN * scale, (sw / k) * scale, (sh / k) * scale);
 
+  // Punti del costume (scritte, particelle): come i simboli, punti tondi.
+  const r = scale * 0.4;
+  ctx.fillStyle = options.color;
+  for (const [x, y, a] of costumeDots(frame)) {
+    if (a < 0.04) continue;
+    ctx.globalAlpha = a;
+    ctx.beginPath();
+    ctx.arc(originX + x * scale, originY + y * scale, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
   // Simbolo: punti tondi sopra la faccia, tenuti dentro il canvas.
   if (frame.glyph) {
     const place = glyphPlacement(frame.glyph.id, frame.glyph.age);
@@ -106,7 +118,6 @@ export function drawSolidFace(canvas: HTMLCanvasElement, frame: FaceFrame, optio
     ctx.globalAlpha = alpha;
     ctx.fillStyle = options.color;
     ctx.beginPath();
-    const r = scale * 0.4;
     for (const [bx, by] of GLYPH_BITS[frame.glyph.id]) {
       const x = originX + (gx0 + bx) * scale;
       const y = originY + (gy0 + by) * scale;

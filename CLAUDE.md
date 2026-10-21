@@ -26,12 +26,14 @@ random iniettati apposta per poter essere testate senza browser.
 **Albero di avvio** (`src/app/App.tsx`): `DatabaseGate` (esegue le migrazioni, non monta nulla prima) →
 `SettingsProvider` → `LayoutProvider` → `BootGate` (tiene la splash di `index.html` finché il layout non è pronto)
 → `WidgetProviders` (monta i `provider` di tutti i widget, sempre attivi anche se il widget non è in dashboard)
-→ `NavProvider` → vista corrente. Non c'è un router: `core/nav/NavContext.tsx` tiene la vista
-(`dashboard` | `catalog` | `widgetDetail`) e la pagina di dettaglio è il `detailComponent` del widget.
+→ `NavProvider` → vista corrente. Non c'è un router: la vista (`AppView` in `core/nav/useNav.ts`) è
+`dashboard` | `catalog` | `settings` (pagina Impostazioni, `openSettings(sezione)`) | `widgetDetail`, e la pagina
+di dettaglio è il `detailComponent` del widget.
 
 **Tutto è guidato dal registry.** `src/widgets/registry.ts` è l'unico elenco dei widget; ogni widget esporta una
 `WidgetDefinition` (`core/widgets/types.ts`: taglie, `defaultPlacement`, `detailComponent`, `provider`,
-`settingsGroup`, `mini` per gli spazi dell'intestazione). Catalogo, dashboard, layout di default, provider e scheda Impostazioni > Widget derivano da lì:
+`settingsGroup`, `mini`). Catalogo, dashboard, layout di default, provider, sezioni di Impostazioni > Widget e
+scelte degli spazi in alto a destra dell'intestazione (`mini`, `features/dashboard/HeaderSlots.tsx`) derivano da lì:
 aggiungere un widget = cartella `src/widgets/<nome>/` + una riga nel registry.
 
 **Regole di dipendenza**: `app → features, widgets, core`; `features → core, widgets/registry, ui`;
@@ -46,17 +48,24 @@ Debito noto: `widgets/youtube/screens/WatchScreen.tsx` importa `study/data/study
   idempotenti (`IF NOT EXISTS`, `INSERT OR IGNORE`); mai modificare una migrazione rilasciata.
 - Impostazioni: `core/settings/schema.ts` è l'unica fonte (`DEFAULT_SETTINGS` + `SETTING_DEFS`; il controllo in UI
   compare da solo). Righe chiave/valore, niente migrazioni; valori non validi tornano al default (`sanitizeSettings`).
+  Se le opzioni dipendono dal registry (che `core` non può importare) la chiave è `text` nello schema e la pagina
+  passa a `SettingsSection` un `overrides` con il select (es. `headerSlot1/2` in `tabs/DashboardTab.tsx`).
 - Metadati interni dell'app: store chiave/valore `core/db/meta.ts`, non le impostazioni.
 
 **Backend nativo** (`src-tauri/`): `src/lib.rs` registra plugin (sql, notification, log in debug) e comandi.
 - File Transfer: server HTTP in C su Winsock (`filetransfer/c/`), compilato da `build.rs` con `cc` **solo su Windows**,
   esposto con i comandi `ft_*` di `src/file_transfer.rs`; va fermato alla chiusura della finestra.
 - Companion: `companion_snapshot` in `src/companion.rs` (inattività e app in primo piano via `windows-sys`).
-- Lato frontend, ogni widget chiama `invoke()` da un solo file `data/*Api.ts`.
+- Lato frontend, ogni widget chiama `invoke()` da un solo file `data/*Api.ts`; allo stesso modo l'unica chiamata
+  in rete (`fetch`) è `widgets/weather/data/weatherApi.ts`.
 - Su sistemi non Windows l'app deve compilare e i widget mostrano un errore chiaro.
 
-**Stile**: token in `src/styles/tokens.css` (`--bg-card`, `--surface-1/2/3`, `--accent`, `--text-*`), sovrascritti su
-`<html>` dalle impostazioni Aspetto/Effetti; usarli sempre perché il tema chiaro funzioni. Un `.css` accanto a ogni
+**Temi e stile**: 4 temi (`core/theme/themes.ts`), scelti con `data-theme` su `<html>`; ogni tema ridefinisce i
+token di `src/styles/tokens.css` (colori, `--card-*`, `--panel-*`, `--radius-*`, `--font-display`, `--btn-*`…).
+Quando un pezzo cambia *forma* per tema si usa `useThemeVariant(map)` (`core/theme/variants.ts`), mai
+`if (theme === …)`; le varianti-componente si rendono con `createElement` (lint `static-components`). Le card per
+tema dei widget stanno in `card/cards.ts` e le pagine di dettaglio riusano la card M. In Opaco ogni widget ha un
+pigmento (`data-pigment` sulla cella e su `.detail-scope`) che ridefinisce i token. Un `.css` accanto a ogni
 componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è l'unico elemento che scrolla.
 
 ## Regole

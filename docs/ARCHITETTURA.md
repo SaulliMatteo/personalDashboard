@@ -106,11 +106,18 @@ companion/
 │   ├─ brain.ts              decide umore, sguardo, reazioni, fumetti (orologio e random iniettati)
 │   ├─ animator.ts           interpola, battiti di ciglia, sguardo, respiro, saltelli
 │   ├─ animations.ts         catalogo delle animazioni accendibili/spegnibili
-│   ├─ personalities.ts      personalità e frasi
-│   └─ appCategory.ts        app in primo piano → categoria (musica, codice, video…)
-├─ render/                   stili grafici: ledRenderer.ts (matrice LED), styles.ts (registro)
+│   ├─ personalities.ts      personalità (frasi, ritmo, ritocchi della faccia)
+│   ├─ poses.ts              pose di Pixy (umore, sguardo, costume, fumetto) e varianti per personalità
+│   ├─ subjectKind.ts        nome della materia → tipo (matematica, scienze, lingue…)
+│   └─ appCategory.ts        app in primo piano → categoria e app specifica (processo, percorso,
+│                            descrizione dell'eseguibile, scelta manuale dell'utente)
+├─ render/                   stili grafici: ledRenderer.ts (matrice LED), solidRenderer.ts, styles.ts (registro);
+│                            costumes.ts (forme dei costumi: fiamma, coperta, libro…) e sdf.ts (distanze)
 └─ data/systemApi.ts         invoke("companion_snapshot") → src-tauri/src/companion.rs (Windows)
 ```
+
+Dati che Pixy legge dall'activityBus oltre a studio e video: `studySubjectName` (Studio), `weatherTemperature`
+(Meteo, solo se il widget scarica il dato), `videoPaused`/`videoProgress`/`videoDurationSeconds` (player YouTube).
 
 Flusso: eventi/stato (activityBus, sistema, mouse) → `brain` (poche volte al minuto) →
 `animator` (ogni fotogramma) → `render/<stile>` (disegna i parametri).

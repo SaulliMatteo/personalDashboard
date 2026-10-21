@@ -1,5 +1,5 @@
 import type { FaceFrame } from "../engine/animator";
-import { FACE_H, FACE_W, GLYPH_BITS, faceField, glyphPlacement } from "./faceShape";
+import { FACE_H, FACE_W, GLYPH_BITS, costumeDots, faceField, glyphPlacement } from "./faceShape";
 
 /**
  * Stile "matrice LED": tutta la card è una griglia di punti spenti e la
@@ -129,6 +129,9 @@ export function drawLedFace(canvas: HTMLCanvasElement, frame: FaceFrame, options
     const gy0 = Math.max(Math.round(place.y + frame.offsetY), Math.ceil(-faceY0));
     for (const [bx, by] of GLYPH_BITS[frame.glyph.id]) glyphSet.add((gy0 + by) * 1000 + (gx0 + bx));
   }
+  // Punti del costume (scritte, particelle): chiave = riga * 1000 + colonna, valore = luminosità.
+  const dotMap = new Map<number, number>();
+  for (const [x, y, a] of costumeDots(frame)) dotMap.set(y * 1000 + x, Math.max(a, dotMap.get(y * 1000 + x) ?? 0));
 
   for (let j = 0; j < rows; j++) {
     const fy = j - faceY0;
@@ -136,7 +139,10 @@ export function drawLedFace(canvas: HTMLCanvasElement, frame: FaceFrame, options
       const fx = i - faceX0;
       let b = field.brightness(fx, fy);
 
-      if (glyphSet && glyphSet.has(Math.round(fy) * 1000 + Math.round(fx))) b = Math.max(b, glyphAlpha);
+      const key = Math.round(fy) * 1000 + Math.round(fx);
+      if (glyphSet && glyphSet.has(key)) b = Math.max(b, glyphAlpha);
+      const dot = dotMap.get(key);
+      if (dot !== undefined) b = Math.max(b, dot);
 
       if (b < 0.04) continue;
       ctx.globalAlpha = b;
