@@ -2,7 +2,8 @@ import type { WidgetDefinition } from "../../core/widgets/types";
 import { SIZE_S, SIZE_W, SIZE_M } from "../../core/widgets/sizes";
 import CompanionWidget from "./CompanionWidget";
 import CompanionDetail from "./CompanionDetail";
-import { CompanionProvider, COMPANION_WIDGET_ID } from "./CompanionContext";
+import { CompanionProvider } from "./CompanionContext";
+import { COMPANION_WIDGET_ID } from "./useCompanion";
 
 export const companionWidget: WidgetDefinition = {
   id: COMPANION_WIDGET_ID,

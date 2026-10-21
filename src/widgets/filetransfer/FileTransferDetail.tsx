@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { MdOutlineFolderOpen, MdRefresh } from "react-icons/md";
 import { QRCodeSVG } from "qrcode.react";
-import { useNav } from "../../core/nav/NavContext";
+import { useNav } from "../../core/nav/useNav";
 import { useThemeVariant } from "../../core/theme/variants";
 import BackButton from "../../ui/BackButton";
-import { useFileTransfer } from "./FileTransferContext";
+import { useFileTransfer } from "./useFileTransfer";
 import { readPreview, type Preview } from "./data/fileTransferApi";
 import { extensionOf, formatDate, formatSize } from "./lib/format";
 import { STATUS_LABELS } from "./lib/labels";

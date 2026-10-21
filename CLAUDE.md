@@ -83,6 +83,7 @@ componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è 
 
 - Il dettaglio di un widget si apre con il doppio click sulla cella; il doppio click su un controllo interno è ignorato, salvo i pulsanti a tutta cella marcati `data-cell-action`. I controlli fanno comunque `e.stopPropagation()`.
 - Valori "ultimi" in interval/listener di lunga durata → `core/hooks/useLatestRef.ts`.
+- Contesti: `XContext.tsx` esporta solo il provider; contesto, tipo e hook in `useX.ts` (es. `useSettings.ts`).
 - `tauri-plugin-notification` è pinnato `=2.4.0` perché la 2.5 richiede `tauri ^2.12` (il progetto usa `2.11.3`):
   non aggiornarlo senza controllare il manifesto su crates.io.
 - Le notifiche mostrano il nome dell'app solo nella versione installata; in `tauri dev` Windows le attribuisce a PowerShell.

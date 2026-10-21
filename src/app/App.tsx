@@ -1,6 +1,7 @@
 import { SettingsProvider } from "../core/settings/SettingsContext";
 import { LayoutProvider } from "../core/layout/LayoutContext";
-import { NavProvider, useNav } from "../core/nav/NavContext";
+import { NavProvider } from "../core/nav/NavContext";
+import { useNav } from "../core/nav/useNav";
 import WidgetProviders from "../widgets/WidgetProviders";
 import { getWidget, widgetPigment } from "../widgets/registry";
 import Dashboard from "../features/dashboard/Dashboard";

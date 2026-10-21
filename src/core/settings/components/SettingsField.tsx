@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { useSettings } from "../SettingsContext";
+import { useSettings } from "../useSettings";
 import type { SettingDef, SettingKey } from "../schema";
 import NumberField from "../../../ui/NumberField";
 import "./settingsFields.css";

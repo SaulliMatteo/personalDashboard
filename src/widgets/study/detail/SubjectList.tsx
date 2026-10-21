@@ -10,12 +10,12 @@ import {
   MdPlayArrow,
   MdSettings,
 } from "react-icons/md";
-import { useSettings } from "../../../core/settings/SettingsContext";
+import { useSettings } from "../../../core/settings/useSettings";
 import SubjectSettingsPopup from "../components/SubjectSettingsPopup";
 import { listArchivedSubjects, type Subject, type SubjectMode } from "../data/studyRepository";
 import { colorForSubject } from "../lib/colors";
 import { formatHoursMinutes } from "../lib/format";
-import { useTimer } from "../timer/TimerContext";
+import { useTimer } from "../timer/useTimer";
 
 /** Elenco materie (avvio, impostazioni, archiviazione) + materie archiviate + form per aggiungerne. */
 function SubjectList() {

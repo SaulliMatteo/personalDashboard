@@ -1,5 +1,5 @@
 import { MdSettings } from "react-icons/md";
-import { useNav } from "../../core/nav/NavContext";
+import { useNav } from "../../core/nav/useNav";
 import type { WidgetDefinition } from "../../core/widgets/types";
 import "./widgetSettings.css";
 

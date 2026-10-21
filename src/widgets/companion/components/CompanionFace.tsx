@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
-import { useSettings } from "../../../core/settings/SettingsContext";
+import { useSettings } from "../../../core/settings/useSettings";
 import { useTheme } from "../../../core/theme/useTheme";
 import { useThemeVariant, type ThemeVariants } from "../../../core/theme/variants";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
-import { useCompanion } from "../CompanionContext";
+import { useCompanion } from "../useCompanion";
 import { COMPANION_STYLES, type CompanionStyle } from "../render/styles";
 import "./CompanionFace.css";
 

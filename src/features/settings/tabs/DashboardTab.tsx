@@ -1,5 +1,5 @@
-import { useLayout } from "../../../core/layout/LayoutContext";
-import { useNav } from "../../../core/nav/NavContext";
+import { useLayout } from "../../../core/layout/useLayout";
+import { useNav } from "../../../core/nav/useNav";
 import SettingsSection from "../../../core/settings/components/SettingsSection";
 import { SETTING_DEFS, type SettingDef, type SettingKey } from "../../../core/settings/schema";
 import { WIDGET_REGISTRY } from "../../../widgets/registry";

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSettings } from "../../../core/settings/SettingsContext";
+import { useSettings } from "../../../core/settings/useSettings";
 import { getDailyTotals, type Subject } from "../data/studyRepository";
 import { colorForSubject } from "../lib/colors";
 import { formatHoursMinutes } from "../lib/format";

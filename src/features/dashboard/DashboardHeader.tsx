@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { useActivityStatus } from "../../core/activity/activityBus";
 import { useNow } from "../../core/hooks/useNow";
-import { useSettings } from "../../core/settings/SettingsContext";
+import { useSettings } from "../../core/settings/useSettings";
 import { useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
 import { clockText, dateText } from "../../core/time/format";
 import HeaderSlots from "./HeaderSlots";

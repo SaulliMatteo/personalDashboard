@@ -1,4 +1,4 @@
-import { useNav } from "../../../core/nav/NavContext";
+import { useNav } from "../../../core/nav/useNav";
 import SettingsSection from "../../../core/settings/components/SettingsSection";
 import type { WidgetDefinition } from "../../../core/widgets/types";
 

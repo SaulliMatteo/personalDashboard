@@ -1,8 +1,8 @@
 import { MdOutlineSettings } from "react-icons/md";
 import "./sidebar.css";
 import { useActivityStatus } from "../../core/activity/activityBus";
-import { useNav } from "../../core/nav/NavContext";
-import { useSettings } from "../../core/settings/SettingsContext";
+import { useNav } from "../../core/nav/useNav";
+import { useSettings } from "../../core/settings/useSettings";
 import { useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
 import ProgressBar from "../../ui/ProgressBar";
 

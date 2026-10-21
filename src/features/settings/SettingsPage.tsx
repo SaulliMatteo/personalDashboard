@@ -1,5 +1,5 @@
 import { createElement, type ComponentType } from "react";
-import { useNav } from "../../core/nav/NavContext";
+import { useNav } from "../../core/nav/useNav";
 import { WIDGET_REGISTRY } from "../../widgets/registry";
 import AppearanceTab from "./tabs/AppearanceTab";
 import DashboardTab from "./tabs/DashboardTab";

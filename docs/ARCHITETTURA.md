@@ -180,6 +180,10 @@ Colonna in una nuova migrazione → campo in `Subject`/`SubjectRow`/`PATCH_COLUM
 → controllo in `components/SubjectSettingsPopup.tsx`.
 
 ## Convenzioni
+
+- Contesti React: `XContext.tsx` esporta **solo** il `XProvider`; tipo del valore, `createContext` e hook stanno in
+  `useX.ts` accanto (es. `core/settings/useSettings.ts`). Così l'aggiornamento a caldo di Vite non crea un secondo
+  contesto (errore "useX deve essere usato dentro <XProvider>") e il lint `only-export-components` resta pulito.
 - Stato "ultimo valore" dentro callback di lunga durata (interval, listener): `useLatestRef`.
 - Le query SQL stanno solo nei `*Repository.ts`; i componenti non scrivono SQL.
 - Impostazioni = preferenze dell'app (schema). Dati e metadati interni = tabelle/`meta`.

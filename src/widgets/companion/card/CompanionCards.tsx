@@ -1,6 +1,6 @@
 import type { SizeKey } from "../../../core/widgets/sizes";
-import { useSettings } from "../../../core/settings/SettingsContext";
-import { useCompanion } from "../CompanionContext";
+import { useSettings } from "../../../core/settings/useSettings";
+import { useCompanion } from "../useCompanion";
 import CompanionFace from "../components/CompanionFace";
 import { BEHAVIOR_LABELS } from "../engine/brain";
 import "./companionCards.css";

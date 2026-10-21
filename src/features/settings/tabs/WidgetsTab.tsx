@@ -1,4 +1,4 @@
-import { useNav } from "../../../core/nav/NavContext";
+import { useNav } from "../../../core/nav/useNav";
 import { WIDGET_REGISTRY } from "../../../widgets/registry";
 
 /** Scheda Widget: l'elenco dei widget, con le scorciatoie alle loro impostazioni e pagine. */

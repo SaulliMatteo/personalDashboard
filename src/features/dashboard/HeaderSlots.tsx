@@ -1,7 +1,7 @@
 import { createElement } from "react";
 import { MdOutlineTune } from "react-icons/md";
-import { useNav } from "../../core/nav/NavContext";
-import { useSettings } from "../../core/settings/SettingsContext";
+import { useNav } from "../../core/nav/useNav";
+import { useSettings } from "../../core/settings/useSettings";
 import { useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
 import { getWidget } from "../../widgets/registry";
 import "./headerSlots.css";
