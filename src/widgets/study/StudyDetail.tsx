@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { MdBarChart, MdOutlineTimer } from "react-icons/md";
 import "./StudyDetail.css";
-import { useNav } from "../../core/nav/NavContext";
+import { useNav } from "../../core/nav/useNav";
 import BackButton from "../../ui/BackButton";
-import { useTimer } from "./timer/TimerContext";
+import { useTimer } from "./timer/useTimer";
 import TimerTab from "./detail/TimerTab";
 import ReportTab from "./detail/ReportTab";
 

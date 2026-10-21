@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MdAdd, MdSearch } from "react-icons/md";
-import { useNav } from "../../core/nav/NavContext";
+import { useNav } from "../../core/nav/useNav";
 import BackButton from "../../ui/BackButton";
 import AddVideoDialog from "./components/AddVideoDialog";
 import { findVideoByYoutubeId, type SavedVideo } from "./data/youtubeRepository";

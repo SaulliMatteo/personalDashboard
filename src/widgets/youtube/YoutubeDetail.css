@@ -1,10 +1,26 @@
 /* Pagina YouTube: stessi token del resto dell'app (tema chiaro/scuro e accent automatici). */
 
 .yt-detail {
+  /* Miniature con lo stesso raggio della card YouTube del tema (YoutubeWidget.css);
+     righe e note come pannelli, non come pillole. */
+  --yt-media-radius: 14px;
+
   display: flex;
   flex-direction: column;
   gap: 16px;
   flex-shrink: 0;
+}
+
+:root[data-theme="opaco"] .yt-detail {
+  --yt-media-radius: 20px;
+}
+
+:root[data-theme="quaderno"] .yt-detail {
+  --yt-media-radius: 6px;
+}
+
+:root[data-theme="fosforo"] .yt-detail {
+  --yt-media-radius: var(--radius-display);
 }
 
 .yt-detail-header {
@@ -21,16 +37,16 @@
 .yt-card {
   min-width: 0;
   padding: 18px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
+  background: var(--card-bg);
+  border: var(--card-border);
   border-radius: var(--radius-card);
+  box-shadow: var(--card-shadow);
 }
 
 .yt-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .yt-muted {
@@ -147,19 +163,19 @@ textarea.yt-input {
 }
 
 .yt-btn--danger {
-  background: rgba(230, 100, 100, 0.16);
-  color: #f0a0a0;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .yt-btn--danger:hover:not(:disabled) {
-  background: rgba(230, 100, 100, 0.28);
-  color: #f5b5b5;
+  background: var(--danger-strong);
+  color: var(--danger);
 }
 
 /* Il ConfirmButton aggiunge .is-armed al secondo passaggio. */
 .yt-btn.is-armed {
-  background: #e78080;
-  color: #1a0b0b;
+  background: var(--danger);
+  color: var(--on-danger);
 }
 
 .yt-icon-btn {
@@ -194,13 +210,13 @@ textarea.yt-input {
 }
 
 .yt-icon-btn--danger:hover {
-  background: rgba(230, 100, 100, 0.16);
-  color: #f0a0a0;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .yt-icon-btn.is-armed {
-  background: #e78080;
-  color: #1a0b0b;
+  background: var(--danger);
+  color: var(--on-danger);
 }
 
 .yt-link-btn {
@@ -229,15 +245,15 @@ textarea.yt-input {
   justify-content: space-between;
   gap: 10px;
   padding: 9px 12px;
-  border-radius: var(--radius-item);
+  border-radius: var(--radius-panel);
   background: var(--accent-soft);
   color: var(--text-secondary);
   font-size: 12.5px;
 }
 
 .yt-banner--error {
-  background: rgba(230, 100, 100, 0.12);
-  color: #e78080;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .yt-banner button {
@@ -334,10 +350,10 @@ textarea.yt-input {
   display: flex;
   flex-direction: column;
   padding: 6px;
-  border: 1px solid var(--border-subtle);
+  border: var(--card-border);
   border-radius: var(--radius-card);
-  background: var(--bg-card);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-pop);
 }
 
 .yt-search-hit {
@@ -347,7 +363,7 @@ textarea.yt-input {
   flex-direction: column;
   gap: 2px;
   padding: 8px 10px;
-  border-radius: var(--radius-item);
+  border-radius: var(--radius-panel);
   cursor: pointer;
 }
 
@@ -418,6 +434,27 @@ textarea.yt-input {
   color: var(--text-primary);
 }
 
+.yt-hero .yt-section-title {
+  margin-bottom: 0;
+}
+
+/* Titoli delle schede nel linguaggio del tema, come le card della dashboard. */
+:root[data-theme="opaco"] .yt-section-title h3 {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+:root[data-theme="quaderno"] .yt-section-title h3 {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .yt-section-title h3 {
+  font-weight: 500;
+}
+
 .yt-empty-note {
   padding: 8px 2px;
 }
@@ -477,8 +514,8 @@ textarea.yt-input {
   position: relative;
   overflow: hidden;
   aspect-ratio: 16 / 9;
-  border-radius: var(--radius-item);
-  background: var(--surface-2);
+  border-radius: var(--yt-media-radius);
+  background: var(--display-texture, none), var(--thumb-bg);
 }
 
 .yt-thumb img {
@@ -506,8 +543,8 @@ textarea.yt-input {
   height: 34px;
   transform: translate(-50%, -50%) scale(0.9);
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
+  background: var(--media-scrim);
+  color: var(--media-fg);
   font-size: 22px;
   opacity: 0;
   transition: opacity 150ms ease, transform 150ms ease, background 150ms ease;
@@ -525,6 +562,9 @@ textarea.yt-input {
 
 .yt-hero .yt-thumb-play {
   opacity: 1;
+  border: var(--thumb-play-border, 0);
+  background: var(--thumb-play-bg);
+  color: var(--thumb-play-fg);
   width: 48px;
   height: 48px;
   font-size: 30px;
@@ -536,8 +576,8 @@ textarea.yt-input {
   bottom: 8px;
   padding: 1px 6px;
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.72);
-  color: #fff;
+  background: var(--media-scrim);
+  color: var(--media-fg);
   font-size: 11px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -549,7 +589,7 @@ textarea.yt-input {
   bottom: 0;
   left: 0;
   height: 3px;
-  background: rgba(255, 255, 255, 0.28);
+  background: var(--media-track);
 }
 
 .yt-thumb-progress > span {
@@ -572,7 +612,7 @@ textarea.yt-input {
   gap: 6px;
   padding-right: 4px;
   border: 1px solid transparent;
-  border-radius: var(--radius-item);
+  border-radius: var(--radius-panel);
   background: var(--surface-1);
   transition: background 150ms ease, border-color 150ms ease;
 }
@@ -668,11 +708,12 @@ textarea.yt-input {
   position: relative;
   display: flex;
   min-width: 0;
-  border: 1px solid var(--border-subtle);
+  border: var(--card-border);
   border-top: 3px solid var(--folder-color, var(--border-subtle));
   border-radius: var(--radius-card);
-  background: var(--bg-card);
+  background: var(--card-bg);
   transition: border-color 150ms ease, background 150ms ease, transform 150ms var(--ease-out-back);
+  box-shadow: var(--card-shadow);
 }
 
 .yt-folder-card:hover {
@@ -688,10 +729,11 @@ textarea.yt-input {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  border: 1px solid var(--border-subtle);
+  border: var(--card-border);
   border-radius: var(--radius-card);
-  background: var(--bg-card);
+  background: var(--card-bg);
   cursor: pointer;
+  box-shadow: var(--card-shadow);
 }
 
 .yt-folder-card--plain:hover {
@@ -752,8 +794,8 @@ textarea.yt-input {
   position: absolute;
   top: 14px;
   right: 14px;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
+  background: var(--media-scrim);
+  color: var(--media-fg);
   opacity: 0;
   transition: opacity 150ms ease, background 150ms ease;
 }
@@ -774,7 +816,7 @@ textarea.yt-input {
   gap: 2px;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: var(--radius-item);
+  border-radius: var(--yt-media-radius);
   background: var(--surface-2);
 }
 
@@ -881,7 +923,7 @@ textarea.yt-input {
 .yt-hero-thumb {
   width: 100%;
   height: 100%;
-  border-radius: var(--radius-item);
+  border-radius: var(--yt-media-radius);
 }
 
 .yt-hero-bottom {
@@ -947,7 +989,7 @@ textarea.yt-input {
   aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: var(--radius-card);
-  background: #000;
+  background: var(--media-bg);
 }
 
 .yt-player-iframe {
@@ -1074,7 +1116,7 @@ textarea.yt-input {
   gap: 8px;
   padding: 12px;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-item);
+  border-radius: var(--radius-panel);
   background: var(--surface-1);
 }
 
@@ -1124,7 +1166,7 @@ textarea.yt-input {
   align-items: flex-start;
   gap: 10px;
   padding: 10px;
-  border-radius: var(--radius-item);
+  border-radius: var(--radius-panel);
   background: var(--surface-1);
 }
 
@@ -1205,7 +1247,7 @@ textarea.yt-input {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--overlay);
   backdrop-filter: blur(2px);
   animation: yt-fade 150ms ease-out;
 }
@@ -1220,11 +1262,11 @@ textarea.yt-input {
   max-height: 88vh;
   overflow-y: auto;
   padding: 22px 24px;
-  border: 1px solid var(--border-subtle);
+  border: var(--card-border);
   border-radius: var(--radius-card);
-  background: var(--bg-card);
+  background: var(--card-bg);
   color: var(--text-primary);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-pop);
   animation: yt-pop 180ms var(--ease-out-back);
 }
 
@@ -1338,15 +1380,15 @@ textarea.yt-input {
 }
 
 .yt-validation--ok {
-  color: #5fcf94;
+  color: var(--success-text);
 }
 
 .yt-validation--bad {
-  color: #e78080;
+  color: var(--danger);
 }
 
 .yt-validation--warn {
-  color: var(--study-break, #f5a35c);
+  color: var(--study-break);
 }
 
 .yt-preview {
@@ -1354,7 +1396,7 @@ textarea.yt-input {
   align-items: center;
   gap: 12px;
   padding: 8px;
-  border-radius: var(--radius-item);
+  border-radius: var(--yt-media-radius);
   background: var(--surface-1);
 }
 
@@ -1413,30 +1455,4 @@ textarea.yt-input {
   .yt-row-thumb {
     width: 88px;
   }
-}
-
-/* ---------- Tema chiaro: stati con contrasto sufficiente su sfondo bianco ---------- */
-
-:root[data-theme="light"] .yt-btn--danger,
-:root[data-theme="light"] .yt-icon-btn--danger:hover {
-  background: rgba(200, 60, 60, 0.12);
-  color: #b42323;
-}
-
-:root[data-theme="light"] .yt-btn--danger:hover:not(:disabled) {
-  background: rgba(200, 60, 60, 0.2);
-  color: #9a1c1c;
-}
-
-:root[data-theme="light"] .yt-banner--error,
-:root[data-theme="light"] .yt-validation--bad {
-  color: #b42323;
-}
-
-:root[data-theme="light"] .yt-validation--ok {
-  color: #1f8a53;
-}
-
-:root[data-theme="light"] .yt-validation--warn {
-  color: #b86a1d;
 }

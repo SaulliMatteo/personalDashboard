@@ -1,6 +1,6 @@
 import { useState } from "react";
 import SettingsSection from "../../../core/settings/components/SettingsSection";
-import { useSettings } from "../../../core/settings/SettingsContext";
+import { useSettings } from "../../../core/settings/useSettings";
 import ConfirmButton from "../../../ui/ConfirmButton";
 
 /** Esporta/importa tutte le impostazioni come testo JSON (backup, trasferimento tra computer). */
@@ -37,6 +37,7 @@ function BackupSection() {
   return (
     <div className="settings-section">
       <h4 className="settings-section-title">Backup</h4>
+      <p className="settings-field-description">Copia tutte le impostazioni come testo, oppure incolla un backup per ripristinarlo.</p>
       <div className="settings-backup">
         <textarea
           className="settings-backup-text"
@@ -47,10 +48,10 @@ function BackupSection() {
           rows={6}
         />
         <div className="settings-backup-actions">
-          <button type="button" className="settings-btn" onClick={handleExport}>
+          <button type="button" className="sp-btn" onClick={handleExport}>
             Mostra impostazioni
           </button>
-          <button type="button" className="settings-btn" onClick={handleImport} disabled={text.trim() === ""}>
+          <button type="button" className="sp-btn" onClick={handleImport} disabled={text.trim() === ""}>
             Applica
           </button>
         </div>
@@ -64,24 +65,30 @@ function GeneralTab() {
   const { resetSettings } = useSettings();
 
   return (
-    <div>
-      <h2>Generale</h2>
-      <p className="note">Personalizza l'app e gestisci le tue impostazioni.</p>
+    <>
+      <header className="sp-head">
+        <h2>Generale</h2>
+        <p>Il tuo nome, il titolo dell'app e il backup delle impostazioni.</p>
+      </header>
 
       <SettingsSection group="general" />
+      <BackupSection />
 
-      <div className="settings-sections">
-        <BackupSection />
-
-        <div className="settings-section">
-          <h4 className="settings-section-title">Ripristino</h4>
-          <div className="settings-option">
-            <span>Ripristina tutte le impostazioni ai valori di default (il layout dei widget non cambia)</span>
-            <ConfirmButton className="settings-btn" label="Ripristina" onConfirm={resetSettings} />
+      <div className="settings-section">
+        <h4 className="settings-section-title">Ripristino</h4>
+        <div className="settings-fields">
+          <div className="settings-field">
+            <div className="settings-field-text">
+              <span className="settings-field-label">Torna alle impostazioni iniziali</span>
+              <p className="settings-field-description">Tutte le impostazioni tornano ai valori di default. La posizione dei widget non cambia.</p>
+            </div>
+            <div className="settings-field-control">
+              <ConfirmButton className="sp-btn sp-btn--danger" label="Ripristina" onConfirm={resetSettings} />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

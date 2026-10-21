@@ -1,29 +1,17 @@
+import { createElement } from "react";
 import WidgetFrame from "../../core/widgets/WidgetFrame";
 import type { WidgetProps } from "../../core/widgets/types";
-import { useSettings } from "../../core/settings/SettingsContext";
-import { useCompanion } from "./CompanionContext";
-import CompanionFace from "./components/CompanionFace";
-import { BEHAVIOR_LABELS } from "./engine/brain";
-import "./CompanionWidget.css";
+import { sizeKey } from "../../core/widgets/sizes";
+import { useThemeVariant } from "../../core/theme/variants";
+import { COMPANION_CARDS } from "./card/cards";
 
-/** Widget in dashboard: la faccia occupa tutta la card; nelle taglie grandi nome e stato in basso. */
+/** Widget in dashboard: la card del tema corrente nella taglia scelta. */
 function CompanionWidget({ w, h }: WidgetProps) {
-  const { snapshot } = useCompanion();
-  const { settings } = useSettings();
-  const isSmall = w < 2 && h < 2;
-  const showFooter = h >= 2;
-
+  const Card = useThemeVariant(COMPANION_CARDS);
   return (
-    <WidgetFrame>
-      <article className={`widget companion-widget${isSmall ? " companion-widget--small" : ""}`}>
-        <CompanionFace className="companion-widget-face" bubbleSize={isSmall ? "small" : "normal"} padding={isSmall ? 1 : 2} />
-        {showFooter && (
-          <footer className="companion-widget-footer">
-            <span className="companion-widget-name">{settings.companionName || "Companion"}</span>
-            <span className="companion-widget-status">{BEHAVIOR_LABELS[snapshot.behavior]}</span>
-          </footer>
-        )}
-      </article>
+    // card-postit: in Quaderno la card è un post-it (vedi tokens.css).
+    <WidgetFrame className="card-postit">
+      {createElement(Card, { size: sizeKey(w, h) })}
     </WidgetFrame>
   );
 }

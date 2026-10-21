@@ -30,7 +30,7 @@ function MoveDialog({ video, folders, onClose, onDone }: MoveDialogProps) {
       <div className="yt-dialog-body">
         <p className="yt-muted yt-dialog-video">{video.title}</p>
         <label className="yt-field">
-          <span className="yt-label">CARTELLA</span>
+          <span className="yt-label">Cartella</span>
           <select className="yt-input" value={target === null ? "" : String(target)} onChange={(e) => setTarget(e.target.value === "" ? null : Number(e.target.value))}>
             <option value="">Senza cartella</option>
             {options.map((o) => (

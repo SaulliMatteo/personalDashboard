@@ -1,10 +1,12 @@
 import { SettingsProvider } from "../core/settings/SettingsContext";
 import { LayoutProvider } from "../core/layout/LayoutContext";
-import { NavProvider, useNav } from "../core/nav/NavContext";
+import { NavProvider } from "../core/nav/NavContext";
+import { useNav } from "../core/nav/useNav";
 import WidgetProviders from "../widgets/WidgetProviders";
-import { getWidget } from "../widgets/registry";
+import { getWidget, widgetPigment } from "../widgets/registry";
 import Dashboard from "../features/dashboard/Dashboard";
 import WidgetCatalog from "../features/catalog/WidgetCatalog";
+import SettingsPage from "../features/settings/SettingsPage";
 import DatabaseGate from "./DatabaseGate";
 import AppShell from "./AppShell";
 import BootGate from "./BootGate";
@@ -17,11 +19,20 @@ function CurrentView() {
     content = <Dashboard />;
   } else if (view.type === "catalog") {
     content = <WidgetCatalog />;
+  } else if (view.type === "settings") {
+    content = <SettingsPage section={view.section} />;
   } else {
     // Qualunque widget con una pagina propria si aggancia qui registrando
     // `detailComponent` nella sua definizione, senza toccare questo switch.
+    // data-pigment: in Opaco la pagina usa il pigmento del suo widget.
     const Detail = getWidget(view.widgetId)?.detailComponent;
-    content = Detail ? <Detail /> : <Dashboard />;
+    content = Detail ? (
+      <div className="detail-scope" data-pigment={widgetPigment(view.widgetId)}>
+        <Detail />
+      </div>
+    ) : (
+      <Dashboard />
+    );
   }
 
   return <AppShell>{content}</AppShell>;

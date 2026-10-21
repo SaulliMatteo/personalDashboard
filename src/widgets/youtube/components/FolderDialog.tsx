@@ -54,12 +54,12 @@ function FolderDialog({ folder, folders, defaultParentId = null, onClose, onDone
     <Dialog title={editing ? "Modifica cartella" : "Nuova cartella"} onClose={onClose}>
       <form className="yt-dialog-body" onSubmit={(e) => void submit(e)}>
         <label className="yt-field">
-          <span className="yt-label">NOME</span>
+          <span className="yt-label">Nome</span>
           <input className="yt-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Es. Analisi, Elettronica…" maxLength={80} />
         </label>
 
         <label className="yt-field">
-          <span className="yt-label">DOVE</span>
+          <span className="yt-label">Dove</span>
           <select className="yt-input" value={parentId === null ? "" : String(parentId)} onChange={(e) => setParentId(e.target.value === "" ? null : Number(e.target.value))}>
             <option value="">Primo livello</option>
             {options.map((o) => (
@@ -71,7 +71,7 @@ function FolderDialog({ folder, folders, defaultParentId = null, onClose, onDone
         </label>
 
         <div className="yt-field">
-          <span className="yt-label">COLORE</span>
+          <span className="yt-label">Colore</span>
           <div className="yt-swatches">
             <button type="button" className={`yt-swatch yt-swatch--auto${color === null ? " is-selected" : ""}`} onClick={() => setColor(null)} title="Automatico" aria-label="Colore automatico">
               A
