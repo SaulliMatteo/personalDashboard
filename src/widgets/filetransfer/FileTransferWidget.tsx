@@ -2,22 +2,16 @@ import type { MouseEvent } from "react";
 import WidgetFrame from "../../core/widgets/WidgetFrame";
 import type { WidgetProps } from "../../core/widgets/types";
 import { sizeKey } from "../../core/widgets/sizes";
-import { useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
+import { useThemeVariant } from "../../core/theme/variants";
 import { PlayIcon, StopIcon } from "../../ui/icons";
 import { useFileTransfer } from "./FileTransferContext";
 import { extensionOf, formatSize } from "./lib/format";
+import { STATUS_LABELS } from "./lib/labels";
 import "./FileTransferWidget.css";
 
 const LATEST_FILES = 3;
 
 // Etichetta dello stato: in Fosforo è da display ("On"), negli altri temi per esteso.
-const STATUS_LABELS: ThemeVariants<[string, string]> = {
-  notte: ["Online", "Offline"],
-  opaco: ["Online", "Offline"],
-  quaderno: ["Online", "Offline"],
-  fosforo: ["On", "Off"],
-};
-
 // Raggio degli angoli dell'icona "ferma", come nei mockup.
 const STOP_ROUND = { notte: 2, opaco: 3, quaderno: 2, fosforo: 0 };
 
