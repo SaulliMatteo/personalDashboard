@@ -271,7 +271,7 @@
   padding: 12px 10px 4px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: normal;
   color: var(--text-muted);
 }
 
@@ -692,9 +692,9 @@
   flex-direction: column;
   min-width: 0;
   overflow: hidden;
-  border: 1px solid var(--border-subtle);
-  border-radius: 14px;
-  background: var(--surface-1);
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
   cursor: pointer;
   transition: border-color 200ms ease, transform 200ms ease;
 }
@@ -722,7 +722,7 @@
 .nq-card-kicker {
   margin-bottom: 8px;
   font-size: 9.5px;
-  letter-spacing: 0.06em;
+  letter-spacing: normal;
   color: var(--text-muted);
 }
 
@@ -825,7 +825,7 @@
 
 .nq-row-kicker {
   font-size: 10px;
-  letter-spacing: 0.05em;
+  letter-spacing: normal;
   color: var(--text-muted);
 }
 
@@ -904,7 +904,7 @@
 
 .nq-panel-label--muted {
   font-size: 11px;
-  letter-spacing: 0.06em;
+  letter-spacing: normal;
   color: var(--text-muted);
 }
 
@@ -1106,4 +1106,20 @@
 body.nq-dragging,
 body.nq-dragging * {
   cursor: grabbing !important;
+}
+
+/* ---------- Schede delle note nel linguaggio del tema ---------- */
+
+/* Quaderno: ogni nota è un foglio a quadretti con il margine rosso. */
+:root[data-theme="quaderno"] .nq-card-preview {
+  background: linear-gradient(90deg, transparent 10px, var(--paper-margin) 10px 11px, transparent 11px), var(--main-bg);
+}
+
+/* Fosforo: anteprima come un piccolo display a punti. */
+:root[data-theme="fosforo"] .nq-card {
+  border: var(--display-border);
+}
+
+:root[data-theme="fosforo"] .nq-card-preview {
+  background: var(--display-texture, none);
 }

@@ -37,7 +37,7 @@ import {
   type NoteSummary,
 } from "../data/notesRepository";
 import { normalizeUrl, toggleChecklist } from "../lib/editorDom";
-import { formatWhen, htmlToMarkdown, htmlToText, monthYearUpper, wordCount } from "../lib/html";
+import { formatWhen, htmlToMarkdown, htmlToText, monthYear, wordCount } from "../lib/html";
 import type { InkTool } from "./InkLayer";
 import PageSurface from "./PageSurface";
 import "./noteEditor.css";
@@ -317,7 +317,7 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
     ? "Salvataggio…"
     : `Salvato automaticamente · ${new Date(savedAt).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`;
 
-  const kicker = (pathLabel || "Senza cartella").toUpperCase();
+  const kicker = pathLabel || "Senza cartella";
 
   return (
     <div className="nq-editor">
@@ -424,7 +424,7 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
       <div className="nq-editor-body">
         <aside className="nq-pages">
           <div className="nq-pages-head">
-            <span>PAGINE</span>
+            <span>Pagine</span>
             <span>{pages.length}</span>
           </div>
           <div className="nq-pages-list">
@@ -490,8 +490,8 @@ function NoteEditor({ note, pathLabel, onChanged, onToggleStar, onTrash }: NoteE
               color={color}
               size={size}
               kicker={kicker}
-              dateLabel={monthYearUpper(note.createdAt)}
-              footerLabel={`${kicker} · ${(title || "Senza titolo").toUpperCase()}`}
+              dateLabel={monthYear(note.createdAt)}
+              footerLabel={`${kicker} · ${title || "Senza titolo"}`}
               editorRef={editorRef}
               onContent={(html) => patchPage(page.id, { content: html })}
               onInk={handleInk}

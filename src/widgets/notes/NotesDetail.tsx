@@ -503,7 +503,7 @@ function NotesDetail() {
           </nav>
 
           <div className="nq-section-head">
-            <span>LE TUE CARTELLE</span>
+            <span>Le tue cartelle</span>
             <button type="button" className="nq-icon-btn" onClick={() => setNewFolder({ parentId: null })} aria-label="Nuova cartella" title="Nuova cartella">
               <MdOutlineCreateNewFolder />
             </button>
@@ -544,7 +544,7 @@ function NotesDetail() {
             {allTags.length > 0 && (
               <>
                 <div className="nq-section-head">
-                  <span>TAG</span>
+                  <span>Tag</span>
                 </div>
                 <div className="nq-tags">
                   {allTags.map((tag) => (
