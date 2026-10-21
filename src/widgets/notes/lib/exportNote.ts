@@ -1,7 +1,7 @@
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import type { NotePage } from "../data/notesRepository";
-import { htmlToMarkdown, monthYearUpper, sanitizeHtml } from "./html";
+import { htmlToMarkdown, sanitizeHtml } from "./html";
 import { drawStrokes } from "./ink";
 
 export interface ExportMeta {
