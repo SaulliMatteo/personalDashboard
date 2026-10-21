@@ -113,7 +113,7 @@ function AddVideoDialog({ folders, defaultFolderId, onClose, onAdded }: AddVideo
     <Dialog title="Aggiungi video" onClose={onClose} width={520}>
       <form className="yt-dialog-body" onSubmit={(e) => void submit(e)}>
         <label className="yt-field">
-          <span className="yt-label">LINK DI YOUTUBE</span>
+          <span className="yt-label">Link di YouTube</span>
           <input
             className="yt-input"
             value={link}
@@ -158,7 +158,7 @@ function AddVideoDialog({ folders, defaultFolderId, onClose, onAdded }: AddVideo
         )}
 
         <label className="yt-field">
-          <span className="yt-label">CARTELLA</span>
+          <span className="yt-label">Cartella</span>
           <select className="yt-input" value={folderValue} onChange={(e) => setFolderValue(e.target.value)}>
             <option value="">Senza cartella</option>
             {options.map((o) => (

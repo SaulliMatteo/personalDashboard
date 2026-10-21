@@ -42,6 +42,11 @@ export interface WidgetDefinition {
   detailComponent?: ComponentType;
   /** Gruppo di impostazioni dello schema che appartiene a questo widget (scheda Settings > Widgets). */
   settingsGroup?: SettingsGroup;
+  /**
+   * Versione da intestazione, scelta negli spazi in alto a destra della dashboard:
+   * una riga, alta al massimo ~56px, deve funzionare nei 4 temi.
+   */
+  mini?: ComponentType;
   /** Provider di contesto che il widget richiede (sempre montato, anche se il widget non è in dashboard). */
   provider?: ComponentType<{ children: ReactNode }>;
 }

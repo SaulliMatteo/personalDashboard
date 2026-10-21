@@ -1,0 +1,93 @@
+/* Meteo 1×1, come le celle di widget-1x1.html: numero grande al centro, didascalia sotto. */
+
+.widget.weatherw {
+  --weather-size: 54px;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+}
+
+.weatherw-temp {
+  font-family: var(--font-display);
+  font-size: var(--weather-size);
+  font-weight: var(--display-weight);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.weatherw-icon {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  font-size: 20px;
+  color: var(--text-secondary);
+}
+
+.weatherw-cap {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 14px;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.weatherw.is-stale .weatherw-temp {
+  opacity: 0.6;
+}
+
+/* Senza città: tutta la cella è il pulsante per sceglierla. */
+.weatherw-setup {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Senza dato (città da scegliere, errore, caricamento): una nuvola al posto della temperatura. */
+.weatherw-empty {
+  font-size: 40px;
+  color: var(--text-muted);
+}
+
+.weatherw-setup:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -4px;
+}
+
+:root[data-theme="opaco"] .widget.weatherw {
+  --weather-size: 72px;
+}
+
+/* In Opaco le celle 1×1 hanno solo il numero; resta la didascalia del pulsante "Scegli la città". */
+:root[data-theme="opaco"] .weatherw > .weatherw-cap,
+:root[data-theme="opaco"] .weatherw-icon {
+  display: none;
+}
+
+:root[data-theme="quaderno"] .widget.weatherw {
+  --weather-size: 72px;
+}
+
+:root[data-theme="quaderno"] .weatherw-temp {
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .widget.weatherw {
+  --weather-size: 66px;
+}

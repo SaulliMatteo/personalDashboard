@@ -1,0 +1,54 @@
+/* "La tua giornata" nell'intestazione (notte.html): linea delle ore con le sessioni di oggi. */
+
+.study-mini {
+  width: 520px;
+  max-width: 100%;
+  min-width: 300px;
+}
+
+.study-mini-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.study-mini-track {
+  position: relative;
+  height: 26px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.study-mini-span {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+.study-mini-now {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--text-primary);
+}
+
+.study-mini-hours {
+  position: relative;
+  height: 16px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.study-mini-hours span {
+  position: absolute;
+  top: 2px;
+  transform: translateX(-50%);
+}

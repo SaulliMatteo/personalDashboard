@@ -1,13 +1,16 @@
 import type { ActivityEvent, ActivityStatus } from "../../../core/activity/activityBus";
-import type { ForegroundApp } from "./appCategory";
+import type { AppId, ForegroundApp } from "./appCategory";
 import { ANIMATIONS } from "./animations";
-import { EMOTIONS, type EmotionId, type GlyphId } from "./face";
+import { EMOTIONS, type EmotionId, type FaceMotion, type GlyphId } from "./face";
 import { PERSONALITIES, fillPhrase, type PersonalityId, type PhraseKey } from "./personalities";
+import { POSES, resolvePose, type CostumeId, type GazeMode, type PoseId } from "./poses";
+import { subjectKind } from "./subjectKind";
 
 /**
- * Il "cervello" del Companion: decide COSA mostrare (umore, sguardo,
- * reazioni, fumetti) a partire da ciò che succede. Non disegna e non
- * anima nulla: quello è compito di FaceAnimator e del renderer.
+ * Il "cervello" del Companion: decide COSA mostrare (posa, reazioni,
+ * fumetti) a partire da ciò che succede. Non disegna e non anima nulla:
+ * quello è compito di FaceAnimator e del renderer. Com'è fatta ogni posa
+ * (espressione, costume, varianti per personalità) sta in poses.ts.
  *
  * Classe pura con orologio e generatore casuale iniettati: si testa
  * senza browser e senza aspettare il tempo vero.
@@ -26,37 +29,34 @@ export interface BrainConfig {
   /** Minuti senza mouse/tastiera prima di addormentarsi. */
   idleMinutes: number;
   userName: string;
+  /** Soglie del meteo, in °C. */
+  hotC: number;
+  coldC: number;
 }
 
 export interface BrainInput {
   activity: ActivityStatus;
-  /** App in primo piano (solo Windows e solo se l'utente lo permette), null se ignota o se è la dashboard stessa. */
+  /** App in primo piano (Windows e macOS, solo se l'utente lo permette), null se ignota o se è la dashboard stessa. */
   foreground: ForegroundApp | null;
-  /** Secondi dall'ultimo input dell'utente (di sistema su Windows, della finestra altrove). */
+  /** Secondi dall'ultimo input dell'utente (di sistema su Windows e macOS, della finestra altrove). */
   idleSeconds: number;
   /** La finestra della dashboard ha il focus. */
   appFocused: boolean;
   hour: number;
 }
 
-export type Behavior =
-  | "idle"
-  | "study"
-  | "studyPaused"
-  | "break"
-  | "video"
-  | "music"
-  | "coding"
-  | "game"
-  | "chat"
-  | "night"
-  | "sleep";
-
-export type GazeMode = "wander" | "read" | "screen" | "down" | "sleep";
-
 export interface Reaction {
+  /** Posa della reazione (null = solo un'espressione sopra la posa di fondo). */
+  pose: PoseId | null;
   emotion: EmotionId;
   glyph: GlyphId | null;
+  /** undefined = resta il costume della posa di fondo. */
+  costume?: CostumeId | null;
+  motion?: FaceMotion;
+  gaze?: GazeMode;
+  doze?: boolean;
+  /** Velocità delle animazioni della reazione (già moltiplicata per la personalità). */
+  tempo?: number;
   startedAt: number;
   until: number;
   priority: number;
@@ -71,16 +71,26 @@ export interface Bubble {
 }
 
 export interface BrainSnapshot {
-  behavior: Behavior;
-  /** Espressione di fondo del comportamento corrente. */
+  pose: PoseId;
+  /** Cosa sta facendo, a parole (card, mini, pagina). */
+  status: string;
+  personality: PersonalityId;
+  /** Espressione di fondo della posa corrente. */
   mood: EmotionId;
   gaze: GazeMode;
-  /** Simbolo di fondo del comportamento (es. "z" quando dorme). */
+  /** Simbolo di fondo della posa (es. "z" quando dorme). */
   glyph: GlyphId | null;
+  costume: CostumeId | null;
+  /** Avanzamento (0..1) per i costumi che lo mostrano, es. la barra del video. */
+  costumeValue: number | null;
+  /** Movimento della posa (null = quello dell'espressione). */
+  motion: FaceMotion | null;
+  /** Si appisola e si risveglia di scatto. */
+  doze: boolean;
   /** Bagliore dello schermo che scorre sugli occhi. */
   screenGlow: boolean;
-  /** Dondola a tempo di musica. */
-  musicBeat: boolean;
+  /** Velocità delle animazioni (personalità × posa). */
+  tempo: number;
   /** Può guardare il mouse in questo momento. */
   canFollow: boolean;
   reaction: Reaction | null;
@@ -108,6 +118,15 @@ const VIDEO_GRACE_MS = 10_000;
  * di inattività: dopo, si addormenta comunque.
  */
 const PASSIVE_APP_MAX_IDLE_S = 45 * 60;
+/** Video senza toccare niente per più di così: si annoia. */
+const VIDEO_BORED_IDLE_S = 20 * 60;
+/** Da questa durata un video del widget è "un film": occhiali 3D. */
+const LONG_VIDEO_S = 40 * 60;
+/** Probabilità che un video del widget si guardi col popcorn. */
+const POPCORN_CHANCE = 0.35;
+/** Trasformazione col meteo: quanto dura e ogni quanto torna. */
+const WEATHER_FORM_MS = 6000;
+const WEATHER_EVERY_MS: [number, number] = [3 * 60_000, 6 * 60_000];
 
 /** Priorità delle reazioni: una più importante non viene coperta da una minore. */
 const PRIORITY = { random: 0, event: 1, study: 2, goal: 3, user: 4 } as const;
@@ -117,6 +136,91 @@ const EMOTE_ANIMS = ANIMATIONS.filter((a) => a.category === "emotes" && a.emotio
 const MUSIC_EMOTES = new Set(["emote_happy", "emote_laugh", "emote_love", "emote_wink"]);
 const CALM_EMOTES = new Set(["emote_sleepy", "emote_bored", "emote_curious"]);
 
+/** Emozioni casuali ammesse in ogni posa (assente = nessuna: studio, video, giochi, codice, sonno). */
+const EMOTE_POOL: Partial<Record<PoseId, "all" | "music" | "calm" | "rare">> = {
+  idle: "all",
+  study_break: "all",
+  study_wait: "all",
+  app_chat: "all",
+  app_messages: "all",
+  app_browser: "all",
+  app_opera: "all",
+  app_design: "all",
+  app_ai: "all",
+  app_explorer: "all",
+  app_call: "rare",
+  app_office: "rare",
+  app_excel: "rare",
+  app_slides: "rare",
+  app_blender: "rare",
+  app_music: "music",
+  app_spotify: "music",
+  bedtime: "calm",
+};
+
+/** Pose in cui guarda il mouse. */
+const FOLLOW_POSES = new Set<PoseId>(["idle", "study_break", "study_wait", "app_chat", "app_messages", "app_music", "app_spotify", "app_design", "app_ai", "bedtime"]);
+/** Pose in cui chiacchiera spontaneamente (se la dashboard è in primo piano). */
+const CHAT_POSES = new Set<PoseId>(["idle", "study_break", "bedtime"]);
+/** Pose "passive" (guardi, ascolti, giochi): non dorme anche se non tocchi il mouse. */
+const PASSIVE_POSES = new Set<PoseId>(["video_watch", "video_cinema", "app_music", "app_game", "app_spotify", "app_youtube", "app_streaming", "app_live", "app_lol", "app_shooter", "app_minecraft"]);
+/** Pose da video: ogni tanto ride, si sorprende, si spaventa o si commuove. */
+const VIDEO_POSES = new Set<PoseId>(["video_watch", "video_popcorn", "video_cinema", "video_progress", "video_late", "app_youtube", "app_streaming"]);
+/** Pose in cui può trasformarsi col meteo: mai mentre studi, guardi, giochi o dorme. */
+const WEATHER_POSES = new Set<PoseId>(["idle", "study_break", "app_chat", "app_messages", "app_music", "app_spotify", "app_browser", "app_opera", "app_office", "app_design", "app_ai", "app_explorer"]);
+
+const APP_POSES: Record<AppId, PoseId> = {
+  discord: "app_discord",
+  lol: "app_lol",
+  opera: "app_opera",
+  spotify: "app_spotify",
+  youtube: "app_youtube",
+  streaming: "app_streaming",
+  live: "app_live",
+  call: "app_call",
+  messages: "app_messages",
+  minecraft: "app_minecraft",
+  shooter: "app_shooter",
+  excel: "app_excel",
+  slides: "app_slides",
+  blender: "app_blender",
+  ai: "app_ai",
+  explorer: "app_explorer",
+};
+
+const SUBJECT_POSES = {
+  math: "study_math",
+  science: "study_science",
+  lang: "study_lang",
+  history: "study_history",
+  art: "study_art",
+  code: "study_code",
+  other: "study",
+} as const satisfies Record<ReturnType<typeof subjectKind>, PoseId>;
+
+/** Anteprima dalla pagina: animazione → posa da mostrare per qualche secondo. */
+const PREVIEW_POSES: Record<string, PoseId> = {
+  study_focus: "study",
+  study_read: "study",
+  study_book: "study",
+  study_subject: "study_math",
+  study_break: "study_break",
+  video_watch: "video_watch",
+  video_glow: "video_watch",
+  video_react: "video_watch",
+  video_popcorn: "video_popcorn",
+  video_cinema: "video_cinema",
+  video_bored: "video_bored",
+  video_progress: "video_progress",
+  video_pause: "video_paused",
+  video_late: "video_late",
+  sleep_idle: "sleep",
+  night: "bedtime",
+  bed_blanket: "bed",
+  app_react: "app_music",
+  app_specific: "app_discord",
+};
+
 export function timeOfDayKey(hour: number): PhraseKey {
   if (hour >= 5 && hour < 12) return "greet_morning";
   if (hour >= 12 && hour < 18) return "greet_afternoon";
@@ -124,13 +228,15 @@ export function timeOfDayKey(hour: number): PhraseKey {
   return "greet_night";
 }
 
+const isStudyPose = (pose: PoseId) => pose === "study" || (pose.startsWith("study_") && pose !== "study_break" && pose !== "study_wait");
+
 export class CompanionBrain {
   private readonly now: () => number;
   private readonly random: () => number;
   private config: BrainConfig;
   private input: BrainInput;
 
-  private behavior: Behavior = "idle";
+  private pose: PoseId = "idle";
   private reaction: Reaction | null = null;
   private bubble: Bubble | null = null;
   private bubbleSeq = 0;
@@ -140,13 +246,16 @@ export class CompanionBrain {
   private nextEmoteAt: number;
   private nextChatAt: number;
   private nextVideoReactAt: number;
+  private nextWeatherAt: number;
+  /** Il video in corso si guarda col popcorn (deciso all'inizio di ogni video). */
+  private popcorn = false;
 
   // "Bentornato": quanto tempo l'utente passa fuori dalla dashboard e dove.
   private awaySince: number | null = null;
   private awayApps = new Map<string, number>();
   private lastInputAt: number;
 
-  private preview: { id: string; behavior: Behavior | null; until: number } | null = null;
+  private preview: { id: string; pose: PoseId | null; until: number } | null = null;
   /** Ultimo istante in cui il video dell'app era in riproduzione. */
   private lastVideoAt = -Infinity;
 
@@ -164,7 +273,8 @@ export class CompanionBrain {
     this.nextEmoteAt = t + this.emoteDelay();
     this.nextChatAt = t + this.chatDelay();
     this.nextVideoReactAt = t + 45_000;
-    this.behavior = this.decideBehavior();
+    this.nextWeatherAt = t + 60_000;
+    this.pose = this.decidePose();
   }
 
   // ------------------------------------------------------------------ config
@@ -174,7 +284,7 @@ export class CompanionBrain {
     this.config = config;
     if (!config.bubbles) this.bubble = null;
     if (rateChanged) this.nextEmoteAt = this.now() + this.emoteDelay();
-    this.behavior = this.decideBehavior();
+    this.pose = this.decidePose();
     this.changed();
   }
 
@@ -208,31 +318,30 @@ export class CompanionBrain {
       }
     }
 
-    const wasSleeping = this.behavior === "sleep";
-    const before = this.behavior;
+    const wasAsleep = this.pose === "sleep" || this.pose === "bed";
+    const before = this.pose;
     const reactionBefore = this.reaction;
     const bubbleBefore = this.bubble;
-    this.behavior = this.decideBehavior();
+    this.pose = this.decidePose();
 
     // Si sveglia con un saluto solo se l'utente è davvero tornato (ha toccato
     // mouse o tastiera), non se ha smesso di dormire per un altro motivo.
-    if (wasSleeping && this.behavior !== "sleep" && input.idleSeconds < prev.idleSeconds) {
-      // Sveglio! Un saluto in base all'ora.
-      this.react("surprised", 900);
+    if (wasAsleep && this.pose !== "sleep" && this.pose !== "bed" && input.idleSeconds < prev.idleSeconds) {
+      this.reactPose("react_greet", 1800);
       this.say(timeOfDayKey(input.hour), {}, { spontaneous: false });
     } else if (input.appFocused && !prev.appFocused && this.awaySince !== null) {
       const away = t - this.awaySince;
       if (away >= WELCOME_AWAY_MS && this.isOn("welcome_back")) {
-        this.react("happy", 2200);
+        this.reactPose("react_welcome", 2200);
         const app = this.topAwayApp();
         this.say("welcome_back", { app: app ?? undefined }, { spontaneous: false });
       }
     }
     if (input.appFocused) this.awaySince = null;
 
-    if (before !== this.behavior) this.onEnterBehavior(this.behavior);
+    if (before !== this.pose) this.onEnterPose(before, this.pose);
     // Chiamato ogni ~2 s dal polling: segnala un cambiamento solo se c'è davvero.
-    if (before !== this.behavior || reactionBefore !== this.reaction || bubbleBefore !== this.bubble) this.changed();
+    if (before !== this.pose || reactionBefore !== this.reaction || bubbleBefore !== this.bubble) this.changed();
   }
 
   private topAwayApp(): string | null {
@@ -247,61 +356,81 @@ export class CompanionBrain {
     return best;
   }
 
-  private decideBehavior(): Behavior {
-    if (this.preview?.behavior && this.preview.until > this.now()) return this.preview.behavior;
+  private decidePose(): PoseId {
+    if (this.preview?.pose && this.preview.until > this.now()) return this.preview.pose;
     const { activity, foreground, idleSeconds, hour } = this.input;
+    const lateNight = hour < 5;
     // Le attività "passive" (studiare, guardare, ascoltare) vengono PRIMA
     // del sonno: mentre leggi un libro o guardi un film non tocchi il mouse,
     // ma non sei via.
-    if (activity.studying) return "study";
-    if (activity.onBreak) return "break";
-    if (activity.watchingVideo || this.now() - this.lastVideoAt < VIDEO_GRACE_MS) return "video";
-    const fromApp = this.behaviorFromApp(foreground);
-    const passive = fromApp === "video" || fromApp === "music" || fromApp === "game";
-    if (passive && idleSeconds < PASSIVE_APP_MAX_IDLE_S) return fromApp;
-    if (this.isOn("sleep_idle") && idleSeconds >= this.config.idleMinutes * 60) return "sleep";
+    if (activity.studying) return this.studyPose();
+    if (activity.onBreak) return "study_break";
+    if (activity.watchingVideo || this.now() - this.lastVideoAt < VIDEO_GRACE_MS) return this.videoPose();
+    if (activity.videoPaused && this.isOn("video_pause")) return "video_paused";
+    const fromApp = this.poseFromApp(foreground);
+    if (fromApp && PASSIVE_POSES.has(fromApp) && idleSeconds < PASSIVE_APP_MAX_IDLE_S) return fromApp;
+    if (this.isOn("sleep_idle") && idleSeconds >= this.config.idleMinutes * 60) return lateNight && this.isOn("bed_blanket") ? "bed" : "sleep";
     if (fromApp) return fromApp;
-    if (activity.studyPaused) return "studyPaused";
-    if (this.isOn("night") && (hour >= 23 || hour < 5)) return "night";
+    if (activity.studyPaused) return "study_wait";
+    if (lateNight && this.isOn("bed_blanket")) return "bed";
+    if (this.isOn("night") && (hour === 23 || lateNight)) return "bedtime";
     return "idle";
   }
 
-  private behaviorFromApp(foreground: ForegroundApp | null): Behavior | null {
-    if (!foreground || !this.isOn("app_react")) return null;
+  private studyPose(): PoseId {
+    if (!this.isOn("study_subject")) return "study";
+    return SUBJECT_POSES[subjectKind(this.input.activity.studySubjectName)];
+  }
+
+  private videoPose(): PoseId {
+    const { activity, idleSeconds, hour } = this.input;
+    if ((hour >= 23 || hour < 5) && this.isOn("video_late")) return "video_late";
+    if (idleSeconds >= VIDEO_BORED_IDLE_S && this.isOn("video_bored")) return "video_bored";
+    if (this.popcorn && this.isOn("video_popcorn")) return "video_popcorn";
+    if ((activity.videoDurationSeconds ?? 0) >= LONG_VIDEO_S && this.isOn("video_cinema")) return "video_cinema";
+    if (activity.videoProgress !== null && this.isOn("video_progress")) return "video_progress";
+    return "video_watch";
+  }
+
+  private poseFromApp(foreground: ForegroundApp | null): PoseId | null {
+    if (!foreground) return null;
+    if (foreground.appId && this.isOn("app_specific")) return APP_POSES[foreground.appId];
+    if (!this.isOn("app_react")) return null;
     switch (foreground.category) {
-      case "video":
-        return "video";
-      case "music":
-        return "music";
       case "coding":
+        return "app_coding";
       case "office":
+        return "app_office";
       case "design":
-        return "coding";
+        return "app_design";
       case "game":
-        return "game";
+        return "app_game";
       case "chat":
-        return "chat";
+        return "app_chat";
+      case "music":
+        return "app_music";
+      case "browser":
+        return "app_browser";
+      case "video":
+        return this.isOn("video_cinema") ? "video_cinema" : "video_watch";
       default:
         return null;
     }
   }
 
-  private onEnterBehavior(behavior: Behavior): void {
-    const contextual: Partial<Record<Behavior, PhraseKey>> = {
-      video: "video_start",
-      music: "music",
-      coding: "coding",
-      game: "game",
-      chat: "chat",
-      night: "night",
-    };
-    if (behavior === "video") this.nextVideoReactAt = this.now() + 45_000 + this.random() * 45_000;
-    const key = contextual[behavior];
+  private onEnterPose(before: PoseId, pose: PoseId): void {
+    const t = this.now();
+    if (VIDEO_POSES.has(pose) && !VIDEO_POSES.has(before)) {
+      this.nextVideoReactAt = t + 45_000 + this.random() * 45_000;
+      // Popcorn: si decide una volta per video, non a ogni cambio di posa.
+      if (before !== "video_paused") this.popcorn = this.random() < POPCORN_CHANCE;
+    }
+    const key = POSES[pose].phrase;
     if (!key) return;
     const last = this.lastSaidAt.get(key);
-    if (last !== undefined && this.now() - last < CONTEXT_PHRASE_COOLDOWN_MS) return;
+    if (last !== undefined && t - last < CONTEXT_PHRASE_COOLDOWN_MS) return;
     // Non a ogni cambio di app: metà delle volte basta l'espressione.
-    if (behavior !== "video" && this.random() < 0.5) return;
+    if (!VIDEO_POSES.has(pose) && this.random() < 0.5) return;
     this.say(key, {}, { spontaneous: false });
   }
 
@@ -314,7 +443,7 @@ export class CompanionBrain {
         this.say("study_start", {}, { cooldownMs: 120_000, priority: PRIORITY.event });
         break;
       case "pomodoroDone":
-        if (this.isOn("study_cheer")) this.react("excited", 3200, "star", PRIORITY.study);
+        if (this.isOn("study_cheer")) this.reactPose("react_pomodoro", 3200, PRIORITY.study);
         this.say("pomodoro_done", {}, { priority: PRIORITY.study });
         break;
       case "breakOver":
@@ -329,11 +458,12 @@ export class CompanionBrain {
         break;
       }
       case "goalReached":
-        if (this.isOn("study_goal")) this.react("excited", 4500, "spark", PRIORITY.goal);
+        if (this.isOn("study_goal")) this.reactPose("react_goal", 4500, PRIORITY.goal);
         this.say("goal_reached", {}, { priority: PRIORITY.goal });
         break;
       case "videoEnded":
-        this.react("curious", 1800, undefined, PRIORITY.event);
+        if (this.isOn("video_end")) this.reactPose("react_video_end", 4000, PRIORITY.event);
+        else this.react("curious", 1800, undefined, PRIORITY.event);
         this.say("video_end", {}, { priority: PRIORITY.event });
         break;
       case "fileReceived":
@@ -346,8 +476,7 @@ export class CompanionBrain {
 
   /** Click / carezza dalla pagina di dettaglio. */
   poke(): void {
-    const options: EmotionId[] = this.config.personality === "grumpy" ? ["angry", "bored", "wink"] : ["happy", "laugh", "shy", "love"];
-    this.react(options[Math.floor(this.random() * options.length)], 2000, undefined, PRIORITY.user);
+    this.reactPose("react_poke", 2000, PRIORITY.user);
     this.say("poke", {}, { priority: PRIORITY.user });
     this.changed();
   }
@@ -359,7 +488,7 @@ export class CompanionBrain {
   }
 
   greet(): void {
-    this.react("happy", 1800);
+    this.reactPose("react_greet", 1800);
     this.say(timeOfDayKey(this.input.hour), {}, { spontaneous: false });
     this.changed();
   }
@@ -369,29 +498,35 @@ export class CompanionBrain {
     const t = this.now();
     const def = ANIMATIONS.find((a) => a.id === id);
     if (!def) return;
-    const behaviorFor: Record<string, Behavior> = {
-      study_focus: "study",
-      study_read: "study",
-      study_break: "break",
-      video_watch: "video",
-      video_glow: "video",
-      video_react: "video",
-      sleep_idle: "sleep",
-      night: "night",
-      app_react: "music",
-    };
-    this.preview = { id, behavior: behaviorFor[id] ?? null, until: t + 5000 };
+    this.preview = { id, pose: PREVIEW_POSES[id] ?? null, until: t + 5000 };
     this.reaction = null;
     if (def.emotion) this.react(def.emotion, 3000, undefined, PRIORITY.user);
     else if (id === "study_cheer") this.handleEvent({ type: "pomodoroDone" });
     else if (id === "study_goal") this.handleEvent({ type: "goalReached" });
+    else if (id === "video_end") this.handleEvent({ type: "videoEnded" });
+    else if (id === "weather_hot" || id === "weather_cold") this.weatherForm(id === "weather_hot", PRIORITY.user);
     else if (id === "welcome_back") {
-      this.react("happy", 2200, undefined, PRIORITY.user);
+      this.reactPose("react_welcome", 2200, PRIORITY.user);
       this.say("welcome_back", { app: "VS Code" }, { priority: PRIORITY.user });
     } else if (id === "video_react") {
       this.nextVideoReactAt = t + 600;
     }
-    this.behavior = this.decideBehavior();
+    this.pose = this.decidePose();
+    this.changed();
+  }
+
+  /** Anteprima di una posa dalla galleria della pagina di dettaglio. */
+  previewPose(pose: PoseId, durationMs = 4500): void {
+    const t = this.now();
+    this.reaction = null;
+    // Le reazioni stanno sopra la posa di fondo: si mostrano come tali.
+    if (pose.startsWith("react_")) {
+      this.preview = null;
+      this.reactPose(pose, durationMs, PRIORITY.user);
+    } else {
+      this.preview = { id: `pose:${pose}`, pose, until: t + durationMs };
+    }
+    this.pose = this.decidePose();
     this.changed();
   }
 
@@ -407,10 +542,11 @@ export class CompanionBrain {
       dirty = true;
     }
     // Alcune condizioni scadono col tempo (anteprima, coda del video): si ridecide.
-    const decided = this.decideBehavior();
-    if (decided !== this.behavior) {
-      this.behavior = decided;
-      this.onEnterBehavior(decided);
+    const decided = this.decidePose();
+    if (decided !== this.pose) {
+      const before = this.pose;
+      this.pose = decided;
+      this.onEnterPose(before, decided);
       dirty = true;
     }
     if (this.reaction && this.reaction.until <= t) {
@@ -427,22 +563,53 @@ export class CompanionBrain {
       if (this.reaction === null && this.tryRandomEmote()) dirty = true;
     }
 
-    if (this.behavior === "video" && this.isOn("video_react") && t >= this.nextVideoReactAt) {
+    if (VIDEO_POSES.has(this.pose) && this.isOn("video_react") && t >= this.nextVideoReactAt) {
       this.nextVideoReactAt = t + 45_000 + this.random() * 75_000;
       if (this.reaction === null) {
-        this.react(this.random() < 0.55 ? "laugh" : "surprised", 2000, undefined, PRIORITY.random);
+        this.videoReaction();
         dirty = true;
+      }
+    }
+
+    if (t >= this.nextWeatherAt) {
+      this.nextWeatherAt = t + WEATHER_EVERY_MS[0] + this.random() * (WEATHER_EVERY_MS[1] - WEATHER_EVERY_MS[0]);
+      const temp = this.input.activity.weatherTemperature;
+      if (temp !== null && this.reaction === null && WEATHER_POSES.has(this.pose)) {
+        const hot = temp >= this.config.hotC && this.isOn("weather_hot");
+        const cold = temp <= this.config.coldC && this.isOn("weather_cold");
+        if (hot || cold) {
+          this.weatherForm(hot, PRIORITY.random);
+          dirty = true;
+        }
       }
     }
 
     if (t >= this.nextChatAt) {
       this.nextChatAt = t + this.chatDelay();
-      if (["idle", "break", "night"].includes(this.behavior) && this.input.appFocused) {
+      if (CHAT_POSES.has(this.pose) && this.input.appFocused) {
         if (this.say("idle", {}, { spontaneous: true })) dirty = true;
       }
     }
 
     if (dirty) this.changed();
+  }
+
+  private videoReaction(): void {
+    const r = this.random();
+    if (r < 0.4) this.react("laugh", 2000, undefined, PRIORITY.random);
+    else if (r < 0.7) this.react("surprised", 2000, undefined, PRIORITY.random);
+    else if (r < 0.88) {
+      this.reactPose("react_scared", 3500, PRIORITY.random);
+      this.say("video_scared", {}, { spontaneous: true });
+    } else {
+      this.reactPose("react_moved", 4000, PRIORITY.random);
+      this.say("video_moved", {}, { spontaneous: true });
+    }
+  }
+
+  private weatherForm(hot: boolean, priority: Priority): void {
+    this.reactPose(hot ? "react_hot" : "react_cold", WEATHER_FORM_MS, priority);
+    this.say(hot ? "hot" : "cold", {}, { cooldownMs: CONTEXT_PHRASE_COOLDOWN_MS, priority });
   }
 
   private emoteDelay(): number {
@@ -457,12 +624,12 @@ export class CompanionBrain {
 
   private tryRandomEmote(): boolean {
     if (!this.config.randomEmotes) return false;
-    const b = this.behavior;
+    const kind = EMOTE_POOL[this.pose];
+    if (!kind) return false;
     let pool = EMOTE_ANIMS.filter((a) => !this.config.disabled.has(a.id));
-    if (b === "sleep" || b === "study" || b === "video" || b === "game") return false;
-    if (b === "music") pool = pool.filter((a) => MUSIC_EMOTES.has(a.id));
-    if (b === "night") pool = pool.filter((a) => CALM_EMOTES.has(a.id));
-    if (b === "coding" && this.random() > 0.35) return false; // mentre lavori disturba meno
+    if (kind === "music") pool = pool.filter((a) => MUSIC_EMOTES.has(a.id));
+    if (kind === "calm") pool = pool.filter((a) => CALM_EMOTES.has(a.id));
+    if (kind === "rare" && this.random() > 0.35) return false; // mentre lavori disturba meno
     if (pool.length > 1 && this.lastEmote) pool = pool.filter((a) => a.id !== this.lastEmote);
     if (pool.length === 0) return false;
 
@@ -486,11 +653,32 @@ export class CompanionBrain {
 
   // ------------------------------------------------------------------ uscite
 
+  /** Un'espressione sopra la posa di fondo (che tiene costume e movimento). */
   private react(emotion: EmotionId, durationMs: number, glyph?: GlyphId, priority: Priority = PRIORITY.event): void {
     const t = this.now();
     // Es. "obiettivo raggiunto" non viene coperto dal "pomodoro finito" che arriva subito dopo.
     if (this.reaction && this.reaction.until > t && this.reaction.priority > priority) return;
-    this.reaction = { emotion, glyph: glyph ?? EMOTIONS[emotion].glyph ?? null, startedAt: t, until: t + durationMs, priority };
+    this.reaction = { pose: null, emotion, glyph: glyph ?? EMOTIONS[emotion].glyph ?? null, startedAt: t, until: t + durationMs, priority };
+  }
+
+  /** Una reazione con la sua posa completa, nella versione della personalità. */
+  private reactPose(id: PoseId, durationMs: number, priority: Priority = PRIORITY.event): void {
+    const t = this.now();
+    if (this.reaction && this.reaction.until > t && this.reaction.priority > priority) return;
+    const spec = resolvePose(id, this.config.personality);
+    this.reaction = {
+      pose: id,
+      emotion: spec.mood,
+      glyph: spec.glyph !== undefined ? spec.glyph : (EMOTIONS[spec.mood].glyph ?? null),
+      costume: spec.costume ?? null,
+      motion: spec.motion,
+      gaze: spec.gaze,
+      doze: spec.doze ?? false,
+      tempo: this.personality.tempo * (spec.speed ?? 1),
+      startedAt: t,
+      until: t + durationMs,
+      priority,
+    };
   }
 
   /**
@@ -532,70 +720,37 @@ export class CompanionBrain {
 
   snapshot(): BrainSnapshot {
     if (this.cached) return this.cached;
-    const b = this.behavior;
+    const pose = this.pose;
+    const spec = resolvePose(pose, this.config.personality);
     const base = this.personality.baseMood;
-    let mood: EmotionId = base;
-    let gaze: GazeMode = "wander";
-    let glyph: GlyphId | null = null;
-    let screenGlow = false;
-    let musicBeat = false;
+    let mood = spec.mood;
+    let gaze = spec.gaze;
+    let costume = spec.costume ?? null;
 
-    switch (b) {
-      case "sleep":
-        mood = "sleep";
-        gaze = "sleep";
-        glyph = "z";
-        break;
-      case "study":
-        if (this.isOn("study_focus")) mood = "focused";
-        gaze = this.isOn("study_read") ? "read" : this.isOn("study_focus") ? "down" : "wander";
-        break;
-      case "studyPaused":
-        glyph = "dots";
-        break;
-      case "break":
-        if (this.isOn("study_break")) mood = "relaxed";
-        break;
-      case "video":
-        if (this.isOn("video_watch")) {
-          mood = "watching";
-          gaze = "screen";
-        }
-        screenGlow = this.isOn("video_glow");
-        break;
-      case "music":
-        mood = "relaxed";
-        glyph = "note";
-        musicBeat = true;
-        break;
-      case "coding":
-        mood = "focused";
-        gaze = "down";
-        break;
-      case "game":
-        mood = "watching";
-        gaze = "screen";
-        screenGlow = this.isOn("video_glow");
-        break;
-      case "chat":
-        mood = "curious";
-        break;
-      case "night":
-        mood = "sleepy";
-        gaze = "down";
-        break;
-      case "idle":
-        break;
+    // Le animazioni spente tolgono il loro pezzo, la posa resta.
+    if (isStudyPose(pose)) {
+      if (!this.isOn("study_focus")) mood = base;
+      gaze = this.isOn("study_read") ? "read" : this.isOn("study_focus") ? "down" : "wander";
+      if (!this.isOn("study_book")) costume = null;
     }
+    if (mood === "watching" && !this.isOn("video_watch")) mood = base;
+    // "idle" usa l'umore di fondo della personalità (es. rilassato per il Calmo).
+    if (pose === "idle") mood = base;
 
     this.cached = {
-      behavior: b,
+      pose,
+      status: spec.label,
+      personality: this.config.personality,
       mood,
       gaze,
-      glyph,
-      screenGlow,
-      musicBeat,
-      canFollow: this.isOn("follow") && ["idle", "break", "studyPaused", "chat", "night", "music"].includes(b),
+      glyph: spec.glyph !== undefined ? spec.glyph : (EMOTIONS[mood].glyph ?? null),
+      costume,
+      costumeValue: costume === "progress" ? this.input.activity.videoProgress : null,
+      motion: spec.motion ?? null,
+      doze: spec.doze ?? false,
+      screenGlow: (spec.glow ?? false) && this.isOn("video_glow"),
+      tempo: this.personality.tempo * (spec.speed ?? 1),
+      canFollow: this.isOn("follow") && FOLLOW_POSES.has(pose),
       reaction: this.reaction,
       bubble: this.bubble,
       blink: this.isOn("blink"),
@@ -605,17 +760,3 @@ export class CompanionBrain {
     return this.cached;
   }
 }
-
-export const BEHAVIOR_LABELS: Record<Behavior, string> = {
-  idle: "Ti tiene compagnia",
-  study: "Studia con te",
-  studyPaused: "Aspetta che riprendi",
-  break: "In pausa",
-  video: "Guarda il video",
-  music: "Ascolta la musica",
-  coding: "Ti guarda lavorare",
-  game: "Fa il tifo",
-  chat: "Curiosa in chat",
-  night: "Ha sonno",
-  sleep: "Dorme",
-};

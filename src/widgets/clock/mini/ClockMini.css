@@ -1,0 +1,22 @@
+/* Orario nell'intestazione: misure dell'orologio di fosforo.html. */
+
+.clock-mini {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: var(--display-weight);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+:root[data-theme="notte"] .clock-mini,
+:root[data-theme="opaco"] .clock-mini {
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+:root[data-theme="quaderno"] .clock-mini {
+  font-size: 44px;
+  letter-spacing: 0;
+}

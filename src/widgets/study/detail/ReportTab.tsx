@@ -10,7 +10,7 @@ import {
 import { colorForSubject } from "../lib/colors";
 import { formatHoursMinutes } from "../lib/format";
 import { buildBuckets, periodRange, type ReportPeriod } from "../lib/report";
-import { useTimer } from "../timer/TimerContext";
+import { useTimer } from "../timer/useTimer";
 import "./reportTab.css";
 
 const PERIODS: { id: ReportPeriod; label: string }[] = [
@@ -20,7 +20,7 @@ const PERIODS: { id: ReportPeriod; label: string }[] = [
 ];
 
 /** Colore per sessioni di una materia che non esiste più (non dovrebbe capitare: serve a far quadrare comunque i totali). */
-const UNKNOWN_COLOR = "#8a8a92";
+const UNKNOWN_COLOR = "var(--text-muted)";
 
 function ReportTab() {
   // `subjects` = solo le materie ATTIVE (come nel timer): servono per mantenere i colori

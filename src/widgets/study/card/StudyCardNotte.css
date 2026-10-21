@@ -1,0 +1,372 @@
+/* Studio, tema Notte (temi-dashboard/docs/design/temi/notte.html e widget-1x1.html). */
+
+.widget.sn {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  font-size: 14px;
+}
+
+/* ---------- 1×1 ---------- */
+.widget.sn--S {
+  padding: 0;
+}
+
+.sn-cell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.sn-cell-time {
+  font-size: min(46px, calc((100cqw - 32px) / (var(--chars) * 0.58)));
+  font-weight: 200;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.sn-cell-line {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 22px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.sn-cell-line > span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* ---------- Quadrante + pulsanti ---------- */
+.sn-timer {
+  flex: 0 0 auto;
+  align-self: stretch;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.widget.sn--M {
+  align-items: stretch;
+  justify-content: center;
+}
+
+.sn--M .sn-timer {
+  flex: 1 1 auto;
+}
+
+.sn-time {
+  font-size: 21.2cqw;
+  font-weight: 200;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.sn-phase {
+  margin-top: max(4px, 2.5cqw);
+  font-size: max(12px, 5.1cqw);
+  color: var(--text-secondary);
+}
+
+.sn-subject {
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: max(12px, 5.5cqw);
+  font-weight: 500;
+  color: var(--accent-strong);
+}
+
+.sn-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.sn .study-btn {
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.sn .study-btn--primary {
+  border: 0;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+}
+
+.sn .study-btn--secondary {
+  border: var(--btn-ghost-border);
+  background: transparent;
+  color: var(--btn-ghost-fg);
+}
+
+.sn .study-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ---------- Corpo: quadrante a sinistra, materie a destra ---------- */
+.sn-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 22px;
+  align-items: center;
+}
+
+.sn-body .sn-timer {
+  height: 100%;
+  justify-content: center;
+}
+
+.sn-subjects {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sn-subjects-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.sn-subjects-total {
+  color: var(--text-primary);
+}
+
+.sn-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.sn-row {
+  display: block;
+  flex: 0 0 auto;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-item);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.sn-row.is-active {
+  border-color: var(--row-active-border);
+  background: var(--row-active-bg);
+}
+
+.sn-row:disabled {
+  cursor: default;
+}
+
+.sn-row:not(.is-active):hover {
+  background: var(--surface-1);
+}
+
+.sn-row-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sn-row-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sn-row-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--subject-color);
+}
+
+.sn-row-time {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.sn-row-bar {
+  display: block;
+  height: 3px;
+  margin-top: 8px;
+  border-radius: 3px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.sn-row-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--subject-color);
+}
+
+.sn-next {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ---------- 3×3: intestazione e ultimi 7 giorni ---------- */
+.sn-head {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sn-head-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sn-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.sn-chip {
+  padding: 3px 10px;
+  border-radius: 10px;
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+  font-size: 12px;
+}
+
+.sn-cycles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.sn-cycles > span:first-child {
+  margin-right: 4px;
+}
+
+.sn-cycle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dot-off);
+}
+
+.sn-cycle.is-done {
+  background: var(--accent);
+}
+
+.sn-cycle.is-current {
+  background: transparent;
+  border: 1.5px solid var(--accent);
+}
+
+.sn-week {
+  flex: 0 0 auto;
+  padding: 12px 14px 10px;
+  border-radius: var(--radius-panel);
+  border: var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.sn-week-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.sn-week-total {
+  color: var(--text-primary);
+}
+
+.sn-week-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 56px;
+  margin-top: 8px;
+}
+
+.sn-week-day {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.sn-week-bar-area {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 22px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.sn-week-bar {
+  width: 100%;
+  min-height: 3px;
+  border-radius: 4px;
+  background: var(--bar-off);
+}
+
+.sn-week-day.is-today .sn-week-bar {
+  background: var(--accent);
+}
+
+.sn-week-initial {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-muted);
+}
+
+.sn-week-day.is-today .sn-week-initial {
+  color: var(--text-primary);
+}

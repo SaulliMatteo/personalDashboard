@@ -1,192 +1,294 @@
-.ft-widget {
+/* File transfer (card "File" dei mockup e widget-1x1.html). Stessa struttura
+   in tutti i temi: le misure che cambiano sono variabili impostate per tema. */
+
+.widget.ftw {
+  --ft-num-size: 40px;
+  --ft-num-s: 54px;
+  --ft-num-lh: 1;
+  --ft-pad: 16px;
+
   display: flex;
   flex-direction: column;
+  padding: var(--ft-pad);
+  color: var(--text-primary);
 }
 
-.ft-widget-header {
-  display: flex;
+:root[data-theme="opaco"] .widget.ftw {
+  --ft-num-size: 62px;
+  --ft-num-s: 72px;
+  --ft-num-lh: 0.85;
+  --ft-pad: 18px;
+}
+
+:root[data-theme="quaderno"] .widget.ftw {
+  --ft-num-size: 58px;
+  --ft-num-s: 72px;
+  --ft-num-lh: 0.85;
+}
+
+:root[data-theme="fosforo"] .widget.ftw {
+  --ft-num-size: 48px;
+  --ft-num-s: 66px;
+  --ft-pad: 14px;
+}
+
+.ftw-num {
+  font-family: var(--font-display);
+  font-size: var(--ft-num-size);
+  font-weight: var(--display-weight);
+  line-height: var(--ft-num-lh);
+  color: var(--accent-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Nei temi Notte e Opaco i numeri sono nel colore del testo, non dell'accent. */
+:root[data-theme="notte"] .ftw-num,
+:root[data-theme="opaco"] .ftw-num {
+  color: var(--text-primary);
+}
+
+.ftw-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dot-off);
+}
+
+.ftw.is-online .ftw-dot {
+  background: var(--led);
+}
+
+/* ---------- 1×1: numero al centro, punto di stato, etichetta ---------- */
+.widget.ftw--S {
+  position: relative;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 10px;
+  justify-content: center;
 }
 
-.ft-widget--small {
-  padding: 10px 12px;
+.ftw--S .ftw-num {
+  font-size: var(--ft-num-s);
+  line-height: 1;
 }
 
-.ft-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
+.ftw--S .ftw-dot {
+  position: absolute;
+  top: 18px;
+  right: 18px;
 }
 
-.ft-widget--small .ft-status {
-  font-size: 0; /* nel 1x1 resta solo il puntino */
+.ftw--S .ftw-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
-.ft-status-dot {
+:root[data-theme="opaco"] .ftw--S .ftw-cap {
+  display: none;
+}
+
+:root[data-theme="opaco"] .ftw--S .ftw-dot {
+  top: 20px;
+  right: 20px;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
-  background: var(--text-muted);
 }
 
-.ft-status.is-online {
-  color: #34d399;
+:root[data-theme="quaderno"] .ftw--S .ftw-dot,
+:root[data-theme="fosforo"] .ftw--S .ftw-dot {
+  top: 16px;
+  right: 16px;
 }
 
-.ft-status.is-online .ft-status-dot {
-  background: #34d399;
-  box-shadow: 0 0 0 4px rgba(52, 211, 153, 0.15);
-}
-
-.ft-widget-count {
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-  color: var(--accent);
-}
-
-.ft-widget-caption {
-  margin: 2px 0 0;
-  font-size: 12.5px;
-  color: var(--text-muted);
-}
-
-.ft-widget-small-body {
-  flex: 1;
-  min-height: 0;
+/* ---------- 2×1 e 2×2 ---------- */
+.ftw-head {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
   justify-content: space-between;
+  align-items: center;
+  gap: 8px;
 }
 
-.ft-widget-main {
+.ftw-title {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ftw-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.ftw.is-online .ftw-status {
+  color: var(--success-text);
+}
+
+.ftw-status .ftw-dot {
+  width: 6px;
+  height: 6px;
+}
+
+.ftw-main {
+  margin-top: auto;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
-}
-
-.ft-widget-side {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   min-width: 0;
 }
 
-.ft-widget-address {
+.ftw-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ftw-side {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ftw-address {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 
-.ft-widget-hint {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.ft-widget-toggle {
-  all: unset;
-  box-sizing: border-box;
-  flex-shrink: 0;
+.ftw-toggle {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-
-  width: 26px;
-  height: 26px;
   border-radius: 50%;
-
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 16px;
+  border: var(--btn-ghost-border);
+  background: var(--btn-ghost-bg, transparent);
+  color: var(--btn-ghost-fg);
   cursor: pointer;
-
-  transition: background 150ms ease, color 150ms ease, transform 120ms ease, opacity 150ms ease;
 }
 
-.ft-widget-toggle:hover:not(:disabled) {
-  background: var(--accent);
-  color: var(--on-accent);
-}
-
-.ft-widget-toggle:active:not(:disabled) {
-  transform: scale(0.92);
-}
-
-.ft-widget-toggle:disabled {
-  opacity: 0.4;
+.ftw-toggle:disabled {
+  opacity: 0.5;
   cursor: default;
 }
 
-.ft-widget-toggle.is-running {
-  background: var(--surface-2);
-  color: var(--text-secondary);
+/* Opaco: titolo in grassetto, stato a pillola d'inchiostro, pulsante pieno. */
+:root[data-theme="opaco"] .ftw-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.ft-widget-files {
-  flex: 1;
+:root[data-theme="opaco"] .ftw-status {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--pg-ink);
+  color: var(--pg-light);
+  font-weight: 500;
+}
+
+:root[data-theme="opaco"] .ftw-status .ftw-dot {
+  display: none;
+}
+
+:root[data-theme="opaco"] .ftw-label {
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+:root[data-theme="opaco"] .ftw-toggle {
+  border: 0;
+  background: var(--pg-ink);
+  color: var(--pg-light);
+}
+
+/* Quaderno: titolo e stato in grassetto. */
+:root[data-theme="quaderno"] .ftw-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+:root[data-theme="quaderno"] .ftw-status {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+:root[data-theme="quaderno"] .ftw-status .ftw-dot {
+  width: 7px;
+  height: 7px;
+}
+
+/* Fosforo: testi nel colore principale, LED rosso solo se online. */
+:root[data-theme="fosforo"] .ftw-title {
+  font-size: inherit;
+  color: var(--text-primary);
+}
+
+:root[data-theme="fosforo"] .ftw-status {
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+:root[data-theme="fosforo"] .ftw-status .ftw-dot {
+  width: 7px;
+  height: 7px;
+}
+
+:root[data-theme="fosforo"] .ftw-toggle {
+  border: var(--btn-primary-border);
+  color: var(--btn-primary-fg);
+}
+
+/* ---------- 2×2: ultimi file ricevuti ---------- */
+.ftw-files {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
   min-height: 0;
   overflow: hidden;
-  list-style: none;
-  margin: 14px 0 0;
-  padding: 0;
+  font-size: 13px;
+}
 
+.ftw-files li {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--divider);
 }
 
-.ft-widget-files li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 9px;
-  border-radius: 8px;
-  background: var(--surface-1);
-  font-size: 12.5px;
+.ftw-files li:last-child {
+  padding-bottom: 0;
 }
 
-.ft-widget-file-icon {
-  flex-shrink: 0;
-  color: var(--text-muted);
-  font-size: 15px;
-}
-
-.ft-widget-file-name {
-  flex: 1;
+.ftw-file-name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--text-primary);
 }
 
-.ft-widget-file-meta {
-  flex-shrink: 0;
-  color: var(--text-muted);
-  font-size: 11px;
+.ftw-file-meta {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
 }
 
-li.ft-widget-empty {
-  background: transparent;
-  padding: 0 2px;
-  color: var(--text-muted);
+.ftw-files-empty {
+  color: var(--text-secondary);
 }
 
-.ft-widget-play-align{
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* In 2×2 numero e controlli stanno in alto, i file riempiono il resto. */
+.ftw--M .ftw-main {
+  margin-top: 16px;
 }
