@@ -1,10 +1,19 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import "./css/index.css";
-import "./css/App.css";
+// Font dei temi, inclusi nel bundle: nessuna risorsa scaricata a runtime.
+import "@fontsource-variable/manrope";
+import "@fontsource-variable/bricolage-grotesque/opsz.css";
+import "@fontsource-variable/figtree";
+import "@fontsource-variable/caveat";
+import "@fontsource-variable/jetbrains-mono";
+import "@fontsource-variable/doto";
 
-import App from "./App";
+import "./styles/tailwind.css";
+import "./styles/tokens.css";
+import "./styles/base.css";
+
+import App from "./app/App";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

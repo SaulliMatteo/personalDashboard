@@ -1,0 +1,285 @@
+/* Scheda Report: riepilogo, grafico a barre impilate, classifica materie. */
+
+.study-report {
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  padding: 22px;
+  box-shadow: var(--card-shadow);
+}
+
+.study-report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+/* Navigazione tra periodi: ‹ titolo › [Oggi] */
+.study-report-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.study-report-title {
+  margin: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.study-nav-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 18px;
+  color: var(--text-secondary);
+  background: var(--surface-1);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.study-nav-btn:hover:not(:disabled) {
+  background: var(--surface-3);
+  color: var(--text-primary);
+}
+
+.study-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.study-nav-today {
+  all: unset;
+  box-sizing: border-box;
+  margin-left: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  cursor: pointer;
+}
+
+.study-nav-today:hover {
+  background: var(--border-accent);
+}
+
+.study-archived-tag {
+  flex-shrink: 0;
+  margin-left: 2px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--surface-2);
+}
+
+.study-period-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-1);
+  border-radius: var(--radius-item);
+  padding: 3px;
+}
+
+.study-period-toggle button {
+  all: unset;
+  box-sizing: border-box;
+  padding: 5px 14px;
+  border-radius: 6px;
+
+  font-size: 12.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.study-period-toggle button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.study-report-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.study-bars {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  height: 200px;
+  padding: 4px 2px 0;
+}
+
+.study-bar-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.study-bar-value {
+  height: 14px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.study-bar-col.is-current .study-bar-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.study-bar-track {
+  flex: 1;
+  width: 100%;
+  max-width: 54px;
+  min-height: 0;
+
+  display: flex;
+  align-items: flex-end;
+
+  background: var(--surface-1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.study-bar-stack {
+  width: 100%;
+  display: flex;
+  flex-direction: column-reverse;
+  transition: height 300ms ease;
+}
+
+.study-bar-seg {
+  flex-basis: 0;
+  min-height: 2px;
+}
+
+.study-bar-label {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.study-bar-col.is-current .study-bar-label {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.study-bar-col.is-current .study-bar-track {
+  box-shadow: 0 0 0 1px var(--border-accent);
+}
+
+.study-report-table {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.study-report-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 1.1fr) 2fr 62px 38px;
+  align-items: center;
+  gap: 12px;
+
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.study-report-row-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.study-report-row-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-1);
+  overflow: hidden;
+}
+
+.study-report-row-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.study-report-row-time,
+.study-report-row-share {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* ---------- Barre nella forma del tema (come "Ultimi 7 giorni" nelle card) ---------- */
+.study-bar-track {
+  background: var(--bar-off);
+}
+
+.study-report-row-bar {
+  background: var(--track);
+}
+
+/* Opaco: colonne piene e tonde. */
+:root[data-theme="opaco"] .study-bar-track {
+  border-radius: 14px;
+}
+
+/* Quaderno: barre disegnate a penna, aperte in basso, sulla riga di base. */
+:root[data-theme="quaderno"] .study-bar-track {
+  box-sizing: border-box;
+  border: 1.5px solid var(--accent);
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  background: transparent;
+}
+
+:root[data-theme="quaderno"] .study-bars {
+  border-bottom: 2px solid var(--accent);
+}
+
+:root[data-theme="quaderno"] .study-bar-label {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1;
+  text-transform: none;
+}
+
+/* Fosforo: barre spezzate in celle da 6px, come i display a punti. */
+:root[data-theme="fosforo"] .study-bar-track {
+  border-radius: 2px;
+}
+
+:root[data-theme="fosforo"] .study-bar-stack {
+  -webkit-mask: repeating-linear-gradient(to top, currentColor 0 6px, transparent 6px 8px);
+  mask: repeating-linear-gradient(to top, currentColor 0 6px, transparent 6px 8px);
+}

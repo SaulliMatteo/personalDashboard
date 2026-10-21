@@ -1,0 +1,617 @@
+/* ==========================================================================
+   TOKEN DI TEMA. Unico posto in cui vivono i colori.
+   - il tema si sceglie con <html data-theme="notte|opaco|quaderno|fosforo">
+     (impostazione "theme"); i valori vengono dai mockup in
+     temi-dashboard/docs/design/temi/
+   - --accent viene sovrascritto da <html style> solo se "accentOverride"
+   - in Opaco ogni widget ha un pigmento: [data-pigment="<nome>"] sulla sua
+     cella (o sulla sua pagina di dettaglio) ridefinisce i token lì dentro
+   ========================================================================== */
+
+/* ---------- Token comuni e derivati (valgono per tutti i temi) ---------- */
+:root {
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --border-accent: color-mix(in srgb, var(--accent) 35%, transparent);
+
+  /* Fase di pausa del pomodoro: colore distinto e voluto (riposo vs concentrazione). */
+  --study-break: #f5a35c; /* sovrascritto da settings.studyBreakColor */
+  --study-break-soft: color-mix(in srgb, var(--study-break) 14%, transparent);
+
+  /* Traccia di sfondo di anelli e barre (nome storico). */
+  --ring-track: var(--track);
+
+  /* Sopra miniature e video veri (immagini): uguali in tutti i temi. */
+  --media-bg: #000000;
+  --media-scrim: rgba(0, 0, 0, 0.6);
+  --media-fg: #FFFFFF;
+  --media-track: rgba(255, 255, 255, 0.28);
+
+  /* Codice QR: deve restare scuro su chiaro per essere letto dalla fotocamera. */
+  --qr-bg: #FFFFFF;
+  --qr-fg: #1B2433;
+
+  --danger-soft: color-mix(in srgb, var(--danger) 16%, transparent);
+  --danger-strong: color-mix(in srgb, var(--danger) 28%, transparent);
+  --success-soft: color-mix(in srgb, var(--success) 15%, transparent);
+
+  --ease-out-back: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Anteprime dei temi nella scheda Aspetto: restano uguali qualunque sia il
+     tema attivo (impostazioni-aspetto.html). bg = foglio, a = card grande, b = card piccole. */
+  --preview-notte-bg: #0A0D16;
+  --preview-notte-a: #8EA6FF;
+  --preview-notte-b: #151B2B;
+  --preview-notte-border: 0;
+  --preview-notte-radius: 6px;
+  --preview-opaco-bg: #D8D5CD;
+  --preview-opaco-a: #A9B59C;
+  --preview-opaco-b: #9DB0C0;
+  --preview-opaco-border: 0;
+  --preview-opaco-radius: 8px;
+  --preview-quaderno-bg: #FCFDFF;
+  --preview-quaderno-a: #FFF1A8;
+  --preview-quaderno-b: #FFFFFF;
+  --preview-quaderno-border: 1px solid #C9D3E3;
+  --preview-quaderno-radius: 2px;
+  --preview-fosforo-bg: #1A090C;
+  --preview-fosforo-a: #0B0405;
+  --preview-fosforo-b: #24100F;
+  --preview-fosforo-border: 1px solid rgba(255, 214, 206, 0.2);
+  --preview-fosforo-radius: 4px;
+}
+
+/* ==========================================================================
+   NOTTE: scuro, blu inchiostro, ricco di dettagli
+   ========================================================================== */
+:root,
+:root[data-theme="notte"] {
+  color-scheme: dark;
+
+  --font-family: "Manrope Variable", system-ui, sans-serif;
+  /* Numeri grandi (timer, contatori). */
+  --font-display: "Manrope Variable", system-ui, sans-serif;
+  --display-weight: 200;
+  --display-tracking: -0.04em;
+  /* Titoli dei widget e saluto. */
+  --font-title: "Manrope Variable", system-ui, sans-serif;
+  --title-weight: 500;
+  --heading-weight: 300;
+  --body-size: 14px;
+  --line-height: 1.5;
+
+  --bg: #090C15;
+  --main-bg: #090C15;
+  --bg-sidebar: #090C15;
+  --sidebar-border: 1px solid #161D30;
+  --sidebar-width: 216px;
+
+  --bg-card: #121831;
+  --card-bg: linear-gradient(180deg, #151B2E 0%, #10152A 100%);
+  --card-border: 1px solid #1F2740;
+  --card-shadow: inset 0 1px 0 rgba(200, 215, 255, 0.07);
+  --card-transform: none;
+  --radius-card: 22px;
+  --widget-padding: 22px;
+  --grid-gap: 14px;
+  /* Spazio interno dell'area principale e distanza intestazione-griglia. */
+  --main-padding: 26px 32px 28px;
+  --main-gap: 20px;
+
+  /* Pannello interno: display, celle delle note, disco del quadrante. */
+  --panel-bg: #0B0F1C;
+  --panel-border: 1px solid #182036;
+  --radius-panel: 16px;
+  /* "Display" per timer, faccia e miniature: in Notte coincide col pannello. */
+  --display-bg: #0B0F1C;
+  --display-texture: none;
+  --display-border: 1px solid #182036;
+  --radius-display: 16px;
+
+  --border-subtle: #1F2740;
+  --divider: #1F2740;
+  --row-active-bg: #161C2E;
+  --row-active-border: #2A3350;
+  --track: #1E2538;
+  --tick-off: #232B44;
+  --tick-off-long: #3A4566;
+  --bar-off: #2A3456;
+  --dot-off: #2A3350;
+  --dot-on: #8EA6FF;
+
+  --text-primary: #E9ECF5;
+  --text-secondary: #9AA2BA;
+  --text-muted: #8890A8;
+  --text-soft: #C9CFE0;
+
+  --accent: #8EA6FF;
+  --accent-strong: color-mix(in srgb, var(--accent) 64%, #ffffff);
+  --on-accent: #090C15;
+  --success: #7DD3B0;
+  --success-text: #7DD3B0;
+  --warn: #F0B47A;
+  --led: #7DD3B0;
+  --danger: #F08A8A;
+  --on-danger: #090C15;
+
+  --surface-1: rgba(233, 236, 245, 0.04);
+  --surface-2: #161C2E;
+  --surface-3: #1A2032;
+
+  --radius-item: 12px;
+  --btn-primary-bg: var(--accent);
+  --btn-primary-fg: var(--on-accent);
+  --btn-ghost-border: 1px solid #2A3350;
+  --btn-ghost-fg: #C9CFE0;
+  --chip-bg: var(--accent-soft);
+  --chip-fg: var(--accent-strong);
+  --slot-border: 1px dashed #2A3350;
+  --slot-bg: transparent;
+  --slot-fg: #9AA2BA;
+  --slot-gap: 6px;
+  --slot-font-size: 13px;
+  --slot-weight: 400;
+  --slot-svg-display: block;
+  --slot-svg-stroke: 1.6;
+  --slot-text-display: none;
+  --slot-plus-font: inherit;
+  --slot-plus-size: 30px;
+
+  --nav-active-bg: #161C2E;
+  --nav-active-fg: #E9ECF5;
+  --nav-fg: #9AA2BA;
+
+  --bubble-bg: #1A2032;
+  --bubble-fg: #C9CFE0;
+  --bubble-radius: 14px 14px 14px 4px;
+  --face-on: #DCE3FF;
+  --face-halo: rgba(142, 166, 255, 0.16);
+
+  --thumb-bg: linear-gradient(135deg, #22305A 0%, #141B33 100%);
+  --thumb-play-bg: rgba(233, 236, 245, 0.92);
+  --thumb-play-fg: #090C15;
+  --thumb-badge-bg: rgba(9, 12, 21, 0.8);
+  --thumb-track: rgba(233, 236, 245, 0.15);
+
+  --highlight: var(--accent-soft);
+  --overlay: rgba(5, 7, 12, 0.72);
+  --modal-bg: #121726;
+  --modal-border: 1px solid #1E2538;
+  --shadow-pop: 0 18px 48px rgba(0, 0, 0, 0.5);
+  --focus-ring: 2px solid var(--accent);
+}
+
+/* ==========================================================================
+   OPACO: chiaro, blocchi di colore pigmentato, niente bordi né ombre
+   ========================================================================== */
+:root[data-theme="opaco"] {
+  color-scheme: light;
+
+  --font-family: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --display-weight: 800;
+  --display-tracking: -0.05em;
+  --font-title: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --title-weight: 600;
+  --heading-weight: 800;
+  --body-size: 14px;
+  --line-height: 1.45;
+
+  --bg: #D8D5CD;
+  --main-bg: #D8D5CD;
+  --bg-sidebar: #D8D5CD;
+  --sidebar-border: 0;
+  --sidebar-width: 208px;
+
+  --bg-card: #EFECE5;
+  --card-bg: #EFECE5;
+  --card-border: 0;
+  --card-shadow: none;
+  --card-transform: none;
+  --radius-card: 28px;
+  --widget-padding: 22px;
+  --grid-gap: 12px;
+  /* Spazio interno dell'area principale e distanza intestazione-griglia. */
+  --main-padding: 26px 30px 28px 8px;
+  --main-gap: 18px;
+
+  --panel-bg: #E2DED5;
+  --panel-border: 0;
+  --radius-panel: 18px;
+  --display-bg: #E2DED5;
+  --display-texture: none;
+  --display-border: 0;
+  --radius-display: 20px;
+
+  --border-subtle: #C9C5BB;
+  --divider: #C9C5BB;
+  --row-active-bg: #22251F;
+  --row-active-border: transparent;
+  --track: #C9C5BB;
+  --tick-off: #C9C5BB;
+  --tick-off-long: #9E9A90;
+  --bar-off: #C9C5BB;
+  --dot-off: #C9C5BB;
+  --dot-on: #22251F;
+
+  --text-primary: #22251F;
+  --text-secondary: #4D5047;
+  --text-muted: #4D5047;
+  --text-soft: #22251F;
+
+  --accent: #22251F;
+  --accent-strong: var(--accent);
+  --on-accent: #ECE9E2;
+  --success: #3F6B3A;
+  --success-text: #2E5229;
+  --warn: #7A4E12;
+  --led: #22251F;
+  --danger: #8A2A1E;
+  --on-danger: #ECE9E2;
+
+  --surface-1: rgba(34, 37, 31, 0.05);
+  --surface-2: #E2DED5;
+  --surface-3: #C9C5BB;
+
+  --radius-item: 999px;
+  --btn-primary-bg: var(--accent);
+  --btn-primary-fg: var(--on-accent);
+  --btn-ghost-border: 0;
+  --btn-ghost-fg: #22251F;
+  --btn-ghost-bg: #C9C5BB;
+  --chip-bg: #C9C5BB;
+  --chip-fg: #22251F;
+  --slot-border: 2px dashed #9E9A90;
+  --slot-bg: transparent;
+  --slot-fg: #4D5047;
+  --slot-gap: 2px;
+  --slot-font-size: 14px;
+  --slot-weight: 500;
+  --slot-svg-display: none;
+  --slot-svg-stroke: 1.6;
+  --slot-text-display: block;
+  --slot-plus-font: inherit;
+  --slot-plus-size: 30px;
+
+  --nav-active-bg: #22251F;
+  --nav-active-fg: #ECE9E2;
+  --nav-fg: #4D5047;
+
+  --bubble-bg: #ECE9E2;
+  --bubble-fg: #22251F;
+  --bubble-radius: 18px 18px 18px 6px;
+  --face-on: #22251F;
+  --face-halo: transparent;
+
+  --thumb-bg: #C9C5BB;
+  --thumb-play-bg: #22251F;
+  --thumb-play-fg: #ECE9E2;
+  --thumb-badge-bg: #22251F;
+  --thumb-track: #C9C5BB;
+
+  --highlight: #C9C5BB;
+  --overlay: rgba(34, 37, 31, 0.45);
+  --modal-bg: #EFECE5;
+  --modal-border: 0;
+  --shadow-pop: 0 18px 48px rgba(34, 37, 31, 0.18);
+  --focus-ring: 2px solid var(--text-primary);
+}
+
+/* Pigmenti: fondo / inchiostro / tono scuro / tono medio / chiaro (testo su inchiostro). */
+:root[data-theme="opaco"] [data-pigment="salvia"] {
+  --pg-bg: #A9B59C; --pg-ink: #1F2B1C; --pg-dark: #8E9C80; --pg-mid: #95A387; --pg-light: #DCE4D3; --pg-half: #5E6E55;
+}
+:root[data-theme="opaco"] [data-pigment="blu"] {
+  --pg-bg: #9DB0C0; --pg-ink: #1B2A36; --pg-dark: #8296A8; --pg-mid: #8EA2B3; --pg-light: #ECE9E2; --pg-half: #4E6273;
+}
+:root[data-theme="opaco"] [data-pigment="senape"] {
+  --pg-bg: #D2B26A; --pg-ink: #3A2C0A; --pg-dark: #B89A55; --pg-mid: #C4A45E; --pg-light: #EFDFB8; --pg-half: #7A6230;
+}
+:root[data-theme="opaco"] [data-pigment="malva"] {
+  --pg-bg: #B8A1B4; --pg-ink: #33213A; --pg-dark: #8F7690; --pg-mid: #9C849A; --pg-light: #F1E6EF; --pg-half: #634D67;
+}
+:root[data-theme="opaco"] [data-pigment="carta"] {
+  --pg-bg: #EFECE5; --pg-ink: #22251F; --pg-dark: #C9C5BB; --pg-mid: #E2DED5; --pg-light: #ECE9E2; --pg-half: #4D5047;
+}
+
+/* Dentro un blocco pigmentato tutto il testo usa l'inchiostro del pigmento. */
+:root[data-theme="opaco"] [data-pigment] {
+  --card-bg: var(--pg-bg);
+  --bg-card: var(--pg-bg);
+  --text-primary: var(--pg-ink);
+  --text-secondary: var(--pg-ink);
+  --text-muted: var(--pg-ink);
+  --text-soft: var(--pg-ink);
+  --accent: var(--pg-ink);
+  --accent-strong: var(--pg-ink);
+  --accent-soft: color-mix(in srgb, var(--pg-ink) 12%, transparent);
+  --border-accent: color-mix(in srgb, var(--pg-ink) 35%, transparent);
+  --on-accent: var(--pg-light);
+  --panel-bg: var(--pg-mid);
+  --display-bg: var(--pg-dark);
+  --surface-1: color-mix(in srgb, var(--pg-ink) 6%, transparent);
+  --surface-2: var(--pg-mid);
+  --surface-3: var(--pg-dark);
+  --border-subtle: var(--pg-dark);
+  --divider: var(--pg-dark);
+  --row-active-bg: var(--pg-ink);
+  --track: var(--pg-dark);
+  --ring-track: var(--pg-dark);
+  --tick-off: var(--pg-dark);
+  --tick-off-long: var(--pg-half);
+  --bar-off: var(--pg-dark);
+  --dot-off: var(--pg-dark);
+  --dot-on: var(--pg-ink);
+  --btn-ghost-bg: var(--pg-mid);
+  --btn-ghost-fg: var(--pg-ink);
+  --chip-bg: var(--pg-mid);
+  --chip-fg: var(--pg-ink);
+  --face-on: var(--pg-ink);
+  --thumb-bg: var(--pg-dark);
+  --thumb-play-bg: var(--pg-ink);
+  --thumb-play-fg: var(--pg-light);
+  --thumb-track: var(--pg-mid);
+  --highlight: var(--pg-mid);
+  --led: var(--pg-ink);
+  --success: var(--pg-ink);
+  --success-text: var(--pg-ink);
+  --focus-ring: 2px solid var(--pg-ink);
+}
+/* Nel pigmento "carta" il testo secondario resta grigio pietra. */
+:root[data-theme="opaco"] [data-pigment="carta"] {
+  --text-secondary: #4D5047;
+  --text-muted: #4D5047;
+}
+
+/* ==========================================================================
+   QUADERNO: chiaro, foglio a quadretti, inchiostro blu
+   ========================================================================== */
+:root[data-theme="quaderno"] {
+  color-scheme: light;
+
+  --font-family: "Figtree Variable", system-ui, sans-serif;
+  --font-display: "Caveat Variable", cursive;
+  --display-weight: 600;
+  --display-tracking: 0;
+  --font-title: "Caveat Variable", cursive;
+  --title-weight: 600;
+  --heading-weight: 600;
+  --body-size: 14px;
+  --line-height: 1.5;
+
+  --bg: #FCFDFF;
+  /* Foglio a quadretti da 24px: usato dall'area principale e dalle pagine "di carta". */
+  --main-bg: linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, #FCFDFF;
+  --paper-margin: #F2A9A9;
+  --bg-sidebar: #FFFFFF;
+  --sidebar-border: 1px solid #D6DEEA;
+  --sidebar-width: 216px;
+
+  --bg-card: #FFFFFF;
+  --card-bg: #FFFFFF;
+  --card-border: 1px solid #C9D3E3;
+  --card-shadow: 0 3px 0 #DCE4F0;
+  --card-transform: none;
+  --radius-card: 8px;
+  --widget-padding: 22px;
+  --grid-gap: 18px;
+  /* Spazio interno dell'area principale e distanza intestazione-griglia. */
+  --main-padding: 22px 32px 28px 68px;
+  --main-gap: 16px;
+
+  --panel-bg: #FFFFFF;
+  --panel-border: 1px solid #DCE6F5;
+  --radius-panel: 6px;
+  --display-bg: #E9EEF8;
+  --display-texture: none;
+  --display-border: 1.5px solid #1B2433;
+  --radius-display: 6px;
+
+  --border-subtle: #DCE6F5;
+  --divider: #DCE6F5;
+  --row-active-bg: transparent;
+  --row-active-border: transparent;
+  --track: #B8C4D8;
+  --tick-off: #B8C4D8;
+  --tick-off-long: #9AA7BD;
+  --bar-off: transparent;
+  --dot-off: #B8C4D8;
+  --dot-on: #2340A0;
+
+  --text-primary: #1B2433;
+  --text-secondary: #556178;
+  --text-muted: #556178;
+  --text-soft: #1B2433;
+
+  --accent: #2340A0;
+  --accent-strong: var(--accent);
+  --on-accent: #FFFFFF;
+  --success: #2F9E6B;
+  --success-text: #1F7A50;
+  --warn: #9A5B12;
+  --led: #2F9E6B;
+  --danger: #B3261E;
+  --on-danger: #FFFFFF;
+
+  --surface-1: rgba(35, 64, 160, 0.04);
+  --surface-2: #EEF2FB;
+  --surface-3: #DCE6F5;
+
+  --radius-item: 8px;
+  --btn-primary-bg: var(--accent);
+  --btn-primary-fg: var(--on-accent);
+  --btn-ghost-border: 1.5px solid var(--accent);
+  --btn-ghost-fg: var(--accent);
+  --btn-ghost-bg: #FFFFFF;
+  --chip-bg: #EEF2FB;
+  --chip-fg: var(--accent);
+  --slot-border: 2px dashed #9AA7BD;
+  --slot-bg: rgba(255, 255, 255, 0.6);
+  --slot-fg: #556178;
+  --slot-gap: 2px;
+  --slot-font-size: 13px;
+  --slot-weight: 400;
+  --slot-svg-display: none;
+  --slot-svg-stroke: 1.6;
+  --slot-text-display: block;
+  --slot-plus-font: "Caveat Variable", cursive;
+  --slot-plus-size: 38px;
+
+  --nav-active-bg: #EEF2FB;
+  --nav-active-fg: #2340A0;
+  --nav-fg: #556178;
+
+  --postit-bg: #FFF1A8;
+  --postit-shadow: 0 3px 0 #E8D77F;
+  --postit-text: #5C4E12;
+  --bubble-bg: transparent;
+  --bubble-fg: var(--accent);
+  --bubble-radius: 0;
+  --face-on: #1B2433;
+  --face-halo: transparent;
+
+  --thumb-bg: #E9EEF8;
+  --thumb-play-bg: var(--accent);
+  --thumb-play-fg: #FFFFFF;
+  --thumb-badge-bg: #1B2433;
+  --thumb-track: #E9EEF8;
+
+  --highlight: #FFE27A;
+  --highlight-mark: linear-gradient(transparent 55%, #FFE27A 55%, #FFE27A 92%, transparent 92%);
+  --overlay: rgba(27, 36, 51, 0.35);
+  --modal-bg: #FFFFFF;
+  --modal-border: 1px solid #C9D3E3;
+  --shadow-pop: 0 4px 0 #DCE4F0;
+  --focus-ring: 2px solid var(--accent);
+}
+
+/* Card "post-it" (il Companion in Quaderno): l'unico elemento ruotato. */
+:root[data-theme="quaderno"] .card-postit {
+  --card-bg: var(--postit-bg);
+  --card-border: 0;
+  --card-shadow: var(--postit-shadow);
+  --radius-card: 3px;
+  --card-transform: rotate(-1.2deg);
+}
+
+/* ==========================================================================
+   FOSFORO: scuro, moduli hardware con display a punti
+   ========================================================================== */
+:root[data-theme="fosforo"] {
+  color-scheme: dark;
+
+  --font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+  --font-display: "Doto Variable", monospace;
+  --display-weight: 900;
+  --display-tracking: 0;
+  --font-title: "JetBrains Mono Variable", ui-monospace, monospace;
+  --title-weight: 400;
+  --heading-weight: 400;
+  --body-size: 13px;
+  --line-height: 1.55;
+
+  --bg: #110709;
+  --main-bg: transparent;
+  --bg-sidebar: transparent;
+  --sidebar-border: 0;
+  --sidebar-width: 208px;
+  /* Unica decorazione di sfondo: cerchio pieno in basso a destra + cerchio sottile in alto. */
+  --deco-fill: radial-gradient(circle at 30% 30%, #4A131B 0%, #2A0A10 45%, #170609 70%);
+  --deco-ring: 1px solid rgba(255, 214, 206, 0.08);
+
+  --bg-card: #1A0D0F;
+  --card-bg: rgba(26, 13, 15, 0.9);
+  --card-border: 1px solid rgba(255, 214, 206, 0.12);
+  --card-shadow: none;
+  --card-transform: none;
+  --radius-card: 14px;
+  --widget-padding: 14px;
+  --grid-gap: 12px;
+  /* Spazio interno dell'area principale e distanza intestazione-griglia. */
+  --main-padding: 24px 32px 28px 16px;
+  --main-gap: 18px;
+
+  --panel-bg: transparent;
+  --panel-border: 1px solid rgba(255, 214, 206, 0.12);
+  --radius-panel: 8px;
+  --display-bg: #0B0405;
+  --display-texture: radial-gradient(rgba(255, 230, 220, 0.07) 1px, transparent 1.3px) 0 0 / 7px 7px;
+  --display-border: 1px solid rgba(255, 214, 206, 0.08);
+  --radius-display: 10px;
+
+  --border-subtle: rgba(255, 214, 206, 0.12);
+  --divider: rgba(255, 214, 206, 0.08);
+  --row-active-bg: rgba(255, 214, 206, 0.05);
+  --row-active-border: rgba(255, 214, 206, 0.16);
+  --track: #3A2326;
+  --tick-off: #3A2326;
+  --tick-off-long: #3A2326;
+  --bar-off: #3A2326;
+  --dot-off: #3A2326;
+  --dot-on: #F4E9E4;
+
+  --text-primary: #F2E6E1;
+  --text-secondary: #B39C97;
+  --text-muted: #B39C97;
+  --text-soft: #F4E9E4;
+
+  --accent: #F4E9E4;
+  --accent-strong: var(--accent);
+  --on-accent: #110709;
+  --success: #F4E9E4;
+  --success-text: #F4E9E4;
+  --warn: #F4E9E4;
+  --led: #FF4A3D;
+  --danger: #FF4A3D;
+  --on-danger: #110709;
+
+  --surface-1: rgba(255, 214, 206, 0.04);
+  --surface-2: rgba(255, 214, 206, 0.07);
+  --surface-3: rgba(255, 214, 206, 0.12);
+
+  --radius-item: 999px;
+  --btn-primary-bg: transparent;
+  --btn-primary-fg: #F4E9E4;
+  --btn-primary-border: 1px solid rgba(255, 214, 206, 0.28);
+  --btn-ghost-border: 1px solid rgba(255, 214, 206, 0.16);
+  --btn-ghost-fg: #B39C97;
+  --chip-bg: #F4E9E4;
+  --chip-fg: #110709;
+  --slot-border: 1px dashed rgba(255, 214, 206, 0.22);
+  --slot-bg: transparent;
+  --slot-fg: #B39C97;
+  --slot-gap: 6px;
+  --slot-font-size: 12px;
+  --slot-weight: 400;
+  --slot-svg-display: block;
+  --slot-svg-stroke: 1.5;
+  --slot-text-display: none;
+  --slot-plus-font: inherit;
+  --slot-plus-size: 30px;
+
+  --nav-active-bg: #F4E9E4;
+  --nav-active-fg: #110709;
+  --nav-fg: #B39C97;
+
+  --bubble-bg: #110709;
+  --bubble-fg: #F2E6E1;
+  --bubble-border: 1px solid rgba(255, 214, 206, 0.2);
+  --bubble-radius: 13px;
+  --face-on: #F4E9E4;
+  --face-halo: transparent;
+  --lens-ring: 1px solid rgba(255, 214, 206, 0.14);
+
+  --thumb-bg: #0B0405;
+  --thumb-play-bg: transparent;
+  --thumb-play-fg: #F4E9E4;
+  --thumb-play-border: 1px solid rgba(255, 214, 206, 0.4);
+  --thumb-badge-bg: #110709;
+  --thumb-track: #3A2326;
+
+  --highlight: rgba(255, 214, 206, 0.12);
+  --overlay: rgba(8, 3, 4, 0.75);
+  --modal-bg: #1A0D0F;
+  --modal-border: 1px solid rgba(255, 214, 206, 0.12);
+  --shadow-pop: 0 18px 48px rgba(0, 0, 0, 0.55);
+  --focus-ring: 1px solid #F4E9E4;
+}

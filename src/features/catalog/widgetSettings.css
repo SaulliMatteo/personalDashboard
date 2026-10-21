@@ -1,0 +1,30 @@
+.widget-catalog-card-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.widget-settings-gear {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+
+  transition: background 150ms ease, color 150ms ease, transform 250ms ease;
+}
+
+.widget-settings-gear:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  transform: rotate(60deg);
+}

@@ -1,0 +1,210 @@
+/* Barra laterale, nelle forme dei quattro mockup (notte/opaco/quaderno/fosforo.html). */
+
+.sidebar {
+  width: var(--sidebar-width, 216px);
+  height: 100vh;
+  flex-shrink: 0;
+  box-sizing: border-box;
+
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding: 26px 14px;
+
+  background: var(--bg-sidebar);
+  border-right: var(--sidebar-border);
+  color: var(--text-primary);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.sidebar-logo svg {
+  flex: 0 0 auto;
+  color: var(--accent);
+}
+
+.sidebar-logo-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 12px;
+
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--nav-fg);
+
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.nav-item:hover {
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-fg);
+  font-weight: 500;
+}
+
+.nav-item:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.nav-item-dot {
+  display: none;
+}
+
+.setting-button {
+  justify-content: space-between;
+}
+
+/* ---------- Notte: punto accent sulla voce attiva, le altre allineate al testo ---------- */
+:root[data-theme="notte"] .nav-item-dot {
+  display: block;
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+:root[data-theme="notte"] .nav-item:not(.active) .nav-item-dot {
+  visibility: hidden;
+}
+
+.sidebar-goal {
+  padding: 14px;
+  border-radius: var(--radius-panel);
+  border: var(--panel-border);
+  background: var(--panel-bg);
+}
+
+.sidebar-goal-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.sidebar-goal-values {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 2px 0 8px;
+}
+
+.sidebar-goal-done {
+  font-size: 22px;
+  font-weight: 300;
+}
+
+.sidebar-goal .pbar {
+  height: 4px;
+}
+
+/* ---------- Opaco: titolo pesante, voci a pillola ---------- */
+:root[data-theme="opaco"] .sidebar {
+  gap: 30px;
+  padding: 28px 16px;
+}
+
+:root[data-theme="opaco"] .sidebar-logo {
+  max-width: 7em;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+:root[data-theme="opaco"] .sidebar-nav {
+  gap: 4px;
+}
+
+:root[data-theme="opaco"] .nav-item {
+  align-self: flex-start;
+  padding: 0 18px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+:root[data-theme="opaco"] .nav-item.active {
+  font-weight: 600;
+}
+
+:root[data-theme="opaco"] .setting-button:not(.active) {
+  background: var(--btn-ghost-bg);
+  color: var(--text-primary);
+}
+
+/* ---------- Quaderno: voci rettangolari, attiva in blu inchiostro ---------- */
+:root[data-theme="quaderno"] .nav-item.active {
+  font-weight: 600;
+}
+
+/* ---------- Fosforo: pillole basse, Impostazioni con bordo ---------- */
+:root[data-theme="fosforo"] .sidebar {
+  gap: 28px;
+  padding: 26px 16px;
+}
+
+:root[data-theme="fosforo"] .sidebar-logo {
+  padding: 0 8px;
+  font-weight: 500;
+}
+
+:root[data-theme="fosforo"] .sidebar-nav {
+  gap: 4px;
+}
+
+:root[data-theme="fosforo"] .nav-item {
+  align-self: flex-start;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 17px;
+}
+
+:root[data-theme="fosforo"] .setting-button {
+  border: var(--btn-ghost-border);
+}
+
+:root[data-theme="opaco"] .setting-button,
+:root[data-theme="fosforo"] .setting-button {
+  justify-content: flex-start;
+}
+
+:root[data-theme="opaco"] .setting-button svg,
+:root[data-theme="fosforo"] .setting-button svg {
+  display: none;
+}

@@ -1,0 +1,291 @@
+/* Note (card "Note" dei mockup e widget-1x1.html). */
+
+.widget.nw {
+  --nw-num: 54px;
+  --nw-num-side: 44px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+  color: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .widget.nw {
+  --nw-num: 72px;
+}
+
+:root[data-theme="quaderno"] .widget.nw {
+  --nw-num: 72px;
+}
+
+:root[data-theme="fosforo"] .widget.nw {
+  --nw-num: 66px;
+  --nw-num-side: 40px;
+}
+
+.nw-num {
+  font-family: var(--font-display);
+  font-size: var(--nw-num);
+  font-weight: var(--display-weight);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-theme="quaderno"] .nw-num {
+  color: var(--accent);
+}
+
+/* ---------- 1×1 ---------- */
+.widget.nw--S {
+  position: relative;
+  align-items: center;
+  justify-content: center;
+}
+
+.nw-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="opaco"] .nw-cap {
+  display: none;
+}
+
+/* ---------- Intestazione sopra (Notte, Quaderno) ---------- */
+.nw-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nw-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.nw-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="quaderno"] .widget.nw {
+  gap: 0;
+  padding: 14px 20px;
+}
+
+:root[data-theme="quaderno"] .nw-head {
+  align-items: baseline;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--accent);
+}
+
+:root[data-theme="quaderno"] .nw-head h2 {
+  font-family: var(--font-title);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .nw-count {
+  font-size: 13px;
+}
+
+/* ---------- Numero a sinistra (Opaco, Fosforo) ---------- */
+.widget.nw--side.nw--STRIP {
+  flex-direction: row;
+  align-items: stretch;
+  gap: 18px;
+}
+
+.nw-side {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nw-side .nw-num {
+  font-size: var(--nw-num-side);
+}
+
+.nw-side-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="fosforo"] .nw-side-label {
+  margin-top: 4px;
+}
+
+:root[data-theme="opaco"] .widget.nw {
+  padding: 18px 22px;
+}
+
+:root[data-theme="opaco"] .widget.nw--side.nw--STRIP {
+  align-items: center;
+  gap: 22px;
+}
+
+:root[data-theme="opaco"] .nw-side .nw-num {
+  line-height: 0.9;
+}
+
+:root[data-theme="opaco"] .nw-side-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .nw--M .nw-side {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+}
+
+:root[data-theme="fosforo"] .widget.nw {
+  padding: 14px 18px;
+}
+
+/* In 2×2 il numero sta sopra l'elenco, su una riga. */
+.nw--M .nw-side {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+/* ---------- Le tre note recenti affiancate (3×1) ---------- */
+.nw-cells {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.nw-note {
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius-panel);
+  border: var(--panel-border);
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.nw-note-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.nw-note-when {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="opaco"] .nw-cells {
+  gap: 8px;
+  align-self: stretch;
+}
+
+:root[data-theme="opaco"] .nw-cells .nw-note {
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 18px;
+}
+
+:root[data-theme="opaco"] .nw-note-title {
+  font-size: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+:root[data-theme="quaderno"] .nw-cells {
+  column-gap: 18px;
+  gap: 0 18px;
+}
+
+:root[data-theme="quaderno"] .nw-cells .nw-note {
+  justify-content: center;
+  padding: 8px 8px 0 0;
+  border: 0;
+  border-right: 1px solid var(--divider);
+  border-radius: 0;
+  background: transparent;
+}
+
+:root[data-theme="quaderno"] .nw-cells .nw-note:last-child {
+  border-right: 0;
+}
+
+:root[data-theme="quaderno"] .nw-note-title {
+  font-size: inherit;
+  font-weight: 600;
+}
+
+:root[data-theme="fosforo"] .nw-cells {
+  gap: 8px;
+}
+
+:root[data-theme="fosforo"] .nw-cells .nw-note {
+  justify-content: space-between;
+  background: transparent;
+}
+
+:root[data-theme="fosforo"] .nw-note-title {
+  font-size: inherit;
+  font-weight: 400;
+}
+
+/* ---------- Elenco di 4 note (2×2) ---------- */
+.nw-list {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.nw-list .nw-note {
+  flex: 0 0 auto;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 0;
+  border: 0;
+  border-top: 1px solid var(--divider);
+  border-radius: 0;
+  background: transparent;
+}
+
+.nw-list .nw-note:first-child {
+  border-top: 0;
+}
+
+.nw-list .nw-note-when {
+  flex: 0 0 auto;
+}
+
+.nw-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}

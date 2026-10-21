@@ -1,0 +1,1458 @@
+/* Pagina YouTube: stessi token del resto dell'app (tema chiaro/scuro e accent automatici). */
+
+.yt-detail {
+  /* Miniature con lo stesso raggio della card YouTube del tema (YoutubeWidget.css);
+     righe e note come pannelli, non come pillole. */
+  --yt-media-radius: 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+:root[data-theme="opaco"] .yt-detail {
+  --yt-media-radius: 20px;
+}
+
+:root[data-theme="quaderno"] .yt-detail {
+  --yt-media-radius: 6px;
+}
+
+:root[data-theme="fosforo"] .yt-detail {
+  --yt-media-radius: var(--radius-display);
+}
+
+.yt-detail-header {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* ---------- Elementi base ---------- */
+
+.yt-card {
+  min-width: 0;
+  padding: 18px;
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--card-shadow);
+}
+
+.yt-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.yt-muted {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.yt-dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--folder-color, var(--accent));
+}
+
+.yt-spacer {
+  flex: 1;
+}
+
+.yt-input {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12.5px;
+}
+
+.yt-input:focus {
+  outline: none;
+  border-color: var(--border-accent);
+}
+
+.yt-input:disabled {
+  opacity: 0.5;
+}
+
+/* Le tendine native si aprono con i colori della dashboard (altrimenti, nel tema scuro, le opzioni sono bianco su bianco). */
+select.yt-input {
+  color-scheme: inherit;
+}
+
+.yt-input option,
+.yt-input optgroup {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+textarea.yt-input {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.yt-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 15px;
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, opacity 150ms ease;
+}
+
+.yt-btn svg {
+  font-size: 16px;
+}
+
+.yt-btn:hover:not(:disabled) {
+  background: var(--surface-3);
+  color: var(--text-primary);
+}
+
+.yt-btn:focus-visible,
+.yt-icon-btn:focus-visible,
+.yt-link-btn:focus-visible,
+.yt-row-main:focus-visible,
+.yt-folder-card-main:focus-visible,
+.yt-hero-thumb-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.yt-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.yt-btn--primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.yt-btn--primary:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--on-accent);
+  opacity: 0.88;
+}
+
+.yt-btn--danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.yt-btn--danger:hover:not(:disabled) {
+  background: var(--danger-strong);
+  color: var(--danger);
+}
+
+/* Il ConfirmButton aggiunge .is-armed al secondo passaggio. */
+.yt-btn.is-armed {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.yt-icon-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: var(--radius-item);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.yt-icon-btn svg {
+  font-size: 18px;
+}
+
+.yt-icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.yt-icon-btn.is-on {
+  color: var(--accent);
+}
+
+.yt-icon-btn--danger:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.yt-icon-btn.is-armed {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.yt-link-btn {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.yt-link-btn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.yt-link-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.yt-banner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-panel);
+  background: var(--accent-soft);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+}
+
+.yt-banner--error {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.yt-banner button {
+  all: unset;
+  flex-shrink: 0;
+  cursor: pointer;
+  color: inherit;
+  font-size: 12px;
+}
+
+/* ---------- Barra superiore: tab, ricerca, aggiungi ---------- */
+
+.yt-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.yt-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+}
+
+.yt-tabs button {
+  all: unset;
+  box-sizing: border-box;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.yt-tabs button:hover {
+  color: var(--text-primary);
+}
+
+.yt-tabs button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.yt-tabs button:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+.yt-search {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 460px;
+  margin-left: auto;
+}
+
+.yt-search > svg {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  transform: translateY(-50%);
+  font-size: 17px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.yt-search-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 9px 12px 9px 34px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12.5px;
+}
+
+.yt-search-input:focus {
+  outline: none;
+  border-color: var(--border-accent);
+}
+
+.yt-search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  box-shadow: var(--shadow-pop);
+}
+
+.yt-search-hit {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: var(--radius-panel);
+  cursor: pointer;
+}
+
+.yt-search-hit:hover,
+.yt-search-hit:focus-visible {
+  background: var(--surface-2);
+}
+
+.yt-search-hit-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.yt-search-hit .yt-muted {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+}
+
+.yt-search-empty {
+  padding: 8px 10px;
+}
+
+/* ---------- Intestazioni di schermata e sezione ---------- */
+
+.yt-screen-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.yt-screen-head h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.yt-screen-head .yt-muted {
+  margin-top: 3px;
+}
+
+.yt-screen-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.yt-section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.yt-section-title h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.yt-hero .yt-section-title {
+  margin-bottom: 0;
+}
+
+/* Titoli delle schede nel linguaggio del tema, come le card della dashboard. */
+:root[data-theme="opaco"] .yt-section-title h3 {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+:root[data-theme="quaderno"] .yt-section-title h3 {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .yt-section-title h3 {
+  font-weight: 500;
+}
+
+.yt-empty-note {
+  padding: 8px 2px;
+}
+
+.yt-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.yt-breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.yt-breadcrumb svg {
+  font-size: 17px;
+}
+
+.yt-breadcrumb button {
+  all: unset;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.yt-breadcrumb button:hover {
+  color: var(--accent);
+}
+
+.yt-breadcrumb button:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+.yt-breadcrumb .is-current {
+  padding: 2px 4px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.yt-breadcrumb-title {
+  max-width: 380px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Miniature ---------- */
+
+.yt-thumb {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--yt-media-radius);
+  background: var(--display-texture, none), var(--thumb-bg);
+}
+
+.yt-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* hqdefault è 4:3 con barre nere: così si vede solo il 16:9 vero */
+}
+
+.yt-thumb-empty {
+  width: 100%;
+  height: 100%;
+  min-height: 40px;
+  background: var(--surface-2);
+}
+
+.yt-thumb-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  transform: translate(-50%, -50%) scale(0.9);
+  border-radius: 50%;
+  background: var(--media-scrim);
+  color: var(--media-fg);
+  font-size: 22px;
+  opacity: 0;
+  transition: opacity 150ms ease, transform 150ms ease, background 150ms ease;
+}
+
+.yt-row-main:hover .yt-thumb-play,
+.yt-row-main:focus-visible .yt-thumb-play,
+.yt-hero-thumb-btn:hover .yt-thumb-play,
+.yt-hero-thumb-btn:focus-visible .yt-thumb-play {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.yt-hero .yt-thumb-play {
+  opacity: 1;
+  border: var(--thumb-play-border, 0);
+  background: var(--thumb-play-bg);
+  color: var(--thumb-play-fg);
+  width: 48px;
+  height: 48px;
+  font-size: 30px;
+}
+
+.yt-thumb-duration {
+  position: absolute;
+  right: 6px;
+  bottom: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--media-scrim);
+  color: var(--media-fg);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.yt-thumb-progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--media-track);
+}
+
+.yt-thumb-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+/* ---------- Righe video ---------- */
+
+.yt-video-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.yt-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 4px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-panel);
+  background: var(--surface-1);
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.yt-row:hover {
+  background: var(--surface-2);
+}
+
+.yt-row.is-watched .yt-row-title {
+  color: var(--text-secondary);
+}
+
+.yt-row-main {
+  all: unset;
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.yt-row-thumb {
+  flex: 0 0 auto;
+  width: 112px;
+}
+
+.yt-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.yt-row-title {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.yt-row-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+}
+
+.yt-row-folder {
+  align-self: flex-start;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.yt-row-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+  opacity: 0.55;
+  transition: opacity 150ms ease;
+}
+
+.yt-row:hover .yt-row-actions,
+.yt-row:focus-within .yt-row-actions {
+  opacity: 1;
+}
+
+/* ---------- Cartelle ---------- */
+
+.yt-folder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.yt-folder-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  border: var(--card-border);
+  border-top: 3px solid var(--folder-color, var(--border-subtle));
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  transition: border-color 150ms ease, background 150ms ease, transform 150ms var(--ease-out-back);
+  box-shadow: var(--card-shadow);
+}
+
+.yt-folder-card:hover {
+  border-color: var(--border-accent);
+  border-top-color: var(--folder-color, var(--border-accent));
+  transform: translateY(-1px);
+}
+
+.yt-folder-card--plain {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  cursor: pointer;
+  box-shadow: var(--card-shadow);
+}
+
+.yt-folder-card--plain:hover {
+  border-color: var(--border-accent);
+}
+
+.yt-folder-card-main {
+  all: unset;
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.yt-folder-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 4px 4px;
+}
+
+.yt-folder-card--plain .yt-folder-card-text {
+  padding: 10px 14px 12px;
+}
+
+.yt-folder-card--plain .yt-mosaic {
+  margin: 10px 10px 0;
+}
+
+.yt-folder-card-name {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.yt-folder-card-towatch {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.yt-folder-card-edit {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: var(--media-scrim);
+  color: var(--media-fg);
+  opacity: 0;
+  transition: opacity 150ms ease, background 150ms ease;
+}
+
+.yt-folder-card:hover .yt-folder-card-edit,
+.yt-folder-card:focus-within .yt-folder-card-edit {
+  opacity: 1;
+}
+
+.yt-folder-card-edit:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Mosaico di miniature: 1, 2 o 3 immagini nello spazio di una 16:9. */
+.yt-mosaic {
+  display: grid;
+  gap: 2px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--yt-media-radius);
+  background: var(--surface-2);
+}
+
+.yt-mosaic .yt-thumb {
+  aspect-ratio: auto;
+  border-radius: 0;
+  min-height: 0;
+}
+
+.yt-mosaic--1 {
+  grid-template: 1fr / 1fr;
+}
+
+.yt-mosaic--2 {
+  grid-template: 1fr / 1fr 1fr;
+}
+
+.yt-mosaic--3 {
+  grid-template: 1fr 1fr / 2fr 1fr;
+}
+
+.yt-mosaic--3 .yt-thumb:first-child {
+  grid-row: 1 / span 2;
+}
+
+.yt-mosaic-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 34px;
+}
+
+/* ---------- Home ---------- */
+
+.yt-home,
+.yt-library,
+.yt-watch {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.yt-home-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 16px;
+  align-items: stretch; /* le due schede hanno la stessa altezza: decide la lista (3 righe) */
+}
+
+/* Coda: al massimo 3 righe visibili, il resto scorre. Righe ad altezza fissa, così "3" è esatto. */
+.yt-queue-list {
+  --row-h: 88px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: calc(var(--row-h) * 3 + 6px * 2);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.yt-queue-list .yt-row {
+  flex-shrink: 0;
+  height: var(--row-h);
+}
+
+.yt-queue-list .yt-row-main {
+  height: 100%;
+}
+
+.yt-queue-list .yt-row-thumb {
+  width: 120px;
+}
+
+.yt-queue-list .yt-row-text {
+  overflow: hidden;
+}
+
+/* Hero: la miniatura prende l'altezza che resta (16:9 intero, mai tagliata), titolo e pulsante sotto sulla stessa riga. */
+.yt-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.yt-hero-stage {
+  flex: 1;
+  min-height: 140px;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.yt-hero-thumb-btn {
+  all: unset;
+  display: block;
+  height: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  cursor: pointer;
+}
+
+.yt-hero-thumb {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--yt-media-radius);
+}
+
+.yt-hero-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.yt-hero-info {
+  min-width: 0;
+}
+
+.yt-hero-title {
+  margin: 0 0 3px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.yt-hero-btn {
+  flex-shrink: 0;
+}
+
+.yt-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.yt-welcome p {
+  margin: 0;
+  max-width: 520px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+/* ---------- Guarda e annota ---------- */
+
+.yt-watch-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.yt-watch-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.yt-player-frame {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--media-bg);
+}
+
+.yt-player-iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.yt-player-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.yt-player-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.yt-rate {
+  width: auto;
+  min-width: 78px;
+}
+
+.yt-switch {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.yt-switch:focus-visible .yt-switch-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.yt-switch-track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  background: var(--surface-3);
+  transition: background 150ms ease;
+}
+
+.yt-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition: transform 150ms var(--ease-out-back), background 150ms ease;
+}
+
+.yt-switch.is-on .yt-switch-track {
+  background: var(--accent);
+}
+
+.yt-switch.is-on .yt-switch-knob {
+  transform: translateX(16px);
+  background: var(--on-accent);
+}
+
+.yt-watch-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.yt-watch-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.yt-saved-in {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.yt-watch-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* ---------- Appunti ---------- */
+
+.yt-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.yt-notes-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.yt-notes-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.yt-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-1);
+}
+
+.yt-composer-time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.yt-composer-chip {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.yt-composer .yt-btn {
+  align-self: flex-end;
+}
+
+.yt-notes-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.yt-notes-empty {
+  padding: 4px 0;
+}
+
+.yt-note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+.yt-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--radius-panel);
+  background: var(--surface-1);
+}
+
+.yt-note-time {
+  all: unset;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.yt-note-time:hover {
+  background: var(--border-accent);
+}
+
+.yt-note-time:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+.yt-note-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.yt-note-title {
+  font-weight: 700;
+}
+
+.yt-note-body {
+  color: var(--text-secondary);
+}
+
+.yt-note-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+  opacity: 0.55;
+}
+
+.yt-note:hover .yt-note-actions,
+.yt-note:focus-within .yt-note-actions {
+  opacity: 1;
+}
+
+.yt-note-edit {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.yt-note-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* ---------- Finestre ---------- */
+
+.yt-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+  animation: yt-fade 150ms ease-out;
+}
+
+@keyframes yt-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.yt-dialog {
+  box-sizing: border-box;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 22px 24px;
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-pop);
+  animation: yt-pop 180ms var(--ease-out-back);
+}
+
+@keyframes yt-pop {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.yt-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.yt-dialog-head h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.yt-dialog-close {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.yt-dialog-close:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.yt-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.yt-dialog-video {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yt-dialog-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.yt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.yt-swatches {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.yt-swatch {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.yt-swatch--auto {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.yt-swatch.is-selected {
+  border-color: var(--text-primary);
+}
+
+.yt-swatch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.yt-validation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.yt-validation svg {
+  flex-shrink: 0;
+  font-size: 17px;
+}
+
+.yt-validation--ok {
+  color: var(--success-text);
+}
+
+.yt-validation--bad {
+  color: var(--danger);
+}
+
+.yt-validation--warn {
+  color: var(--study-break);
+}
+
+.yt-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: var(--yt-media-radius);
+  background: var(--surface-1);
+}
+
+.yt-preview img,
+.yt-preview .yt-thumb-empty {
+  flex: 0 0 auto;
+  width: 120px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.yt-preview-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.yt-preview-title {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.yt-newfolder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---------- Schermi stretti ---------- */
+
+@media (max-width: 900px) {
+  .yt-hero-stage {
+    flex: none;
+  }
+
+  .yt-hero-thumb-btn {
+    width: 100%;
+    height: auto;
+  }
+
+  .yt-home-top,
+  .yt-watch-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .yt-row-thumb {
+    width: 88px;
+  }
+}

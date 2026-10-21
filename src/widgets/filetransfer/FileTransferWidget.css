@@ -1,0 +1,294 @@
+/* File transfer (card "File" dei mockup e widget-1x1.html). Stessa struttura
+   in tutti i temi: le misure che cambiano sono variabili impostate per tema. */
+
+.widget.ftw {
+  --ft-num-size: 40px;
+  --ft-num-s: 54px;
+  --ft-num-lh: 1;
+  --ft-pad: 16px;
+
+  display: flex;
+  flex-direction: column;
+  padding: var(--ft-pad);
+  color: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .widget.ftw {
+  --ft-num-size: 62px;
+  --ft-num-s: 72px;
+  --ft-num-lh: 0.85;
+  --ft-pad: 18px;
+}
+
+:root[data-theme="quaderno"] .widget.ftw {
+  --ft-num-size: 58px;
+  --ft-num-s: 72px;
+  --ft-num-lh: 0.85;
+}
+
+:root[data-theme="fosforo"] .widget.ftw {
+  --ft-num-size: 48px;
+  --ft-num-s: 66px;
+  --ft-pad: 14px;
+}
+
+.ftw-num {
+  font-family: var(--font-display);
+  font-size: var(--ft-num-size);
+  font-weight: var(--display-weight);
+  line-height: var(--ft-num-lh);
+  color: var(--accent-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Nei temi Notte e Opaco i numeri sono nel colore del testo, non dell'accent. */
+:root[data-theme="notte"] .ftw-num,
+:root[data-theme="opaco"] .ftw-num {
+  color: var(--text-primary);
+}
+
+.ftw-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dot-off);
+}
+
+.ftw.is-online .ftw-dot {
+  background: var(--led);
+}
+
+/* ---------- 1×1: numero al centro, punto di stato, etichetta ---------- */
+.widget.ftw--S {
+  position: relative;
+  align-items: center;
+  justify-content: center;
+}
+
+.ftw--S .ftw-num {
+  font-size: var(--ft-num-s);
+  line-height: 1;
+}
+
+.ftw--S .ftw-dot {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+}
+
+.ftw--S .ftw-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="opaco"] .ftw--S .ftw-cap {
+  display: none;
+}
+
+:root[data-theme="opaco"] .ftw--S .ftw-dot {
+  top: 20px;
+  right: 20px;
+  width: 8px;
+  height: 8px;
+}
+
+:root[data-theme="quaderno"] .ftw--S .ftw-dot,
+:root[data-theme="fosforo"] .ftw--S .ftw-dot {
+  top: 16px;
+  right: 16px;
+}
+
+/* ---------- 2×1 e 2×2 ---------- */
+.ftw-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.ftw-title {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ftw-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.ftw.is-online .ftw-status {
+  color: var(--success-text);
+}
+
+.ftw-status .ftw-dot {
+  width: 6px;
+  height: 6px;
+}
+
+.ftw-main {
+  margin-top: auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.ftw-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ftw-side {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ftw-address {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ftw-toggle {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: var(--btn-ghost-border);
+  background: var(--btn-ghost-bg, transparent);
+  color: var(--btn-ghost-fg);
+  cursor: pointer;
+}
+
+.ftw-toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Opaco: titolo in grassetto, stato a pillola d'inchiostro, pulsante pieno. */
+:root[data-theme="opaco"] .ftw-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .ftw-status {
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--pg-ink);
+  color: var(--pg-light);
+  font-weight: 500;
+}
+
+:root[data-theme="opaco"] .ftw-status .ftw-dot {
+  display: none;
+}
+
+:root[data-theme="opaco"] .ftw-label {
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+:root[data-theme="opaco"] .ftw-toggle {
+  border: 0;
+  background: var(--pg-ink);
+  color: var(--pg-light);
+}
+
+/* Quaderno: titolo e stato in grassetto. */
+:root[data-theme="quaderno"] .ftw-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+:root[data-theme="quaderno"] .ftw-status {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+:root[data-theme="quaderno"] .ftw-status .ftw-dot {
+  width: 7px;
+  height: 7px;
+}
+
+/* Fosforo: testi nel colore principale, LED rosso solo se online. */
+:root[data-theme="fosforo"] .ftw-title {
+  font-size: inherit;
+  color: var(--text-primary);
+}
+
+:root[data-theme="fosforo"] .ftw-status {
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+:root[data-theme="fosforo"] .ftw-status .ftw-dot {
+  width: 7px;
+  height: 7px;
+}
+
+:root[data-theme="fosforo"] .ftw-toggle {
+  border: var(--btn-primary-border);
+  color: var(--btn-primary-fg);
+}
+
+/* ---------- 2×2: ultimi file ricevuti ---------- */
+.ftw-files {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  min-height: 0;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.ftw-files li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--divider);
+}
+
+.ftw-files li:last-child {
+  padding-bottom: 0;
+}
+
+.ftw-file-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ftw-file-meta {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+}
+
+.ftw-files-empty {
+  color: var(--text-secondary);
+}
+
+/* In 2×2 numero e controlli stanno in alto, i file riempiono il resto. */
+.ftw--M .ftw-main {
+  margin-top: 16px;
+}

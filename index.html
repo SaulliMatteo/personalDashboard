@@ -1,12 +1,81 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>personaldashboard</title>
+    <!-- Schermata di avvio: vive FUORI da #root, così compare prima del
+         bundle JS (niente schermo bianco) e React la fa sparire a caricamento
+         finito (src/app/splash.ts). Stili inline di proposito: devono
+         funzionare prima che parta qualunque altro CSS. -->
+    <!-- Tema dell'ultimo avvio (cache scritta da applySettings.ts), applicato
+         prima di qualunque render: niente flash del tema sbagliato. -->
+    <script>
+      try {
+        var t = localStorage.getItem("pd-theme");
+        if (t === "notte" || t === "opaco" || t === "quaderno" || t === "fosforo") document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+    <style>
+      /* Colori della splash per tema: copiano i token di src/styles/tokens.css
+         (qui servono prima che arrivi il CSS del bundle). */
+      :root { --s-bg: #090C15; --s-accent: #8EA6FF; --s-card: #151B2E; --s-line: #1F2740; --s-text: #E9ECF5; --s-muted: #9AA2BA; --s-radius: 9px; }
+      :root[data-theme="opaco"] { --s-bg: #D8D5CD; --s-accent: #22251F; --s-card: #C9C5BB; --s-line: transparent; --s-text: #22251F; --s-muted: #4D5047; --s-radius: 12px; }
+      :root[data-theme="quaderno"] { --s-bg: #FCFDFF; --s-accent: #2340A0; --s-card: #FFFFFF; --s-line: #C9D3E3; --s-text: #1B2433; --s-muted: #556178; --s-radius: 4px; }
+      :root[data-theme="fosforo"] { --s-bg: #110709; --s-accent: #F4E9E4; --s-card: #1A0D0F; --s-line: rgba(255,214,206,.12); --s-text: #F2E6E1; --s-muted: #B39C97; --s-radius: 6px; }
+      html, body { margin: 0; height: 100%; background: var(--s-bg); }
+      #splash {
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px;
+        background: var(--s-bg); color: var(--s-muted);
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        transition: opacity 420ms ease, transform 420ms ease;
+      }
+      #splash.is-leaving { opacity: 0; transform: scale(1.03); pointer-events: none; }
+      .splash-grid {
+        display: grid; grid-template-columns: repeat(4, 34px); grid-auto-rows: 34px; gap: 8px;
+      }
+      .splash-tile {
+        border-radius: var(--s-radius); background: var(--s-card); border: 1px solid var(--s-line);
+        animation: splash-wave 2.1s ease-in-out infinite;
+        animation-delay: calc(var(--d) * 170ms);
+      }
+      .splash-tile:nth-child(1) { grid-area: 1 / 1 / 3 / 3; --d: 0; }
+      .splash-tile:nth-child(2) { grid-area: 1 / 3;         --d: 1; }
+      .splash-tile:nth-child(3) { grid-area: 1 / 4;         --d: 2; }
+      .splash-tile:nth-child(4) { grid-area: 2 / 3 / 3 / 5; --d: 2; }
+      .splash-tile:nth-child(5) { grid-area: 3 / 1;         --d: 2; }
+      .splash-tile:nth-child(6) { grid-area: 3 / 2 / 4 / 4; --d: 3; }
+      .splash-tile:nth-child(7) { grid-area: 3 / 4;         --d: 4; }
+      @keyframes splash-wave {
+        0%, 100% { background: var(--s-card); border-color: var(--s-line); }
+        35% {
+          background: color-mix(in srgb, var(--s-accent) 22%, var(--s-card));
+          border-color: color-mix(in srgb, var(--s-accent) 55%, transparent);
+        }
+      }
+      .splash-text { text-align: center; line-height: 1.5; }
+      .splash-name { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: .01em; color: var(--s-text); }
+      #splash-status { margin: 4px 0 0; font-size: 12.5px; min-height: 19px; }
+      @media (prefers-reduced-motion: reduce) {
+        .splash-tile { animation: none; }
+        #splash { transition: opacity 150ms ease; transform: none !important; }
+      }
+    </style>
   </head>
   <body>
+    <div id="splash" role="status" aria-live="polite">
+      <div class="splash-grid" aria-hidden="true">
+        <span class="splash-tile"></span><span class="splash-tile"></span><span class="splash-tile"></span>
+        <span class="splash-tile"></span><span class="splash-tile"></span><span class="splash-tile"></span>
+        <span class="splash-tile"></span>
+      </div>
+      <div class="splash-text">
+        <p class="splash-name">personalDashboard</p>
+        <p id="splash-status">Avvio…</p>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

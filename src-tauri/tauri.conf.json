@@ -18,7 +18,9 @@
         "minWidth": 1200,
         "minHeight": 620,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "theme": "Dark",
+        "backgroundColor": "#0b0b0e"
       }
     ],
     "security": {
@@ -35,6 +37,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "resources": {
+      "filetransfer/public/": "filetransfer-public/"
+    },
+    "macOS": {
+      "signingIdentity": "-",
+      "minimumSystemVersion": "11.0"
+    },
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }

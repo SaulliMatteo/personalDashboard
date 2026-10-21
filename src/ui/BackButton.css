@@ -1,0 +1,29 @@
+.detail-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+
+  height: 36px;
+  border: var(--btn-ghost-border);
+  border-radius: var(--radius-item);
+  background: var(--btn-ghost-bg, transparent);
+
+  padding: 0 14px;
+
+  color: var(--btn-ghost-fg);
+  font-family: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.detail-back-btn:hover {
+  color: var(--text-primary);
+}
+
+.detail-back-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
