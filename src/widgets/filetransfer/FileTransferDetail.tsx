@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { MdOutlineFolderOpen, MdRefresh } from "react-icons/md";
 import { QRCodeSVG } from "qrcode.react";
 import { useNav } from "../../core/nav/NavContext";
+import { useThemeVariant } from "../../core/theme/variants";
 import BackButton from "../../ui/BackButton";
 import { useFileTransfer } from "./FileTransferContext";
 import { readPreview, type Preview } from "./data/fileTransferApi";
 import { extensionOf, formatDate, formatSize } from "./lib/format";
+import { STATUS_LABELS } from "./lib/labels";
 import "./FileTransferDetail.css";
 
 /** Pagina a schermo intero: controllo del server, QR di collegamento, file ricevuti e anteprima. */
@@ -13,6 +15,8 @@ function FileTransferDetail() {
   const { goToDashboard } = useNav();
   const { running, address, port, busy, error, files, ready, startServer, stopServer, refreshFiles, openFolder, clearError } =
     useFileTransfer();
+
+  const [onLabel, offLabel] = useThemeVariant(STATUS_LABELS);
 
   const [selected, setSelected] = useState<string | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -54,19 +58,31 @@ function FileTransferDetail() {
         <BackButton onClick={goToDashboard} />
       </header>
 
-      <section className="ft-card ft-server">
+      {/* Il server con i pezzi della card File del tema: numero grande, punto di stato, pulsanti. */}
+      <section className={`ft-card ft-server${running ? " is-online" : ""}`}>
         <div className="ft-server-main">
-          <div className="ft-label">SERVER HTTP</div>
-          <h2>{running ? "Server attivo" : "Server fermo"}</h2>
+          <div className="ft-server-head">
+            <h2>Server</h2>
+            <span className="ft-status">
+              <span className="ft-dot" aria-hidden="true" />
+              {running ? onLabel : offLabel}
+            </span>
+          </div>
+
+          <div className="ft-count">
+            <span className="ft-num">{ready ? files.length : "–"}</span>
+            <span className="ft-count-label">{files.length === 1 ? "file ricevuto" : "file ricevuti"}</span>
+          </div>
+
           <p className="ft-muted">
             {running
-              ? "Il server è pronto a ricevere connessioni dalla rete locale."
+              ? "Pronto a ricevere file dai dispositivi sulla stessa rete Wi-Fi."
               : "Avvia il server per permettere all'iPad di collegarsi."}
           </p>
 
           {running && address && (
             <div className="ft-address">
-              <span>INDIRIZZO DA APRIRE SUL dispositivo</span>
+              <span>Indirizzo da aprire sul dispositivo</span>
               <code>http://{address}</code>
             </div>
           )}
@@ -91,26 +107,20 @@ function FileTransferDetail() {
         </div>
 
         <div className="ft-server-side">
-          <div className="ft-info-row">
-            <span>PORTA</span>
-            <strong>{port}</strong>
-          </div>
-          <div className="ft-info-row">
-            <span>PROTOCOLLO</span>
-            <strong>HTTP</strong>
-          </div>
-          <div className="ft-info-row">
-            <span>FILE</span>
-            <strong>{files.length}</strong>
-          </div>
+          <dl className="ft-info">
+            <dt>Porta</dt>
+            <dd>{port}</dd>
+            <dt>Protocollo</dt>
+            <dd>HTTP</dd>
+          </dl>
 
           {running && address && (
             <div className="ft-qr">
-              <div className="ft-label">SCANSIONA PER COLLEGARTI</div>
-              {/* Il QR resta bianco su fondo bianco in ogni tema: i lettori lo richiedono. */}
+              {/* Il QR resta scuro su chiaro in ogni tema: i lettori lo richiedono. */}
               <div className="ft-qr-code">
                 <QRCodeSVG value={`http://${address}/`} size={120} level="M" bgColor="transparent" fgColor="currentColor" />
               </div>
+              <span className="ft-muted">Inquadralo con l'iPad per collegarti.</span>
             </div>
           )}
         </div>
@@ -119,10 +129,7 @@ function FileTransferDetail() {
       <section className="ft-grid">
         <div className="ft-card ft-files">
           <div className="ft-card-heading">
-            <div>
-              <div className="ft-label">ARCHIVIO</div>
-              <h2>File ricevuti</h2>
-            </div>
+            <h2>File ricevuti</h2>
             <div className="ft-buttons">
               <button type="button" className="ft-btn ft-btn--small" onClick={() => void refreshFiles()} title="Aggiorna l'elenco">
                 <MdRefresh /> Aggiorna
@@ -163,10 +170,7 @@ function FileTransferDetail() {
 
         <div className="ft-card ft-preview">
           <div className="ft-card-heading">
-            <div>
-              <div className="ft-label">VISUALIZZATORE</div>
-              <h2>Anteprima</h2>
-            </div>
+            <h2>Anteprima</h2>
             {selected && <span className="ft-preview-name">{selected}</span>}
           </div>
 

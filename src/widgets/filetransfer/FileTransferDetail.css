@@ -32,12 +32,6 @@
   color: var(--text-primary);
 }
 
-.ft-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
 
 .ft-muted {
   margin: 0;
@@ -63,47 +57,10 @@
   gap: 12px;
 }
 
-.ft-server-side {
-  width: 210px;
-  flex-shrink: 0;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 14px;
-  background: var(--surface-1);
-  border-left: 1px solid var(--border-subtle);
-}
 
-.ft-info-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
 
-.ft-info-row span {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
 
-.ft-info-row strong {
-  font-size: 13px;
-  color: var(--text-primary);
-}
 
-.ft-qr {
-  margin-top: 4px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border-subtle);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
 
 .ft-qr-code {
   display: inline-flex;
@@ -117,33 +74,128 @@
   display: block;
 }
 
+
+
+
+/* ---------- Server: i pezzi della card File (FileTransferWidget.css) ---------- */
+.ft-server-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.ft-server-head h2 {
+  margin: 0;
+}
+
+.ft-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ft-server.is-online .ft-status {
+  color: var(--success-text);
+}
+
+.ft-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dot-off);
+}
+
+.ft-server.is-online .ft-dot {
+  background: var(--led);
+}
+
+.ft-count {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.ft-num {
+  font-family: var(--font-display);
+  font-size: 56px;
+  font-weight: var(--display-weight);
+  line-height: 1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.ft-count-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.ft-server-side {
+  width: 220px;
+  flex-shrink: 0;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-left: 1px solid var(--divider);
+}
+
+.ft-info {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 12px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.ft-info dt {
+  color: var(--text-secondary);
+}
+
+.ft-info dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Il QR sta su un pannello del tema, come le miniature delle card. */
+.ft-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--radius-panel);
+  border: var(--panel-border);
+  background: var(--panel-bg);
+  text-align: center;
+}
+
 .ft-address {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 4px 16px;
   padding: 11px 14px;
-  border: 1px solid var(--border-accent);
-  border-radius: var(--radius-item);
-  background: var(--accent-soft);
-}
-
-.ft-address span {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 .ft-address code {
   font-size: 13px;
-  font-weight: 700;
-  color: var(--accent);
-  user-select: text; /* l'app disattiva la selezione: l'indirizzo va poter essere copiato */
+  font-weight: 600;
+  color: var(--accent-strong);
+  user-select: text; /* l'app disattiva la selezione: l'indirizzo deve poter essere copiato */
   -webkit-user-select: text;
 }
 
-/* ---------- Pulsanti ---------- */
+/* ---------- Pulsanti nella forma del tema ---------- */
 
 .ft-buttons {
   display: flex;
@@ -151,59 +203,67 @@
   gap: 8px;
 }
 
+
+
+
+
+
+
+
+
 .ft-btn {
-  all: unset;
-  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-
-  padding: 9px 15px;
+  height: 38px;
+  padding: 0 16px;
+  border: var(--btn-ghost-border);
   border-radius: var(--radius-item);
-
-  background: var(--surface-2);
-  color: var(--text-secondary);
-  font-size: 12.5px;
-  font-weight: 600;
+  background: var(--btn-ghost-bg, transparent);
+  color: var(--btn-ghost-fg);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-
-  transition: background 150ms ease, color 150ms ease, transform 120ms ease, opacity 150ms ease;
 }
 
 .ft-btn:hover:not(:disabled) {
-  background: var(--surface-3);
   color: var(--text-primary);
-  transform: translateY(-1px);
+}
+
+.ft-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .ft-btn:disabled {
   opacity: 0.4;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .ft-btn--primary {
-  background: var(--accent);
-  color: var(--on-accent);
+  border: var(--btn-primary-border, 0);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
 }
 
 .ft-btn--primary:hover:not(:disabled) {
-  background: var(--accent);
-  color: var(--on-accent);
-  opacity: 0.88;
+  color: var(--btn-primary-fg);
 }
 
 .ft-btn--danger {
-  background: var(--danger-soft);
+  border: 1px solid var(--danger);
+  background: transparent;
   color: var(--danger);
 }
 
 .ft-btn--danger:hover:not(:disabled) {
-  background: var(--danger-strong);
   color: var(--danger);
 }
 
 .ft-btn--small {
-  padding: 7px 11px;
+  height: 32px;
+  padding: 0 12px;
   font-size: 12px;
 }
 
@@ -297,9 +357,23 @@
   background: var(--surface-1);
 }
 
+/* Riga scelta come la materia attiva nelle card dello Studio. */
 .ft-file-row.is-selected {
-  background: var(--accent-soft);
-  border-color: var(--border-accent);
+  background: var(--row-active-bg);
+  border-color: var(--row-active-border, transparent);
+}
+
+:root[data-theme="opaco"] .ft-file-row.is-selected,
+:root[data-theme="opaco"] .ft-file-row.is-selected .ft-file-meta {
+  color: var(--on-accent);
+}
+
+:root[data-theme="quaderno"] .ft-file-row.is-selected {
+  background: transparent;
+}
+
+:root[data-theme="quaderno"] .ft-file-row.is-selected .ft-file-name {
+  background: var(--highlight-mark);
 }
 
 .ft-file-icon {
@@ -399,4 +473,16 @@
   max-height: 360px;
   object-fit: contain;
   border-radius: 6px;
+}
+
+/* Numero grande nella misura delle card File di ogni tema. */
+:root[data-theme="opaco"] .ft-num {
+  font-size: 72px;
+  line-height: 0.85;
+}
+
+:root[data-theme="quaderno"] .ft-num {
+  font-size: 64px;
+  line-height: 0.85;
+  color: var(--accent);
 }
