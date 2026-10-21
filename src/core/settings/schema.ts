@@ -14,7 +14,12 @@
  * restano con i loro default e continuano a governare l'app. Il gruppo
  * "study" e "youtube" si modificano dalla rotellina del widget nel catalogo
  * (ogni widget dichiara il suo gruppo con `settingsGroup`).
+ *
+ * Raggi, spaziature, font e larghezza della sidebar li decide il tema
+ * (styles/tokens.css): non sono più impostazioni.
  */
+
+import { THEMES, THEME_IDS, isThemeId, type ThemeId } from "../theme/themes";
 
 /** Palette del glow dei widget: tre colori usati per il bordo "mesh". */
 export const GLOW_PALETTES = {
@@ -33,14 +38,11 @@ export const DEFAULT_SETTINGS = {
   dashboardName: "Personal Dashboard",
 
   // ---- Aspetto ----
-  theme: "dark" as "dark" | "light" | "system",
-  accentColor: "#6c8dff",
-  cardRadius: 14,
-  itemRadius: 8,
-  widgetPadding: 16,
-  fontFamily: "default" as "default" | "system" | "serif" | "mono",
+  theme: "notte" as ThemeId,
+  /** false = si usa l'accent del tema; true = si usa accentColor. */
+  accentOverride: false,
+  accentColor: "#8EA6FF",
   sidebarPosition: "left" as "left" | "right",
-  sidebarWidth: 240,
   sidebarShowTitle: true,
   animationsEnabled: true,
 
@@ -57,9 +59,11 @@ export const DEFAULT_SETTINGS = {
 
   // ---- Dashboard ----
   showDashboardHeader: true,
-  dashboardGreeting: "welcome" as "welcome" | "time" | "off",
-  gridMargin: 10,
-  gridRowHeightRatio: 0.5,
+  dashboardGreeting: "time" as "welcome" | "time" | "off",
+  // Spazi in alto a destra dell'intestazione: "auto" = come il mockup del tema,
+  // "none" = vuoto, altrimenti l'id di un widget con `mini` (vedi features/dashboard/HeaderSlots).
+  headerSlot1: "auto",
+  headerSlot2: "none",
   gridRows: 4,
   lockLayout: false,
   gridPushDelayMs: 600,
@@ -89,7 +93,7 @@ export const DEFAULT_SETTINGS = {
   youtubeCountAsStudy: false,
 
   // ---- Widget: Companion ----
-  companionName: "Pixel",
+  companionName: "Pixy",
   companionPersonality: "cheerful" as "cheerful" | "calm" | "sleepy" | "grumpy",
   companionColor: "text" as "text" | "accent",
   companionShowMouth: true,
@@ -101,11 +105,21 @@ export const DEFAULT_SETTINGS = {
   companionWatchForegroundApp: true,
   /** Animazioni spente, "id,id,…". Si modifica dalla pagina del Companion: nessuna voce in SETTING_DEFS. */
   companionDisabledAnimations: "",
+  /** Sopra questa temperatura (°C, dal widget Meteo) ogni tanto diventa una fiamma. */
+  companionHotC: 28,
+  /** Sotto questa temperatura (°C, dal widget Meteo) ogni tanto diventa un fiocco di neve. */
+  companionColdC: 5,
+  /** Categorie scelte a mano per le app, "processo=categoria;…". Si modifica dalla pagina del Companion: nessuna voce in SETTING_DEFS. */
+  companionAppCategories: "",
+
+  // ---- Widget: Meteo ----
+  /** Vuota = meteo spento: nessuna richiesta in rete. */
+  weatherCity: "",
 };
 
 export type AppSettings = typeof DEFAULT_SETTINGS;
 export type SettingKey = keyof AppSettings;
-export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion";
+export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion" | "weather";
 
 interface BaseDef {
   key: SettingKey;
@@ -140,26 +154,12 @@ export const SETTING_DEFS: SettingDef[] = [
   // ======================= ASPETTO =======================
   {
     key: "theme", group: "appearance", section: "Tema e colori", type: "select", label: "Tema",
-    options: [{ value: "dark", label: "Scuro" }, { value: "light", label: "Chiaro" }, { value: "system", label: "Segui il sistema" }],
+    options: THEME_IDS.map((id) => ({ value: id, label: THEMES[id].label })),
   },
-  { key: "accentColor", group: "appearance", section: "Tema e colori", type: "color", label: "Colore accent", description: "Usato per selezioni, pulsanti e anelli di progresso." },
-
-  { key: "cardRadius", group: "appearance", section: "Forma e spaziatura", type: "number", control: "slider", min: 0, max: 28, step: 1, unit: "px", label: "Arrotondamento widget" },
-  { key: "itemRadius", group: "appearance", section: "Forma e spaziatura", type: "number", control: "slider", min: 0, max: 16, step: 1, unit: "px", label: "Arrotondamento pulsanti e campi" },
-  { key: "widgetPadding", group: "appearance", section: "Forma e spaziatura", type: "number", control: "slider", min: 8, max: 28, step: 1, unit: "px", label: "Spazio interno dei widget" },
-
-  {
-    key: "fontFamily", group: "appearance", section: "Tipografia", type: "select", label: "Carattere",
-    options: [
-      { value: "default", label: "Inter (predefinito)" },
-      { value: "system", label: "Carattere di sistema" },
-      { value: "serif", label: "Serif" },
-      { value: "mono", label: "Monospazio" },
-    ],
-  },
+  { key: "accentOverride", group: "appearance", section: "Tema e colori", type: "boolean", label: "Colore accent personalizzato", description: "Spento: si usa l'accent del tema." },
+  { key: "accentColor", group: "appearance", section: "Tema e colori", type: "color", dependsOn: "accentOverride", label: "Colore accent", description: "Usato per selezioni, pulsanti e anelli di progresso." },
 
   { key: "sidebarPosition", group: "appearance", section: "Barra laterale", type: "select", label: "Posizione", options: [{ value: "left", label: "Sinistra" }, { value: "right", label: "Destra" }] },
-  { key: "sidebarWidth", group: "appearance", section: "Barra laterale", type: "number", control: "slider", min: 180, max: 320, step: 10, unit: "px", label: "Larghezza" },
   { key: "sidebarShowTitle", group: "appearance", section: "Barra laterale", type: "boolean", label: "Mostra il titolo dell'app" },
 
   { key: "animationsEnabled", group: "appearance", section: "Movimento", type: "boolean", label: "Animazioni", description: "Disattivandole si spengono transizioni e sweep del glow." },
@@ -181,17 +181,19 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "showDashboardHeader", group: "dashboard", section: "Intestazione", type: "boolean", label: "Mostra l'intestazione" },
   {
     key: "dashboardGreeting", group: "dashboard", section: "Intestazione", type: "select", dependsOn: "showDashboardHeader", label: "Saluto",
-    options: [{ value: "welcome", label: "Welcome back" }, { value: "time", label: "In base all'ora del giorno" }, { value: "off", label: "Nessuno" }],
+    options: [{ value: "time", label: "In base all'ora del giorno" }, { value: "welcome", label: "Ciao" }, { value: "off", label: "Nessuno (titolo «Dashboard»)" }],
   },
+  // Le opzioni vengono dal registry dei widget (che core non conosce): la scheda Dashboard
+  // le mostra come select con SettingsField; qui basta la validazione da testo.
+  { key: "headerSlot1", group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Spazio in alto a destra", description: "Un mini widget accanto al saluto." },
+  { key: "headerSlot2", group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Secondo spazio", description: "Un altro mini widget, affiancato al primo." },
 
-  { key: "gridMargin", group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 0, max: 40, step: 1, unit: "px", label: "Margine tra i widget" },
-  { key: "gridRowHeightRatio", group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 0.3, max: 1, step: 0.05, label: "Altezza righe", description: "Rapporto tra altezza di riga e larghezza di colonna. 1 = celle quadrate." },
   { key: "gridRows", group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 4, max: 8, step: 1, label: "Righe disponibili", description: "Più righe = più spazio per i widget. Non scende mai sotto le righe già occupate." },
 
   { key: "lockLayout", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Blocca layout", description: "Impedisce di trascinare i widget." },
   { key: "gridPushDelayMs", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 1500, step: 50, unit: "ms", label: "Ritardo spinta widget", description: "Quanto tieni un widget sopra un altro prima che lo sposti." },
   { key: "dragThreshold", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 20, step: 1, unit: "px", label: "Distanza prima che parta il trascinamento", description: "Evita trascinamenti involontari quando clicchi." },
-  { key: "openDetailOnClick", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Apri i dettagli con un click sul widget" },
+  { key: "openDetailOnClick", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Apri il dettaglio con un doppio click sul widget" },
 
   { key: "showDragGhost", group: "dashboard", section: "Anteprima di spostamento", type: "boolean", label: "Mostra l'anteprima fantasma", description: "La copia sfocata che indica dove atterrerà il widget." },
   { key: "ghostOpacity", group: "dashboard", section: "Anteprima di spostamento", type: "number", control: "slider", min: 0.15, max: 0.8, step: 0.05, dependsOn: "showDragGhost", label: "Opacità" },
@@ -227,9 +229,15 @@ export const SETTING_DEFS: SettingDef[] = [
       "Mentre guardi un video, il tempo in riproduzione si aggiunge allo studio della materia che ha lo stesso nome della cartella in cui il video è salvato (solo la cartella diretta; maiuscole e accenti non contano). Non conta se nessuna materia attiva ha quel nome, né mentre il timer dello Studio sta lavorando.",
   },
 
+  // ======================= WIDGET: METEO =======================
+  {
+    key: "weatherCity", group: "weather", section: "Località", type: "text", maxLength: 60, placeholder: "Es. Milano", label: "Città",
+    description: "Il meteo usa internet (Open-Meteo, gratuito e senza account) solo se il widget o il suo mini sono in uso e la città è impostata.",
+  },
+
   // ======================= WIDGET: COMPANION =======================
   // Personalità e animazioni singole si scelgono anche dalla pagina del Companion.
-  { key: "companionName", group: "companion", section: "Aspetto", type: "text", maxLength: 16, placeholder: "Pixel", label: "Nome" },
+  { key: "companionName", group: "companion", section: "Aspetto", type: "text", maxLength: 16, placeholder: "Pixy", label: "Nome" },
   {
     key: "companionPersonality", group: "companion", section: "Aspetto", type: "select", label: "Personalità",
     options: [
@@ -239,7 +247,7 @@ export const SETTING_DEFS: SettingDef[] = [
       { value: "grumpy", label: "Brontolone" },
     ],
   },
-  { key: "companionColor", group: "companion", section: "Aspetto", type: "select", label: "Colore dei LED", options: [{ value: "text", label: "Bianco (segue il tema)" }, { value: "accent", label: "Colore accent" }] },
+  { key: "companionColor", group: "companion", section: "Aspetto", type: "select", label: "Colore della faccia", options: [{ value: "text", label: "Quello del tema" }, { value: "accent", label: "Colore accent" }] },
   { key: "companionShowMouth", group: "companion", section: "Aspetto", type: "boolean", label: "Mostra la bocca" },
 
   { key: "companionBubbles", group: "companion", section: "Fumetti ed emozioni", type: "boolean", label: "Fumetti", description: "Frasi brevi quando succede qualcosa o, ogni tanto, spontanee." },
@@ -258,6 +266,14 @@ export const SETTING_DEFS: SettingDef[] = [
     key: "companionWatchForegroundApp", group: "companion", section: "Comportamento", type: "boolean",
     label: "Osserva l'app in primo piano (Windows)",
     description: "Legge nome e titolo della finestra attiva per capire se stai ascoltando musica, programmando o guardando un video. Tutto resta sul PC: niente viene salvato né inviato.",
+  },
+  {
+    key: "companionHotC", group: "companion", section: "Meteo", type: "number", control: "input", min: 15, max: 45, step: 1, label: "Caldo da (°C)",
+    description: "Sopra questa temperatura ogni tanto diventa una fiamma. Serve il widget Meteo con la città impostata, in dashboard o nell'intestazione.",
+  },
+  {
+    key: "companionColdC", group: "companion", section: "Meteo", type: "number", control: "input", min: -20, max: 20, step: 1, label: "Freddo da (°C)",
+    description: "Sotto questa temperatura ogni tanto diventa un fiocco di neve.",
   },
 ];
 
@@ -288,9 +304,26 @@ export function isValidSetting(key: SettingKey, value: unknown): boolean {
  * dal default. Un DB parzialmente corrotto non può rompere l'app.
  */
 export function sanitizeSettings(raw: Record<string, unknown>): AppSettings {
+  const converted = convertLegacySettings(raw);
   const result: Record<string, unknown> = { ...DEFAULT_SETTINGS };
   for (const key of Object.keys(DEFAULT_SETTINGS) as SettingKey[]) {
-    if (key in raw && isValidSetting(key, raw[key])) result[key] = raw[key];
+    if (key in converted && isValidSetting(key, converted[key])) result[key] = converted[key];
   }
   return result as AppSettings;
+}
+
+/** Vecchi valori del tema (prima dei 4 temi) -> tema nuovo, così l'utente non perde la scelta. */
+const LEGACY_THEMES: Record<string, ThemeId> = { dark: "notte", light: "quaderno", system: "notte" };
+
+/**
+ * Converte i valori salvati da versioni precedenti PRIMA della validazione
+ * (che altrimenti li scarterebbe facendoli tornare al default).
+ */
+function convertLegacySettings(raw: Record<string, unknown>): Record<string, unknown> {
+  // "Pixel" era il nome predefinito del Companion: chi non l'aveva cambiato diventa Pixy.
+  if (raw.companionName === "Pixel") raw = { ...raw, companionName: "Pixy" };
+  const theme = raw.theme;
+  if (typeof theme !== "string" || isThemeId(theme)) return raw;
+  const mapped = LEGACY_THEMES[theme];
+  return mapped ? { ...raw, theme: mapped } : raw;
 }

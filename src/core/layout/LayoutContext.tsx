@@ -1,49 +1,15 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  type Dispatch,
-  type SetStateAction,
-  type ReactNode,
-} from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { collides } from "react-grid-layout/core";
 import { loadLayout, saveLayout, deleteWidget, type LayoutItem } from "./layoutRepository";
 import { finalizeLayout } from "./compactor";
 import { GRID_COLS } from "./gridConfig";
-import { useSettings } from "../settings/SettingsContext";
+import { useSettings } from "../settings/useSettings";
 import { useLatestRef } from "../hooks/useLatestRef";
 import { getMeta, setMeta } from "../db";
 import { DEFAULT_LAYOUT, getWidget } from "../../widgets/registry";
+import { LayoutContext } from "./useLayout";
 
 const LAYOUT_INITIALIZED_KEY = "layout_initialized";
-
-interface LayoutContextValue {
-  /** Layout corrente. Vuoto finché `ready` non è true. */
-  layout: LayoutItem[];
-  /**
-   * Setter "grezzo", usato dagli handler di drag della Dashboard. Il
-   * catalogo widget non dovrebbe usarlo: usa addWidget/removeWidget,
-   * che tengono anche il DB allineato.
-   */
-  setLayout: Dispatch<SetStateAction<LayoutItem[]>>;
-  /**
-   * Righe effettive della griglia: quelle impostate, ma mai meno di quelle
-   * già occupate (abbassare l'impostazione non deve far sovrapporre i widget).
-   */
-  rows: number;
-  /** True quando il layout iniziale è stato caricato dal DB. */
-  ready: boolean;
-  /** Prima cella libera per una taglia data (riga per riga), o null se non c'è spazio. */
-  findFreeSlot: (size: { w: number; h: number }) => { x: number; y: number } | null;
-  /** Aggiunge un widget nella prima posizione libera. False se già presente o senza spazio. */
-  addWidget: (id: string, size: { w: number; h: number }) => Promise<boolean>;
-  removeWidget: (id: string) => Promise<void>;
-  /** Riporta il layout alla disposizione di default. */
-  resetLayout: () => Promise<void>;
-}
-
-const LayoutContext = createContext<LayoutContextValue | undefined>(undefined);
 
 function layoutExtent(items: readonly LayoutItem[]): number {
   return items.reduce((max, item) => Math.max(max, item.y + item.h), 0);
@@ -139,10 +105,4 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
       {children}
     </LayoutContext.Provider>
   );
-}
-
-export function useLayout() {
-  const ctx = useContext(LayoutContext);
-  if (!ctx) throw new Error("useLayout deve essere usato dentro <LayoutProvider>");
-  return ctx;
 }

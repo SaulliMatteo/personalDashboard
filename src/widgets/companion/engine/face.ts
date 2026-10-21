@@ -40,7 +40,7 @@ export interface FaceParams {
 }
 
 /** Movimento extra di tutta la faccia mentre l'emozione è attiva. */
-export type FaceMotion = "none" | "bounce" | "shake" | "nod" | "sway" | "tremble";
+export type FaceMotion = "none" | "bounce" | "beat" | "shake" | "nod" | "sway" | "tremble" | "flicker" | "talk";
 
 /** Piccolo simbolo che compare accanto alla faccia. */
 export type GlyphId = "z" | "heart" | "note" | "exclaim" | "question" | "sweat" | "star" | "dots" | "anger" | "spark";
@@ -65,6 +65,12 @@ export const EMOTION_IDS = [
   "relaxed",
   "watching",
   "bored",
+  "serious",
+  "hot",
+  "cold",
+  "determined",
+  "talking",
+  "aim",
 ] as const;
 
 export type EmotionId = (typeof EMOTION_IDS)[number];
@@ -118,6 +124,12 @@ export const EMOTIONS: Record<EmotionId, EmotionSpec> = {
   relaxed: { label: "Rilassato", eyes: { lidBottom: 0.4, lidTop: 0.15 }, face: { mouthCurve: 0.5, mouthWidth: 0.55 }, motion: "sway" },
   watching: { label: "Guarda", eyes: { scaleX: 1.08, scaleY: 1.12 }, face: { gazeY: -0.15, mouthWidth: 0.2, mouthOpen: 0.1 } },
   bored: { label: "Annoiato", eyes: { lidTop: 0.45 }, face: { mouthCurve: -0.15, mouthWidth: 0.45, gazeX: 0.8, gazeY: 0.2 }, glyph: "dots" },
+  serious: { label: "Serio", eyes: { lidTop: 0.22, scaleY: 0.88 }, face: { mouthWidth: 0.32, mouthCurve: -0.05 } },
+  hot: { label: "Accaldato", eyes: { lidTop: 0.38, lidBottom: 0.15 }, face: { mouthWidth: 0.35, mouthOpen: 0.5, mouthCurve: 0.1 } },
+  cold: { label: "Infreddolito", eyes: { scaleY: 0.9, lidTop: 0.12 }, face: { mouthCurve: -0.3, mouthWidth: 0.45, blush: 0.7 }, motion: "tremble" },
+  determined: { label: "Deciso", eyes: { tilt: 0.35, lidTop: 0.18 }, face: { mouthCurve: 0.25, mouthWidth: 0.4 } },
+  talking: { label: "Parla", eyes: { lidBottom: 0.3 }, face: { mouthCurve: 0.4, mouthWidth: 0.45 }, motion: "talk" },
+  aim: { label: "Mira", left: { lidTop: 0.5, lidBottom: 0.3 }, right: { scaleX: 1.08, scaleY: 1.1 }, face: { mouthCurve: -0.05, mouthWidth: 0.3 } },
 };
 
 export function emotionFace(id: EmotionId): FaceParams {

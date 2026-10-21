@@ -6,9 +6,10 @@
  * Il numero di colonne è fisso. Le RIGHE sono invece impostabili
  * (settings.gridRows, minimo 4): aumentarle non invalida nessun layout.
  *
- * Margine, altezza righe e ritardo di spinta: vedi core/settings/schema.ts.
+ * L'altezza di riga si ricava dall'altezza disponibile (la griglia riempie
+ * la finestra); lo spazio fra i widget lo decide il tema (--grid-gap).
  */
-export const GRID_COLS = 4;
+export const GRID_COLS = 6;
 
-// Altezza minima di riga in px, per non schiacciare i widget con finestre strette.
-export const MIN_ROW_HEIGHT = 40;
+// Altezza minima di riga in px: sotto questa soglia meglio far scorrere .main che schiacciare i widget.
+export const MIN_ROW_HEIGHT = 120;
