@@ -1,5 +1,5 @@
 import BorderGlow, { type BorderGlowProps } from "../../ui/BorderGlow";
-import { useSettings } from "../settings/SettingsContext";
+import { useSettings } from "../settings/useSettings";
 import { GLOW_PALETTES } from "../settings/schema";
 import { useTheme } from "../theme/useTheme";
 

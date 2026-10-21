@@ -4,7 +4,7 @@ import type { WidgetProps } from "../../core/widgets/types";
 import { sizeKey } from "../../core/widgets/sizes";
 import { useThemeVariant } from "../../core/theme/variants";
 import { PlayIcon, StopIcon } from "../../ui/icons";
-import { useFileTransfer } from "./FileTransferContext";
+import { useFileTransfer } from "./useFileTransfer";
 import { extensionOf, formatSize } from "./lib/format";
 import { STATUS_LABELS } from "./lib/labels";
 import "./FileTransferWidget.css";

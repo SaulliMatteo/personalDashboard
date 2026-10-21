@@ -13,7 +13,7 @@ import {
   MdChevronRight,
 } from "react-icons/md";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
-import { useSettings } from "../../core/settings/SettingsContext";
+import { useSettings } from "../../core/settings/useSettings";
 import FolderPanel from "./components/FolderPanel";
 import FolderTree from "./components/FolderTree";
 import NoteCollection, { type LayoutMode, type SortKey } from "./components/NoteCollection";

@@ -1,5 +1,5 @@
 import SettingsSection from "../../../core/settings/components/SettingsSection";
-import { useSettings } from "../../../core/settings/SettingsContext";
+import { useSettings } from "../../../core/settings/useSettings";
 import { ACCENT_PRESETS, THEME_IDS, THEMES } from "../../../core/theme/themes";
 import { useTheme } from "../../../core/theme/useTheme";
 import { GRID_COLS } from "../../../core/layout/gridConfig";

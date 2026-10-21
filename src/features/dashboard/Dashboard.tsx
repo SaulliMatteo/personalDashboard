@@ -3,10 +3,10 @@ import GridLayout, { useContainerWidth } from "react-grid-layout";
 import { calcGridItemPosition } from "react-grid-layout/core";
 import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE prima del nostro
 import "./dashboard.css";
-import { useSettings } from "../../core/settings/SettingsContext";
+import { useSettings } from "../../core/settings/useSettings";
 import { useTheme } from "../../core/theme/useTheme";
-import { useLayout } from "../../core/layout/LayoutContext";
-import { useNav } from "../../core/nav/NavContext";
+import { useLayout } from "../../core/layout/useLayout";
+import { useNav } from "../../core/nav/useNav";
 import { createDragCompactor, finalizeLayout, clampToBounds } from "../../core/layout/compactor";
 import { saveLayout, type LayoutItem } from "../../core/layout/layoutRepository";
 import { GRID_COLS, MIN_ROW_HEIGHT } from "../../core/layout/gridConfig";

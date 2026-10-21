@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { emitActivityEvent } from "../../core/activity/activityBus";
 import {
   FT_PORT,
@@ -9,26 +9,7 @@ import {
   stopServer as stopServerApi,
   type FileEntry,
 } from "./data/fileTransferApi";
-
-interface FileTransferContextValue {
-  /** True quando lo stato iniziale (server + file) è stato letto. */
-  ready: boolean;
-  running: boolean;
-  /** "ip:porta" da aprire sull'iPad; null se il server è fermo. */
-  address: string | null;
-  port: number;
-  busy: boolean;
-  error: string | null;
-  /** File ricevuti, i più recenti per primi. */
-  files: FileEntry[];
-  startServer: () => Promise<void>;
-  stopServer: () => Promise<void>;
-  refreshFiles: () => Promise<void>;
-  openFolder: () => Promise<void>;
-  clearError: () => void;
-}
-
-const FileTransferContext = createContext<FileTransferContextValue | undefined>(undefined);
+import { FileTransferContext } from "./useFileTransfer";
 
 const POLL_MS = 2000;
 
@@ -148,11 +129,4 @@ export function FileTransferProvider({ children }: { children: ReactNode }) {
   );
 
   return <FileTransferContext.Provider value={value}>{children}</FileTransferContext.Provider>;
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useFileTransfer() {
-  const ctx = useContext(FileTransferContext);
-  if (!ctx) throw new Error("useFileTransfer deve essere usato dentro <FileTransferProvider>");
-  return ctx;
 }

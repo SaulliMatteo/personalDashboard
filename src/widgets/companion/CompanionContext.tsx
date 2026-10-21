@@ -1,14 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getActivity, subscribeActivity, subscribeActivityEvents } from "../../core/activity/activityBus";
-import { useLayout } from "../../core/layout/LayoutContext";
-import { useSettings } from "../../core/settings/SettingsContext";
+import { useLayout } from "../../core/layout/useLayout";
+import { useSettings } from "../../core/settings/useSettings";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
-import { CompanionBrain, type BrainConfig, type BrainInput, type BrainSnapshot } from "./engine/brain";
+import { CompanionBrain, type BrainConfig, type BrainInput } from "./engine/brain";
 import { FaceAnimator, type FaceFrame } from "./engine/animator";
 import { classifyApp, type ForegroundApp } from "./engine/appCategory";
 import { parseDisabled, serializeDisabled } from "./engine/animations";
 import { PERSONALITIES } from "./engine/personalities";
 import { readSystemSnapshot } from "./data/systemApi";
+import { COMPANION_WIDGET_ID, CompanionContext, type CompanionContextValue } from "./useCompanion";
 
 /**
  * UN SOLO Companion per tutta l'app: cervello + animatore vivono qui e i
@@ -17,32 +18,10 @@ import { readSystemSnapshot } from "./data/systemApi";
  * compaiono due facce diverse.
  */
 
-export const COMPANION_WIDGET_ID = "companion";
-
 const TICK_MS = 250;
 const POLL_MS = 2000;
 /** Per quanto tempo dopo l'ultimo movimento il Companion guarda ancora il mouse. */
 const POINTER_FRESH_MS = 2500;
-
-interface CompanionContextValue {
-  snapshot: BrainSnapshot;
-  /** App in primo piano riconosciuta (solo Windows, se permesso). */
-  foreground: ForegroundApp | null;
-  idleSeconds: number;
-  /** True se i segnali di sistema (Windows) arrivano davvero. */
-  systemSupported: boolean;
-  disabled: Set<string>;
-  /** Fotogramma all'istante `t` (performance.now). `rect` = dove è disegnato, per guardare il mouse. */
-  sampleFrame: (t: number, rect: DOMRect | null) => FaceFrame;
-  poke: () => void;
-  chatter: () => void;
-  previewAnimation: (id: string) => void;
-  setAnimationEnabled: (id: string, enabled: boolean) => void;
-  /** La pagina di dettaglio lo chiama finché è aperta: tiene vivo il polling anche senza widget in dashboard. */
-  retain: () => () => void;
-}
-
-const CompanionContext = createContext<CompanionContextValue | undefined>(undefined);
 
 function makeInitialInput(): BrainInput {
   return {
@@ -294,11 +273,4 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   );
 
   return <CompanionContext.Provider value={value}>{children}</CompanionContext.Provider>;
-}
-
-// eslint-disable-next-line react-refresh/only-export-components
-export function useCompanion() {
-  const ctx = useContext(CompanionContext);
-  if (!ctx) throw new Error("useCompanion deve essere usato dentro <CompanionProvider>");
-  return ctx;
 }

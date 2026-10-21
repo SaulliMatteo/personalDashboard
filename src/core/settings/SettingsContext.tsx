@@ -1,35 +1,12 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DEFAULT_SETTINGS, isValidSetting, type AppSettings, type SettingKey } from "./schema";
 import { loadSettings, saveSettingsPatch, clearSettings } from "./settingsRepository";
 import { applySettingsToDocument } from "./applySettings";
+import { SettingsContext } from "./useSettings";
 
 // Gli slider emettono molti valori al secondo: li raccogliamo e scriviamo
 // una volta sola quando l'utente si ferma.
 const SAVE_DEBOUNCE_MS = 300;
-
-interface SettingsContextValue {
-  /** Mai null: il provider non renderizza i figli finché le impostazioni non sono caricate. */
-  settings: AppSettings;
-  updateSetting: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-  resetSettings: () => void;
-  /**
-   * Applica un oggetto di impostazioni (es. incollato dall'utente): solo le
-   * chiavi note e valide vengono accettate, il resto viene scartato.
-   */
-  importSettings: (raw: Record<string, unknown>) => { applied: number; ignored: number };
-}
-
-const SettingsContext = createContext<SettingsContextValue | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings | null>(null);
@@ -135,10 +112,4 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   if (!value) return null;
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
-}
-
-export function useSettings() {
-  const ctx = useContext(SettingsContext);
-  if (!ctx) throw new Error("useSettings deve essere usato dentro <SettingsProvider>");
-  return ctx;
 }

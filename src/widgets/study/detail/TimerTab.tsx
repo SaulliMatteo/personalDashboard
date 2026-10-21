@@ -1,5 +1,5 @@
 import { createElement, useEffect, useState } from "react";
-import { useSettings } from "../../../core/settings/SettingsContext";
+import { useSettings } from "../../../core/settings/useSettings";
 import { useThemeVariant } from "../../../core/theme/variants";
 import ProgressBar from "../../../ui/ProgressBar";
 import { STUDY_CARDS } from "../card/cards";

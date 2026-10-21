@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent } from "react";
-import { useNav } from "../../core/nav/NavContext";
+import { useNav } from "../../core/nav/useNav";
 import { useThemeVariant } from "../../core/theme/variants";
 import WidgetFrame from "../../core/widgets/WidgetFrame";
 import type { WidgetProps } from "../../core/widgets/types";

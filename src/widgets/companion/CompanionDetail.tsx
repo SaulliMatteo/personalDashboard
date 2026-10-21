@@ -1,11 +1,11 @@
 import { createElement, useEffect } from "react";
 import { MdPlayArrow, MdChatBubbleOutline, MdFavoriteBorder } from "react-icons/md";
-import { useNav } from "../../core/nav/NavContext";
-import { useSettings } from "../../core/settings/SettingsContext";
+import { useNav } from "../../core/nav/useNav";
+import { useSettings } from "../../core/settings/useSettings";
 import { useActivityStatus } from "../../core/activity/activityBus";
 import SettingsSection from "../../core/settings/components/SettingsSection";
 import BackButton from "../../ui/BackButton";
-import { useCompanion } from "./CompanionContext";
+import { useCompanion } from "./useCompanion";
 import { useThemeVariant } from "../../core/theme/variants";
 import { COMPANION_CARDS } from "./card/cards";
 import { BEHAVIOR_LABELS } from "./engine/brain";

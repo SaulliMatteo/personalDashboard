@@ -1,6 +1,6 @@
 import { useState } from "react";
 import SettingsSection from "../../../core/settings/components/SettingsSection";
-import { useSettings } from "../../../core/settings/SettingsContext";
+import { useSettings } from "../../../core/settings/useSettings";
 import ConfirmButton from "../../../ui/ConfirmButton";
 
 /** Esporta/importa tutte le impostazioni come testo JSON (backup, trasferimento tra computer). */

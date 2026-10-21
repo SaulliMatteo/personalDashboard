@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSettings } from "../../../core/settings/SettingsContext";
+import { useSettings } from "../../../core/settings/useSettings";
 import { listSubjects, loadTimerState, logSession } from "../../study/data/studyRepository";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import { emitActivityEvent, publishActivity } from "../../../core/activity/activityBus";
