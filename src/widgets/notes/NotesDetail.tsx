@@ -88,6 +88,7 @@ function NotesDetail() {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [notes, setNotes] = useState<NoteSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [view, setView] = useState<View>({ kind: "all" });
   const [openId, setOpenId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
@@ -115,8 +116,12 @@ function NotesDetail() {
       setFolders(f);
       setNotes(n);
       setLoaded(true);
+      setLoadError(null);
     } catch (error) {
       console.error("Errore nel caricamento del Notes:", error);
+      // Prima del primo caricamento si vede la pagina d'errore; dopo, un avviso.
+      setLoadError(String(error));
+      setNotice("Impossibile aggiornare l'elenco delle note (dettagli nella console).");
     }
   }, []);
 
@@ -237,6 +242,7 @@ function NotesDetail() {
       setOpenId(id);
     } catch (error) {
       console.error("Errore nella creazione della nota:", error);
+      showNotice("Impossibile creare la nota (dettagli nella console).");
     }
   }
 
@@ -294,23 +300,29 @@ function NotesDetail() {
       selectFolder(id);
     } catch (error) {
       console.error("Errore nella creazione della cartella:", error);
+      showNotice("Impossibile creare la cartella (dettagli nella console).");
     }
   }
 
   async function handleSaveFolder(patch: { name: string; color: string | null; icon: string }) {
     if (!customizeFolder) return;
-    await updateFolder(customizeFolder.id, patch);
-    setCustomizeId(null);
-    await reload();
+    const id = customizeFolder.id;
+    await attempt("Impossibile salvare la cartella", async () => {
+      await updateFolder(id, patch);
+      setCustomizeId(null);
+      await reload();
+    });
   }
 
   async function handleDeleteFolder() {
     if (!customizeFolder) return;
     const ids = subtreeIds(customizeFolder.id);
-    await deleteFolders(ids);
-    if (view.kind === "folder" && ids.includes(view.id)) setView({ kind: "all" });
-    setCustomizeId(null);
-    await reload();
+    await attempt("Impossibile eliminare la cartella", async () => {
+      await deleteFolders(ids);
+      if (view.kind === "folder" && ids.includes(view.id)) setView({ kind: "all" });
+      setCustomizeId(null);
+      await reload();
+    });
   }
 
   /** Apre il campo "nome" per una nuova sottocartella direttamente nell'albero. */
@@ -352,6 +364,7 @@ function NotesDetail() {
       await reload();
     } catch (error) {
       console.error("Errore nello spostamento:", error);
+      showNotice("Impossibile spostare l'elemento (dettagli nella console).");
     }
   }
 
@@ -429,40 +442,66 @@ function NotesDetail() {
   );
 
   async function handleToggleStar(note: NoteSummary) {
-    await updateNote(note.id, { starred: !note.starred }, false);
-    await reload();
+    await attempt("Impossibile aggiornare i preferiti", async () => {
+      await updateNote(note.id, { starred: !note.starred }, false);
+      await reload();
+    });
   }
 
   async function handleTrash(id: number) {
-    await trashNote(id);
-    if (openId === id) setOpenId(null);
-    await reload();
+    await attempt("Impossibile spostare la nota nel cestino", async () => {
+      await trashNote(id);
+      if (openId === id) setOpenId(null);
+      await reload();
+    });
   }
 
   async function handleRestore(id: number) {
     const note = notes.find((n) => n.id === id);
-    await restoreNote(id, note?.folderId != null && folderById.has(note.folderId));
-    await reload();
+    await attempt("Impossibile ripristinare la nota", async () => {
+      await restoreNote(id, note?.folderId != null && folderById.has(note.folderId));
+      await reload();
+    });
   }
 
   async function handleDeleteForever(id: number) {
     const note = notes.find((n) => n.id === id);
-    if (vaultOn && note?.diskPath) await removeNoteDir(note.diskPath);
-    await deleteNoteForever(id);
-    await reload();
+    await attempt("Impossibile eliminare la nota", async () => {
+      if (vaultOn && note?.diskPath) await removeNoteDir(note.diskPath);
+      await deleteNoteForever(id);
+      await reload();
+    });
   }
 
   async function handleEmptyTrash() {
-    if (vaultOn) for (const n of trashed) if (n.diskPath) await removeNoteDir(n.diskPath);
-    await emptyTrash(trashed.map((n) => n.id));
-    await reload();
+    await attempt("Impossibile svuotare il cestino", async () => {
+      if (vaultOn) for (const n of trashed) if (n.diskPath) await removeNoteDir(n.diskPath);
+      await emptyTrash(trashed.map((n) => n.id));
+      await reload();
+    });
   }
 
   // ---------------- Avvisi, copia su disco, file dal desktop ----------------
 
   function showNotice(text: string) {
     setNotice(text);
-    window.setTimeout(() => setNotice(null), 4000);
+  }
+
+  // Un solo timer: un avviso nuovo non viene chiuso da quello del precedente.
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 4000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  /** Azione dell'utente: se fallisce lo dice con un avviso (dettagli in console). */
+  async function attempt(failure: string, action: () => Promise<void>) {
+    try {
+      await action();
+    } catch (error) {
+      console.error(`${failure}:`, error);
+      showNotice(`${failure} (dettagli nella console).`);
+    }
   }
 
   useEffect(() => {
@@ -498,6 +537,7 @@ function NotesDetail() {
       }
     } catch (error) {
       console.error("Impossibile cambiare l'impostazione:", error);
+      showNotice("Impossibile cambiare l'impostazione della copia su disco (dettagli nella console).");
     }
   }
 
@@ -693,7 +733,18 @@ function NotesDetail() {
 
   const userName = settings.userName.trim();
 
-  if (!loaded) return <p className="nq-loading">Caricamento…</p>;
+  if (!loaded) {
+    if (loadError === null) return <p className="nq-loading">Caricamento…</p>;
+    return (
+      <div className="nq-load-error" role="alert">
+        <strong>Impossibile caricare le note</strong>
+        <span>{loadError}</span>
+        <button type="button" className="nq-btn" onClick={() => void reload()}>
+          Riprova
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="nq">

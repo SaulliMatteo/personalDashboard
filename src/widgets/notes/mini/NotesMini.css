@@ -44,3 +44,9 @@
 :root[data-theme="quaderno"] .notes-mini-num {
   font-size: 44px;
 }
+
+/* Caricamento fallito. :root davanti per vincere sui colori per tema. */
+:root .notes-mini--error .notes-mini-num,
+:root .notes-mini--error .notes-mini-title {
+  color: var(--danger);
+}
