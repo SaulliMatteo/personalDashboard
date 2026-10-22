@@ -196,18 +196,46 @@
   --pv-radius: var(--preview-fosforo-radius);
 }
 
+/* Le anteprime mostrano la variante attiva: quelle non native leggono i token
+   --preview-<tema>-<variante>-* (styles/tokens-varianti.css). */
+:root[data-mode="giorno"] .sp-theme--notte {
+  --pv-bg: var(--preview-notte-giorno-bg);
+  --pv-a: var(--preview-notte-giorno-a);
+  --pv-b: var(--preview-notte-giorno-b);
+  --pv-border: var(--preview-notte-giorno-border);
+  --pv-radius: var(--preview-notte-giorno-radius);
+}
+
+:root[data-mode="notte"] .sp-theme--opaco {
+  --pv-bg: var(--preview-opaco-notte-bg);
+  --pv-a: var(--preview-opaco-notte-a);
+  --pv-b: var(--preview-opaco-notte-b);
+  --pv-border: var(--preview-opaco-notte-border);
+  --pv-radius: var(--preview-opaco-notte-radius);
+}
+
+:root[data-mode="notte"] .sp-theme--quaderno {
+  --pv-bg: var(--preview-quaderno-notte-bg);
+  --pv-a: var(--preview-quaderno-notte-a);
+  --pv-b: var(--preview-quaderno-notte-b);
+  --pv-border: var(--preview-quaderno-notte-border);
+  --pv-radius: var(--preview-quaderno-notte-radius);
+}
+
+:root[data-mode="giorno"] .sp-theme--fosforo {
+  --pv-bg: var(--preview-fosforo-giorno-bg);
+  --pv-a: var(--preview-fosforo-giorno-a);
+  --pv-b: var(--preview-fosforo-giorno-b);
+  --pv-border: var(--preview-fosforo-giorno-border);
+  --pv-radius: var(--preview-fosforo-giorno-radius);
+}
+
 .sp-theme-name {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   padding: 12px 4px 0;
   font-weight: 600;
-}
-
-.sp-theme-scheme {
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--text-secondary);
 }
 
 .sp-theme-desc {
@@ -234,6 +262,46 @@
   margin: 0;
   font-size: 15px;
   font-weight: 600;
+}
+
+.sp-block-sub {
+  margin-left: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* ---------- Variante: controllo segmentato (stessa forma del selettore di periodo dello Studio) ---------- */
+.sp-segmented {
+  display: flex;
+  align-self: flex-start;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+}
+
+.sp-segmented button {
+  padding: 6px 16px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.sp-segmented button.is-on {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-fg);
+  font-weight: 500;
+}
+
+.sp-segmented button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .sp-link {
