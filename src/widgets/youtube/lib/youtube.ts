@@ -149,7 +149,7 @@ export function describePlayerError(code: number | string): string {
     case 150:
       return "Il proprietario non permette di riprodurre questo video fuori da YouTube.";
     case 153:
-      return "YouTube ha rifiutato il player (errore 153: referrer mancante).";
+      return "YouTube ha rifiutato il player (errore 153: la pagina non ha inviato il referrer).";
     default:
       return typeof code === "string" ? code : `Errore del player (codice ${code}).`;
   }

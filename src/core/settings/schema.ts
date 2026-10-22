@@ -194,7 +194,7 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "gridRows", group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 4, max: 8, step: 1, label: "Righe disponibili", description: "Più righe = più spazio per i widget, che diventano più bassi: la dashboard resta sempre dentro lo schermo. Non scende mai sotto le righe già occupate." },
 
   { key: "lockLayout", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Blocca layout", description: "Impedisce di trascinare i widget." },
-  { key: "gridPushDelayMs", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 1500, step: 50, unit: "ms", label: "Ritardo spinta widget", description: "Quanto tieni un widget sopra un altro prima che lo sposti." },
+  { key: "gridPushDelayMs", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 1500, step: 50, unit: "ms", label: "Ritardo spinta widget", description: "Quanto tieni un widget sopra un altro prima che lo sposti (se lo rilasci lì, lo sposta subito)." },
   { key: "dragThreshold", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 20, step: 1, unit: "px", label: "Distanza prima che parta il trascinamento", description: "Evita trascinamenti involontari quando clicchi." },
   { key: "openDetailOnClick", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Apri il dettaglio con un doppio click sul widget" },
 

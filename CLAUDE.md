@@ -54,7 +54,7 @@ Debito noto: `widgets/youtube/screens/WatchScreen.tsx` importa `study/data/study
 - Metadati interni dell'app: store chiave/valore `core/db/meta.ts`, non le impostazioni.
 
 **Backend nativo** (`src-tauri/`): `src/lib.rs` registra plugin (sql, notification, fs/dialog/opener usati dal
-Quaderno, log in debug) e comandi.
+Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.json` ha `create: false`).
 - File Transfer: server HTTP in C (`filetransfer/c/`; Winsock su Windows, socket POSIX su macOS/Linux, tutte le
   differenze in `platform.h`), compilato da `build.rs` con `cc` (che imposta `cfg(ft_native)`), esposto con i comandi
   `ft_*` di `src/file_transfer.rs`; va fermato alla chiusura della finestra. Su macOS la 5000 è di AirPlay: il server
@@ -106,7 +106,10 @@ componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è 
 - Valori "ultimi" in interval/listener di lunga durata → `core/hooks/useLatestRef.ts`.
 - Contesti: `XContext.tsx` esporta solo il provider; contesto, tipo e hook in `useX.ts` (es. `useSettings.ts`).
 - `tauri-plugin-notification` è pinnato `=2.4.0` perché la 2.5 richiede `tauri ^2.12` (il progetto usa `2.11.3`):
-  non aggiornarlo senza controllare il manifesto su crates.io.
+  non aggiornarlo senza controllare il manifesto su crates.io. Idem `tauri-plugin-localhost` (`=2.3.1`, la 2.4 vuole `^2.12`).
+- Su macOS l'app installata serve il frontend da `http://localhost:14321` (`tauri-plugin-localhost`, `src/lib.rs`):
+  da `tauri://localhost` YouTube rifiuta il player (errore 153, niente referrer). La porta è anche in
+  `capabilities/default.json` (`remote.urls`, senza la pagina perde l'IPC): cambiarla in entrambi i posti.
 - Le notifiche mostrano il nome dell'app solo nella versione installata; in `tauri dev` Windows le attribuisce a PowerShell.
 - La pagina web servita all'iPad (`src-tauri/filetransfer/public/`) è un build copiato da un progetto esterno:
   non modificarla a mano (vedi `docs/FILE_TRANSFER.md`).

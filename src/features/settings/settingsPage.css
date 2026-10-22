@@ -362,7 +362,8 @@
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-item);
+  /* Non --radius-item: in Opaco e Fosforo vale 999px e il riquadro diventerebbe un ovale. */
+  border-radius: min(var(--radius-panel), 10px);
   background: var(--surface-1);
   color: var(--text-primary);
   font-family: ui-monospace, monospace;
