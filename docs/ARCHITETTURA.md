@@ -16,7 +16,8 @@ src/
 │   ├─ settings/             schema.ts = UNICA fonte di verità delle impostazioni
 │   ├─ layout/               griglia: contesto, repository, compactor (spinta ritardata)
 │   ├─ nav/                  vista corrente (dashboard / catalogo / dettaglio widget / impostazioni)
-│   ├─ theme/                themes.ts (i 4 temi, pigmenti Opaco, ACCENT_PRESETS), variants.ts (useThemeVariant)
+│   ├─ theme/                themes.ts (i 4 temi × giorno/notte, pigmenti Opaco, ACCENT_PRESETS), variants.ts (useThemeVariant),
+│                            useTheme.ts (tema con la variante risolta), useSystemDark.ts (prefers-color-scheme)
 │   ├─ widgets/              tipi (WidgetDefinition), taglie, WidgetFrame (cornice comune)
 │   ├─ activity/             bacheca delle attività: i widget pubblicano (studio, video, file)
 │   │                        e chi vuole ascolta, senza importarsi a vicenda
@@ -38,7 +39,8 @@ src/
 │   └─ weather/              Meteo (Open-Meteo, opzionale): 1×1 + mini, provider con cache
 ├─ ui/                       componenti riusabili senza logica di dominio
 │                            (BackButton, ConfirmButton, NumberField, BorderGlow, ProgressBar per tema)
-└─ styles/                   tokens.css (colori/raggi/font), base.css, tailwind.css
+└─ styles/                   tokens.css (colori/raggi/font, varianti native), tokens-varianti.css
+│                            (le altre varianti giorno/notte), base.css, tailwind.css
 ```
 
 ### Il widget Studio (`widgets/study/`)
@@ -182,8 +184,19 @@ Non modificare mai una migrazione già rilasciata. Gli statement devono poter es
 - Usa sempre i token (`--bg-card`, `--surface-1/2/3`, `--accent`, `--on-accent`, `--text-*`): così il tema chiaro funziona da solo.
 - Ogni componente ha il suo `.css` accanto; niente CSS globale fuori da `styles/`.
 - Come appare il timer (colori, testo, anello): `widgets/study/timer/useTimerView.ts`, usato da widget e pagina.
-- I temi sono 4 (Notte, Opaco, Quaderno, Fosforo): `data-theme` su `<html>`, un blocco di token per tema in
-  `tokens.css`. I mockup in `temi-dashboard/docs/design/temi/` sono la fonte di verità.
+- I temi sono 4 (Notte, Opaco, Quaderno, Fosforo), ognuno in due varianti, giorno e notte, che cambiano **solo i
+  colori** (forme, font e componenti restano quelli del tema). Su `<html>` ci sono `data-theme` e `data-mode`
+  (`giorno|notte`, già risolta). La variante nativa (Notte e Fosforo: notte; Opaco e Quaderno: giorno) è il blocco
+  `:root[data-theme="<id>"]` di `tokens.css`; l'altra è un blocco completo `:root[data-theme][data-mode]` in
+  `tokens-varianti.css` (con pigmenti di Opaco notte, post-it di Quaderno notte e anteprime della scheda Aspetto).
+  Un token nuovo va aggiunto in entrambi i file. I mockup in `docs/design/temi/` sono la fonte di verità.
+- L'impostazione `themeMode` è `giorno|notte|auto`: `auto` segue il sistema (`useSystemDark`) anche ad app aperta.
+  `useTheme()` restituisce il tema risolto (`mode`, `scheme`, `glow`, `defaultAccent`, `accent`): il codice non
+  guarda mai `themeMode` direttamente. L'accent personalizzato è uno per variante (`ACCENT_KEYS` in `schema.ts`).
+  Lo script in `index.html` applica tema e variante dalla cache (`pd-theme`, `pd-mode`, `pd-theme-mode`) prima del
+  bundle, ricalcolando `auto` dal sistema; la splash ha i colori di tutte le 8 combinazioni.
+- I canvas che leggono i token (faccia del Companion, inchiostro delle Note) li rileggono quando cambiano
+  `theme.id`/`theme.mode`. Nelle Note il colore `THEME_INK` (`#f2f2f4`) si disegna con `--text-primary`.
 - Quando un pezzo cambia **forma** per tema (non solo colore) si usa `useThemeVariant(map)` di
   `core/theme/variants.ts` con una `ThemeVariants<T>` (una voce per tema), mai `if (theme === …)`.
   Se la variante è un componente, si rende con `createElement(Variant, props)` (regola lint `static-components`).
