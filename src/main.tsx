@@ -11,6 +11,8 @@ import "@fontsource-variable/doto";
 
 import "./styles/tailwind.css";
 import "./styles/tokens.css";
+// Dopo tokens.css: le varianti giorno/notte ridefiniscono i token dei temi (selettori con data-mode).
+import "./styles/tokens-varianti.css";
 import "./styles/base.css";
 
 import App from "./app/App";

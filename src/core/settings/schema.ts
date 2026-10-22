@@ -17,7 +17,7 @@
  * (styles/tokens.css): non sono più impostazioni.
  */
 
-import { THEMES, THEME_IDS, isThemeId, type ThemeId } from "../theme/themes";
+import { THEMES, THEME_IDS, isThemeId, type ThemeId, type ThemeMode } from "../theme/themes";
 import type { ThemeVariants } from "../theme/variants";
 
 /** Palette del glow dei widget: tre colori usati per il bordo "mesh". */
@@ -42,9 +42,13 @@ export const DEFAULT_SETTINGS = {
 
   // ---- Aspetto ----
   theme: "notte" as ThemeId,
-  /** false = si usa l'accent del tema; true = si usa accentColor. */
-  accentOverride: false,
-  accentColor: "#8EA6FF",
+  /** Variante del tema: "auto" segue il sistema. Chi aveva già impostazioni parte dalla variante nativa (convertLegacySettings). */
+  themeMode: "auto" as ThemeMode | "auto",
+  // Accent per variante: false = si usa l'accent della variante; true = si usa accentColor<Variante>.
+  accentOverrideGiorno: false,
+  accentColorGiorno: "#3B57D6",
+  accentOverrideNotte: false,
+  accentColorNotte: "#8EA6FF",
   sidebarPosition: "left" as "left" | "right",
   sidebarShowTitle: true,
   animationsEnabled: true,
@@ -159,8 +163,14 @@ export const SETTING_DEFS: SettingDef[] = [
     key: "theme", group: "appearance", section: "Tema e colori", type: "select", label: "Tema",
     options: THEME_IDS.map((id) => ({ value: id, label: THEMES[id].label })),
   },
-  { key: "accentOverride", group: "appearance", section: "Tema e colori", type: "boolean", label: "Colore accent personalizzato", description: "Spento: si usa l'accent del tema." },
-  { key: "accentColor", group: "appearance", section: "Tema e colori", type: "color", dependsOn: "accentOverride", label: "Colore accent", description: "Usato per selezioni, pulsanti e anelli di progresso." },
+  {
+    key: "themeMode", group: "appearance", section: "Tema e colori", type: "select", label: "Variante",
+    options: [{ value: "giorno", label: "Giorno" }, { value: "notte", label: "Notte" }, { value: "auto", label: "Automatico" }],
+  },
+  { key: "accentOverrideGiorno", group: "appearance", section: "Tema e colori", type: "boolean", label: "Accent personalizzato (giorno)", description: "Spento: si usa l'accent del tema." },
+  { key: "accentColorGiorno", group: "appearance", section: "Tema e colori", type: "color", dependsOn: "accentOverrideGiorno", label: "Colore accent (giorno)" },
+  { key: "accentOverrideNotte", group: "appearance", section: "Tema e colori", type: "boolean", label: "Accent personalizzato (notte)", description: "Spento: si usa l'accent del tema." },
+  { key: "accentColorNotte", group: "appearance", section: "Tema e colori", type: "color", dependsOn: "accentOverrideNotte", label: "Colore accent (notte)" },
 
   { key: "sidebarPosition", group: "appearance", section: "Barra laterale", type: "select", label: "Posizione", options: [{ value: "left", label: "Sinistra" }, { value: "right", label: "Destra" }] },
   { key: "sidebarShowTitle", group: "appearance", section: "Barra laterale", type: "boolean", label: "Mostra il titolo dell'app" },
@@ -315,6 +325,18 @@ export function sanitizeSettings(raw: Record<string, unknown>): AppSettings {
   return result as AppSettings;
 }
 
+/** Chiavi dell'accent di ciascuna variante. */
+export const ACCENT_KEYS = {
+  giorno: { override: "accentOverrideGiorno", color: "accentColorGiorno" },
+  notte: { override: "accentOverrideNotte", color: "accentColorNotte" },
+} as const satisfies Record<ThemeMode, { override: SettingKey; color: SettingKey }>;
+
+/** Accent scelto dall'utente per la variante, o null se usa quello del tema. */
+export function accentFor(settings: AppSettings, mode: ThemeMode): string | null {
+  const keys = ACCENT_KEYS[mode];
+  return settings[keys.override] ? settings[keys.color] : null;
+}
+
 /** Vecchi valori del tema (prima dei 4 temi) -> tema nuovo, così l'utente non perde la scelta. */
 const LEGACY_THEMES: Record<string, ThemeId> = { dark: "notte", light: "quaderno", system: "notte" };
 
@@ -326,7 +348,34 @@ function convertLegacySettings(raw: Record<string, unknown>): Record<string, unk
   // "Pixel" era il nome predefinito del Companion: chi non l'aveva cambiato diventa Pixy.
   if (raw.companionName === "Pixel") raw = { ...raw, companionName: "Pixy" };
   const theme = raw.theme;
-  if (typeof theme !== "string" || isThemeId(theme)) return raw;
-  const mapped = LEGACY_THEMES[theme];
-  return mapped ? { ...raw, theme: mapped } : raw;
+  if (typeof theme === "string" && !isThemeId(theme) && LEGACY_THEMES[theme]) raw = { ...raw, theme: LEGACY_THEMES[theme] };
+  return convertToThemeModes(raw);
+}
+
+/**
+ * Prima delle varianti giorno/notte: chi ha già impostazioni salvate resta sulla
+ * variante nativa del suo tema (vede esattamente ciò che vedeva) e il vecchio
+ * accent unico diventa quello di quella variante. Un DB vuoto (installazione
+ * nuova) resta sul default "auto".
+ */
+function convertToThemeModes(raw: Record<string, unknown>): Record<string, unknown> {
+  if ("themeMode" in raw || Object.keys(raw).length === 0) return raw;
+  const native = THEMES[isThemeId(raw.theme) ? raw.theme : DEFAULT_SETTINGS.theme].nativeMode;
+  const keys = ACCENT_KEYS[native];
+  const converted: Record<string, unknown> = { ...raw, themeMode: native };
+  if ("accentOverride" in raw) converted[keys.override] = raw.accentOverride;
+  if ("accentColor" in raw) converted[keys.color] = raw.accentColor;
+  return converted;
+}
+
+/**
+ * Chiavi ricavate dalla conversione che vanno salvate subito: il DB tiene solo le
+ * chiavi cambiate, e senza `themeMode` salvato un'installazione nuova che modifica
+ * un'altra impostazione al riavvio verrebbe presa per una installazione vecchia.
+ */
+export function keysToPersistOnLoad(raw: Record<string, unknown>, settings: AppSettings): SettingKey[] {
+  if ("themeMode" in raw) return [];
+  if (settings.themeMode === "auto") return ["themeMode"];
+  const keys = ACCENT_KEYS[settings.themeMode];
+  return ["themeMode", keys.override, keys.color];
 }

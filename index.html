@@ -9,21 +9,37 @@
          bundle JS (niente schermo bianco) e React la fa sparire a caricamento
          finito (src/app/splash.ts). Stili inline di proposito: devono
          funzionare prima che parta qualunque altro CSS. -->
-    <!-- Tema dell'ultimo avvio (cache scritta da applySettings.ts), applicato
-         prima di qualunque render: niente flash del tema sbagliato. -->
+    <!-- Tema e variante dell'ultimo avvio (cache scritta da applySettings.ts),
+         applicati prima di qualunque render: niente flash del tema sbagliato.
+         Con la variante "auto" si ricalcola dal sistema, che può essere cambiato
+         ad app chiusa; se manca solo la variante (aggiornamento) vale quella nativa. -->
     <script>
       try {
+        var root = document.documentElement;
         var t = localStorage.getItem("pd-theme");
-        if (t === "notte" || t === "opaco" || t === "quaderno" || t === "fosforo") document.documentElement.dataset.theme = t;
+        // Nessuna cache = primo avvio: valgono i default (tema notte, variante automatica).
+        var tm = t === null ? "auto" : localStorage.getItem("pd-theme-mode");
+        if (t !== "notte" && t !== "opaco" && t !== "quaderno" && t !== "fosforo") t = "notte";
+        root.dataset.theme = t;
+        var m = localStorage.getItem("pd-mode");
+        if (tm === "auto") m = window.matchMedia("(prefers-color-scheme: dark)").matches ? "notte" : "giorno";
+        else if (tm === "giorno" || tm === "notte") m = tm;
+        if (m !== "giorno" && m !== "notte") m = t === "opaco" || t === "quaderno" ? "giorno" : "notte";
+        root.dataset.mode = m;
       } catch (e) {}
     </script>
     <style>
-      /* Colori della splash per tema: copiano i token di src/styles/tokens.css
+      /* Colori della splash per tema e variante: copiano i token di src/styles/tokens.css
+         e tokens-varianti.css
          (qui servono prima che arrivi il CSS del bundle). */
       :root { --s-bg: #090C15; --s-accent: #8EA6FF; --s-card: #151B2E; --s-line: #1F2740; --s-text: #E9ECF5; --s-muted: #9AA2BA; --s-radius: 9px; }
       :root[data-theme="opaco"] { --s-bg: #D8D5CD; --s-accent: #22251F; --s-card: #C9C5BB; --s-line: transparent; --s-text: #22251F; --s-muted: #4D5047; --s-radius: 12px; }
       :root[data-theme="quaderno"] { --s-bg: #FCFDFF; --s-accent: #2340A0; --s-card: #FFFFFF; --s-line: #C9D3E3; --s-text: #1B2433; --s-muted: #556178; --s-radius: 4px; }
       :root[data-theme="fosforo"] { --s-bg: #110709; --s-accent: #F4E9E4; --s-card: #1A0D0F; --s-line: rgba(255,214,206,.12); --s-text: #F2E6E1; --s-muted: #B39C97; --s-radius: 6px; }
+      :root[data-theme="notte"][data-mode="giorno"] { --s-bg: #EEF1F7; --s-accent: #3B57D6; --s-card: #FFFFFF; --s-line: #DCE2EE; --s-text: #141A2E; --s-muted: #5B6480; --s-radius: 9px; }
+      :root[data-theme="opaco"][data-mode="notte"] { --s-bg: #1B1C18; --s-accent: #ECE9E2; --s-card: #34352F; --s-line: transparent; --s-text: #ECE9E2; --s-muted: #A9A79E; --s-radius: 12px; }
+      :root[data-theme="quaderno"][data-mode="notte"] { --s-bg: #121620; --s-accent: #9FB6FF; --s-card: #1A1F2B; --s-line: #2C3446; --s-text: #E6EAF2; --s-muted: #98A3B8; --s-radius: 4px; }
+      :root[data-theme="fosforo"][data-mode="giorno"] { --s-bg: #EFE9E5; --s-accent: #2A1215; --s-card: #FDFAF8; --s-line: rgba(70,24,28,.12); --s-text: #2A1517; --s-muted: #77605D; --s-radius: 6px; }
       html, body { margin: 0; height: 100%; background: var(--s-bg); }
       #splash {
         position: fixed; inset: 0; z-index: 9999;

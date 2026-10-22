@@ -1,5 +1,13 @@
 import type { InkStroke } from "../data/notesRepository";
 
+/**
+ * Colore salvato per "inchiostro del tema" (era il bianco della penna): sulla
+ * pagina si disegna con --text-primary della variante attiva, così resta
+ * leggibile su fondo chiaro e scuro. Il valore salvato non cambia, quindi le
+ * note vecchie e l'esportazione (che scurisce i colori chiari) funzionano uguali.
+ */
+export const THEME_INK = "#f2f2f4";
+
 /** Larghezza di riferimento: gli spessori salvati valgono per una pagina larga 900px. */
 export const REF_WIDTH = 900;
 
