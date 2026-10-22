@@ -16,7 +16,7 @@ function WidgetFrame({ children, ...overrides }: BorderGlowProps) {
 
   const colors =
     settings.glowPalette === "accent"
-      ? [settings.accentOverride ? settings.accentColor : theme.defaultAccent]
+      ? [theme.accent]
       : [...GLOW_PALETTES[settings.glowPalette].colors];
 
   return (

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { DEFAULT_SETTINGS, isValidSetting, type AppSettings, type SettingKey } from "./schema";
 import { loadSettings, saveSettingsPatch, clearSettings } from "./settingsRepository";
 import { applySettingsToDocument } from "./applySettings";
+import { resolveMode } from "../theme/themes";
+import { useSystemDark } from "../theme/useSystemDark";
 import { SettingsContext } from "./useSettings";
 
 // Gli slider emettono molti valori al secondo: li raccogliamo e scriviamo
@@ -27,10 +29,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Applica tema/colori/ecc. PRIMA del paint, per evitare un flash.
+  // Applica tema/colori/ecc. PRIMA del paint, per evitare un flash. Con la variante
+  // "auto" si riapplica anche quando cambia il tema del sistema.
+  const systemDark = useSystemDark();
   useLayoutEffect(() => {
-    if (settings) applySettingsToDocument(settings);
-  }, [settings]);
+    if (settings) applySettingsToDocument(settings, resolveMode(settings.themeMode, systemDark));
+  }, [settings, systemDark]);
 
   const flush = useCallback(() => {
     if (timer.current !== null) {

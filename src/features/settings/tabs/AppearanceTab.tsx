@@ -1,5 +1,6 @@
 import SettingsSection from "../../../core/settings/components/SettingsSection";
 import { useSettings } from "../../../core/settings/useSettings";
+import { ACCENT_KEYS } from "../../../core/settings/schema";
 import { ACCENT_PRESETS, THEME_IDS, THEMES } from "../../../core/theme/themes";
 import { useTheme } from "../../../core/theme/useTheme";
 import { GRID_COLS } from "../../../core/layout/gridConfig";
@@ -8,12 +9,14 @@ import { GRID_COLS } from "../../../core/layout/gridConfig";
 function AppearanceTab() {
   const { settings, updateSetting } = useSettings();
   const theme = useTheme();
-  const effectiveAccent = (settings.accentOverride ? settings.accentColor : theme.defaultAccent).toLowerCase();
+  // L'accent si sceglie per la variante attiva: l'altra tiene il suo.
+  const accentKeys = ACCENT_KEYS[theme.mode];
+  const effectiveAccent = theme.accent.toLowerCase();
   const isPreset = ACCENT_PRESETS.some((p) => p.color.toLowerCase() === effectiveAccent);
 
   function pickAccent(color: string) {
-    updateSetting("accentColor", color);
-    updateSetting("accentOverride", color.toLowerCase() !== theme.defaultAccent.toLowerCase());
+    updateSetting(accentKeys.color, color);
+    updateSetting(accentKeys.override, color.toLowerCase() !== theme.defaultAccent.toLowerCase());
   }
 
   return (
@@ -43,7 +46,6 @@ function AppearanceTab() {
               </span>
               <span className="sp-theme-name">
                 <span>{def.label}</span>
-                <span className="sp-theme-scheme">{def.schemeLabel}</span>
               </span>
               <span className="sp-theme-desc">{def.description}</span>
             </button>
@@ -54,7 +56,7 @@ function AppearanceTab() {
       <div className="sp-block">
         <div className="sp-block-head">
           <h3>Colore accent</h3>
-          <button type="button" className="sp-link" disabled={!settings.accentOverride} onClick={() => updateSetting("accentOverride", false)}>
+          <button type="button" className="sp-link" disabled={!settings[accentKeys.override]} onClick={() => updateSetting(accentKeys.override, false)}>
             Usa quello del tema
           </button>
         </div>
@@ -94,7 +96,7 @@ function AppearanceTab() {
         </span>
       </div>
 
-      <SettingsSection group="appearance" omit={["theme", "accentOverride", "accentColor"]} />
+      <SettingsSection group="appearance" omit={["theme", "themeMode", "accentOverrideGiorno", "accentColorGiorno", "accentOverrideNotte", "accentColorNotte"]} />
 
       {theme.glow ? (
         <SettingsSection group="glow" />
