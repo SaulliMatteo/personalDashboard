@@ -1,0 +1,534 @@
+/* ==========================================================================
+   VARIANTI GIORNO / NOTTE
+   Ogni tema ha una variante "nativa" (Notte e Fosforo: notte; Opaco e
+   Quaderno: giorno) definita in tokens.css, e una variante opposta definita
+   qui. La variante si sceglie con <html data-mode="giorno|notte">.
+   Questi blocchi sono COMPLETI: ridefiniscono ogni token del tema.
+   Valori ricavati dai mockup docs/design/temi/*-giorno.html e *-notte.html.
+   ========================================================================== */
+
+/* ---------- NOTTE, versione giorno: porcellana fredda, inchiostro blu profondo ---------- */
+:root[data-theme="notte"][data-mode="giorno"] {
+  color-scheme: light;
+
+  --font-family: "Manrope Variable", system-ui, sans-serif;
+  /* Numeri grandi (timer, contatori). */
+  --font-display: "Manrope Variable", system-ui, sans-serif;
+  --display-weight: 200;
+  --display-tracking: -0.04em;
+  /* Titoli dei widget e saluto. */
+  --font-title: "Manrope Variable", system-ui, sans-serif;
+  --title-weight: 500;
+  --heading-weight: 300;
+  --body-size: 14px;
+  --line-height: 1.5;
+
+  --bg: #EEF1F7;
+  --main-bg: #EEF1F7;
+  --bg-sidebar: #EEF1F7;
+  --sidebar-border: 1px solid #DCE2EE;
+  --sidebar-width: 216px;
+
+  --bg-card: #FFFFFF;
+  --card-bg: linear-gradient(180deg, #FFFFFF 0%, #F8FAFD 100%);
+  --card-border: 1px solid #DCE2EE;
+  --card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(20, 30, 60, 0.05), 0 6px 18px rgba(20, 30, 60, 0.04);
+  --card-transform: none;
+  --radius-card: 22px;
+  --widget-padding: 22px;
+  --grid-gap: 14px;
+  /* Spazio interno dell'area principale e distanza intestazione-griglia. */
+  --main-padding: 26px 32px 28px;
+  --main-gap: 20px;
+
+  /* Pannello interno: display, celle delle note, disco del quadrante. */
+  --panel-bg: #F4F6FB;
+  --panel-border: 1px solid #E1E6F0;
+  --radius-panel: 16px;
+  /* "Display" per timer, faccia e miniature: in Notte coincide col pannello. */
+  --display-bg: #F4F6FB;
+  --display-texture: none;
+  --display-border: 1px solid #E1E6F0;
+  --radius-display: 16px;
+
+  --border-subtle: #DCE2EE;
+  --divider: #DCE2EE;
+  --row-active-bg: #E4E9F6;
+  --row-active-border: #CBD3E4;
+  --track: #E3E8F1;
+  --tick-off: #D3DAE8;
+  --tick-off-long: #AEB9D0;
+  --bar-off: #D0D8EA;
+  --dot-off: #CBD3E4;
+  --dot-on: #3B57D6;
+
+  --text-primary: #141A2E;
+  --text-secondary: #5B6480;
+  --text-muted: #646C89;
+  --text-soft: #343C58;
+
+  --accent: #3B57D6;
+  --accent-strong: color-mix(in srgb, var(--accent) 80%, #000000);
+  --on-accent: #FFFFFF;
+  --success: #187A56;
+  --success-text: #187A56;
+  --warn: #C27628;
+  --led: #187A56;
+  --danger: #C2413A;
+  --on-danger: #FFFFFF;
+
+  --surface-1: rgba(20, 26, 46, 0.04);
+  --surface-2: #E4E9F6;
+  --surface-3: #E4E9F6;
+
+  --radius-item: 12px;
+  --btn-primary-bg: var(--accent);
+  --btn-primary-fg: var(--on-accent);
+  --btn-ghost-border: 1px solid #CBD3E4;
+  --btn-ghost-fg: #343C58;
+  --chip-bg: var(--accent-soft);
+  --chip-fg: var(--accent-strong);
+  --slot-border: 1px dashed #CBD3E4;
+  --slot-bg: transparent;
+  --slot-fg: #5B6480;
+  --slot-gap: 6px;
+  --slot-font-size: 13px;
+  --slot-weight: 400;
+  --slot-svg-display: block;
+  --slot-svg-stroke: 1.6;
+  --slot-text-display: none;
+  --slot-plus-font: inherit;
+  --slot-plus-size: 30px;
+
+  --nav-active-bg: #E4E9F6;
+  --nav-active-fg: #141A2E;
+  --nav-fg: #5B6480;
+
+  --bubble-bg: #E4E9F6;
+  --bubble-fg: #343C58;
+  --bubble-radius: 14px 14px 14px 4px;
+  --face-on: #22305E;
+  --face-halo: rgba(59, 87, 214, 0.10);
+
+  --thumb-bg: linear-gradient(135deg, #C9D4F3 0%, #E3E9F9 100%);
+  --thumb-play-bg: rgba(20, 26, 46, 0.88);
+  --thumb-play-fg: #FFFFFF;
+  --thumb-badge-bg: rgba(20, 26, 46, 0.82);
+  --thumb-track: rgba(20, 26, 46, 0.12);
+
+  --highlight: var(--accent-soft);
+  --overlay: rgba(20, 26, 46, 0.35);
+  --modal-bg: #FFFFFF;
+  --modal-border: 1px solid #E3E8F1;
+  --shadow-pop: 0 18px 48px rgba(20, 30, 60, 0.18);
+  --focus-ring: 2px solid var(--accent);
+}
+
+/* ---------- OPACO, versione notte: pigmenti profondi su carbone, inchiostro chiaro ---------- */
+:root[data-theme="opaco"][data-mode="notte"] {
+  color-scheme: dark;
+
+  --font-family: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --display-weight: 800;
+  --display-tracking: -0.05em;
+  --font-title: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --title-weight: 600;
+  --heading-weight: 800;
+  --body-size: 14px;
+  --line-height: 1.45;
+
+  --bg: #1B1C18;
+  --main-bg: #1B1C18;
+  --bg-sidebar: #1B1C18;
+  --sidebar-border: 0;
+  --sidebar-width: 208px;
+
+  --bg-card: #2A2B26;
+  --card-bg: #2A2B26;
+  --card-border: 0;
+  --card-shadow: none;
+  --card-transform: none;
+  --radius-card: 28px;
+  --widget-padding: 22px;
+  --grid-gap: 12px;
+  /* Spazio interno dell'area principale e distanza intestazione-griglia. */
+  --main-padding: 26px 30px 28px 8px;
+  --main-gap: 18px;
+
+  --panel-bg: #34352F;
+  --panel-border: 0;
+  --radius-panel: 18px;
+  --display-bg: #34352F;
+  --display-texture: none;
+  --display-border: 0;
+  --radius-display: 20px;
+
+  --border-subtle: #34352F;
+  --divider: #34352F;
+  --row-active-bg: #ECE9E2;
+  --row-active-border: transparent;
+  --track: #34352F;
+  --tick-off: #34352F;
+  --tick-off-long: #55564E;
+  --bar-off: #34352F;
+  --dot-off: #34352F;
+  --dot-on: #ECE9E2;
+
+  --text-primary: #ECE9E2;
+  --text-secondary: #A9A79E;
+  --text-muted: #A9A79E;
+  --text-soft: #ECE9E2;
+
+  --accent: #ECE9E2;
+  --accent-strong: var(--accent);
+  --on-accent: #1E1F1B;
+  --success: #8FC385;
+  --success-text: #A9D39F;
+  --warn: #E0B070;
+  --led: #ECE9E2;
+  --danger: #E38B7C;
+  --on-danger: #1E1F1B;
+
+  --surface-1: rgba(236, 233, 226, 0.05);
+  --surface-2: #34352F;
+  --surface-3: #34352F;
+
+  --radius-item: 999px;
+  --btn-primary-bg: var(--accent);
+  --btn-primary-fg: var(--on-accent);
+  --btn-ghost-border: 0;
+  --btn-ghost-fg: #ECE9E2;
+  --btn-ghost-bg: #34352F;
+  --chip-bg: #34352F;
+  --chip-fg: #ECE9E2;
+  --slot-border: 2px dashed #55564E;
+  --slot-bg: transparent;
+  --slot-fg: #A9A79E;
+  --slot-gap: 2px;
+  --slot-font-size: 14px;
+  --slot-weight: 500;
+  --slot-svg-display: none;
+  --slot-svg-stroke: 1.6;
+  --slot-text-display: block;
+  --slot-plus-font: inherit;
+  --slot-plus-size: 30px;
+
+  --nav-active-bg: #ECE9E2;
+  --nav-active-fg: #1E1F1B;
+  --nav-fg: #A9A79E;
+
+  --bubble-bg: #1E1F1B;
+  --bubble-fg: #ECE9E2;
+  --bubble-radius: 18px 18px 18px 6px;
+  --face-on: #ECE9E2;
+  --face-halo: transparent;
+
+  --thumb-bg: #34352F;
+  --thumb-play-bg: #ECE9E2;
+  --thumb-play-fg: #1E1F1B;
+  --thumb-badge-bg: #ECE9E2;
+  --thumb-track: #34352F;
+
+  --highlight: #34352F;
+  --overlay: rgba(0, 0, 0, 0.6);
+  --modal-bg: #2A2B26;
+  --modal-border: 0;
+  --shadow-pop: 0 18px 48px rgba(0, 0, 0, 0.5);
+  --focus-ring: 2px solid var(--text-primary);
+}
+
+/* Pigmenti in versione notte: fondo / inchiostro / tono scuro / tono medio / chiaro (testo su inchiostro) / metà. */
+:root[data-theme="opaco"][data-mode="notte"] [data-pigment="salvia"] {
+  --pg-bg: #3C4935; --pg-ink: #DCE6D0; --pg-dark: #56654D; --pg-mid: #4D5C45; --pg-light: #1F2B1C; --pg-half: #8FA083;
+}
+:root[data-theme="opaco"][data-mode="notte"] [data-pigment="blu"] {
+  --pg-bg: #34475A; --pg-ink: #E1EAF2; --pg-dark: #4A5F73; --pg-mid: #40546A; --pg-light: #1B2A36; --pg-half: #9DB0C0;
+}
+:root[data-theme="opaco"][data-mode="notte"] [data-pigment="senape"] {
+  --pg-bg: #6B5523; --pg-ink: #F3E3BA; --pg-dark: #836A30; --pg-mid: #775F28; --pg-light: #3A2C0A; --pg-half: #D2B26A;
+}
+:root[data-theme="opaco"][data-mode="notte"] [data-pigment="malva"] {
+  --pg-bg: #4E3C52; --pg-ink: #F1E3EE; --pg-dark: #3D2D41; --pg-mid: #6A566D; --pg-light: #33213A; --pg-half: #B8A1B4;
+}
+:root[data-theme="opaco"][data-mode="notte"] [data-pigment="carta"] {
+  --pg-bg: #2A2B26; --pg-ink: #ECE9E2; --pg-dark: #3F403A; --pg-mid: #34352F; --pg-light: #1E1F1B; --pg-half: #A9A79E;
+}
+:root[data-theme="opaco"][data-mode="notte"] [data-pigment="carta"] {
+  --text-secondary: #A9A79E;
+  --text-muted: #A9A79E;
+}
+
+/* ---------- QUADERNO, versione notte: quaderno nero, penna gel azzurra ---------- */
+:root[data-theme="quaderno"][data-mode="notte"] {
+  color-scheme: dark;
+
+  --font-family: "Figtree Variable", system-ui, sans-serif;
+  --font-display: "Caveat Variable", cursive;
+  --display-weight: 600;
+  --display-tracking: 0;
+  --font-title: "Caveat Variable", cursive;
+  --title-weight: 600;
+  --heading-weight: 600;
+  --body-size: 14px;
+  --line-height: 1.5;
+
+  --bg: #121620;
+  /* Foglio a quadretti da 24px: usato dall'area principale e dalle pagine "di carta". */
+  --main-bg: linear-gradient(#1C2330 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, #1C2330 1px, transparent 1px) 0 0 / 24px 24px, #121620;
+  --paper-margin: #8A3F45;
+  --bg-sidebar: #1A1F2B;
+  --sidebar-border: 1px solid #262D3B;
+  --sidebar-width: 216px;
+
+  --bg-card: #1A1F2B;
+  --card-bg: #1A1F2B;
+  --card-border: 1px solid #2C3446;
+  --card-shadow: 0 3px 0 #0B0E15;
+  --card-transform: none;
+  --radius-card: 8px;
+  --widget-padding: 22px;
+  --grid-gap: 18px;
+  /* Spazio interno dell'area principale e distanza intestazione-griglia. */
+  --main-padding: 22px 32px 28px 68px;
+  --main-gap: 16px;
+
+  --panel-bg: #1A1F2B;
+  --panel-border: 1px solid #262E3D;
+  --radius-panel: 6px;
+  --display-bg: #222A3A;
+  --display-texture: none;
+  --display-border: 1.5px solid #E6EAF2;
+  --radius-display: 6px;
+
+  --border-subtle: #262E3D;
+  --divider: #262E3D;
+  --row-active-bg: transparent;
+  --row-active-border: transparent;
+  --track: #3A4459;
+  --tick-off: #3A4459;
+  --tick-off-long: #4A556B;
+  --bar-off: transparent;
+  --dot-off: #3A4459;
+  --dot-on: #9FB6FF;
+
+  --text-primary: #E6EAF2;
+  --text-secondary: #98A3B8;
+  --text-muted: #98A3B8;
+  --text-soft: #E6EAF2;
+
+  --accent: #9FB6FF;
+  --accent-strong: var(--accent);
+  --on-accent: #121620;
+  --success: #4CC38A;
+  --success-text: #6FD3A2;
+  --warn: #E0A25A;
+  --led: #4CC38A;
+  --danger: #F08A80;
+  --on-danger: #121620;
+
+  --surface-1: rgba(159, 182, 255, 0.05);
+  --surface-2: #222A3B;
+  --surface-3: #262E3D;
+
+  --radius-item: 8px;
+  --btn-primary-bg: var(--accent);
+  --btn-primary-fg: var(--on-accent);
+  --btn-ghost-border: 1.5px solid var(--accent);
+  --btn-ghost-fg: var(--accent);
+  --btn-ghost-bg: #1A1F2B;
+  --chip-bg: #222A3B;
+  --chip-fg: var(--accent);
+  --slot-border: 2px dashed #4A556B;
+  --slot-bg: rgba(26, 31, 43, 0.6);
+  --slot-fg: #98A3B8;
+  --slot-gap: 2px;
+  --slot-font-size: 13px;
+  --slot-weight: 400;
+  --slot-svg-display: none;
+  --slot-svg-stroke: 1.6;
+  --slot-text-display: block;
+  --slot-plus-font: "Caveat Variable", cursive;
+  --slot-plus-size: 38px;
+
+  --nav-active-bg: #222A3B;
+  --nav-active-fg: #9FB6FF;
+  --nav-fg: #98A3B8;
+
+  --postit-bg: #E3D58C;
+  --postit-shadow: 0 3px 0 #A99A52;
+  --postit-text: #5C4E12;
+  --bubble-bg: transparent;
+  --bubble-fg: var(--accent);
+  --bubble-radius: 0;
+  --face-on: #E6EAF2;
+  --face-halo: transparent;
+
+  --thumb-bg: #222A3A;
+  --thumb-play-bg: var(--accent);
+  --thumb-play-fg: #121620;
+  --thumb-badge-bg: #E6EAF2;
+  --thumb-track: #222A3A;
+
+  --highlight: #7A6516;
+  --highlight-mark: linear-gradient(transparent 55%, #7A6516 55%, #7A6516 92%, transparent 92%);
+  --overlay: rgba(0, 0, 0, 0.6);
+  --modal-bg: #1A1F2B;
+  --modal-border: 1px solid #2C3446;
+  --shadow-pop: 0 4px 0 #0B0E15;
+  --focus-ring: 2px solid var(--accent);
+}
+
+/* Il post-it resta chiaro (smorzato): dentro, inchiostro e faccia tornano scuri. */
+:root[data-theme="quaderno"][data-mode="notte"] .card-postit {
+  --text-primary: #1B2433;
+  --text-soft: #1B2433;
+  --accent: #2340A0;
+  --bubble-fg: #2340A0;
+  --face-on: #1B2433;
+}
+
+/* ---------- FOSFORO, versione giorno: modulo crema, display LCD a puntini scuri ---------- */
+:root[data-theme="fosforo"][data-mode="giorno"] {
+  color-scheme: light;
+
+  --font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+  --font-display: "Doto Variable", monospace;
+  --display-weight: 900;
+  --display-tracking: 0;
+  --font-title: "JetBrains Mono Variable", ui-monospace, monospace;
+  --title-weight: 400;
+  --heading-weight: 400;
+  --body-size: 13px;
+  --line-height: 1.55;
+
+  --bg: #EFE9E5;
+  --main-bg: transparent;
+  --bg-sidebar: transparent;
+  --sidebar-border: 0;
+  --sidebar-width: 208px;
+  /* Unica decorazione di sfondo: cerchio pieno in basso a destra + cerchio sottile in alto. */
+  --deco-fill: radial-gradient(circle at 30% 30%, #E6C3C1 0%, #EDD5D2 45%, #F0E3DF 70%);
+  --deco-ring: 1px solid rgba(70, 24, 28, 0.08);
+
+  --bg-card: #FDFAF8;
+  --card-bg: rgba(253, 250, 248, 0.92);
+  --card-border: 1px solid rgba(70, 24, 28, 0.12);
+  --card-shadow: none;
+  --card-transform: none;
+  --radius-card: 14px;
+  --widget-padding: 14px;
+  --grid-gap: 12px;
+  /* Spazio interno dell'area principale e distanza intestazione-griglia. */
+  --main-padding: 24px 32px 28px 16px;
+  --main-gap: 18px;
+
+  --panel-bg: transparent;
+  --panel-border: 1px solid rgba(70, 24, 28, 0.12);
+  --radius-panel: 8px;
+  --display-bg: #E5DDD7;
+  --display-texture: radial-gradient(rgba(60, 20, 24, 0.09) 1px, transparent 1.3px) 0 0 / 7px 7px;
+  --display-border: 1px solid rgba(70, 24, 28, 0.08);
+  --radius-display: 10px;
+
+  --border-subtle: rgba(70, 24, 28, 0.12);
+  --divider: rgba(70, 24, 28, 0.08);
+  --row-active-bg: rgba(70, 24, 28, 0.05);
+  --row-active-border: rgba(70, 24, 28, 0.16);
+  --track: #D6C9C4;
+  --tick-off: #D6C9C4;
+  --tick-off-long: #D6C9C4;
+  --bar-off: #D6C9C4;
+  --dot-off: #D6C9C4;
+  --dot-on: #2A1215;
+
+  --text-primary: #2A1517;
+  --text-secondary: #77605D;
+  --text-muted: #77605D;
+  --text-soft: #2A1215;
+
+  --accent: #2A1215;
+  --accent-strong: var(--accent);
+  --on-accent: #EFE9E5;
+  --success: #2A1215;
+  --success-text: #2A1215;
+  --warn: #2A1215;
+  --led: #E0352B;
+  --danger: #E0352B;
+  --on-danger: #EFE9E5;
+
+  --surface-1: rgba(70, 24, 28, 0.04);
+  --surface-2: rgba(70, 24, 28, 0.07);
+  --surface-3: rgba(70, 24, 28, 0.12);
+
+  --radius-item: 999px;
+  --btn-primary-bg: transparent;
+  --btn-primary-fg: #2A1215;
+  --btn-primary-border: 1px solid rgba(70, 24, 28, 0.28);
+  --btn-ghost-border: 1px solid rgba(70, 24, 28, 0.16);
+  --btn-ghost-fg: #77605D;
+  --chip-bg: #2A1215;
+  --chip-fg: #EFE9E5;
+  --slot-border: 1px dashed rgba(70, 24, 28, 0.22);
+  --slot-bg: transparent;
+  --slot-fg: #77605D;
+  --slot-gap: 6px;
+  --slot-font-size: 12px;
+  --slot-weight: 400;
+  --slot-svg-display: block;
+  --slot-svg-stroke: 1.5;
+  --slot-text-display: none;
+  --slot-plus-font: inherit;
+  --slot-plus-size: 30px;
+
+  --nav-active-bg: #2A1215;
+  --nav-active-fg: #EFE9E5;
+  --nav-fg: #77605D;
+
+  --bubble-bg: #EFE9E5;
+  --bubble-fg: #2A1517;
+  --bubble-border: 1px solid rgba(70, 24, 28, 0.2);
+  --bubble-radius: 13px;
+  --face-on: #2A1215;
+  --face-halo: transparent;
+  --lens-ring: 1px solid rgba(70, 24, 28, 0.14);
+
+  --thumb-bg: #E5DDD7;
+  --thumb-play-bg: transparent;
+  --thumb-play-fg: #2A1215;
+  --thumb-play-border: 1px solid rgba(70, 24, 28, 0.4);
+  --thumb-badge-bg: #EFE9E5;
+  --thumb-track: #D6C9C4;
+
+  --highlight: rgba(70, 24, 28, 0.12);
+  --overlay: rgba(42, 18, 21, 0.35);
+  --modal-bg: #FDFAF8;
+  --modal-border: 1px solid rgba(70, 24, 28, 0.12);
+  --shadow-pop: 0 18px 48px rgba(70, 24, 28, 0.18);
+  --focus-ring: 1px solid #2A1215;
+}
+
+/* Anteprime delle varianti nella scheda Aspetto (bg = foglio, a = card grande, b = card piccole). */
+:root {
+  --preview-notte-giorno-bg: #EEF1F7;
+  --preview-notte-giorno-a: #3B57D6;
+  --preview-notte-giorno-b: #FFFFFF;
+  --preview-notte-giorno-border: 1px solid #DCE2EE;
+  --preview-notte-giorno-radius: 6px;
+  --preview-opaco-notte-bg: #1B1C18;
+  --preview-opaco-notte-a: #3C4935;
+  --preview-opaco-notte-b: #34475A;
+  --preview-opaco-notte-border: 0;
+  --preview-opaco-notte-radius: 8px;
+  --preview-quaderno-notte-bg: #121620;
+  --preview-quaderno-notte-a: #E3D58C;
+  --preview-quaderno-notte-b: #1A1F2B;
+  --preview-quaderno-notte-border: 1px solid #2C3446;
+  --preview-quaderno-notte-radius: 2px;
+  --preview-fosforo-giorno-bg: #EFE9E5;
+  --preview-fosforo-giorno-a: #E5DDD7;
+  --preview-fosforo-giorno-b: #FDFAF8;
+  --preview-fosforo-giorno-border: 1px solid rgba(70, 24, 28, 0.2);
+  --preview-fosforo-giorno-radius: 4px;
+}
