@@ -4,25 +4,37 @@ import type { Compactor, Layout } from "react-grid-layout/core";
 /**
  * Compactor "spinta ritardata" per react-grid-layout.
  *
- * Differenza rispetto a prima: NON c'è più stato globale di modulo.
- * Lo stato di un drag (widget attivo, timer di collisione, ultima
- * posizione sicura) vive in una "sessione" creata da createDragCompactor,
- * quindi puoi avere più griglie, parametri diversi per griglia e testare
- * la logica in isolamento. La logica di risoluzione è invariata.
+ * Lo stato di un drag (widget attivo, layout di partenza, timer di
+ * collisione, ultima posizione sicura) vive in una "sessione" creata da
+ * createDragCompactor: niente stato globale di modulo, quindi più griglie
+ * con parametri diversi e logica testabile in isolamento.
+ *
+ * Regola d'oro: il risultato non ha MAI sovrapposizioni. Chi deve far posto
+ * va in una posizione libera (findPlacement) o, se non ce n'è, il drag si
+ * blocca; al rilascio, nel peggiore dei casi, si torna al layout di partenza.
  */
 
-interface Rect {
+type Item = Layout[number];
+
+interface Cell {
   x: number;
   y: number;
+}
+
+interface Rect extends Cell {
   w: number;
   h: number;
 }
 
 interface DragSession {
   activeId: string;
+  /** Layout all'inizio del drag: la "casa" dei widget spinti e il ripiego se il rilascio non si risolve. */
+  originLayout: Item[];
   /** Ultima posizione NOTA SENZA COLLISIONI del widget attivo. */
   lastSafeRect: Rect | null;
   collisionTimers: Map<string, number>;
+  /** Mouse rilasciato: ogni collisione conta come matura (lo scambio avviene subito). */
+  dropping: boolean;
 }
 
 export interface CompactorConfig {
@@ -40,10 +52,165 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(value, max));
 }
 
+/** Taglia e posizione dentro i bordi della griglia. */
+function clampItem(it: Item, cols: number, rows: number) {
+  it.w = clamp(it.w, 1, cols);
+  it.h = clamp(it.h, 1, rows);
+  it.x = clamp(it.x, 0, cols - it.w);
+  it.y = clamp(it.y, 0, rows - it.h);
+}
+
+/** True se `moving` messo in `cell` sta nei bordi e non tocca nessun altro di `items`. */
+function fitsAt(moving: Item, cell: Cell, items: readonly Item[], cols: number, rows: number): boolean {
+  if (cell.x < 0 || cell.y < 0 || cell.x + moving.w > cols || cell.y + moving.h > rows) return false;
+  const candidate = { ...moving, x: cell.x, y: cell.y };
+  return !items.some((other) => other.i !== moving.i && collides(candidate, other));
+}
+
 /**
- * Risolve le collisioni. Con session === null (nessun drag in corso) la
- * risoluzione è immediata; altrimenti le spinte rispettano pushDelayMs.
+ * Dove mettere `moving` senza toccare nessuno: la prima delle `preferred` che
+ * va bene, altrimenti la cella libera più vicina alla sua posizione attuale.
+ * Null se nella griglia non c'è posto.
  */
+function findPlacement(
+  moving: Item,
+  items: readonly Item[],
+  preferred: readonly Cell[],
+  cols: number,
+  rows: number
+): Cell | null {
+  for (const cell of preferred) {
+    if (fitsAt(moving, cell, items, cols, rows)) return cell;
+  }
+  let best: Cell | null = null;
+  let bestDistance = Infinity;
+  for (let y = 0; y + moving.h <= rows; y++) {
+    for (let x = 0; x + moving.w <= cols; x++) {
+      const distance = Math.abs(x - moving.x) + Math.abs(y - moving.y);
+      if (distance < bestDistance && fitsAt(moving, { x, y }, items, cols, rows)) {
+        best = { x, y };
+        bestDistance = distance;
+      }
+    }
+  }
+  return best;
+}
+
+/**
+ * Toglie ogni sovrapposizione: i widget si sistemano uno alla volta (prima
+ * `first`, poi dall'alto in basso) e chi tocca uno già sistemato va nella
+ * cella libera più vicina. Su un layout già valido non cambia nulla.
+ * False se qualcuno non trova posto (resta sovrapposto).
+ */
+function separate(items: Item[], cols: number, rows: number, first: string | null): boolean {
+  const order = [...items].sort((a, b) => {
+    if (a.i === first) return -1;
+    if (b.i === first) return 1;
+    return a.y - b.y || a.x - b.x;
+  });
+  const placed: Item[] = [];
+  let ok = true;
+  for (const it of order) {
+    if (!it.static && !fitsAt(it, it, placed, cols, rows)) {
+      const cell = findPlacement(it, placed, [], cols, rows);
+      if (cell) {
+        it.x = cell.x;
+        it.y = cell.y;
+      } else {
+        ok = false;
+      }
+    }
+    placed.push(it);
+  }
+  return ok;
+}
+
+/**
+ * Risolve il layout durante un drag. Il widget attivo che copre altri widget:
+ * finché la sovrapposizione non è "maturata" (pushDelayMs, o subito al
+ * rilascio) resta all'ultima posizione sicura; poi chi sta sotto si sposta,
+ * prima nella cella d'origine dell'attivo (scambio), poi sotto, poi sopra,
+ * poi nel posto libero più vicino. Se qualcuno non ha posto, il drag si blocca.
+ */
+function resolveDrag(items: Item[], cols: number, rows: number, pushDelayMs: number, session: DragSession): Item[] | null {
+  const active = items.find((it) => it.i === session.activeId);
+  if (!active) return separate(items, cols, rows, null) ? items : null;
+
+  const timers = session.collisionTimers;
+  const now = Date.now();
+  const seen = new Set<string>();
+  const covered = items
+    .filter((other) => other.i !== active.i && !other.static && collides(active, other))
+    .sort((a, b) => a.y - b.y || a.x - b.x);
+
+  let blocked = false;
+  for (const other of covered) {
+    const key = pairKey(active.i, other.i);
+    seen.add(key);
+    const firstSeen = timers.get(key);
+    if (firstSeen === undefined) timers.set(key, now);
+    const matured = session.dropping || (firstSeen !== undefined && now - firstSeen >= pushDelayMs);
+    if (!matured) blocked = true;
+  }
+  for (const key of timers.keys()) {
+    if (!seen.has(key)) timers.delete(key);
+  }
+
+  if (!blocked) {
+    // Le spinte si provano su una copia: se anche uno solo non trova posto, non si muove nessuno.
+    const trial = items.map((it) => ({ ...it }));
+    const trialActive = trial.find((it) => it.i === active.i)!;
+    const origin = session.originLayout.find((it) => it.i === active.i);
+    for (const other of covered) {
+      const moving = trial.find((it) => it.i === other.i)!;
+      const preferred: Cell[] = [
+        // Scambio: nella cella d'origine dell'attivo, con la stessa posizione relativa
+        // (un 2×2 che copre quattro 1×1 li ritrova nello stesso ordine al suo posto).
+        ...(origin
+          ? [
+              { x: origin.x + (moving.x - trialActive.x), y: origin.y + (moving.y - trialActive.y) },
+              { x: origin.x, y: origin.y },
+            ]
+          : []),
+        { x: moving.x, y: trialActive.y + trialActive.h },
+        { x: moving.x, y: trialActive.y - moving.h },
+      ];
+      const cell = findPlacement(moving, trial, preferred, cols, rows);
+      if (!cell) {
+        blocked = true;
+        break;
+      }
+      moving.x = cell.x;
+      moving.y = cell.y;
+    }
+    if (!blocked) items = trial;
+  }
+
+  const current = items.find((it) => it.i === session.activeId)!;
+  if (blocked && session.lastSafeRect) {
+    Object.assign(current, session.lastSafeRect);
+  } else if (!blocked) {
+    session.lastSafeRect = { x: current.x, y: current.y, w: current.w, h: current.h };
+  }
+
+  // Chi era stato spinto torna a casa appena il suo posto è di nuovo libero.
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const it of items) {
+      const home = session.originLayout.find((o) => o.i === it.i);
+      if (!home || it.i === session.activeId || (home.x === it.x && home.y === it.y)) continue;
+      if (fitsAt(it, home, items, cols, rows)) {
+        it.x = home.x;
+        it.y = home.y;
+        changed = true;
+      }
+    }
+  }
+
+  return separate(items, cols, rows, session.activeId) ? items : null;
+}
+
 function resolveLayout(
   layout: Layout,
   cols: number,
@@ -51,166 +218,19 @@ function resolveLayout(
   pushDelayMs: number,
   session: DragSession | null
 ): Layout {
-  const items = layout.map((it) => ({ ...it }));
   const rows = Math.max(1, maxRows);
-  const activeId = session?.activeId ?? null;
+  const items = layout.map((it) => ({ ...it }));
+  for (const it of items) clampItem(it, cols, rows);
 
-  // Prima si sistema la taglia, poi si calcolano le collisioni con numeri
-  // già validi (un widget troppo grande non deve spingere via gli altri).
-  for (const it of items) {
-    it.w = clamp(it.w, 1, cols);
-    it.h = clamp(it.h, 1, rows);
+  if (!session) {
+    separate(items, cols, rows, null);
+    return items;
   }
 
-  const originalPositions = new Map(layout.map((it) => [it.i, { x: it.x, y: it.y }]));
-  const now = Date.now();
-  const seenThisRound = new Set<string>();
-
-  if (session) {
-    const timers = session.collisionTimers;
-    const active = items.find((it) => it.i === session.activeId);
-    if (active) {
-      let blocked = false;
-
-      for (const other of items) {
-        if (other.i === session.activeId || other.static) continue;
-        if (!collides(active, other)) continue;
-
-        const key = pairKey(active.i, other.i);
-        seenThisRound.add(key);
-        const firstSeen = timers.get(key);
-        const matured = firstSeen !== undefined && now - firstSeen >= pushDelayMs;
-        if (firstSeen === undefined) timers.set(key, now);
-
-        if (!matured) {
-          blocked = true;
-          continue;
-        }
-
-        // Matura: verifichiamo che "other" abbia DAVVERO un posto valido
-        // dove atterrare (sotto o sopra) senza uscire dai bordi né toccare
-        // un terzo widget. Se non c'è, blocchiamo il drag stesso.
-        let candidateY = active.y + active.h;
-        let fits = candidateY + other.h <= rows;
-        if (!fits) {
-          const above = active.y - other.h;
-          if (above >= 0) {
-            candidateY = above;
-            fits = true;
-          }
-        }
-        if (fits) {
-          const candidate = { ...other, y: candidateY };
-          const collidesWithThird = items.some(
-            (third) =>
-              third.i !== other.i &&
-              third.i !== active.i &&
-              !third.static &&
-              collides(candidate, third)
-          );
-          if (collidesWithThird) fits = false;
-        }
-        if (!fits) blocked = true;
-      }
-
-      if (blocked && session.lastSafeRect) {
-        // Torna all'ultima posizione sicura nota.
-        active.x = session.lastSafeRect.x;
-        active.y = session.lastSafeRect.y;
-        active.w = session.lastSafeRect.w;
-        active.h = session.lastSafeRect.h;
-      } else if (!blocked) {
-        session.lastSafeRect = { x: active.x, y: active.y, w: active.w, h: active.h };
-      }
-    }
-  }
-
-  let changed = true;
-  let iterations = 0;
-  const maxIterations = items.length * items.length + 10;
-
-  while (changed && iterations < maxIterations) {
-    changed = false;
-    iterations++;
-
-    for (let i = 0; i < items.length; i++) {
-      for (let j = 0; j < items.length; j++) {
-        if (i === j) continue;
-        const a = items[i];
-        const b = items[j];
-        if (a.static || b.static) continue;
-        if (!collides(a, b)) continue;
-
-        const key = pairKey(a.i, b.i);
-        seenThisRound.add(key);
-
-        if (session && !(a.i === activeId || b.i === activeId)) {
-          const firstSeen = session.collisionTimers.get(key);
-          if (firstSeen === undefined) {
-            session.collisionTimers.set(key, now);
-            continue;
-          }
-          if (now - firstSeen < pushDelayMs) continue;
-        }
-
-        let fixed: typeof a;
-        let moving: typeof a;
-        if (a.i === activeId) {
-          fixed = a;
-          moving = b;
-        } else if (b.i === activeId) {
-          fixed = b;
-          moving = a;
-        } else {
-          const aOrig = originalPositions.get(a.i)!;
-          const bOrig = originalPositions.get(b.i)!;
-          [fixed, moving] = aOrig.y < bOrig.y || (aOrig.y === bOrig.y && i < j) ? [a, b] : [b, a];
-        }
-
-        // Se rimettendo "moving" dov'era all'inizio non collide più con
-        // nessuno, la spinta si annulla.
-        const origPos = originalPositions.get(moving.i);
-        if (origPos && (origPos.x !== moving.x || origPos.y !== moving.y)) {
-          const candidate = { ...moving, x: origPos.x, y: origPos.y };
-          const stillBlocked = items.some(
-            (other) => other.i !== moving.i && !other.static && collides(candidate, other)
-          );
-          if (!stillBlocked) {
-            moving.x = origPos.x;
-            moving.y = origPos.y;
-            changed = true;
-            continue;
-          }
-        }
-
-        let newY = fixed.y + fixed.h;
-        if (newY + moving.h > rows) {
-          const above = fixed.y - moving.h;
-          newY = above >= 0 ? above : Math.max(0, rows - moving.h);
-        }
-
-        if (moving.y !== newY) {
-          moving.y = newY;
-          changed = true;
-        }
-      }
-    }
-  }
-
-  if (session) {
-    for (const key of session.collisionTimers.keys()) {
-      if (!seenThisRound.has(key)) session.collisionTimers.delete(key);
-    }
-  }
-
-  for (const it of items) {
-    it.w = clamp(it.w, 1, cols);
-    it.h = clamp(it.h, 1, rows);
-    it.x = clamp(it.x, 0, cols - it.w);
-    it.y = clamp(it.y, 0, Math.max(0, rows - it.h));
-  }
-
-  return items;
+  const resolved = resolveDrag(items, cols, rows, pushDelayMs, session);
+  if (resolved) return resolved;
+  // Impossibile togliere le sovrapposizioni: si torna al layout di partenza.
+  return session.originLayout.map((it) => ({ ...it }));
 }
 
 /** Risoluzione immediata, senza ritardi: per caricamento, reset, rilascio. */
@@ -218,12 +238,14 @@ export function finalizeLayout(layout: Layout, cols: number, maxRows: number): L
   return resolveLayout(layout, cols, maxRows, 0, null);
 }
 
-export function clampToBounds(layout: Layout, cols: number, maxRows: number): Layout {
-  return layout.map((it) => ({
-    ...it,
-    x: Math.max(0, Math.min(it.x, cols - it.w)),
-    y: Math.max(0, Math.min(it.y, Math.max(0, maxRows - it.h))),
-  }));
+/** Stesse posizioni e taglie per gli stessi widget (l'ordine non conta). */
+export function sameLayout(a: Layout, b: Layout): boolean {
+  if (a.length !== b.length) return false;
+  const byId = new Map(b.map((it) => [it.i, it]));
+  return a.every((it) => {
+    const other = byId.get(it.i);
+    return other !== undefined && other.x === it.x && other.y === it.y && other.w === it.w && other.h === it.h;
+  });
 }
 
 export function createDragCompactor(config: CompactorConfig) {
@@ -241,28 +263,35 @@ export function createDragCompactor(config: CompactorConfig) {
   return {
     compactor,
 
-    /** rect: posizione del widget PRIMA di iniziare il drag (primo punto sicuro noto). */
-    startDrag(id: string, rect?: Rect) {
-      session = { activeId: id, lastSafeRect: rect ? { ...rect } : null, collisionTimers: new Map() };
+    /** layout: com'era la griglia PRIMA del drag (casa dei widget spinti e ripiego). */
+    startDrag(id: string, layout: Layout) {
+      const origin = layout.find((it) => it.i === id);
+      session = {
+        activeId: id,
+        originLayout: layout.map((it) => ({ ...it })),
+        lastSafeRect: origin ? { x: origin.x, y: origin.y, w: origin.w, h: origin.h } : null,
+        collisionTimers: new Map(),
+        dropping: false,
+      };
+    },
+
+    /** Mouse rilasciato: da qui ogni collisione si risolve subito. Va chiamata PRIMA del rilascio della libreria. */
+    beginDrop() {
+      if (session) session.dropping = true;
+    },
+
+    /** Risultato del rilascio calcolato a mano (rete di sicurezza se la libreria perde il rilascio). */
+    dropResult(layout: Layout, cols: number): Layout {
+      if (session) session.dropping = true;
+      return resolveLayout(layout, cols, config.maxRows, config.pushDelayMs, session);
+    },
+
+    isActive(): boolean {
+      return session !== null;
     },
 
     endDrag() {
       session = null;
-    },
-
-    /** True se il widget attivo sta ancora sopra un altro senza che il ritardo sia maturato. */
-    hasPendingCollision(layout: Layout, activeId: string): boolean {
-      const now = Date.now();
-      const active = layout.find((it) => it.i === activeId);
-      if (!active) return false;
-
-      for (const other of layout) {
-        if (other.i === activeId || other.static) continue;
-        if (!collides(active, other)) continue;
-        const firstSeen = session?.collisionTimers.get(pairKey(active.i, other.i));
-        if (firstSeen === undefined || now - firstSeen < config.pushDelayMs) return true;
-      }
-      return false;
     },
   };
 }

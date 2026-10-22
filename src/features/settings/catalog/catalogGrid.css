@@ -1,23 +1,10 @@
-.widget-catalog {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.widget-catalog-header {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
+/* Card del catalogo (pagina catalogo e Impostazioni > Widget). */
 
 .widget-catalog-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 16px;
-
-  overflow-y: auto;
+  /* Niente overflow proprio: scorre .main, e un overflow qui taglierebbe l'ombra delle card ai bordi. */
 }
 
 .widget-catalog-card {
@@ -32,6 +19,11 @@
   border-radius: var(--radius-card);
 
   transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+/* Con le impostazioni aperte la card prende tutta la riga: i controlli non stanno in una colonna stretta. */
+.widget-catalog-card.is-open {
+  grid-column: 1 / -1;
 }
 
 .widget-catalog-card:hover {
@@ -85,6 +77,11 @@
   font-size: 13px;
   line-height: 1.5;
   color: var(--text-muted);
+}
+
+.widget-catalog-settings {
+  padding-top: 6px;
+  border-top: 1px solid var(--divider);
 }
 
 .widget-catalog-sizes {

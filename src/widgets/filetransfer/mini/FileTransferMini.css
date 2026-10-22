@@ -4,6 +4,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  max-width: 260px;
+  min-width: 0;
   color: var(--text-primary);
 }
 
@@ -18,9 +20,17 @@
 .ft-mini-text {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   font-size: 12px;
   line-height: 1.35;
   color: var(--text-secondary);
+}
+
+/* I testi non vanno a capo: si accorciano con i puntini. */
+.ft-mini-text > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ft-mini-text > span:first-child {

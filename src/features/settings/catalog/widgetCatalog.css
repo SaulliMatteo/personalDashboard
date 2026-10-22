@@ -1,0 +1,13 @@
+.widget-catalog {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.widget-catalog-header {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}

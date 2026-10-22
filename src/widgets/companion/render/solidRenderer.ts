@@ -22,8 +22,12 @@ export interface SolidOptions {
 
 /** Distanza tra due campioni, in pixel reali: sotto non si vede la differenza. */
 const SAMPLE_PX = 1.5;
-/** Area campionata intorno alla faccia, in punti (sguardo e spostamenti ci stanno dentro). */
-const MARGIN = 4;
+/**
+ * Area campionata intorno alla faccia, in punti: tutta quella che il canvas mostra, fino a
+ * questo massimo. I costumi escono fino a ~9 punti (la fiamma 13): con un margine fisso più
+ * piccolo venivano tagliati prima del bordo del riquadro, solo in questi temi (il LED usa la griglia intera).
+ */
+const MAX_MARGIN = 13;
 
 interface MaskBuffer {
   canvas: HTMLCanvasElement;
@@ -68,17 +72,20 @@ export function drawSolidFace(canvas: HTMLCanvasElement, frame: FaceFrame, optio
 
   // Campioni per punto: abbastanza per un bordo netto, mai troppi.
   const k = Math.max(1, Math.min(8, scale / SAMPLE_PX));
-  const sw = Math.ceil((FACE_W + MARGIN * 2) * k);
-  const sh = Math.ceil((FACE_H + MARGIN * 2) * k);
+  // Margini visibili: lo spazio tra faccia e bordo del canvas (la faccia è centrata).
+  const mx = Math.min(MAX_MARGIN, Math.ceil(originX / scale));
+  const my = Math.min(MAX_MARGIN, Math.ceil(originY / scale));
+  const sw = Math.ceil((FACE_W + mx * 2) * k);
+  const sh = Math.ceil((FACE_H + my * 2) * k);
   const buffer = maskBuffer(canvas, sw, sh);
   if (!buffer) return;
 
   const field = faceField(frame, { showMouth: options.showMouth, roundness: options.roundness });
   const data = buffer.image.data;
   for (let j = 0; j < sh; j++) {
-    const fy = (j + 0.5) / k - MARGIN;
+    const fy = (j + 0.5) / k - my;
     for (let i = 0; i < sw; i++) {
-      const fx = (i + 0.5) / k - MARGIN;
+      const fx = (i + 0.5) / k - mx;
       data[(j * sw + i) * 4 + 3] = Math.round(field.brightness(fx, fy, k) * 255);
     }
   }
@@ -92,7 +99,7 @@ export function drawSolidFace(canvas: HTMLCanvasElement, frame: FaceFrame, optio
   g.fillRect(0, 0, sw, sh);
 
   ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(buffer.canvas, 0, 0, sw, sh, originX - MARGIN * scale, originY - MARGIN * scale, (sw / k) * scale, (sh / k) * scale);
+  ctx.drawImage(buffer.canvas, 0, 0, sw, sh, originX - mx * scale, originY - my * scale, (sw / k) * scale, (sh / k) * scale);
 
   // Punti del costume (scritte, particelle): come i simboli, punti tondi.
   const r = scale * 0.4;

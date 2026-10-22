@@ -9,17 +9,16 @@
  * Nessuna migrazione DB: i valori sono righe chiave/valore e le chiavi
  * mancanti ricadono sul default.
  *
- * Gruppi: general/appearance/glow/dashboard non hanno più una scheda nel
- * modale Settings (che ora contiene solo la gestione widget): le chiavi
- * restano con i loro default e continuano a governare l'app. Il gruppo
- * "study" e "youtube" si modificano dalla rotellina del widget nel catalogo
- * (ogni widget dichiara il suo gruppo con `settingsGroup`).
+ * Gruppi: general/appearance/glow/dashboard hanno la loro scheda in Impostazioni;
+ * i gruppi dei widget si modificano dalla rotellina della card nel catalogo
+ * (Impostazioni > Widget; ogni widget dichiara il suo gruppo con `settingsGroup`).
  *
  * Raggi, spaziature, font e larghezza della sidebar li decide il tema
  * (styles/tokens.css): non sono più impostazioni.
  */
 
 import { THEMES, THEME_IDS, isThemeId, type ThemeId } from "../theme/themes";
+import type { ThemeVariants } from "../theme/variants";
 
 /** Palette del glow dei widget: tre colori usati per il bordo "mesh". */
 export const GLOW_PALETTES = {
@@ -31,6 +30,10 @@ export const GLOW_PALETTES = {
 } as const;
 
 export type GlowPaletteKey = keyof typeof GLOW_PALETTES | "accent";
+
+/** Cosa mostra lo spazio dell'intestazione impostato su "Come il tema" (`headerSlot1` = "auto"):
+ *  il mini dei mockup. Sono id del registry dei widget, che core non importa. */
+export const HEADER_SLOT_AUTO: ThemeVariants<string> = { notte: "study", opaco: "none", quaderno: "none", fosforo: "clock" };
 
 export const DEFAULT_SETTINGS = {
   // ---- Generale ----
@@ -188,10 +191,10 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "headerSlot1", group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Spazio in alto a destra", description: "Un mini widget accanto al saluto." },
   { key: "headerSlot2", group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Secondo spazio", description: "Un altro mini widget, affiancato al primo." },
 
-  { key: "gridRows", group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 4, max: 8, step: 1, label: "Righe disponibili", description: "Più righe = più spazio per i widget. Non scende mai sotto le righe già occupate." },
+  { key: "gridRows", group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 4, max: 8, step: 1, label: "Righe disponibili", description: "Più righe = più spazio per i widget, che diventano più bassi: la dashboard resta sempre dentro lo schermo. Non scende mai sotto le righe già occupate." },
 
   { key: "lockLayout", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Blocca layout", description: "Impedisce di trascinare i widget." },
-  { key: "gridPushDelayMs", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 1500, step: 50, unit: "ms", label: "Ritardo spinta widget", description: "Quanto tieni un widget sopra un altro prima che lo sposti." },
+  { key: "gridPushDelayMs", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 1500, step: 50, unit: "ms", label: "Ritardo spinta widget", description: "Quanto tieni un widget sopra un altro prima che lo sposti (se lo rilasci lì, lo sposta subito)." },
   { key: "dragThreshold", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 20, step: 1, unit: "px", label: "Distanza prima che parta il trascinamento", description: "Evita trascinamenti involontari quando clicchi." },
   { key: "openDetailOnClick", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Apri il dettaglio con un doppio click sul widget" },
 

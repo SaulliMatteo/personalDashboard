@@ -7,9 +7,7 @@
  * (settings.gridRows, minimo 4): aumentarle non invalida nessun layout.
  *
  * L'altezza di riga si ricava dall'altezza disponibile (la griglia riempie
- * la finestra); lo spazio fra i widget lo decide il tema (--grid-gap).
+ * la finestra e non la supera mai: la dashboard non scorre); lo spazio fra
+ * i widget lo decide il tema (--grid-gap).
  */
 export const GRID_COLS = 6;
-
-// Altezza minima di riga in px: sotto questa soglia meglio far scorrere .main che schiacciare i widget.
-export const MIN_ROW_HEIGHT = 120;

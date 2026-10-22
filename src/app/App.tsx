@@ -5,7 +5,7 @@ import { useNav } from "../core/nav/useNav";
 import WidgetProviders from "../widgets/WidgetProviders";
 import { getWidget, widgetPigment } from "../widgets/registry";
 import Dashboard from "../features/dashboard/Dashboard";
-import WidgetCatalog from "../features/catalog/WidgetCatalog";
+import WidgetCatalog from "../features/settings/catalog/WidgetCatalog";
 import SettingsPage from "../features/settings/SettingsPage";
 import DatabaseGate from "./DatabaseGate";
 import AppShell from "./AppShell";
