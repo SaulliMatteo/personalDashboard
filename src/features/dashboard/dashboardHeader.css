@@ -1,25 +1,27 @@
-/* Intestazione della dashboard, una forma per tema (mockup notte/opaco/quaderno/fosforo.html). */
+/* Intestazione della dashboard, una forma per tema (mockup notte/opaco/quaderno/fosforo.html):
+   solo il saluto a sinistra e i mini a destra, sempre su una riga. */
 
 .dh {
   flex: 0 0 auto;
   display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  min-width: 0;
   color: var(--text-primary);
 }
 
+/* Il saluto si accorcia con i puntini invece di mandare a capo i mini. */
 .dh h1 {
+  flex: 0 1 auto;
+  min-width: 0;
   margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.dh p {
-  margin: 0;
-  color: var(--text-secondary);
-}
-
-/* ---------- Notte: saluto sottile, data e ora; a destra gli spazi (di default la giornata di studio) ---------- */
+/* ---------- Notte: saluto sottile; a destra gli spazi (di default la giornata di studio) ---------- */
 .dh--notte {
   align-items: flex-end;
-  justify-content: space-between;
   gap: 32px;
 }
 
@@ -29,14 +31,9 @@
   letter-spacing: -0.02em;
 }
 
-.dh--notte p {
-  margin-top: 2px;
-}
-
-/* ---------- Opaco: saluto grande, data a destra ---------- */
+/* ---------- Opaco: saluto grande ---------- */
 .dh--opaco {
   align-items: baseline;
-  justify-content: space-between;
   gap: 20px;
 }
 
@@ -46,22 +43,7 @@
   letter-spacing: -0.02em;
 }
 
-.dh--opaco p {
-  margin-left: auto;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.dh--opaco .dh-slots {
-  margin-left: 0;
-}
-
-/* Spazi vuoti: niente distanza in più, la data resta sul bordo destro come nel mockup. */
-.dh--opaco .dh-slots:not(:has(.dh-slot)) {
-  margin-left: -20px;
-}
-
-/* ---------- Quaderno: saluto scritto a mano, data e studio di oggi accanto ---------- */
+/* ---------- Quaderno: saluto scritto a mano ---------- */
 .dh--quaderno {
   align-items: baseline;
   gap: 18px;
@@ -72,24 +54,16 @@
   font-size: 44px;
   font-weight: 600;
   line-height: 1.1;
+  color: var(--accent);
 }
 
-/* ---------- Fosforo: saluto e data; a destra gli spazi (di default l'orologio a punti) ---------- */
+/* ---------- Fosforo: saluto; a destra gli spazi (di default l'orologio a punti) ---------- */
 .dh--fosforo {
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
 }
 
 .dh--fosforo h1 {
   font-size: 20px;
   font-weight: 400;
-}
-
-.dh--fosforo p {
-  margin-top: 2px;
-}
-
-.dh--quaderno h1 {
-  color: var(--accent);
 }

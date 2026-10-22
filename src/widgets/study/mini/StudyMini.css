@@ -1,9 +1,10 @@
 /* "La tua giornata" nell'intestazione (notte.html): linea delle ore con le sessioni di oggi. */
 
+/* Si restringe accanto a un altro mini invece di mandare a capo l'intestazione. */
 .study-mini {
-  width: 520px;
+  width: 360px;
   max-width: 100%;
-  min-width: 300px;
+  min-width: 200px;
 }
 
 .study-mini-head {

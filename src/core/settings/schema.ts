@@ -9,17 +9,16 @@
  * Nessuna migrazione DB: i valori sono righe chiave/valore e le chiavi
  * mancanti ricadono sul default.
  *
- * Gruppi: general/appearance/glow/dashboard non hanno più una scheda nel
- * modale Settings (che ora contiene solo la gestione widget): le chiavi
- * restano con i loro default e continuano a governare l'app. Il gruppo
- * "study" e "youtube" si modificano dalla rotellina del widget nel catalogo
- * (ogni widget dichiara il suo gruppo con `settingsGroup`).
+ * Gruppi: general/appearance/glow/dashboard hanno la loro scheda in Impostazioni;
+ * i gruppi dei widget si modificano dalla rotellina della card nel catalogo
+ * (Impostazioni > Widget; ogni widget dichiara il suo gruppo con `settingsGroup`).
  *
  * Raggi, spaziature, font e larghezza della sidebar li decide il tema
  * (styles/tokens.css): non sono più impostazioni.
  */
 
 import { THEMES, THEME_IDS, isThemeId, type ThemeId } from "../theme/themes";
+import type { ThemeVariants } from "../theme/variants";
 
 /** Palette del glow dei widget: tre colori usati per il bordo "mesh". */
 export const GLOW_PALETTES = {
@@ -31,6 +30,10 @@ export const GLOW_PALETTES = {
 } as const;
 
 export type GlowPaletteKey = keyof typeof GLOW_PALETTES | "accent";
+
+/** Cosa mostra lo spazio dell'intestazione impostato su "Come il tema" (`headerSlot1` = "auto"):
+ *  il mini dei mockup. Sono id del registry dei widget, che core non importa. */
+export const HEADER_SLOT_AUTO: ThemeVariants<string> = { notte: "study", opaco: "none", quaderno: "none", fosforo: "clock" };
 
 export const DEFAULT_SETTINGS = {
   // ---- Generale ----

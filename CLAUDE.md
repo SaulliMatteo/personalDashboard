@@ -32,8 +32,9 @@ di dettaglio è il `detailComponent` del widget.
 
 **Tutto è guidato dal registry.** `src/widgets/registry.ts` è l'unico elenco dei widget; ogni widget esporta una
 `WidgetDefinition` (`core/widgets/types.ts`: taglie, `defaultPlacement`, `detailComponent`, `provider`,
-`settingsGroup`, `mini`). Catalogo, dashboard, layout di default, provider, sezioni di Impostazioni > Widget e
-scelte degli spazi in alto a destra dell'intestazione (`mini`, `features/dashboard/HeaderSlots.tsx`) derivano da lì:
+`settingsGroup`, `mini`). Catalogo (che è anche Impostazioni > Widget: la rotellina di una card apre il suo
+`settingsGroup`), dashboard, layout di default, provider e scelte degli spazi in alto a destra dell'intestazione
+(`mini`, `features/dashboard/HeaderSlots.tsx`) derivano da lì:
 aggiungere un widget = cartella `src/widgets/<nome>/` + una riga nel registry.
 
 **Regole di dipendenza**: `app → features, widgets, core`; `features → core, widgets/registry, ui`;
