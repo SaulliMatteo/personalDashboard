@@ -4,6 +4,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  max-width: 260px;
+  min-width: 0;
 }
 
 .companion-mini-face {
@@ -15,6 +17,7 @@
 .companion-mini-text {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   font-size: 12px;
   line-height: 1.35;
   color: var(--text-secondary);
@@ -24,4 +27,11 @@
   font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
+}
+
+/* Nome e stato non vanno a capo: si accorciano con i puntini. */
+.companion-mini-text > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

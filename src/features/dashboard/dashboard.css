@@ -33,7 +33,10 @@
   cursor: grab;
 }
 
-.react-grid-item > div {
+/* Il widget riempie la sua cella. Anche dentro la preview fantasma: senza, la
+   sua altezza dipenderebbe dal contenuto (preview ora più piccola, ora più grande). */
+.react-grid-item > div,
+.widget-ghost > * {
   width: 100%;
   height: 100%;
 }
@@ -42,9 +45,8 @@
   cursor: grabbing;
   z-index: 20;
   box-shadow: var(--shadow-pop);
-  transition:
-    transform 120ms ease,
-    box-shadow 120ms ease;
+  /* Niente transizione sul transform: il widget trascinato segue il mouse senza ritardo. */
+  transition: box-shadow 120ms ease;
 }
 
 .widget-grid.is-locked .react-grid-item {

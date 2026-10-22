@@ -3,9 +3,29 @@ mod file_transfer;
 
 use tauri::Manager;
 
+/// Porta da cui l'app installata su macOS serve il frontend (vedi `main_window_url`).
+/// Non cambiarla: è l'origine della pagina, cambiarla azzera il `localStorage`.
+/// Va tenuta uguale in `capabilities/default.json` (`remote.urls`).
+#[cfg(all(target_os = "macos", not(dev)))]
+const LOCALHOST_PORT: u16 = 14321;
+
+/// URL della finestra principale. Su macOS l'app installata userebbe `tauri://localhost`:
+/// da lì WKWebView non manda il referrer e YouTube rifiuta il player (errore 153),
+/// quindi il frontend si serve da `http://localhost` con `tauri-plugin-localhost`.
+/// Su Windows (`http://tauri.localhost`) e in dev (server di Vite) resta com'è.
+#[cfg(all(target_os = "macos", not(dev)))]
+fn main_window_url() -> tauri::WebviewUrl {
+    let url = format!("http://localhost:{LOCALHOST_PORT}");
+    tauri::WebviewUrl::External(url.parse().expect("URL localhost valido"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    #[cfg(all(target_os = "macos", not(dev)))]
+    let builder = builder.plugin(tauri_plugin_localhost::Builder::new(LOCALHOST_PORT).build());
+
+    builder
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
@@ -36,6 +56,15 @@ pub fn run() {
                         .build(),
                 )?;
             }
+            // La finestra è in tauri.conf.json con `create: false`: si crea qui per
+            // poterle cambiare l'URL su macOS (vedi `main_window_url`).
+            #[allow(unused_mut)]
+            let mut config = app.config().app.windows[0].clone();
+            #[cfg(all(target_os = "macos", not(dev)))]
+            {
+                config.url = main_window_url();
+            }
+            tauri::WebviewWindowBuilder::from_config(app.handle(), &config)?.build()?;
             Ok(())
         })
         .run(tauri::generate_context!())

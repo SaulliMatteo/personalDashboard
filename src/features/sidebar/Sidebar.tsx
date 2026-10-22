@@ -52,12 +52,12 @@ function GoalCard({ goalMinutes }: { goalMinutes: number }) {
 }
 
 function Sidebar() {
-  const { view, goToDashboard, openWidgetDetail, openSettings } = useNav();
+  const { view, goToDashboard, openSettings } = useNav();
   const { settings } = useSettings();
   const logo = useThemeVariant(LOGOS);
   const showGoal = useThemeVariant(SHOW_GOAL) && settings.studyDailyGoalMinutes > 0;
 
-  const item = (label: string, active: boolean, onClick?: () => void) => (
+  const item = (label: string, active: boolean, onClick: () => void) => (
     <button
       type="button"
       className={`nav-item${active ? " active" : ""}`}
@@ -80,9 +80,6 @@ function Sidebar() {
 
       <nav className="sidebar-nav" aria-label="Navigazione principale">
         {item("Dashboard", view.type === "dashboard", goToDashboard)}
-        {item("Tasks", false)}
-        {item("Projects", false)}
-        {item("Notes", view.type === "widgetDetail" && view.widgetId === "notes", () => openWidgetDetail("notes"))}
       </nav>
 
       <div className="sidebar-bottom">

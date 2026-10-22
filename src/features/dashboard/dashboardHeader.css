@@ -1,25 +1,32 @@
-/* Intestazione della dashboard, una forma per tema (mockup notte/opaco/quaderno/fosforo.html). */
+/* Intestazione della dashboard, una forma per tema (mockup notte/opaco/quaderno/fosforo.html):
+   solo il saluto a sinistra e i mini a destra, sempre su una riga. */
 
+/* container-type: le regole in fondo decidono cosa cede quando l'intestazione è stretta. */
 .dh {
   flex: 0 0 auto;
   display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  min-width: 0;
+  container-type: inline-size;
   color: var(--text-primary);
 }
 
+/* Il saluto ha la precedenza: non si restringe per far posto ai mini (sono loro a cedere).
+   L'ellissi resta solo per un nome lunghissimo. Il padding tiene dentro i segni che sporgono
+   (l'ultima lettera in corsivo, le gambe di "g"/"p"), che overflow: hidden taglierebbe. */
 .dh h1 {
+  flex: 0 0 auto;
+  max-width: 100%;
   margin: 0;
+  padding: 0 0.2em 0.08em 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.dh p {
-  margin: 0;
-  color: var(--text-secondary);
-}
-
-/* ---------- Notte: saluto sottile, data e ora; a destra gli spazi (di default la giornata di studio) ---------- */
+/* ---------- Notte: saluto sottile; a destra gli spazi (di default la giornata di studio) ---------- */
 .dh--notte {
   align-items: flex-end;
-  justify-content: space-between;
   gap: 32px;
 }
 
@@ -29,14 +36,9 @@
   letter-spacing: -0.02em;
 }
 
-.dh--notte p {
-  margin-top: 2px;
-}
-
-/* ---------- Opaco: saluto grande, data a destra ---------- */
+/* ---------- Opaco: saluto grande ---------- */
 .dh--opaco {
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
   gap: 20px;
 }
 
@@ -46,38 +48,24 @@
   letter-spacing: -0.02em;
 }
 
-.dh--opaco p {
-  margin-left: auto;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.dh--opaco .dh-slots {
-  margin-left: 0;
-}
-
-/* Spazi vuoti: niente distanza in più, la data resta sul bordo destro come nel mockup. */
-.dh--opaco .dh-slots:not(:has(.dh-slot)) {
-  margin-left: -20px;
-}
-
-/* ---------- Quaderno: saluto scritto a mano, data e studio di oggi accanto ---------- */
+/* ---------- Quaderno: saluto scritto a mano ---------- */
 .dh--quaderno {
-  align-items: baseline;
+  align-items: center;
   gap: 18px;
 }
 
+/* line-height più alto della card: la scrittura a mano scende sotto la riga. */
 .dh--quaderno h1 {
   font-family: var(--font-title);
   font-size: 44px;
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.25;
+  color: var(--accent);
 }
 
-/* ---------- Fosforo: saluto e data; a destra gli spazi (di default l'orologio a punti) ---------- */
+/* ---------- Fosforo: saluto; a destra gli spazi (di default l'orologio a punti) ---------- */
 .dh--fosforo {
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
 }
 
@@ -86,10 +74,30 @@
   font-weight: 400;
 }
 
-.dh--fosforo p {
-  margin-top: 2px;
+/* ---------- Intestazione stretta: prima rimpicciolisce il saluto, poi spariscono i mini ----------
+   Così non si va mai a capo e il nome non viene mai tagliato. */
+@container (max-width: 860px) {
+  .dh--notte h1 {
+    font-size: 24px;
+  }
+
+  .dh--opaco h1 {
+    font-size: 28px;
+  }
+
+  .dh--quaderno h1 {
+    font-size: 34px;
+  }
 }
 
-.dh--quaderno h1 {
-  color: var(--accent);
+@container (max-width: 700px) {
+  .dh-slot + .dh-slot {
+    display: none;
+  }
+}
+
+@container (max-width: 480px) {
+  .dh-slots {
+    display: none;
+  }
 }
