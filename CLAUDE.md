@@ -18,8 +18,12 @@ cd src-tauri && cargo check   # dopo modifiche a Rust o C
 ```
 
 Non esistono test automatici: si verifica con `npm run build` + `npm run lint` (+ `cargo check`).
-Le logiche "pure" (es. `widgets/companion/engine/`, `widgets/youtube/lib/watchTracker.ts`) hanno orologio e
-random iniettati apposta per poter essere testate senza browser.
+Le logiche "pure" (es. `widgets/companion/engine/`, `widgets/youtube/lib/watchTracker.ts`, `core/layout/compactor.ts`)
+hanno orologio e random iniettati apposta per poter essere testate senza browser: uno script `.mts` lanciato con
+`node` (Node 24 toglie i tipi da solo) può importarle direttamente; se importano altri file senza estensione, prima
+si fa un bundle con `npx rolldown`.
+Il DB reale è `dashboard.db` nella cartella dati dell'app (Windows: `%APPDATA%\it.matteo.personalDashboard\`), lo
+stesso in dev e nell'app installata: se l'installata è aperta lo blocca, chiuderla prima di `npm run tauri dev`.
 
 ## Architettura d'insieme
 
@@ -73,6 +77,9 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
 
 **Temi e stile**: 4 temi (`core/theme/themes.ts`), scelti con `data-theme` su `<html>`; ogni tema ridefinisce i
 token di `src/styles/tokens.css` (colori, `--card-*`, `--panel-*`, `--radius-*`, `--font-display`, `--btn-*`…).
+Ogni tema ha due varianti, giorno e notte (`data-mode`, impostazione `themeMode` con `auto` che segue il sistema):
+cambiano solo i colori. La variante nativa sta in `tokens.css`, l'altra in `tokens-varianti.css` (un token nuovo va
+in entrambi). Il codice legge il tema risolto con `useTheme()` (`mode`, `accent`…), mai `themeMode`.
 Quando un pezzo cambia *forma* per tema si usa `useThemeVariant(map)` (`core/theme/variants.ts`), mai
 `if (theme === …)`; le varianti-componente si rendono con `createElement` (lint `static-components`). Le card per
 tema dei widget stanno in `card/cards.ts` e le pagine di dettaglio riusano la card M. In Opaco ogni widget ha un
@@ -87,12 +94,12 @@ componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è 
 
 ## Design
 
-- I mockup approvati sono in `temi-dashboard/docs/design/temi/` e sono la fonte di verità per la grafica:
+- I mockup approvati sono in `docs/design/temi/` e sono la fonte di verità per la grafica:
   l'app deve risultare identica. Se codice e mockup non concordano, vale il mockup.
 - Ogni colore viene dai token del tema: niente esadecimali nei componenti (eccezione: colori scelti dall'utente,
   come materie e cartelle).
-- Ogni nuovo widget deve funzionare in tutti e 4 i temi (Notte, Opaco, Quaderno, Fosforo) e avere una taglia 1×1
-  ultra minimal (vedi `temi-dashboard/docs/design/temi/widget-1x1.html`).
+- Ogni nuovo widget deve funzionare in tutti e 4 i temi (Notte, Opaco, Quaderno, Fosforo), giorno e notte, e avere una taglia 1×1
+  ultra minimal (vedi `docs/design/temi/widget-1x1.html`).
 - Anche le pagine di dettaglio dei widget usano il linguaggio completo del tema (parti per tema, non solo colori).
 
 ## Lavori in corso
@@ -103,6 +110,14 @@ componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è 
 ## Convenzioni e insidie
 
 - Il dettaglio di un widget si apre con il doppio click sulla cella; il doppio click su un controllo interno è ignorato, salvo i pulsanti a tutta cella marcati `data-cell-action`. I controlli fanno comunque `e.stopPropagation()`.
+- Griglia della dashboard (`features/dashboard/Dashboard.tsx` + `core/layout/compactor.ts`): non scorre mai, le righe
+  si dividono l'altezza disponibile. Il compactor è l'unico che decide le posizioni e non produce mai sovrapposizioni
+  (scambio → sotto/sopra → posto libero più vicino, altrimenti si torna al layout di partenza). Al rilascio
+  react-grid-layout ricalcola con il compactor e tiene quel risultato come stato interno: per questo `beginDrop()`
+  va chiamata dal `mouseup` in capture su `window` *prima* della libreria, e `onDragStop` deve usare il layout che
+  riceve, non calcolarne uno diverso (la libreria non si riallinea a props uguali alle precedenti).
+- Dopo un drag i click sulla cella si ignorano per un attimo: il rilascio genera un click sul pulsante trascinato
+  (es. aprirebbe un video o una nota).
 - Valori "ultimi" in interval/listener di lunga durata → `core/hooks/useLatestRef.ts`.
 - Contesti: `XContext.tsx` esporta solo il provider; contesto, tipo e hook in `useX.ts` (es. `useSettings.ts`).
 - `tauri-plugin-notification` è pinnato `=2.4.0` perché la 2.5 richiede `tauri ^2.12` (il progetto usa `2.11.3`):
