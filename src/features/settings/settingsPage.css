@@ -36,12 +36,6 @@
   font-weight: 600;
 }
 
-.sp-nav-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
 .sp-nav-item {
   height: 40px;
   padding: 0 12px;
@@ -62,12 +56,6 @@
   background: var(--nav-active-bg);
   color: var(--nav-active-fg);
   font-weight: 500;
-}
-
-.sp-nav-item--sub {
-  height: 34px;
-  padding-left: 24px;
-  font-size: 13px;
 }
 
 .sp-nav-item:focus-visible,

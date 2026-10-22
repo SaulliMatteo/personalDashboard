@@ -1,20 +1,18 @@
 import { createElement } from "react";
 import { MdOutlineTune } from "react-icons/md";
 import { useNav } from "../../core/nav/useNav";
+import { HEADER_SLOT_AUTO } from "../../core/settings/schema";
 import { useSettings } from "../../core/settings/useSettings";
-import { useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
+import { useThemeVariant } from "../../core/theme/variants";
 import { getWidget } from "../../widgets/registry";
 import { fromInnerControl } from "./fromInnerControl";
 import "./headerSlots.css";
-
-/** Cosa mostra lo spazio "Come il tema": quello che c'è nei mockup. */
-const AUTO_SLOT: ThemeVariants<string> = { notte: "study", opaco: "none", quaderno: "none", fosforo: "clock" };
 
 /** Gli spazi in alto a destra dell'intestazione: fino a due `mini` scelti in Impostazioni > Dashboard. */
 function HeaderSlots() {
   const { settings } = useSettings();
   const { openSettings, openWidgetDetail } = useNav();
-  const auto = useThemeVariant(AUTO_SLOT);
+  const auto = useThemeVariant(HEADER_SLOT_AUTO);
 
   const ids = [settings.headerSlot1 === "auto" ? auto : settings.headerSlot1, settings.headerSlot2];
   // Id sconosciuti (widget rimossi) o ripetuti si saltano.

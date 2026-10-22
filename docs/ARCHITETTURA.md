@@ -23,8 +23,9 @@ src/
 │   │                        (lo Studio pubblica anche studyTodaySeconds/Spans per intestazione e sidebar)
 │   ├─ report/               periods.ts: periodi (settimana/mese/anno) e barre per i grafici di report
 │   └─ hooks/                hook generici (useLatestRef, useNow)
-├─ features/                 schermate dell'app (dashboard + intestazione, catalogo, sidebar,
-│                            settings/SettingsPage.tsx: pagina Impostazioni con le schede in tabs/)
+├─ features/                 schermate dell'app (dashboard + intestazione, sidebar,
+│                            settings/SettingsPage.tsx: pagina Impostazioni con le schede in tabs/;
+│                            settings/catalog/: le card del catalogo, usate dalla scheda Widget e dalla pagina catalogo)
 ├─ widgets/                  un widget = una cartella
 │   ├─ registry.ts           l'UNICO elenco dei widget
 │   ├─ WidgetProviders.tsx   monta i provider richiesti dai widget
@@ -81,7 +82,7 @@ Va spostato in `core/` (o fatto passare dall'activityBus) quando si tocca quella
 
 ```
 notes/
-├─ index.ts                  WidgetDefinition (taglie 3×1, 1×1, 2×2; si apre anche dalla sidebar)
+├─ index.ts                  WidgetDefinition (taglie 3×1, 1×1, 2×2)
 ├─ NotesWidget.tsx/.css      widget in dashboard
 ├─ NotesDetail.tsx/.css      pagina: cartelle a sinistra, elenco note, editor
 ├─ components/               FolderPanel, FolderTree, NoteCollection, NoteEditor,
@@ -142,9 +143,9 @@ sale in `core/` o `ui/`.
 1. Crea `src/widgets/<nome>/` con il componente (riceve `{ w, h }` = taglia in celle) e un `index.ts`
    che esporta una `WidgetDefinition` (id, name, description, component, sizes, …).
 2. Aggiungilo in `src/widgets/registry.ts`.
-   Catalogo, dashboard, layout di default, provider e scheda Impostazioni > Widget si aggiornano da soli.
+   Catalogo (Impostazioni > Widget e pagina catalogo), dashboard, layout di default e provider si aggiornano da soli.
 3. Opzionali: `detailComponent` (pagina aperta cliccando il widget), `provider` (contesto sempre attivo),
-   `settingsGroup` (gruppo di impostazioni mostrato in Impostazioni > Widget), `defaultPlacement`.
+   `settingsGroup` (gruppo di impostazioni aperto dalla rotellina della sua card nel catalogo), `defaultPlacement`.
 
 ### Aggiungere un'impostazione
 1. `core/settings/schema.ts`: chiave con valore di default in `DEFAULT_SETTINGS`.
@@ -152,16 +153,18 @@ sale in `core/` o `ui/`.
 3. Leggila con `useSettings()`. Nessuna migrazione: sono righe chiave/valore e le chiavi mancanti usano il default.
    Valori non validi nel DB vengono sostituiti dal default (`sanitizeSettings`).
 
-Le impostazioni sono una pagina (`openSettings(sezione)` di `NavContext`): Aspetto, Dashboard, Widget (una
-sezione per ogni widget con `settingsGroup`, id `widget:<id>`) e Generale.
+Le impostazioni sono una pagina (`openSettings(sezione)` di `NavContext`): Aspetto, Dashboard, Widget e Generale.
+La scheda Widget è il catalogo: le impostazioni di un widget si aprono dentro la sua card (rotellina);
+`openSettings("widget:<id>")` apre la scheda con quella card già aperta.
 
 ### Aggiungere un mini (spazi in alto a destra della dashboard)
 1. Nel widget: `mini/<Nome>Mini.tsx` + `<Nome>Mini.css` accanto, stessa forma degli altri mini (elemento visivo a
    sinistra, due righe di testo: 13px testo primario + 12px secondario; numeri con `--font-display`).
 2. Nella sua `WidgetDefinition`: `mini: <Nome>Mini`. Compare da solo tra le scelte di Impostazioni > Dashboard.
 3. Deve funzionare nei 4 temi e stare in ~56px di altezza. Doppio click sullo spazio = dettaglio (se c'è).
-Gli spazi sono `headerSlot1`/`headerSlot2` nello schema (`"auto"` = come il mockup del tema, vedi
-`features/dashboard/HeaderSlots.tsx`).
+Gli spazi sono `headerSlot1`/`headerSlot2` nello schema (`"auto"` = come il mockup del tema, `HEADER_SLOT_AUTO`
+nello stesso file). I due spazi non possono mostrare lo stesso mini, e non vanno mai a capo: un mini si
+restringe (`min-width: 0`, testi con l'ellissi) invece di allargarsi.
 
 ### Far reagire il Companion a qualcosa di nuovo
 1. Nel widget che "sa" la cosa: `publishActivity({...})` (stato) o `emitActivityEvent({...})` (momento),
