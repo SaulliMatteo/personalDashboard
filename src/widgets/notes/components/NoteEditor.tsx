@@ -48,6 +48,7 @@ import {
 import { noteToMarkdown, renderNoteImage, renderNotePdf, saveBytes, saveText } from "../lib/exportNote";
 import { attachmentAbsolutePath, removeAttachmentFile, slugify } from "../lib/vault";
 import { BACKGROUND_OPTIONS } from "../lib/templates";
+import { THEME_INK } from "../lib/ink";
 import { normalizeUrl, toggleChecklist } from "../lib/editorDom";
 import { formatWhen, htmlToText, monthYear, wordCount } from "../lib/html";
 import type { InkTool } from "./InkLayer";
@@ -79,7 +80,8 @@ function formatBytes(size: number): string {
 }
 
 const INK_SIZES = [1, 2, 3, 5, 8];
-const INK_COLORS = ["#6c8dff", "#f472b6", "#34d399", "#fbbf24", "#f2f2f4"];
+// L'ultimo è l'inchiostro del tema: chiaro di notte, scuro di giorno (vedi THEME_INK).
+const INK_COLORS = ["#6c8dff", "#f472b6", "#34d399", "#fbbf24", THEME_INK];
 
 function NoteEditor({
   note,
@@ -745,9 +747,9 @@ function NoteEditor({
                   key={c}
                   type="button"
                   className={`nq-ink-dot${c === color ? " is-on" : ""}`}
-                  style={{ background: c }}
+                  style={{ background: c === THEME_INK ? "var(--text-primary)" : c }}
                   onClick={() => setColor(c)}
-                  aria-label={`Colore ${c}`}
+                  aria-label={c === THEME_INK ? "Inchiostro del tema" : `Colore ${c}`}
                 />
               ))}
               <select className="nq-select" value={size} onChange={(e) => setSize(Number(e.target.value))} aria-label="Spessore">
