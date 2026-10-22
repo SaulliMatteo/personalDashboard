@@ -5,6 +5,13 @@ import { ACCENT_PRESETS, THEME_IDS, THEMES } from "../../../core/theme/themes";
 import { useTheme } from "../../../core/theme/useTheme";
 import { GRID_COLS } from "../../../core/layout/gridConfig";
 
+/** Opzioni del controllo "Variante"; con "auto" le anteprime mostrano la variante risolta. */
+const MODE_OPTIONS = [
+  { value: "giorno", label: "Giorno" },
+  { value: "notte", label: "Notte" },
+  { value: "auto", label: "Automatico" },
+] as const;
+
 /** Scheda Aspetto: come il mockup impostazioni-aspetto.html (tema, accent, griglia) più il resto del gruppo. */
 function AppearanceTab() {
   const { settings, updateSetting } = useSettings();
@@ -55,7 +62,33 @@ function AppearanceTab() {
 
       <div className="sp-block">
         <div className="sp-block-head">
-          <h3>Colore accent</h3>
+          <h3>Variante</h3>
+        </div>
+        <div className="sp-segmented" role="radiogroup" aria-label="Variante">
+          {MODE_OPTIONS.map((option) => {
+            const selected = settings.themeMode === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                className={selected ? "is-on" : ""}
+                onClick={() => updateSetting("themeMode", option.value)}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="sp-note">Automatico segue il tema chiaro o scuro del sistema.</p>
+      </div>
+
+      <div className="sp-block">
+        <div className="sp-block-head">
+          <h3>
+            Colore accent <span className="sp-block-sub">per la variante {theme.mode}</span>
+          </h3>
           <button type="button" className="sp-link" disabled={!settings[accentKeys.override]} onClick={() => updateSetting(accentKeys.override, false)}>
             Usa quello del tema
           </button>
@@ -101,7 +134,7 @@ function AppearanceTab() {
       {theme.glow ? (
         <SettingsSection group="glow" />
       ) : (
-        <p className="sp-note">Il bordo luminoso dei widget c'è solo nel tema {THEMES.notte.label}: le sue impostazioni compaiono quando lo scegli.</p>
+        <p className="sp-note">Il bordo luminoso dei widget c'è solo nel tema {THEMES.notte.label}, variante notte: le sue impostazioni compaiono quando lo scegli.</p>
       )}
     </>
   );
