@@ -1,19 +1,24 @@
 /* Intestazione della dashboard, una forma per tema (mockup notte/opaco/quaderno/fosforo.html):
    solo il saluto a sinistra e i mini a destra, sempre su una riga. */
 
+/* container-type: le regole in fondo decidono cosa cede quando l'intestazione è stretta. */
 .dh {
   flex: 0 0 auto;
   display: flex;
   justify-content: space-between;
   min-width: 0;
+  container-type: inline-size;
   color: var(--text-primary);
 }
 
-/* Il saluto si accorcia con i puntini invece di mandare a capo i mini. */
+/* Il saluto ha la precedenza: non si restringe per far posto ai mini (sono loro a cedere).
+   L'ellissi resta solo per un nome lunghissimo. Il padding tiene dentro i segni che sporgono
+   (l'ultima lettera in corsivo, le gambe di "g"/"p"), che overflow: hidden taglierebbe. */
 .dh h1 {
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: 0 0 auto;
+  max-width: 100%;
   margin: 0;
+  padding: 0 0.2em 0.08em 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -33,7 +38,7 @@
 
 /* ---------- Opaco: saluto grande ---------- */
 .dh--opaco {
-  align-items: baseline;
+  align-items: center;
   gap: 20px;
 }
 
@@ -45,15 +50,16 @@
 
 /* ---------- Quaderno: saluto scritto a mano ---------- */
 .dh--quaderno {
-  align-items: baseline;
+  align-items: center;
   gap: 18px;
 }
 
+/* line-height più alto della card: la scrittura a mano scende sotto la riga. */
 .dh--quaderno h1 {
   font-family: var(--font-title);
   font-size: 44px;
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.25;
   color: var(--accent);
 }
 
@@ -66,4 +72,32 @@
 .dh--fosforo h1 {
   font-size: 20px;
   font-weight: 400;
+}
+
+/* ---------- Intestazione stretta: prima rimpicciolisce il saluto, poi spariscono i mini ----------
+   Così non si va mai a capo e il nome non viene mai tagliato. */
+@container (max-width: 860px) {
+  .dh--notte h1 {
+    font-size: 24px;
+  }
+
+  .dh--opaco h1 {
+    font-size: 28px;
+  }
+
+  .dh--quaderno h1 {
+    font-size: 34px;
+  }
+}
+
+@container (max-width: 700px) {
+  .dh-slot + .dh-slot {
+    display: none;
+  }
+}
+
+@container (max-width: 480px) {
+  .dh-slots {
+    display: none;
+  }
 }

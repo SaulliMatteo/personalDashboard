@@ -9,7 +9,7 @@ import { useLayout } from "../../core/layout/useLayout";
 import { useNav } from "../../core/nav/useNav";
 import { createDragCompactor, finalizeLayout, clampToBounds } from "../../core/layout/compactor";
 import { saveLayout, type LayoutItem } from "../../core/layout/layoutRepository";
-import { GRID_COLS, MIN_ROW_HEIGHT } from "../../core/layout/gridConfig";
+import { GRID_COLS } from "../../core/layout/gridConfig";
 import { getWidget, widgetPigment } from "../../widgets/registry";
 import { useGhostPreview, useForceEndDragOnBlur } from "./useGhostPreview";
 import DashboardHeader from "./DashboardHeader";
@@ -53,9 +53,10 @@ function Dashboard() {
   const { height, gap } = useGridMetrics(gridElement, theme.id);
   const marginTuple = [gap, gap] as const;
 
-  // La griglia riempie la finestra: le righe si dividono l'altezza disponibile.
-  // Sotto MIN_ROW_HEIGHT si lascia scorrere .main invece di schiacciare i widget.
-  const rowHeight = Math.max(MIN_ROW_HEIGHT, height > 0 ? (height - gap * (rows - 1)) / rows : MIN_ROW_HEIGHT);
+  // La griglia sta sempre nello spazio sotto l'intestazione: le righe si dividono l'altezza
+  // disponibile, quindi la dashboard non scorre mai (con più righe o la finestra bassa i widget
+  // si abbassano). Per difetto: gli arrotondamenti della libreria non devono sforare di 1px.
+  const rowHeight = Math.max(1, Math.floor((height - gap * (rows - 1)) / rows));
 
   const positionParams = {
     margin: marginTuple,
