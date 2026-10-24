@@ -10,7 +10,8 @@ export interface SystemSnapshot {
 /**
  * Inattività di sistema + finestra in primo piano. Fuori da Tauri (es.
  * `npm run dev` nel browser) o su sistemi non supportati ritorna null:
- * il Companion ripiega sui soli eventi della finestra.
+ * chi lo usa ripiega (il Companion sui soli eventi della finestra, lo Studio
+ * rinuncia allo stop automatico).
  */
 export async function readSystemSnapshot(includeForeground: boolean): Promise<SystemSnapshot | null> {
   try {

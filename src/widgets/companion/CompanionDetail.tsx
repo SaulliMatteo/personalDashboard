@@ -10,7 +10,7 @@ import { useThemeVariant } from "../../core/theme/variants";
 import { COMPANION_CARDS } from "./card/cards";
 import { ANIMATIONS, ANIMATION_CATEGORIES, ANIMATION_GALLERY, type AnimationCategory, type GalleryItem } from "./engine/animations";
 import { PERSONALITIES, PERSONALITY_IDS } from "./engine/personalities";
-import { APP_CATEGORIES, type AppCategory } from "./engine/appCategory";
+import { APP_CATEGORIES, type AppCategory } from "../../core/system/appCategory";
 import "./CompanionDetail.css";
 
 const CATEGORY_LABELS: Record<AppCategory, string> = {

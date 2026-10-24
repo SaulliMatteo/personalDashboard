@@ -91,6 +91,11 @@ export const DEFAULT_SETTINGS = {
   studyVolume: 50,
   studyNotificationsEnabled: true,
   studyStopwatchLapMinutes: 60,
+  studyAutoStopEnabled: true,
+  studyAutoStopMinutes: 10,
+  studyAutoStopGame: true,
+  studyAutoStopVideo: false,
+  studyAutoStopChat: false,
   studyDailyGoalMinutes: 0,
   studyMinLoggableSeconds: 10,
   studyBreakColor: "#f5a35c",
@@ -223,6 +228,12 @@ export const SETTING_DEFS: SettingDef[] = [
 
   { key: "studyAutoStartNext", group: "study", section: "Timer", type: "boolean", label: "Avvia in automatico la fase successiva", description: "Solo pomodoro. Se spento, a fine fase il timer si ferma e aspetta che premi play." },
   { key: "studyStopwatchLapMinutes", group: "study", section: "Timer", type: "number", control: "input", min: 1, max: 240, step: 1, label: "Giro dell'anello del cronometro (min)", description: "Ogni quanti minuti l'anello del cronometro compie un giro." },
+
+  { key: "studyAutoStopEnabled", group: "study", section: "Stop automatico", type: "boolean", label: "Ferma il timer se sei inattivo", description: "Senza mouse né tastiera per il tempo qui sotto, il timer si ferma e registra lo studio fino a quando hai smesso. Solo Windows e macOS." },
+  { key: "studyAutoStopMinutes", group: "study", section: "Stop automatico", type: "number", control: "input", min: 1, max: 120, step: 1, dependsOn: "studyAutoStopEnabled", label: "Inattività prima dello stop (min)", description: "Vale anche per le app qui sotto. Le assenze più brevi contano come studio." },
+  { key: "studyAutoStopGame", group: "study", section: "Stop automatico", type: "boolean", dependsOn: "studyAutoStopEnabled", label: "Ferma anche se stai giocando", description: "Giochi e launcher (Steam, Epic, Riot…) in primo piano, anche se non sei inattivo." },
+  { key: "studyAutoStopVideo", group: "study", section: "Stop automatico", type: "boolean", dependsOn: "studyAutoStopEnabled", label: "Ferma anche se guardi video", description: "YouTube, Netflix, Twitch… nel browser o nelle loro app. I video aperti nella dashboard non contano." },
+  { key: "studyAutoStopChat", group: "study", section: "Stop automatico", type: "boolean", dependsOn: "studyAutoStopEnabled", label: "Ferma anche se sei in chat", description: "Discord, WhatsApp, Telegram… La categoria di un'app si può cambiare nella pagina di Pixy." },
 
   { key: "studySoundEnabled", group: "study", section: "Suoni e notifiche", type: "boolean", label: "Suono a fine fase" },
   { key: "studyVolume", group: "study", section: "Suoni e notifiche", type: "number", control: "slider", min: 5, max: 100, step: 5, unit: "%", dependsOn: "studySoundEnabled", label: "Volume" },

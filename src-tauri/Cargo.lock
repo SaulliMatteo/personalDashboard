@@ -101,6 +101,7 @@ dependencies = [
  "tauri-plugin-notification",
  "tauri-plugin-opener",
  "tauri-plugin-sql",
+ "tauri-winrt-notification",
  "windows-sys 0.59.0",
 ]
 
