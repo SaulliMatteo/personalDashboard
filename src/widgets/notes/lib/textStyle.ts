@@ -82,6 +82,32 @@ function selectionIn(root: HTMLElement): Range | null {
   return root.contains(range.commonAncestorContainer) ? range : null;
 }
 
+/**
+ * Divide `owner` in tre: quello che sta prima di `inner`, `inner` e quello che sta dopo.
+ * Prima e dopo diventano copie di `owner` (stessi attributi) accanto a lui; `owner` resta
+ * con dentro solo `inner` (anche se `inner` è annidato in altri tag, che vengono spezzati).
+ */
+function isolate(owner: HTMLElement, inner: Node) {
+  const before = document.createRange();
+  before.setStart(owner, 0);
+  before.setEndBefore(inner);
+  const head = before.extractContents();
+  if (head.textContent) {
+    const copy = owner.cloneNode(false) as HTMLElement;
+    copy.append(head);
+    owner.before(copy);
+  }
+  const after = document.createRange();
+  after.setStartAfter(inner);
+  after.setEnd(owner, owner.childNodes.length);
+  const tail = after.extractContents();
+  if (tail.textContent) {
+    const copy = owner.cloneNode(false) as HTMLElement;
+    copy.append(tail);
+    owner.after(copy);
+  }
+}
+
 /** Unisce uno span con il vicino uguale (stessi attributi), così l'HTML non si frammenta. */
 function mergeWithSiblings(span: HTMLElement) {
   const same = (other: Node | null): other is HTMLElement =>
@@ -132,6 +158,14 @@ export function applyTextAttr(root: HTMLElement, attr: TextAttr, value: string |
   document.execCommand("fontName", false, TEMP_FACE);
   const placed: HTMLElement[] = [];
   root.querySelectorAll<HTMLElement>(`font[face="${TEMP_FACE}"]`).forEach((font) => {
+    // Se la selezione sta dentro uno span che ha già l'attributo, lo si divide: la parte
+    // selezionata esce dallo span (altrimenti "togli" non toglierebbe nulla e due
+    // evidenziatori si sovrapporrebbero).
+    for (let owner = font.parentElement?.closest<HTMLElement>(`span[${attr}]`); owner && root.contains(owner); owner = font.parentElement?.closest<HTMLElement>(`span[${attr}]`)) {
+      isolate(owner, font);
+      owner.removeAttribute(attr);
+      if (owner.attributes.length === 0) owner.replaceWith(...Array.from(owner.childNodes));
+    }
     // Dentro la selezione vince il valore nuovo: si toglie quello vecchio dai figli.
     font.querySelectorAll<HTMLElement>(`[${attr}]`).forEach((el) => {
       el.removeAttribute(attr);

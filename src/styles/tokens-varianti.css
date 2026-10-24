@@ -632,10 +632,12 @@
   --nq-ink-viola: #C9A2FF;
   --nq-ink-grigio: #A9AFBA;
 
-  --nq-mark-giallo: rgba(255, 214, 0, 0.3);
-  --nq-mark-verde: rgba(80, 200, 120, 0.3);
-  --nq-mark-azzurro: rgba(80, 160, 255, 0.3);
-  --nq-mark-rosa: rgba(255, 120, 170, 0.28);
-  --nq-mark-arancio: rgba(255, 160, 60, 0.3);
-  --nq-mark-viola: rgba(170, 120, 255, 0.3);
+  /* Evidenziatore: colore pieno, mescolato al fondo della pagina in proporzione --nq-mark-strength. */
+  --nq-mark-giallo: #FFD600;
+  --nq-mark-verde: #3FBF6F;
+  --nq-mark-azzurro: #4D9CFF;
+  --nq-mark-rosa: #FF6FA5;
+  --nq-mark-arancio: #FF9A2E;
+  --nq-mark-viola: #A77BFF;
+  --nq-mark-strength: 34%;
 }
