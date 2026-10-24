@@ -6,8 +6,16 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 18px;
+  min-height: 0;
+  padding: 16px 18px;
   color: var(--text-primary);
+}
+
+/* Contenitore per le query sull'altezza della cella (la card stessa non può interrogarsi). */
+.nc-m,
+.nc-strip,
+.nc-ring-wrap {
+  container-type: size;
 }
 
 .nc button {
@@ -206,22 +214,30 @@
 
 /* ---------- 3×1 ---------- */
 
+.widget.nc--STRIP {
+  padding: 14px 16px;
+}
+
 .nc-strip {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 14px;
 }
 
 .nc-strip-main {
   all: unset;
   box-sizing: border-box;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px 14px;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 12px;
   border-radius: var(--radius-panel);
   background: var(--panel-bg);
   border: var(--panel-border);
@@ -257,10 +273,44 @@
 
 .nc-strip-side {
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
+}
+
+.nc-strip-side .nc-row {
+  flex: none;
+  padding: 3px 0;
+}
+
+.nc-strip-side .nc-btn {
+  margin-top: 4px;
+  padding: 5px 11px;
+  font-size: 12px;
+}
+
+/* Cella bassa: anteprima su una riga, una sola nota recente; ancora più bassa, solo titoli. */
+@container (max-height: 104px) {
+  .nc-strip-main p {
+    -webkit-line-clamp: 1;
+  }
+
+  .nc-strip-side .nc-row + .nc-row {
+    display: none;
+  }
+}
+
+@container (max-height: 76px) {
+  .nc-strip-main p {
+    display: none;
+  }
+
+  .nc-strip-side .nc-btn {
+    margin-top: 0;
+  }
 }
 
 /* ---------- 1×1 ---------- */
@@ -269,10 +319,18 @@
   padding: 18px;
 }
 
-/* Notte: ghiera a tacche */
-.nc-ring {
+/* Notte: ghiera a tacche, quadrata e grande quanto il lato più corto della cella. */
+.nc-ring-wrap {
   position: absolute;
-  inset: 12px;
+  inset: 10px;
+  display: grid;
+  place-items: center;
+}
+
+.nc-ring {
+  grid-area: 1 / 1;
+  width: min(100cqw, 100cqh);
+  height: min(100cqw, 100cqh);
 }
 
 .nc-ring line {
@@ -286,21 +344,18 @@
 }
 
 .nc-ring-num {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
+  grid-area: 1 / 1;
   text-align: center;
 }
 
 .nc-ring-num .nc-big {
-  font-size: 44px;
+  font-size: min(44px, 34cqmin);
 }
 
 .nc-ring-num small {
   display: block;
-  margin-top: 4px;
-  font-size: 11px;
+  margin-top: 3px;
+  font-size: min(11px, 9cqmin);
   color: var(--text-secondary);
 }
 
@@ -483,4 +538,11 @@ div.nc-s-quaderno {
   background: transparent;
   border: var(--btn-ghost-border);
   box-shadow: var(--note-key-shadow);
+}
+
+/* Notte, 2×2: le righe si dividono l'altezza rimasta (al massimo 46px l'una). */
+.nc--notte .nc-list .nc-row {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 46px;
 }

@@ -574,14 +574,15 @@
 
 /* ---------- Inchiostro ---------- */
 
-/* Parte da (testata − 2.82em): sulle pagine senza titolo coincide con la pagina, come prima. */
+/* Parte da (testata − 2.82em): sulle pagine senza titolo coincide con la pagina, come prima.
+   Un canvas non si allunga con top/bottom (ha un'altezza sua): l'altezza va scritta. */
 .nq-ink {
+  --nq-ink-top: max(0px, calc(var(--nq-head-h, 2.82em) - 2.82em));
   position: absolute;
-  top: max(0px, calc(var(--nq-head-h, 2.82em) - 2.82em));
-  right: 0;
-  bottom: 0;
+  top: var(--nq-ink-top);
   left: 0;
   width: 100%;
+  height: calc(100% - var(--nq-ink-top));
   pointer-events: none;
 }
 
