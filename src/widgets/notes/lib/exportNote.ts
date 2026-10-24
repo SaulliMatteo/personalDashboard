@@ -2,7 +2,8 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import type { NotePage } from "../data/notesRepository";
 import { htmlToMarkdown, monthYear, sanitizeHtml } from "./html";
-import { drawStrokes } from "./ink";
+import { luminance, paperVars } from "./pageColor";
+import { THEME_INK, drawStrokes } from "./ink"; // al posto del solo drawStrokes
 
 export interface ExportMeta {
   title: string;
@@ -43,13 +44,13 @@ export function noteToMarkdown(title: string, pages: NotePage[]): string {
 // Pagina → canvas
 // ---------------------------------------------------------------------
 
-function luminance(hex: string): number {
-  const m = hex.trim().match(/^#([\da-f]{3}|[\da-f]{6})$/i);
-  if (!m) return 0;
-  const v = m[1].length === 3 ? m[1].split("").map((c) => c + c).join("") : m[1];
-  const [r, g, b] = [0, 2, 4].map((i) => parseInt(v.slice(i, i + 2), 16) / 255);
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
+// function luminance(hex: string): number {
+//   const m = hex.trim().match(/^#([\da-f]{3}|[\da-f]{6})$/i);
+//   if (!m) return 0;
+//   const v = m[1].length === 3 ? m[1].split("").map((c) => c + c).join("") : m[1];
+//   const [r, g, b] = [0, 2, 4].map((i) => parseInt(v.slice(i, i + 2), 16) / 255);
+//   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+// }
 
 /** Tratti quasi bianchi (invisibili su carta bianca) diventano quasi neri. */
 const lightInk = (color: string) => (luminance(color) > 0.85 ? "#1a1a1e" : color);
@@ -62,6 +63,10 @@ function buildStage(page: NotePage, number: number, meta: ExportMeta, light: boo
   const paper = document.createElement("div");
   paper.className = "nq-paper";
   paper.dataset.bg = page.background;
+  if (page.color) {
+    paper.style.backgroundColor = page.color;
+    for (const [key, value] of Object.entries(paperVars(page.color))) paper.style.setProperty(key, value);
+  }
   paper.style.cssText = `--nq-zoom:1;width:${PAPER_WIDTH}px;max-width:none;flex:none;border:none;border-radius:0;min-height:${minHeight}px;`;
   paper.innerHTML =
     `<div class="nq-paper-head"><span></span><span></span></div>` +
@@ -144,7 +149,12 @@ async function renderPage(
     ctx.fillStyle = background;
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(image, 0, 0, width, height);
-    drawStrokes(ctx, width, page.ink, light ? lightInk : undefined);
+    const mapInk = page.color
+      ? (c: string) => (c.toLowerCase() === THEME_INK ? (luminance(page.color!) > 0.5 ? "#1a1a1e" : "#f2f2f4") : c)
+      : light
+        ? lightInk
+        : undefined;
+    drawStrokes(ctx, width, page.ink, mapInk);
     return canvas;
   } finally {
     stage.remove();

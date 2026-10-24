@@ -3,6 +3,23 @@
  * rimetterlo nel DOM (editor o anteprime) lo si ripulisce: restano solo i tag
  * di formattazione e due attributi (href sicuri e data-check delle checklist).
  */
+const COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\(\s*\d{1,3}(\s*,\s*\d{1,3}){2}(\s*,\s*[\d.]+)?\s*\)|[a-z]+)$/i;
+const SIZE_RE = /^(\d+(\.\d+)?px|calc\(\s*\d+(\.\d+)?\s*\*\s*var\(--nq-px\)\s*\))$/;
+
+/** Dello style resta solo ciò che l'editor sa produrre: colore, sfondo del testo e dimensione. */
+function safeStyle(css: string): string {
+  const out: string[] = [];
+  for (const decl of css.split(";")) {
+    const i = decl.indexOf(":");
+    if (i < 0) continue;
+    const prop = decl.slice(0, i).trim().toLowerCase();
+    const value = decl.slice(i + 1).trim();
+    if ((prop === "color" || prop === "background-color") && COLOR_RE.test(value)) out.push(`${prop}: ${value}`);
+    else if (prop === "font-size" && SIZE_RE.test(value)) out.push(`font-size: ${value}`);
+  }
+  return out.join("; ");
+}
+
 export function sanitizeHtml(html: string): string {
   if (!html) return "";
   const doc = new DOMParser().parseFromString(html, "text/html");
@@ -12,6 +29,12 @@ export function sanitizeHtml(html: string): string {
   doc.body.querySelectorAll("*").forEach((el) => {
     for (const attr of Array.from(el.attributes)) {
       const name = attr.name.toLowerCase();
+      if (name === "style") {
+        const safe = safeStyle(attr.value);
+        if (safe) el.setAttribute("style", safe);
+        else el.removeAttribute("style");
+        continue;
+      }
       if (name === "data-check" && (attr.value === "0" || attr.value === "1")) continue;
       if (name === "href" && el.tagName === "A" && /^(https?:|mailto:)/i.test(attr.value.trim())) continue;
       el.removeAttribute(attr.name);

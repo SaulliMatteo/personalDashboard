@@ -1,5 +1,5 @@
 import { getDatabase } from "../../../core/db";
-
+import { asPageColor } from "../lib/pageColor";
 // ---------------------------------------------------------------------
 // Tipi
 // ---------------------------------------------------------------------
@@ -77,6 +77,7 @@ export interface NotePage {
   content: string;
   ink: InkStroke[];
   background: PageBackground;
+  color: string | null;
 }
 
 export interface Attachment {
@@ -211,6 +212,7 @@ export interface NewPageInput {
   content: string;
   ink: InkStroke[];
   background: PageBackground;
+  color?: string | null;
 }
 
 export interface NewNoteInput {
@@ -348,13 +350,12 @@ export async function emptyTrash(ids: number[]): Promise<void> {
 // ---------------------------------------------------------------------
 // Pagine
 // ---------------------------------------------------------------------
-
 export async function getPages(noteId: number): Promise<NotePage[]> {
   const db = await getDatabase();
   const rows = await db.select<
-    { id: number; note_id: number; position: number; content: string; ink: string; background: string | null }[]
+    { id: number; note_id: number; position: number; content: string; ink: string; background: string | null; color: string | null }[]
   >(
-    `SELECT id, note_id, position, content, ink, background FROM note_pages WHERE note_id = ? ORDER BY position, id`,
+    `SELECT id, note_id, position, content, ink, background, color FROM note_pages WHERE note_id = ? ORDER BY position, id`,
     [noteId]
   );
   return rows.map((r) => ({
@@ -364,10 +365,11 @@ export async function getPages(noteId: number): Promise<NotePage[]> {
     content: r.content,
     ink: parseInk(r.ink),
     background: parseBackground(r.background),
+    color: asPageColor(r.color),
   }));
 }
 
-export async function addPage(noteId: number, background: PageBackground = "none"): Promise<NotePage> {
+export async function addPage(noteId: number, background: PageBackground = "none", color: string | null = null): Promise<NotePage> {
   const db = await getDatabase();
   const rows = await db.select<{ next: number | null }[]>(
     `SELECT MAX(position) + 1 AS next FROM note_pages WHERE note_id = ?`,
@@ -375,11 +377,11 @@ export async function addPage(noteId: number, background: PageBackground = "none
   );
   const position = rows[0]?.next ?? 0;
   const result = await db.execute(
-    `INSERT INTO note_pages (note_id, position, content, ink, background) VALUES (?, ?, '<p><br></p>', '[]', ?)`,
-    [noteId, position, background]
+    `INSERT INTO note_pages (note_id, position, content, ink, background, color) VALUES (?, ?, '<p><br></p>', '[]', ?, ?)`,
+    [noteId, position, background, color]
   );
   if (result.lastInsertId == null) throw new Error("Pagina non creata");
-  return { id: result.lastInsertId, noteId, position, content: "<p><br></p>", ink: [], background };
+  return { id: result.lastInsertId, noteId, position, content: "<p><br></p>", ink: [], background, color };
 }
 
 export async function savePage(pageId: number, noteId: number, content: string, ink: InkStroke[]): Promise<void> {
@@ -444,4 +446,10 @@ export async function addAttachment(noteId: number, name: string, size: number):
 export async function deleteAttachment(id: number): Promise<void> {
   const db = await getDatabase();
   await db.execute(`DELETE FROM note_attachments WHERE id = ?`, [id]);
+}
+
+export async function setPageColor(pageId: number, noteId: number, color: string | null): Promise<void> {
+  const db = await getDatabase();
+  await db.execute(`UPDATE note_pages SET color = ? WHERE id = ?`, [color, pageId]);
+  await db.execute(`UPDATE notes SET updated_at = ? WHERE id = ?`, [Date.now(), noteId]);
 }

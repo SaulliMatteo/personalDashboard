@@ -39,3 +39,84 @@ export function normalizeUrl(raw: string): string | null {
   const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(value) ? value : `https://${value}`;
   return /^(https?:|mailto:)/i.test(withScheme) ? withScheme : null;
 }
+
+const ZWSP = "\u200b";
+
+function selectionIn(root: HTMLElement): Range | null {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return null;
+  const range = sel.getRangeAt(0);
+  return root.contains(range.commonAncestorContainer) ? range : null;
+}
+
+/**
+ * Dimensione in px (a zoom 100%) del testo. Si scrive come calc(N * var(--nq-px)),
+ * così segue lo zoom della pagina come il resto del testo.
+ */
+export function applyFontSize(root: HTMLElement, px: number): boolean {
+  const range = selectionIn(root);
+  if (!range) return false;
+  const value = `calc(${px} * var(--nq-px))`;
+  const sel = window.getSelection();
+
+  if (range.collapsed) {
+    // Nessun testo selezionato: da qui in poi si scrive con la nuova dimensione.
+    const span = document.createElement("span");
+    span.style.fontSize = value;
+    const text = document.createTextNode(ZWSP);
+    span.appendChild(text);
+    range.insertNode(span);
+    const caret = document.createRange();
+    caret.setStart(text, 1);
+    caret.collapse(true);
+    sel?.removeAllRanges();
+    sel?.addRange(caret);
+    return true;
+  }
+
+  // fontSize accetta solo 1-7: si usa 7 come "segnaposto" e lo si sostituisce con la dimensione vera.
+  document.execCommand("styleWithCSS", false, "false");
+  document.execCommand("fontSize", false, "7");
+  const spans: HTMLElement[] = [];
+  root.querySelectorAll<HTMLElement>('font[size="7"]').forEach((font) => {
+    const span = document.createElement("span");
+    span.style.fontSize = value;
+    while (font.firstChild) span.appendChild(font.firstChild);
+    span.querySelectorAll<HTMLElement>("[style]").forEach((el) => el.style.removeProperty("font-size"));
+    font.replaceWith(span);
+    spans.push(span);
+  });
+  if (spans.length > 0 && sel) {
+    const again = document.createRange();
+    again.setStartBefore(spans[0]);
+    again.setEndAfter(spans[spans.length - 1]);
+    sel.removeAllRanges();
+    sel.addRange(again);
+  }
+  return true;
+}
+
+export function applyTextColor(root: HTMLElement, color: string): boolean {
+  if (!selectionIn(root)) return false;
+  document.execCommand("styleWithCSS", false, "true");
+  document.execCommand("foreColor", false, color);
+  // Va rimesso a false: altrimenti grassetto e corsivo diventerebbero <span style>.
+  document.execCommand("styleWithCSS", false, "false");
+  return true;
+}
+
+export function clearFormatting(root: HTMLElement): boolean {
+  if (!selectionIn(root)) return false;
+  document.execCommand("removeFormat");
+  return true;
+}
+
+/** Dimensione (px a zoom 100%) del testo sotto il cursore, per mostrarla nella toolbar. */
+export function currentFontSizePx(root: HTMLElement, zoom: number): number | null {
+  const node = window.getSelection()?.anchorNode;
+  if (!node || !root.contains(node)) return null;
+  const el = node instanceof HTMLElement ? node : node.parentElement;
+  if (!el) return null;
+  const px = parseFloat(getComputedStyle(el).fontSize) / zoom;
+  return Number.isFinite(px) ? Math.round(px) : null;
+}

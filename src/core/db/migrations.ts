@@ -271,4 +271,12 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_video_watch_sessions_video ON video_watch_sessions(video_id)`,
     ],
   },
+    {
+    version: 11,
+    description: "Notes: colore della pagina scelto dall'utente",
+    statements: [
+      // NULL = colore del tema; altrimenti #rrggbb.
+      `ALTER TABLE note_pages ADD COLUMN color TEXT`,
+    ],
+  },
 ];
