@@ -1695,9 +1695,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Con le larghezze trascinate (colgroup) le colonne le rispettano. */
-.nq-doc table:has(> colgroup) {
+/* Larghezze fisse: le colonne partono uguali e cambiano solo trascinando i confini (colgroup),
+   mai da sole con il testo. Il bordo esterno è nascosto: restano le linee tra le celle. */
+.nq-doc table {
   table-layout: fixed;
+  border-style: hidden;
 }
 
 .nq-doc th,
@@ -1736,32 +1738,31 @@
   border-bottom: 1px solid color-mix(in srgb, var(--note-page-ink) 10%, transparent);
 }
 
+/* Linee tra le colonne */
+.nq-doc th,
+.nq-doc td {
+  border-left: 1px solid color-mix(in srgb, var(--note-page-ink) 22%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--note-page-ink) 22%, transparent);
+}
+
 .nq-doc tr[data-cur] > td {
   background: var(--accent-soft);
 }
 
 /* Opaco: intestazione piena a pillola, righe a fasce */
 :root[data-theme="opaco"] .nq-doc th {
-  border: 0;
+  border-top: 0;
+  border-bottom: 0;
+  border-left-color: color-mix(in srgb, var(--on-accent) 35%, transparent);
+  border-right-color: color-mix(in srgb, var(--on-accent) 35%, transparent);
   background: var(--accent);
   color: var(--on-accent);
   font-weight: 600;
 }
 
-:root[data-theme="opaco"] .nq-doc th:first-child {
-  border-radius: 999px 0 0 999px;
-}
-
-:root[data-theme="opaco"] .nq-doc th:last-child {
-  border-radius: 0 999px 999px 0;
-}
-
-:root[data-theme="opaco"] .nq-doc th:only-child {
-  border-radius: 999px;
-}
-
 :root[data-theme="opaco"] .nq-doc td {
-  border: 0;
+  border-top: 0;
+  border-bottom: 0;
 }
 
 :root[data-theme="opaco"] .nq-doc tbody tr:nth-child(odd) > td {
@@ -1773,7 +1774,11 @@
   color: var(--tint-senape-ink);
 }
 
-/* Quaderno: griglia d'inchiostro, intestazione a mano */
+/* Quaderno: griglia d'inchiostro (anche il bordo esterno), intestazione a mano */
+:root[data-theme="quaderno"] .nq-doc table {
+  border-style: none;
+}
+
 :root[data-theme="quaderno"] .nq-doc th,
 :root[data-theme="quaderno"] .nq-doc td {
   border: 1.5px solid var(--note-page-ink);
@@ -1800,6 +1805,12 @@
 
 :root[data-theme="fosforo"] .nq-doc td {
   border-bottom: 1px dotted var(--border-subtle);
+}
+
+:root[data-theme="fosforo"] .nq-doc th,
+:root[data-theme="fosforo"] .nq-doc td {
+  border-left: 1px dotted color-mix(in srgb, var(--note-page-ink) 40%, transparent);
+  border-right: 1px dotted color-mix(in srgb, var(--note-page-ink) 40%, transparent);
 }
 
 :root[data-theme="fosforo"] .nq-doc tr[data-cur] > td {
