@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scelta del tema</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#8EA6FF}a:hover{color:#B7C6FF}
+button{font:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid #8EA6FF;outline-offset:2px}
+</style>
+</head>
+<body>
+<div style="width: 1240px; height: 700px; box-sizing: border-box; padding: 40px; background: #05070C; font-family: Manrope, system-ui, sans-serif; color: #E9ECF5; font-size: 14px; line-height: 1.5; display: flex; align-items: center; justify-content: center">
+<section aria-label="Impostazioni" style="width: 1160px; height: 620px; box-sizing: border-box; background: #121726; border: 1px solid #1E2538; border-radius: 22px; display: flex; overflow: hidden">
+<nav aria-label="Sezioni" style="flex: 0 0 200px; box-sizing: border-box; padding: 24px 14px; border-right: 1px solid #1E2538; display: flex; flex-direction: column; gap: 2px">
+<h2 style="margin: 0 0 14px; padding: 0 10px; font-size: 18px; font-weight: 600">Impostazioni</h2>
+<button type="button" style="text-align: left; height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: #1A2032; color: #E9ECF5; font-weight: 500">Aspetto</button>
+<button type="button" style="text-align: left; height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: #9AA2BA">Dashboard</button>
+<button type="button" style="text-align: left; height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: #9AA2BA">Widget</button>
+<button type="button" style="text-align: left; height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: #9AA2BA">Generale</button>
+</nav>
+<div style="flex: 1; box-sizing: border-box; padding: 28px 32px; display: flex; flex-direction: column; gap: 26px">
+<div>
+<h3 style="margin: 0; font-size: 16px; font-weight: 600">Tema</h3>
+<p style="margin: 2px 0 0; color: #9AA2BA">Cambia colori, caratteri e l'aspetto di ogni widget. La griglia si adatta sempre alla finestra.</p>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px">
+
+<button type="button" onClick="" aria-pressed="true" style="padding:10px;border-radius:16px;background:transparent;text-align:left;border:2px solid #8EA6FF;margin:0">
+<span aria-hidden="true" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:63px;gap:6px;padding:10px;border-radius:10px;background:#0A0D16">
+<span style="grid-column:1/3;grid-row:1/3;border-radius:6px;background:#8EA6FF;border:0"></span><span style="grid-column:3/5;grid-row:1/2;border-radius:6px;background:#151B2B;border:0"></span><span style="grid-column:3/4;grid-row:2/3;border-radius:6px;background:#151B2B;border:0"></span>
+</span>
+<span style="display: flex; justify-content: space-between; align-items: baseline; padding: 12px 4px 0"><span style="font-weight: 600; color: #E9ECF5">Notte</span><span style="font-size: 12px; color: #9AA2BA">Scuro</span></span>
+<span style="display: block; padding: 2px 4px 0; font-size: 13px; color: #9AA2BA; text-align: left">Blu inchiostro, ghiera a tacche.</span>
+</button>
+
+
+<button type="button" onClick="" aria-pressed="false" style="padding:10px;border-radius:16px;background:transparent;text-align:left;border:1px solid #2A3350;margin:1px">
+<span aria-hidden="true" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:63px;gap:6px;padding:10px;border-radius:10px;background:#D8D5CD">
+<span style="grid-column:1/3;grid-row:1/3;border-radius:8px;background:#A9B59C;border:0"></span><span style="grid-column:3/5;grid-row:1/2;border-radius:8px;background:#9DB0C0;border:0"></span><span style="grid-column:3/4;grid-row:2/3;border-radius:8px;background:#9DB0C0;border:0"></span>
+</span>
+<span style="display: flex; justify-content: space-between; align-items: baseline; padding: 12px 4px 0"><span style="font-weight: 600; color: #E9ECF5">Opaco</span><span style="font-size: 12px; color: #9AA2BA">Chiaro</span></span>
+<span style="display: block; padding: 2px 4px 0; font-size: 13px; color: #9AA2BA; text-align: left">Blocchi di colore pigmentato.</span>
+</button>
+
+
+<button type="button" onClick="" aria-pressed="false" style="padding:10px;border-radius:16px;background:transparent;text-align:left;border:1px solid #2A3350;margin:1px">
+<span aria-hidden="true" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:63px;gap:6px;padding:10px;border-radius:10px;background:#FCFDFF">
+<span style="grid-column:1/3;grid-row:1/3;border-radius:2px;background:#FFF1A8;border:1px solid #C9D3E3"></span><span style="grid-column:3/5;grid-row:1/2;border-radius:2px;background:#FFFFFF;border:1px solid #C9D3E3"></span><span style="grid-column:3/4;grid-row:2/3;border-radius:2px;background:#FFFFFF;border:1px solid #C9D3E3"></span>
+</span>
+<span style="display: flex; justify-content: space-between; align-items: baseline; padding: 12px 4px 0"><span style="font-weight: 600; color: #E9ECF5">Quaderno</span><span style="font-size: 12px; color: #9AA2BA">Chiaro</span></span>
+<span style="display: block; padding: 2px 4px 0; font-size: 13px; color: #9AA2BA; text-align: left">Foglio a quadretti, inchiostro blu.</span>
+</button>
+
+
+<button type="button" onClick="" aria-pressed="false" style="padding:10px;border-radius:16px;background:transparent;text-align:left;border:1px solid #2A3350;margin:1px">
+<span aria-hidden="true" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:63px;gap:6px;padding:10px;border-radius:10px;background:#1A090C">
+<span style="grid-column:1/3;grid-row:1/3;border-radius:4px;background:#0B0405;border:1px solid rgba(255,214,206,0.2)"></span><span style="grid-column:3/5;grid-row:1/2;border-radius:4px;background:#24100F;border:1px solid rgba(255,214,206,0.2)"></span><span style="grid-column:3/4;grid-row:2/3;border-radius:4px;background:#24100F;border:1px solid rgba(255,214,206,0.2)"></span>
+</span>
+<span style="display: flex; justify-content: space-between; align-items: baseline; padding: 12px 4px 0"><span style="font-weight: 600; color: #E9ECF5">Fosforo</span><span style="font-size: 12px; color: #9AA2BA">Scuro</span></span>
+<span style="display: block; padding: 2px 4px 0; font-size: 13px; color: #9AA2BA; text-align: left">Moduli hardware, display a punti.</span>
+</button>
+
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><h3 style="margin: 0; font-size: 15px; font-weight: 600">Colore accent</h3><button type="button" style="border: 0; background: transparent; color: #8EA6FF; padding: 0">Usa quello del tema</button></div>
+<div style="display: flex; gap: 10px">
+<button type="button" aria-label="Lunare" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid #E9ECF5; background: #8EA6FF"></button>
+<button type="button" aria-label="Menta" style="width: 32px; height: 32px; border-radius: 50%; border: 0; background: #7DD3B0"></button>
+<button type="button" aria-label="Ambra" style="width: 32px; height: 32px; border-radius: 50%; border: 0; background: #F0B47A"></button>
+<button type="button" aria-label="Rosa" style="width: 32px; height: 32px; border-radius: 50%; border: 0; background: #F29BC0"></button>
+<button type="button" aria-label="Colore personalizzato" style="width: 32px; height: 32px; border-radius: 50%; border: 1px dashed #4A5370; background: transparent; color: #9AA2BA">+</button>
+</div>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center; padding-top: 18px; border-top: 1px solid #1E2538">
+<div><div style="font-weight: 500">Griglia</div><div style="color: #9AA2BA; font-size: 13px">6 colonne per 4 righe, riempie la finestra senza scorrere.</div></div>
+<span style="color: #9AA2BA">6 × 4</span>
+</div>
+</div>
+</section>
+</div>
+</body>
+</html>

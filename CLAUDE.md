@@ -100,12 +100,12 @@ componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è 
 
 ## Design
 
-- I mockup approvati sono in `docs/design/temi/` e sono la fonte di verità per la grafica:
+- I mockup approvati sono in `temi-dashboard/docs/design/temi/` e sono la fonte di verità per la grafica:
   l'app deve risultare identica. Se codice e mockup non concordano, vale il mockup.
 - Ogni colore viene dai token del tema: niente esadecimali nei componenti (eccezione: colori scelti dall'utente,
   come materie e cartelle).
 - Ogni nuovo widget deve funzionare in tutti e 4 i temi (Notte, Opaco, Quaderno, Fosforo), giorno e notte, e avere una taglia 1×1
-  ultra minimal (vedi `docs/design/temi/widget-1x1.html`).
+  ultra minimal (vedi `temi-dashboard/docs/design/temi/widget-1x1.html`).
 - Anche le pagine di dettaglio dei widget usano il linguaggio completo del tema (parti per tema, non solo colori).
 
 ## Lavori in corso
