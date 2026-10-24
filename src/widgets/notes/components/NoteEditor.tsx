@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import {
   MdAdd,
   MdArrowDownward,
@@ -25,7 +25,9 @@ import {
   MdLooksOne,
   MdLooksTwo,
   MdMoreHoriz,
+  MdOutlineAddPhotoAlternate,
   MdOutlineAttachFile,
+  MdOutlineImage,
   MdOutlineBackspace,
   MdOutlineBorderColor,
   MdOutlineCalendarToday,
@@ -100,6 +102,11 @@ import { getTextOffsets, setTextOffsets, type TextOffsets } from "../lib/selecti
 import { duplicateBlock, moveBlock } from "../lib/blockActions";
 import { shortcutLabel, type ShortcutAction } from "../lib/shortcuts";
 import { filterInsertItems, type InsertItem } from "../lib/insertItems";
+import { createFileBlock, createImageBlock, insertBlocks, caretAt, serializeEditor } from "../lib/blocks";
+import { attachmentUrl, imageSize, isImageName, IMAGE_EXTENSIONS } from "../lib/attachmentUrls";
+import { MAX_FILE_BYTES, classifyFile, formatBytes, pastedImageName, readPaths, textFileToHtml, type IncomingFile } from "../lib/insertFiles";
+import type { EditorApi, ScreenPoint, StoredFile } from "../lib/editorApi";
+import DropOverlay, { type DropZone } from "./DropOverlay";
 import FindBar from "./FindBar";
 import InsertMenu from "./InsertMenu";
 import type { InkTool } from "./InkLayer";
@@ -129,8 +136,10 @@ interface NoteEditorProps {
   /** Pannello stretto (schermo diviso): niente colonna delle pagine. */
   compact?: boolean;
   onClosePane?: () => void;
-  /** Il pannello si registra per ricevere le scorciatoie (lib/shortcuts.ts); null = si toglie. */
-  registerShortcuts?: (handler: ((action: ShortcutAction) => boolean) | null) => void;
+  /** Il riquadro si registra per scorciatoie e file trascinati (lib/editorApi.ts); null = si toglie. */
+  registerEditor?: (api: EditorApi | null) => void;
+  /** Copia i file nella cartella della nota e li aggiunge agli allegati; restituisce i nomi finali. */
+  onStoreFiles: (noteId: number, files: IncomingFile[]) => Promise<StoredFile[]>;
   onOpenShortcuts?: () => void;
 }
 
@@ -164,12 +173,6 @@ const FORMAT_COMMANDS: Partial<Record<ShortcutAction, string>> = {
 
 const HEADING_TAGS: Partial<Record<ShortcutAction, string>> = { h1: "h1", h2: "h2", h3: "h3", paragraph: "p" };
 
-function formatBytes(size: number): string {
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${(size / 1024).toFixed(0)} KB`;
-  return `${(size / 1024 / 1024).toFixed(1)} MB`;
-}
-
 const INK_SIZES = [1, 2, 3, 5, 8];
 // L'ultimo è l'inchiostro del tema: chiaro di notte, scuro di giorno (vedi THEME_INK).
 const INK_COLORS = ["#6c8dff", "#f472b6", "#34d399", "#fbbf24", "#ef4444", "#a855f7", "#000000", "#ffffff", THEME_INK];
@@ -189,7 +192,8 @@ function NoteEditor({
   splitCandidates = [],
   compact = false,
   onClosePane,
-  registerShortcuts,
+  registerEditor,
+  onStoreFiles,
   onOpenShortcuts,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(note.title);
@@ -224,6 +228,9 @@ function NoteEditor({
   const [busy, setBusy] = useState(false);
   const [splitQuery, setSplitQuery] = useState("");
   const [findOpen, setFindOpen] = useState(false);
+  /** File trascinati sopra la pagina: zona sotto il puntatore e quanti sono. */
+  const [dropDrag, setDropDrag] = useState<{ zone: DropZone; count: number } | null>(null);
+  const scrollWrapRef = useRef<HTMLDivElement | null>(null);
   const [slashState, setSlash] = useState<SlashState | null>(null);
   const slash = slashState && slashState.pageIndex === index ? slashState : null;
   // Cronologia della nota: una per editor (cambiando nota l'editor si ricrea e la cronologia riparte).
@@ -423,7 +430,7 @@ function NoteEditor({
 
   function commitEditor() {
     const el = editorRef.current;
-    if (el && page) patchPage(page.id, { content: el.innerHTML });
+    if (el && page) patchPage(page.id, { content: serializeEditor(el) });
   }
 
   /** Comando del browser sul testo: è una voce sola nella cronologia, non digitazione. */
@@ -741,11 +748,17 @@ async function changePageColor(color: string | null) {
   }
 
   const actionRef = useLatestRef(handleAction);
+  const dragOverRef = useLatestRef(dragOver);
+  const dropRef = useLatestRef(dropFiles);
   useEffect(() => {
-    if (!registerShortcuts) return;
-    registerShortcuts((action) => actionRef.current(action));
-    return () => registerShortcuts(null);
-  }, [registerShortcuts, actionRef]);
+    if (!registerEditor) return;
+    registerEditor({
+      action: (action) => actionRef.current(action),
+      dragOver: (point, count) => dragOverRef.current(point, count),
+      drop: (paths, point) => dropRef.current(paths, point),
+    });
+    return () => registerEditor(null);
+  }, [registerEditor, actionRef, dragOverRef, dropRef]);
 
   // ---------------- Menu "/" ----------------
 
@@ -757,7 +770,8 @@ async function changePageColor(color: string | null) {
     { id: "numbers", label: "Elenco numerato", icon: <MdFormatListNumbered />, hint: shortcutLabel("numbers"), keywords: "lista elenco numeri" },
     { id: "checklist", label: "Checklist", icon: <MdChecklist />, hint: shortcutLabel("checklist"), keywords: "cose da fare spunta todo" },
     { id: "divider", label: "Divisore", icon: <MdHorizontalRule />, keywords: "linea separatore riga" },
-    { id: "file", label: "File", icon: <MdOutlineAttachFile />, hint: "allega", keywords: "allegato documento pdf" },
+    { id: "image", label: "Immagine", icon: <MdOutlineImage />, hint: "Ctrl V", keywords: "foto figura png jpg" },
+    { id: "file", label: "File", icon: <MdOutlineAttachFile />, hint: "nella pagina", keywords: "allegato documento pdf scheda" },
   ];
   const slashItems = slash ? filterInsertItems(insertItems, slash.query) : [];
 
@@ -825,9 +839,13 @@ async function changePageColor(color: string | null) {
       case "divider":
         exec("insertHorizontalRule");
         break;
+      case "image":
+        commitEditor();
+        void pickAndInsert("image");
+        break;
       case "file":
         commitEditor();
-        void pickFiles();
+        void pickAndInsert("file");
         break;
     }
   }
@@ -943,7 +961,7 @@ async function changePageColor(color: string | null) {
     setMenu(null);
     await flush();
     const list = pagesRef.current;
-    const meta = { title, kicker: (pathLabel || "Senza cartella").toUpperCase(), createdAt: note.createdAt, font: noteFont };
+    const meta = { title, kicker: (pathLabel || "Senza cartella").toUpperCase(), createdAt: note.createdAt, font: noteFont, noteDir: note.diskPath };
     const base = slugify(title || "nota");
     setBusy(true);
     try {
@@ -969,6 +987,157 @@ async function changePageColor(color: string | null) {
     }
   }
 
+  /** Il punto del testo dove inserire (cursore nella pagina, o l'ultimo che c'era). */
+  function insertionPoint(): Range | null {
+    const el = editorRef.current;
+    const sel = window.getSelection();
+    if (el && sel && sel.rangeCount > 0 && el.contains(sel.getRangeAt(0).startContainer)) return sel.getRangeAt(0).cloneRange();
+    return savedRange.current && el?.contains(savedRange.current.startContainer) ? savedRange.current.cloneRange() : null;
+  }
+
+  /**
+   * Mette dei file nella pagina: immagini come blocco immagine, .md e .txt come testo, gli altri
+   * come scheda file. Immagini e file vanno nella cartella della nota (allegati), mai nel DB.
+   */
+  async function insertIncoming(files: IncomingFile[], at: Range | null) {
+    const el = editorRef.current;
+    if (!el || !page) return;
+    const pageId = page.id;
+    const tooBig = files.filter((f) => f.bytes.length > MAX_FILE_BYTES);
+    if (tooBig.length > 0) showToast(`«${tooBig[0].name}» supera i 50 MB e non è stato inserito`);
+    const ok = files.filter((f) => f.bytes.length <= MAX_FILE_BYTES);
+    const toStore = ok.filter((f) => {
+      const kind = classifyFile(f.name);
+      return kind === "image" || kind === "file";
+    });
+    const stored = toStore.length > 0 ? await onStoreFiles(note.id, toStore) : [];
+    const nodes: Node[] = [];
+    let next = 0;
+    for (const file of ok) {
+      const kind = classifyFile(file.name);
+      if (kind === "markdown" || kind === "text") {
+        const template = document.createElement("template");
+        template.innerHTML = textFileToHtml(file);
+        nodes.push(...Array.from(template.content.childNodes));
+        continue;
+      }
+      const saved = stored[next++];
+      if (!saved) continue;
+      if (kind === "image") {
+        const dims = await imageSize(file.bytes, file.name).catch(() => ({ width: 0, height: 0 }));
+        nodes.push(createImageBlock(saved.name, dims.width, dims.height));
+      } else {
+        nodes.push(createFileBlock(saved.name, saved.size));
+      }
+    }
+    // Se intanto si è cambiata pagina si inserisce comunque qui, ma solo nella pagina di partenza.
+    if (nodes.length === 0 || editorRef.current !== el || pagesRef.current[index]?.id !== pageId) return;
+    el.focus({ preventScroll: true });
+    insertBlocks(el, at && el.contains(at.startContainer) ? at : null, nodes);
+    commitEditor();
+    showToast(nodes.length === 1 ? "Inserito" : `Inseriti ${nodes.length} elementi`);
+  }
+
+  /** "Inserisci immagine" / "File" (barra o menu "/"): sceglie i file e li mette dove sta il cursore. */
+  async function pickAndInsert(kind: "image" | "file") {
+    const at = insertionPoint();
+    try {
+      const picked = await openDialog({
+        multiple: true,
+        filters: kind === "image" ? [{ name: "Immagini", extensions: IMAGE_EXTENSIONS }] : undefined,
+      });
+      if (!picked) return;
+      setBusy(true);
+      await insertIncoming(await readPaths(Array.isArray(picked) ? picked : [picked]), at);
+    } catch (error) {
+      console.error("Inserimento non riuscito:", error);
+      showToast("Impossibile inserire il file (controlla i permessi di lettura)");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Incolla: immagini e file dagli appunti vanno nella pagina; l'HTML di altre app viene ripulito. */
+  function handlePaste(e: ClipboardEvent<HTMLDivElement>): boolean {
+    const files = Array.from(e.clipboardData.files);
+    if (files.length > 0) {
+      e.preventDefault();
+      const at = insertionPoint();
+      void (async () => {
+        try {
+          const incoming = await Promise.all(
+            files.map(async (f) => ({
+              // Gli screenshot arrivano come "image.png": si dà un nome con data e ora.
+              name: f.name && f.name !== "image.png" ? f.name : pastedImageName(f.type),
+              bytes: new Uint8Array(await f.arrayBuffer()),
+            }))
+          );
+          await insertIncoming(incoming, at);
+        } catch (error) {
+          console.error("Incolla non riuscito:", error);
+          showToast("Impossibile incollare il file");
+        }
+      })();
+      return true;
+    }
+    const html = e.clipboardData.getData("text/html");
+    if (html) {
+      e.preventDefault();
+      const clean = sanitizeHtml(html, { source: "esterno" });
+      commandActive.current = true;
+      try {
+        if (clean) document.execCommand("insertHTML", false, clean);
+        else document.execCommand("insertText", false, e.clipboardData.getData("text/plain"));
+      } finally {
+        commandActive.current = false;
+      }
+      commitEditor();
+      return true;
+    }
+    return false;
+  }
+
+  // ---------------- File trascinati dal sistema (eventi di Tauri, via NotesDetail) ----------------
+
+  /** La zona del pannello sotto il punto, o null se il punto è fuori dalla pagina. */
+  function zoneAt(point: ScreenPoint): DropZone | null {
+    const wrap = scrollWrapRef.current;
+    if (!wrap) return null;
+    const r = wrap.getBoundingClientRect();
+    if (point.x < r.left || point.x > r.right || point.y < r.top || point.y > r.bottom) return null;
+    // Due colonne affiancate; su finestre strette sono una sopra l'altra (DropOverlay.css).
+    if (window.innerWidth <= 860) return point.y < r.top + r.height / 2 ? "insert" : "attach";
+    return point.x < r.left + r.width / 2 ? "insert" : "attach";
+  }
+
+  function dragOver(point: ScreenPoint | null, count: number) {
+    const zone = point ? zoneAt(point) : null;
+    setDropDrag((prev) => (zone === null ? null : prev && prev.zone === zone && prev.count === count ? prev : { zone, count }));
+  }
+
+  async function dropFiles(paths: string[], point: ScreenPoint): Promise<boolean> {
+    const zone = zoneAt(point);
+    setDropDrag(null);
+    if (!zone) return false;
+    if (zone === "attach") {
+      onAttachPaths(note.id, paths);
+      showToast("Allegato");
+      return true;
+    }
+    const root = editorRef.current;
+    const at = root ? caretAt(root, point.x, point.y) : null;
+    setBusy(true);
+    try {
+      await insertIncoming(await readPaths(paths), at);
+    } catch (error) {
+      console.error("Inserimento dei file trascinati non riuscito:", error);
+      showToast("Impossibile inserire il file (controlla i permessi di lettura)");
+    } finally {
+      setBusy(false);
+    }
+    return true;
+  }
+
   async function pickFiles() {
     try {
       const picked = await openDialog({ multiple: true });
@@ -978,6 +1147,33 @@ async function changePageColor(color: string | null) {
       console.error("Selezione file non riuscita:", error);
       showToast("Impossibile aprire la scelta dei file");
     }
+  }
+
+  /** "Inserisci nella pagina" da un allegato che c'è già: il blocco usa lo stesso file, senza copiarlo. */
+  async function insertAttachment(attachment: Attachment) {
+    const el = editorRef.current;
+    if (!el || !note.diskPath) {
+      showToast("La copia su disco non è ancora pronta, riprova tra un attimo");
+      return;
+    }
+    const at = insertionPoint();
+    let block: HTMLElement;
+    if (isImageName(attachment.name)) {
+      const dims = await attachmentUrl(note.diskPath, attachment.name)
+        .then((url) => {
+          const img = new Image();
+          img.src = url;
+          return img.decode().then(() => ({ width: img.naturalWidth, height: img.naturalHeight }));
+        })
+        .catch(() => ({ width: 0, height: 0 }));
+      block = createImageBlock(attachment.name, dims.width, dims.height);
+    } else {
+      block = createFileBlock(attachment.name, attachment.size);
+    }
+    el.focus({ preventScroll: true });
+    insertBlocks(el, at, [block]);
+    commitEditor();
+    showToast("Inserito nella pagina");
   }
 
   async function openAttachment(attachment: Attachment) {
@@ -1397,6 +1593,7 @@ async function changePageColor(color: string | null) {
           </span>
         )}
         <span className="nq-tsep" />
+        <ToolButton label="Inserisci immagine" legend="img" icon={<MdOutlineImage />} disabled={busy} onClick={() => void pickAndInsert("image")} />
         <ToolButton label="Allega file" legend="file" icon={<MdOutlineAttachFile />} onClick={() => void pickFiles()} />
         <span className="nq-tsep" />
         <span className="nq-swatches" role="group" aria-label="Colore della pagina">
@@ -1504,6 +1701,14 @@ async function changePageColor(color: string | null) {
               <button type="button" onClick={() => void openAttachment(a)} title="Apri">
                 <MdOutlineAttachFile /> {a.name} <em>{formatBytes(a.size)}</em>
               </button>
+              <button
+                type="button"
+                onClick={() => void insertAttachment(a)}
+                aria-label={`Inserisci ${a.name} nella pagina`}
+                title="Inserisci nella pagina"
+              >
+                <MdOutlineAddPhotoAlternate />
+              </button>
               <button type="button" onClick={() => void removeAttachment(a)} aria-label={`Rimuovi ${a.name}`}>
                 <MdClose />
               </button>
@@ -1512,7 +1717,8 @@ async function changePageColor(color: string | null) {
         </div>
       )}
 
-      <div className="nq-scroll-wrap">
+      <div ref={scrollWrapRef} className="nq-scroll-wrap">
+        {dropDrag && <DropOverlay zone={dropDrag.zone} count={dropDrag.count} />}
         {findOpen && (
           <FindBar
             pages={pages}
@@ -1537,9 +1743,13 @@ async function changePageColor(color: string | null) {
             color={color}
             size={size}
             header={index === 0 ? titleBlock : null}
-          noteFont={noteFont}
+            noteFont={noteFont}
+            noteDir={note.diskPath}
             editorRef={editorRef}
             onContent={handleTyping}
+            onBlockChange={commitEditor}
+            onPaste={handlePaste}
+            onNotice={showToast}
             onInk={handleInk}
             onEditorKeyDown={handleEditorKey}
             onAfterInput={() => checkSlash(true)}

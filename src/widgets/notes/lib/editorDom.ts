@@ -1,3 +1,5 @@
+import { focusedBlock } from "./blocks";
+
 /**
  * Blocco "corrente" dell'editor: l'<li> che contiene il cursore, altrimenti
  * il figlio diretto della radice. Null se il cursore è fuori dall'editor o
@@ -120,9 +122,12 @@ export function currentFontSizePx(root: HTMLElement, zoom: number): number | nul
   const px = parseFloat(getComputedStyle(el).fontSize) / zoom;
   return Number.isFinite(px) ? Math.round(px) : null;
 }
-/** Il figlio diretto della radice che contiene il cursore (paragrafo, titolo, elenco intero…). */
+/** Il figlio diretto della radice che contiene il cursore (paragrafo, titolo, elenco intero…),
+ *  oppure il blocco immagine/file che ha il focus. */
 export function topBlock(root: HTMLElement | null): HTMLElement | null {
   if (!root) return null;
+  const focused = focusedBlock(root);
+  if (focused) return focused;
   let node: Node | null = window.getSelection()?.anchorNode ?? null;
   if (!node || !root.contains(node) || node === root) return null;
   while (node && node.parentNode !== root) node = node.parentNode;

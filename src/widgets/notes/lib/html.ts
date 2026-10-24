@@ -1,4 +1,6 @@
 import { validTextAttr } from "./textStyle";
+import { asAttachmentName, parseAlign, parseImageEdit, parseWidth, serializeImageEdit } from "./imageEdit";
+import { asStrokes } from "./ink";
 
 /**
  * Il contenuto delle pagine è HTML scritto in un contentEditable. Prima di
@@ -23,13 +25,59 @@ function safeStyle(css: string): string {
   return out.join("; ");
 }
 
-export function sanitizeHtml(html: string): string {
+/**
+ * Attributi dei blocchi immagine/file (lib/blocks.ts), ripuliti: il valore normalizzato da tenere,
+ * oppure null per toglierlo.
+ */
+function blockAttr(el: Element, name: string, value: string): string | null {
+  const kind = el.getAttribute("data-block");
+  if (name === "data-block") return value;
+  if (name === "data-attachment") return asAttachmentName(value);
+  if (kind === "image" && el.tagName === "FIGURE") {
+    if (name === "data-edit") return serializeImageEdit(parseImageEdit(value));
+    if (name === "data-align") return parseAlign(value) === value ? value : null;
+    if (name === "data-width") return parseWidth(value)?.toString() ?? null;
+    if (name === "data-ink") {
+      try {
+        const strokes = asStrokes(JSON.parse(value));
+        return strokes.length > 0 ? JSON.stringify(strokes) : null;
+      } catch {
+        return null;
+      }
+    }
+  }
+  if (kind === "file" && el.tagName === "DIV" && name === "data-bytes") {
+    const n = Number(value);
+    return Number.isInteger(n) && n >= 0 ? String(n) : null;
+  }
+  return null;
+}
+
+/** Un blocco vero: figure immagine o div file, con il nome del file valido. */
+function isValidBlock(el: Element): boolean {
+  const kind = el.getAttribute("data-block");
+  const okTag = (kind === "image" && el.tagName === "FIGURE") || (kind === "file" && el.tagName === "DIV");
+  return okTag && asAttachmentName(el.getAttribute("data-attachment")) !== null;
+}
+
+export interface SanitizeOptions {
+  /** "esterno" = HTML incollato da un'altra app: niente blocchi (riferimenti a file della nota). */
+  source?: "app" | "esterno";
+}
+
+export function sanitizeHtml(html: string, options: SanitizeOptions = {}): string {
   if (!html) return "";
+  const external = options.source === "esterno";
   const doc = new DOMParser().parseFromString(html, "text/html");
   doc
-    .querySelectorAll("script, style, iframe, object, embed, link, meta, form, img, video, audio, svg, input, button")
+    .querySelectorAll("script, style, iframe, object, embed, link, meta, form, img, video, audio, svg, input, button, [data-runtime]")
     .forEach((n) => n.remove());
+  doc.body.querySelectorAll("[data-block]").forEach((el) => {
+    // Un blocco non valido o arrivato da fuori diventa un elemento normale (le didascalie restano testo).
+    if (external || !isValidBlock(el)) el.removeAttribute("data-block");
+  });
   doc.body.querySelectorAll("*").forEach((el) => {
+    const isBlock = el.hasAttribute("data-block");
     for (const attr of Array.from(el.attributes)) {
       const name = attr.name.toLowerCase();
       if (name === "style") {
@@ -40,6 +88,13 @@ export function sanitizeHtml(html: string): string {
       }
       if (name === "data-check" && (attr.value === "0" || attr.value === "1")) continue;
       if (el.tagName === "SPAN" && validTextAttr(name, attr.value)) continue;
+      if (isBlock && name.startsWith("data-")) {
+        const kept = blockAttr(el, name, attr.value);
+        if (kept !== null) {
+          if (kept !== attr.value) el.setAttribute(attr.name, kept);
+          continue;
+        }
+      }
       if (name === "href" && el.tagName === "A" && /^(https?:|mailto:)/i.test(attr.value.trim())) continue;
       el.removeAttribute(attr.name);
     }
@@ -121,9 +176,18 @@ export function htmlToMarkdown(html: string): string {
       case "OL":
         blocks.push(Array.from(node.children).map((li, i) => `${i + 1}. ${inline(li).trim()}`).join("\n"));
         break;
-      default:
+      default: {
+        // Blocchi della pagina: rimandano al file in allegati/, accanto a nota.md.
+        const block = node.getAttribute("data-block");
+        const file = node.getAttribute("data-attachment");
+        if (block && file) {
+          const caption = node.querySelector("figcaption")?.textContent?.trim();
+          blocks.push(block === "image" ? `![${caption || file}](<allegati/${file}>)` : `[${file}](<allegati/${file}>)`);
+          break;
+        }
         if (node.hasAttribute("data-check")) blocks.push(`- [${node.getAttribute("data-check") === "1" ? "x" : " "}] ${text}`);
         else if (text) blocks.push(text);
+      }
     }
   }
   return blocks.join("\n\n");

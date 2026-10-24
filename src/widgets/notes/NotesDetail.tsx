@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
-import { readFile, readTextFile } from "@tauri-apps/plugin-fs";
 import { openPath } from "@tauri-apps/plugin-opener";
 import {
   MdOutlineCreateNewFolder,
@@ -23,13 +22,19 @@ import NoteCollection, { type LayoutMode, type SortKey } from "./components/Note
 import NoteEditor from "./components/NoteEditor";
 import Crumbs, { type Crumb } from "./components/Crumbs";
 import ShortcutsPanel from "./components/ShortcutsPanel";
-import { fromFormField, matchShortcut, shortcutLabel, type ShortcutAction } from "./lib/shortcuts";
+import { fromFormField, matchShortcut, shortcutLabel } from "./lib/shortcuts";
+import type { EditorApi, ScreenPoint, StoredFile } from "./lib/editorApi";
+import { createFileBlock, createImageBlock } from "./lib/blocks";
+import { imageSize, releaseAttachmentUrls } from "./lib/attachmentUrls";
+import { MAX_FILE_BYTES, classifyFile, readPaths, type IncomingFile } from "./lib/insertFiles";
 import { takePendingNote } from "./lib/launch";
 import {
   addAttachment,
   addFolder,
   createNote,
   deleteFolders,
+  getPages,
+  savePage,
   deleteNoteForever,
   emptyTrash,
   listFolders,
@@ -49,7 +54,6 @@ import { markdownToHtml, parseFrontmatter, parseMetaString, parseMetaTags, plain
 import { buildFromTemplate } from "./lib/templates";
 import {
   VAULT_DIR,
-  baseName,
   ensureVaultDir,
   importVault,
   isVaultEnabled,
@@ -70,7 +74,6 @@ type View =
   | { kind: "tag"; tag: string };
 
 const RECENT_LIMIT = 12;
-const MAX_ATTACHMENT_BYTES = 50 * 1024 * 1024;
 
 /** Pagina "Notes": cartelle, raccolta di note ed editor. */
 function NotesDetail() {
@@ -243,19 +246,19 @@ function NotesDetail() {
   // Un solo ascoltatore per la pagina: le azioni della pagina si fanno qui, quelle sul testo
   // vanno all'editor del riquadro attivo (quello cliccato o con il focus, nello schermo diviso).
 
-  const editorHandlers = useRef(new Map<"main" | "side", (action: ShortcutAction) => boolean>());
+  const editorApis = useRef(new Map<"main" | "side", EditorApi>());
   const activePane = useRef<"main" | "side">("main");
   const [keysOpen, setKeysOpen] = useState(false);
   const keysOpenRef = useLatestRef(keysOpen);
 
-  const registerMain = useCallback((handler: ((action: ShortcutAction) => boolean) | null) => {
-    if (handler) editorHandlers.current.set("main", handler);
-    else editorHandlers.current.delete("main");
+  const registerMain = useCallback((api: EditorApi | null) => {
+    if (api) editorApis.current.set("main", api);
+    else editorApis.current.delete("main");
   }, []);
-  const registerSide = useCallback((handler: ((action: ShortcutAction) => boolean) | null) => {
-    if (handler) editorHandlers.current.set("side", handler);
+  const registerSide = useCallback((api: EditorApi | null) => {
+    if (api) editorApis.current.set("side", api);
     else {
-      editorHandlers.current.delete("side");
+      editorApis.current.delete("side");
       activePane.current = "main";
     }
   }, []);
@@ -304,8 +307,8 @@ function NotesDetail() {
         void newNoteRef.current();
         return;
       }
-      const handler = editorHandlers.current.get(activePane.current) ?? editorHandlers.current.get("main");
-      if (handler?.(action)) e.preventDefault();
+      const api = editorApis.current.get(activePane.current) ?? editorApis.current.get("main");
+      if (api?.action(action)) e.preventDefault();
       // Senza una nota aperta Ctrl+F apre la ricerca (e non quella del browser).
       else if (action === "find") {
         e.preventDefault();
@@ -600,74 +603,108 @@ function NotesDetail() {
     }
   }
 
+  /** Cartella della nota su disco: la crea (attivando la copia su disco) se non c'è ancora. */
+  async function noteDirFor(noteId: number): Promise<string> {
+    if (!vaultOn) {
+      await setVaultEnabled(true); // gli allegati vivono nella cartella su disco
+      setVaultOn(true);
+    }
+    let fresh = (await listNotes()).find((n) => n.id === noteId);
+    if (fresh && !fresh.diskPath) {
+      await syncPending([fresh], folders);
+      fresh = (await listNotes()).find((n) => n.id === noteId);
+    }
+    if (!fresh?.diskPath) throw new Error("Cartella della nota non creata");
+    return fresh.diskPath;
+  }
+
+  /** Copia i file in <nota>/allegati/ e li aggiunge agli allegati. Usata da editor, allegati e rilascio. */
+  async function storeFiles(noteId: number, files: IncomingFile[]): Promise<StoredFile[]> {
+    const dir = await noteDirFor(noteId);
+    const stored: StoredFile[] = [];
+    for (const file of files) {
+      if (file.bytes.length > MAX_FILE_BYTES) {
+        showNotice(`«${file.name}» supera i 50 MB e non è stato allegato.`);
+        continue;
+      }
+      const finalName = await saveAttachmentFile(dir, file.name, file.bytes);
+      await addAttachment(noteId, finalName, file.bytes.length);
+      stored.push({ name: finalName, size: file.bytes.length });
+    }
+    if (stored.length > 0) {
+      setAttachVersion((v) => v + 1);
+      await reload();
+    }
+    return stored;
+  }
+
   async function attachPaths(noteId: number, paths: string[]) {
     try {
-      if (!vaultOn) {
-        await setVaultEnabled(true); // gli allegati vivono nella cartella su disco
-        setVaultOn(true);
-      }
-      let fresh = (await listNotes()).find((n) => n.id === noteId);
-      if (!fresh) return;
-      if (!fresh.diskPath) {
-        await syncPending([fresh], folders);
-        fresh = (await listNotes()).find((n) => n.id === noteId);
-      }
-      if (!fresh?.diskPath) throw new Error("Cartella della nota non creata");
-
-      let added = 0;
-      for (const path of paths) {
-        const bytes = await readFile(path);
-        if (bytes.length > MAX_ATTACHMENT_BYTES) {
-          showNotice(`«${baseName(path)}» supera i 50 MB e non è stato allegato.`);
-          continue;
-        }
-        const finalName = await saveAttachmentFile(fresh.diskPath, baseName(path), bytes);
-        await addAttachment(noteId, finalName, bytes.length);
-        added++;
-      }
-      if (added > 0) {
-        setAttachVersion((v) => v + 1);
-        showNotice(added === 1 ? "File allegato." : `${added} file allegati.`);
-        await reload();
-      }
+      const stored = await storeFiles(noteId, await readPaths(paths));
+      if (stored.length > 0) showNotice(stored.length === 1 ? "File allegato." : `${stored.length} file allegati.`);
     } catch (error) {
       console.error("Allegato non riuscito:", error);
       showNotice("Impossibile allegare il file: controlla i permessi di lettura (dettagli nella console).");
     }
   }
 
-  async function createNoteFromFile(path: string, folderId: number | null): Promise<number> {
-    const name = baseName(path);
+  /** Una nota nuova da un file: testo per .md/.txt, immagine o scheda del file per gli altri. */
+  async function createNoteFromFile(file: IncomingFile, folderId: number | null): Promise<number> {
+    const name = file.name;
     const title = name.replace(/\.[^.]+$/, "") || name;
     const plain = (content: string) => [{ content, ink: [], background: "none" as const }];
+    const kind = classifyFile(name);
+    const text = () => new TextDecoder().decode(file.bytes);
 
-    if (/\.txt$/i.test(name)) {
-      return createNote(folderId, { title, tags: [], pages: plain(plainTextToHtml(await readTextFile(path))) });
+    if (kind === "text") {
+      return createNote(folderId, { title, tags: [], pages: plain(plainTextToHtml(text())) });
     }
-    if (/\.(md|markdown)$/i.test(name)) {
-      const { meta, body } = parseFrontmatter(await readTextFile(path));
+    if (kind === "markdown") {
+      const { meta, body } = parseFrontmatter(text());
       return createNote(folderId, {
         title: parseMetaString(meta.title) ?? title,
         tags: parseMetaTags(meta.tags),
         pages: plain(markdownToHtml(body)),
       });
     }
-    const safe = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const id = await createNote(folderId, { title, tags: [], pages: plain(`<p>File allegato: ${safe}</p>`) });
-    await attachPaths(id, [path]);
+    const id = await createNote(folderId, { title, tags: [], pages: plain("<p><br></p>") });
+    const [stored] = await storeFiles(id, [file]);
+    if (stored) {
+      let block: HTMLElement;
+      if (kind === "image") {
+        const dims = await imageSize(file.bytes, name).catch(() => ({ width: 0, height: 0 }));
+        block = createImageBlock(stored.name, dims.width, dims.height);
+      } else {
+        block = createFileBlock(stored.name, stored.size);
+      }
+      const [first] = await getPages(id);
+      if (first) await savePage(first.id, id, `${block.outerHTML}<p><br></p>`, []);
+    }
     return id;
   }
 
-  async function handleExternalDrop(paths: string[]) {
+  /** Cartella sotto il punto (barra laterale): id, "root" = fuori dalle cartelle, null = nessuna. */
+  function folderKeyAt(point: ScreenPoint): string | null {
+    return document.elementFromPoint(point.x, point.y)?.closest<HTMLElement>("[data-drop-folder]")?.dataset.dropFolder ?? null;
+  }
+
+  async function handleExternalDrop(paths: string[], point: ScreenPoint) {
     if (paths.length === 0) return;
-    if (openIdRef.current !== null) {
+    // Prima la pagina di un riquadro aperto (Inserisci nella pagina / Allega alla nota).
+    for (const key of ["side", "main"] as const) {
+      const api = editorApis.current.get(key);
+      if (api && (await api.drop(paths, point))) return;
+    }
+    const folderKey = folderKeyAt(point);
+    if (folderKey === null && openIdRef.current !== null) {
+      // Rilasciato sull'intestazione o sulla barra di una nota aperta: allegato, come prima.
       await attachPaths(openIdRef.current, paths);
       return;
     }
-    const folderId = view.kind === "folder" ? view.id : null;
+    const folderId = folderKey === "root" ? null : folderKey !== null ? Number(folderKey) : view.kind === "folder" ? view.id : null;
     try {
       let last: number | null = null;
-      for (const path of paths) last = await createNoteFromFile(path, folderId);
+      for (const file of await readPaths(paths)) last = await createNoteFromFile(file, folderId);
       await reload();
       showNotice(paths.length === 1 ? "Nota creata dal file." : `${paths.length} note create dai file.`);
       if (paths.length === 1 && last !== null) setOpenId(last);
@@ -677,20 +714,40 @@ function NotesDetail() {
     }
   }
 
+  /** Il trascinamento passa sopra la finestra: pannello sulla pagina, cartella evidenziata. */
+  function handleExternalOver(point: ScreenPoint | null, count: number) {
+    for (const api of editorApis.current.values()) api.dragOver(point, count);
+    const key = point ? folderKeyAt(point) : null;
+    setDropKey(key !== null && key !== "root" ? key : null);
+  }
+
+  const overRef = useLatestRef(handleExternalOver);
   const dropRef = useLatestRef(handleExternalDrop);
 
   // File trascinati dal desktop dentro la finestra (evento nativo di Tauri).
   useEffect(() => {
     let cancelled = false;
     let unlisten: (() => void) | null = null;
+    let count = 0;
+    // Tauri dà la posizione in pixel fisici della finestra: in px CSS si divide per devicePixelRatio.
+    const toCss = (pos: { x: number; y: number }): ScreenPoint => ({
+      x: pos.x / (window.devicePixelRatio || 1),
+      y: pos.y / (window.devicePixelRatio || 1),
+    });
     getCurrentWebview()
       .onDragDropEvent((event) => {
         const payload = event.payload;
-        if (payload.type === "enter" || payload.type === "over") setExtDrag(true);
-        else if (payload.type === "leave") setExtDrag(false);
-        else {
+        if (payload.type === "enter" || payload.type === "over") {
+          if (payload.type === "enter") count = payload.paths.length;
+          setExtDrag(true);
+          overRef.current(toCss(payload.position), count);
+        } else if (payload.type === "leave") {
           setExtDrag(false);
-          void dropRef.current(payload.paths);
+          overRef.current(null, 0);
+        } else {
+          setExtDrag(false);
+          overRef.current(null, 0);
+          void dropRef.current(payload.paths, toCss(payload.position));
         }
       })
       .then((fn) => {
@@ -702,12 +759,16 @@ function NotesDetail() {
       cancelled = true;
       unlisten?.();
     };
-  }, [dropRef]);
+  }, [dropRef, overRef]);
+
+  // Lasciando la pagina Notes si libera la memoria delle immagini lette dal disco.
+  useEffect(() => releaseAttachmentUrls, []);
 
   function renderEditor(note: NoteSummary, compact: boolean, onClosePane?: () => void) {
     return (
       <NoteEditor
-        registerShortcuts={onClosePane ? registerSide : registerMain}
+        registerEditor={onClosePane ? registerSide : registerMain}
+        onStoreFiles={storeFiles}
         onOpenShortcuts={() => setKeysOpen(true)}
         key={`${onClosePane ? "side" : "main"}-${note.id}`}
         note={note}
@@ -966,7 +1027,7 @@ function NotesDetail() {
         </div>
       </section>
 
-      {extDrag && (
+      {extDrag && !openNote && (
         <div className="nq-drop-overlay">
           <div>{openNote ? "Rilascia per allegare alla nota" : "Rilascia per creare una nota dal file"}</div>
         </div>
