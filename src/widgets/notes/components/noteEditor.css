@@ -1696,10 +1696,10 @@
 }
 
 /* Larghezze fisse: le colonne partono uguali e cambiano solo trascinando i confini (colgroup),
-   mai da sole con il testo. Il bordo esterno è nascosto: restano le linee tra le celle. */
+   mai da sole con il testo. Bordo esterno marcato, in tutti i temi. */
 .nq-doc table {
   table-layout: fixed;
-  border-style: hidden;
+  border: 2px solid color-mix(in srgb, var(--note-page-ink) 70%, transparent);
 }
 
 .nq-doc th,
@@ -1774,9 +1774,9 @@
   color: var(--tint-senape-ink);
 }
 
-/* Quaderno: griglia d'inchiostro (anche il bordo esterno), intestazione a mano */
+/* Quaderno: griglia d'inchiostro, bordo esterno più spesso, intestazione a mano */
 :root[data-theme="quaderno"] .nq-doc table {
-  border-style: none;
+  border: 2.5px solid var(--note-page-ink);
 }
 
 :root[data-theme="quaderno"] .nq-doc th,
