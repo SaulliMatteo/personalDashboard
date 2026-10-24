@@ -278,6 +278,10 @@ function PageSurface(props: PageSurfaceProps) {
           }}
           onPaste={handlePaste}
           onDrop={(e) => e.preventDefault()}
+          // I blocchi si spostano col loro trascinamento (ImageBlock), mai con quello nativo del browser.
+          onDragStart={(e) => {
+            if (e.target instanceof Element && e.target.closest("[data-block]")) e.preventDefault();
+          }}
           onClick={handleClick}
           onKeyDown={handleKeyDown}
           onFocus={(e) => {

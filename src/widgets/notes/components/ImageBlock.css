@@ -201,7 +201,7 @@
 .nq-h-tl { top: -6px; left: -6px; }
 .nq-h-tr { top: -6px; right: -6px; }
 .nq-h-bl { bottom: -6px; left: -6px; }
-.nq-h-br { bottom: -6px; right: -6px; cursor: nwse-resize; }
+.nq-h-br { bottom: -6px; right: -6px; cursor: nwse-resize; touch-action: none; }
 
 .nq-h-r {
   top: 50%;
@@ -211,6 +211,15 @@
   margin-top: -11px;
   border-radius: 3px;
   cursor: ew-resize;
+  touch-action: none;
+}
+
+/* Area più grande da prendere attorno alle maniglie che ridimensionano. */
+.nq-h-br::after,
+.nq-h-r::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
 }
 
 .nq-measure {
@@ -225,31 +234,69 @@
   white-space: nowrap;
 }
 
-.nq-crop {
+/* Fuori dal ritaglio: scurito (il livello è tagliato sul riquadro dell'immagine). */
+.nq-crop-shade {
   position: absolute;
+  inset: 0;
   z-index: 4;
-  box-sizing: border-box;
-  border: 2px solid var(--accent);
-  box-shadow: 0 0 0 9999px var(--overlay);
-  cursor: move;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
 }
 
-.nq-imgbox:has(.nq-crop) {
-  overflow: hidden;
+.nq-crop-hole {
+  position: absolute;
+  box-shadow: 0 0 0 9999px var(--overlay);
+}
+
+/* Il riquadro del ritaglio e i suoi angoli: sopra, non tagliati. */
+.nq-crop {
+  position: absolute;
+  z-index: 5;
+  box-sizing: border-box;
+  border: 2px solid var(--accent);
+  cursor: move;
+  touch-action: none;
 }
 
 .nq-crop-h {
   position: absolute;
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--bg-card);
+  border-radius: 3px;
   background: var(--accent);
+  touch-action: none;
 }
 
-.nq-crop-h--tl { top: -7px; left: -7px; cursor: nwse-resize; }
-.nq-crop-h--tr { top: -7px; right: -7px; cursor: nesw-resize; }
-.nq-crop-h--bl { bottom: -7px; left: -7px; cursor: nesw-resize; }
-.nq-crop-h--br { bottom: -7px; right: -7px; cursor: nwse-resize; }
+.nq-crop-h--tl { top: -9px; left: -9px; cursor: nwse-resize; }
+.nq-crop-h--tr { top: -9px; right: -9px; cursor: nesw-resize; }
+.nq-crop-h--bl { bottom: -9px; left: -9px; cursor: nesw-resize; }
+.nq-crop-h--br { bottom: -9px; right: -9px; cursor: nwse-resize; }
+
+/* Spostare l'immagine trascinandola: la linea dice dove andrà. */
+.nq-imgbox {
+  cursor: grab;
+  touch-action: none;
+}
+
+.nq-imgbox.is-drawing {
+  cursor: crosshair;
+}
+
+figure[data-moving] .nq-imgbox {
+  opacity: 0.45;
+  cursor: grabbing;
+}
+
+.nq-move-line {
+  position: fixed;
+  z-index: 80;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  pointer-events: none;
+}
 
 /* ---------- Barra dell'immagine (sopra il blocco) ---------- */
 
