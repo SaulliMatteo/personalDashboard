@@ -144,6 +144,9 @@ celle e `data-width` (in %) sulle celle della prima riga. I comandi non scrivono
 nel modello di `lib/tables.ts` (una griglia di id: una cella unita occupa un rettangolo), lo cambiano e la
 riscrivono (`replaceTable`). Le larghezze si vedono grazie a un `<colgroup data-runtime>` rifatto da
 `layoutTables` (editor ed esportazione); la riga del cursore ha `data-cur`. Nessuno dei due viene salvato.
+Aspetto scelto dall'utente: `data-border-color`, `data-border-width`, `data-border-style`, `data-head-color` sulla
+tabella e `data-bg` sulle celle (chiavi della palette o #rrggbb, validate in `lib/tables.ts`). I colori arrivano al
+CSS come variabili in linea (`--nq-tb-*`, `--nq-cell-*`) rifatte da `layoutTables` e tolte prima di salvare.
 
 ### Il widget Companion (`widgets/companion/`)
 

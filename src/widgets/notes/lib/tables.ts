@@ -9,11 +9,85 @@
 
 export type CellAlign = "left" | "center" | "right";
 
+// ---------------------------------------------------------------------
+// Aspetto scelto dall'utente: colori dalla palette (cambiano con giorno/notte) o #rrggbb liberi.
+// ---------------------------------------------------------------------
+
+/** Colori pieni per bordi e intestazione (gli stessi del testo, token --nq-ink-*). */
+export const TABLE_INKS = [
+  { key: "rosso", label: "Rosso" },
+  { key: "arancio", label: "Arancio" },
+  { key: "verde", label: "Verde" },
+  { key: "blu", label: "Blu" },
+  { key: "viola", label: "Viola" },
+  { key: "grigio", label: "Grigio" },
+] as const;
+
+/** Colori tenui per lo sfondo delle celle (gli stessi dell'evidenziatore, token --nq-mark-*). */
+export const CELL_FILLS = [
+  { key: "giallo", label: "Giallo" },
+  { key: "verde", label: "Verde" },
+  { key: "azzurro", label: "Azzurro" },
+  { key: "rosa", label: "Rosa" },
+  { key: "arancio", label: "Arancio" },
+  { key: "viola", label: "Viola" },
+] as const;
+
+export const BORDER_WIDTHS = [
+  { key: "sottile", label: "Sottile" },
+  { key: "medio", label: "Medio" },
+  { key: "spesso", label: "Spesso" },
+] as const;
+
+export const BORDER_STYLES = [
+  { key: "continuo", label: "Continuo" },
+  { key: "tratteggiato", label: "Tratteggiato" },
+  { key: "puntini", label: "A puntini" },
+] as const;
+
+export type BorderWidth = (typeof BORDER_WIDTHS)[number]["key"];
+export type BorderStyle = (typeof BORDER_STYLES)[number]["key"];
+
+export interface TableLook {
+  borderColor: string | null;
+  borderWidth: BorderWidth | null;
+  borderStyle: BorderStyle | null;
+  headColor: string | null;
+}
+
+/** Valore di partenza del selettore "Altro colore…" quando non c'è ancora un colore libero. */
+export const FREE_COLOR_START = "#3a6ea5";
+
+export const DEFAULT_LOOK: TableLook = { borderColor: null, borderWidth: null, borderStyle: null, headColor: null };
+
+const HEX = /^#[0-9a-f]{6}$/i;
+const inList = (list: readonly { key: string }[], v: unknown): v is string => typeof v === "string" && list.some((x) => x.key === v);
+
+/** Colore di bordi e intestazione: chiave di TABLE_INKS o #rrggbb, altrimenti null. */
+export function asInkColor(v: unknown): string | null {
+  return inList(TABLE_INKS, v) || (typeof v === "string" && HEX.test(v)) ? (v as string).toLowerCase() : null;
+}
+
+/** Sfondo di una cella: chiave di CELL_FILLS o #rrggbb, altrimenti null. */
+export function asFillColor(v: unknown): string | null {
+  return inList(CELL_FILLS, v) || (typeof v === "string" && HEX.test(v)) ? (v as string).toLowerCase() : null;
+}
+
+export function asBorderWidth(v: unknown): BorderWidth | null {
+  return inList(BORDER_WIDTHS, v) ? (v as BorderWidth) : null;
+}
+
+export function asBorderStyle(v: unknown): BorderStyle | null {
+  return inList(BORDER_STYLES, v) ? (v as BorderStyle) : null;
+}
+
 export interface CellData {
   /** HTML del contenuto (già ripulito: viene dall'editor o da sanitizeHtml). */
   html: string;
   /** null = a sinistra (il valore predefinito, non scritto nell'HTML). */
   align: CellAlign | null;
+  /** Sfondo (asFillColor); null = quello del tema. */
+  bg: string | null;
 }
 
 export interface TableModel {
@@ -24,6 +98,8 @@ export interface TableModel {
   cells: Record<number, CellData>;
   /** Larghezza di ogni colonna in % della tabella; null = automatica. */
   widths: (number | null)[];
+  /** Bordi e intestazione scelti dall'utente. */
+  look: TableLook;
 }
 
 /** Una cella con il suo rettangolo nella griglia. */
@@ -43,6 +119,7 @@ export interface RawCell {
   align: CellAlign | null;
   /** data-width, solo sulle celle della prima riga. */
   width: number | null;
+  bg?: string | null;
 }
 
 export const MAX_SPAN = 20;
@@ -50,7 +127,7 @@ export const MIN_WIDTH = 5;
 /** Contenuto di una cella vuota: il <br> tiene la riga alta e il cursore ci entra. */
 export const EMPTY_CELL = "<br>";
 
-const emptyCell = (): CellData => ({ html: EMPTY_CELL, align: null });
+const emptyCell = (): CellData => ({ html: EMPTY_CELL, align: null, bg: null });
 
 export function rowCount(m: TableModel): number {
   return m.grid.length;
@@ -63,7 +140,7 @@ export function colCount(m: TableModel): number {
 function copy(m: TableModel): TableModel {
   const cells: Record<number, CellData> = {};
   for (const [id, c] of Object.entries(m.cells)) cells[Number(id)] = { ...c };
-  return { head: m.head, grid: m.grid.map((r) => [...r]), cells, widths: [...m.widths] };
+  return { head: m.head, grid: m.grid.map((r) => [...r]), cells, widths: [...m.widths], look: { ...m.look } };
 }
 
 function newId(m: TableModel): number {
@@ -80,7 +157,7 @@ function prune(m: TableModel): TableModel {
 }
 
 export function createTable(rows: number, cols: number, head = true): TableModel {
-  const m: TableModel = { head, grid: [], cells: {}, widths: Array.from({ length: cols }, () => null) };
+  const m: TableModel = { head, grid: [], cells: {}, widths: Array.from({ length: cols }, () => null), look: { ...DEFAULT_LOOK } };
   let id = 1;
   for (let r = 0; r < rows; r++) {
     const row: number[] = [];
@@ -104,7 +181,7 @@ const clampInt = (v: number, min: number, max: number) => Math.min(max, Math.max
  * posto libero della sua riga). I posti rimasti vuoti diventano celle vuote. `ids[r][i]` è l'id
  * dato alla i-esima cella della riga r (serve a ritrovare la cella del DOM).
  */
-export function fromRows(rows: RawCell[][], head: boolean): { model: TableModel; ids: number[][] } {
+export function fromRows(rows: RawCell[][], head: boolean, look: TableLook = DEFAULT_LOOK): { model: TableModel; ids: number[][] } {
   const R = rows.length;
   const slots: (number | undefined)[][] = rows.map(() => []);
   const cells: Record<number, CellData> = {};
@@ -120,7 +197,7 @@ export function fromRows(rows: RawCell[][], head: boolean): { model: TableModel;
       const cs = clampInt(raw.colspan, 1, MAX_SPAN);
       for (let dr = 0; dr < rs; dr++) for (let dc = 0; dc < cs; dc++) slots[r + dr][c + dc] = id;
       if (r === 0 && raw.width !== null) for (let dc = 0; dc < cs; dc++) widths[c + dc] = raw.width / cs;
-      cells[id] = { html: raw.html, align: raw.align };
+      cells[id] = { html: raw.html, align: raw.align, bg: raw.bg ?? null };
       rowIds.push(id++);
       c += cs;
     }
@@ -145,6 +222,7 @@ export function fromRows(rows: RawCell[][], head: boolean): { model: TableModel;
     grid,
     cells,
     widths: Array.from({ length: C }, (_, c) => widths[c] ?? null),
+    look: { ...look },
   };
   model.widths = normalizeWidths(model.widths);
   return { model: fixHead(model), ids };
@@ -229,7 +307,7 @@ export function insertRow(model: TableModel, at: number): TableModel {
     if (across) row.push(m.grid[pos][c]);
     else {
       const id = newId(m);
-      m.cells[id] = { html: EMPTY_CELL, align: m.cells[m.grid[Math.min(pos, R - 1)][c]]?.align ?? null };
+      m.cells[id] = { html: EMPTY_CELL, align: m.cells[m.grid[Math.min(pos, R - 1)][c]]?.align ?? null, bg: null };
       row.push(id);
     }
   }
@@ -340,7 +418,7 @@ export function mergeCells(model: TableModel, rect: Rect): MergeResult {
   if (inside.length < 2) return { ok: false, reason: "una-cella" };
   if (m.head && r0 === 0 && r1 > 0) return { ok: false, reason: "intestazione" };
   const parts = inside.map((i) => m.cells[i].html).filter((h) => cellText(h) !== "");
-  m.cells[id] = { html: parts.length > 0 ? parts.join("<br>") : EMPTY_CELL, align: m.cells[id].align };
+  m.cells[id] = { ...m.cells[id], html: parts.length > 0 ? parts.join("<br>") : EMPTY_CELL };
   for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) m.grid[r][c] = id;
   return { ok: true, model: prune(m), id };
 }
@@ -354,7 +432,7 @@ export function splitCell(model: TableModel, id: number): TableModel {
     for (let c = box.col; c < box.col + box.colspan; c++) {
       if (r === box.row && c === box.col) continue;
       const nid = newId(m);
-      m.cells[nid] = { html: EMPTY_CELL, align: m.cells[id].align };
+      m.cells[nid] = { html: EMPTY_CELL, align: m.cells[id].align, bg: m.cells[id].bg };
       m.grid[r][c] = nid;
     }
   }

@@ -3,7 +3,7 @@ import { asAttachmentName, parseAlign, parseImageEdit, parseWidth, serializeImag
 import { asFreeCoord } from "./blocks";
 import { asStrokes } from "./ink";
 import { asCellAlign, asCellWidth, readTable } from "./tableDom";
-import { MAX_SPAN, tableToMarkdown } from "./tables";
+import { MAX_SPAN, asBorderStyle, asBorderWidth, asFillColor, asInkColor, tableToMarkdown } from "./tables";
 
 /**
  * Il contenuto delle pagine è HTML scritto in un contentEditable. Prima di
@@ -73,6 +73,15 @@ function cellAttr(name: string, value: string): string | null {
   }
   if (name === "data-align") return asCellAlign(value);
   if (name === "data-width") return asCellWidth(value)?.toString() ?? null;
+  if (name === "data-bg") return asFillColor(value);
+  return null;
+}
+
+/** Aspetto della tabella (bordi, intestazione): il valore da tenere, o null. */
+function tableAttr(name: string, value: string): string | null {
+  if (name === "data-border-color" || name === "data-head-color") return asInkColor(value);
+  if (name === "data-border-width") return asBorderWidth(value);
+  if (name === "data-border-style") return asBorderStyle(value);
   return null;
 }
 
@@ -106,8 +115,8 @@ export function sanitizeHtml(html: string, options: SanitizeOptions = {}): strin
       }
       if (name === "data-check" && (attr.value === "0" || attr.value === "1")) continue;
       if (el.tagName === "SPAN" && validTextAttr(name, attr.value)) continue;
-      if (el.tagName === "TD" || el.tagName === "TH") {
-        const kept = cellAttr(name, attr.value);
+      if (el.tagName === "TD" || el.tagName === "TH" || el.tagName === "TABLE") {
+        const kept = el.tagName === "TABLE" ? tableAttr(name, attr.value) : cellAttr(name, attr.value);
         if (kept !== null) {
           if (kept !== attr.value) el.setAttribute(attr.name, kept);
           continue;
