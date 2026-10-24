@@ -316,6 +316,11 @@
   --main-bg: linear-gradient(#1C2330 1px, transparent 1px) 0 0 / 24px 24px,
     linear-gradient(90deg, #1C2330 1px, transparent 1px) 0 0 / 24px 24px, #121620;
   --paper-margin: #8A3F45;
+  /* Foglio a righe (cella 1×1 del File transfer). */
+  --sheet-bg: #222A3A;
+  --sheet-rule: #2C3446;
+  --sheet-edge: #3A4459;
+  --sheet-shadow: #0B0E15;
   --bg-sidebar: #1A1F2B;
   --sidebar-border: 1px solid #262D3B;
   --sidebar-width: 216px;

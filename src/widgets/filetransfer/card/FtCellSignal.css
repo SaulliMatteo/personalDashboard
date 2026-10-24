@@ -1,0 +1,192 @@
+/* File transfer 1×1 "Segnale": Notte, Opaco e Fosforo (stessa struttura, misure per tema). */
+
+.widget.ftc-s {
+  --ftc-num: 54px;
+  --ftc-bar-on: var(--accent);
+  --ftc-bar-off: var(--dot-off);
+  --ftc-bar-size: 5px;
+  --ftc-top: 14px;
+  --ftc-side: 15px;
+}
+
+.ftc-s-top {
+  position: absolute;
+  top: min(var(--ftc-top), 8cqh);
+  left: var(--ftc-side);
+  right: var(--ftc-side);
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.ftc-s-tag {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ftc-s-tag svg {
+  flex: none;
+}
+
+.ftc-s.is-online .ftc-st {
+  color: var(--success-text);
+}
+
+.ftc-s .ftc-num {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-bottom: 4px;
+  font-size: min(var(--ftc-num), 36cqh, 40cqw);
+}
+
+.ftc-s:not(.is-online) .ftc-num {
+  opacity: 0.5;
+}
+
+.ftc-s-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: min(18px, 10cqh);
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.ftc-s-bar i {
+  width: var(--ftc-bar-size);
+  height: var(--ftc-bar-size);
+  border-radius: 50%;
+  background: var(--ftc-bar-off);
+}
+
+.ftc-s.is-online .ftc-s-bar i {
+  animation: ftc-rx 1.4s steps(1, end) infinite;
+  animation-delay: calc(var(--i) * 0.2s);
+}
+
+@keyframes ftc-rx {
+  0% {
+    background: var(--ftc-bar-on);
+  }
+  15% {
+    background: var(--ftc-bar-off);
+  }
+}
+
+/* Senza animazioni (sistema o impostazione "Animazioni"): tre punti accesi fissi. */
+@media (prefers-reduced-motion: reduce) {
+  .ftc-s.is-online .ftc-s-bar i {
+    animation: none;
+  }
+
+  .ftc-s.is-online .ftc-s-bar i:nth-child(-n + 3) {
+    background: var(--ftc-bar-on);
+  }
+}
+
+:root[data-animations="off"] .ftc-s.is-online .ftc-s-bar i:nth-child(-n + 3) {
+  background: var(--ftc-bar-on);
+}
+
+@container (max-height: 130px) {
+  .ftc-s .ftc-title {
+    display: none;
+  }
+}
+
+@container (max-height: 100px) {
+  .ftc-s-tag,
+  .ftc-s-bar {
+    display: none;
+  }
+}
+
+/* ---------- Notte ---------- */
+.widget.ftc-s--notte {
+  --ftc-top: 16px;
+  --ftc-side: 16px;
+}
+
+.ftc-s--notte .ftc-s-tag svg {
+  width: 14px;
+  height: 14px;
+}
+
+.ftc-s--notte.is-online .ftc-s-tag svg {
+  color: var(--accent);
+}
+
+.ftc-s--notte .ftc-num {
+  color: var(--text-primary);
+}
+
+/* ---------- Opaco (pigmento della cella) ---------- */
+.widget.ftc-s--opaco {
+  --ftc-num: 72px;
+  --ftc-bar-on: var(--pg-ink);
+  --ftc-bar-off: var(--pg-dark);
+  --ftc-bar-size: 6px;
+  --ftc-top: 18px;
+  --ftc-side: 18px;
+  color: var(--pg-ink);
+}
+
+.ftc-s--opaco .ftc-s-top,
+.ftc-s--opaco .ftc-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pg-ink);
+}
+
+.ftc-s--opaco .ftc-s-tag svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ftc-s--opaco .ftc-dot {
+  width: 8px;
+  height: 8px;
+}
+
+.ftc-s--opaco .ftc-num {
+  color: var(--pg-ink);
+}
+
+/* ---------- Fosforo: tutta la cella è il display ---------- */
+.widget.ftc-s--fosforo {
+  --ftc-num: 66px;
+  --ftc-bar-on: var(--dot-on);
+  background: var(--display-texture), var(--display-bg);
+}
+
+.ftc-s--fosforo .ftc-s-tag svg {
+  width: 12px;
+  height: 12px;
+  color: var(--dot-on);
+}
+
+.ftc-s--fosforo .ftc-st,
+.ftc-s--fosforo.is-online .ftc-st {
+  color: var(--text-primary);
+}
+
+.ftc-s--fosforo.is-online .ftc-dot {
+  box-shadow: 0 0 6px var(--led);
+}
+
+:root[data-mode="giorno"] .ftc-s--fosforo.is-online .ftc-dot {
+  box-shadow: none;
+}
+
+.ftc-s--fosforo .ftc-num {
+  color: var(--dot-on);
+}
