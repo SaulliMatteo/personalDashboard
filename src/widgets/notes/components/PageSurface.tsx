@@ -1,10 +1,25 @@
-import { useLayoutEffect, useRef, type CSSProperties, type ClipboardEvent, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ClipboardEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+  type ReactNode,
+  type RefObject,
+} from "react";
+import { createPortal } from "react-dom";
 import type { InkStroke, NotePage, PageBackground } from "../data/notesRepository";
+import { BLOCK_SELECTOR, hydrateBlocks, serializeEditor, type BlockKind } from "../lib/blocks";
 import { currentBlock } from "../lib/editorDom";
 import { sanitizeHtml } from "../lib/html";
-import InkLayer, { type InkTool } from "./InkLayer";
 import { paperAttrs, paperStyle } from "../lib/pageColor";
 import type { NoteFont } from "../lib/textStyle";
+import FileCard from "./FileCard";
+import ImageBlock from "./ImageBlock";
+import InkLayer, { type InkTool } from "./InkLayer";
 
 interface PageSurfaceProps {
   page: NotePage;
@@ -18,9 +33,16 @@ interface PageSurfaceProps {
   header?: ReactNode;
   /** Font predefinito della nota (null = quello del tema). */
   noteFont?: NoteFont | null;
+  /** Cartella della nota su disco (immagini e file dei blocchi). */
+  noteDir: string | null;
   editorRef: RefObject<HTMLDivElement | null>;
   onContent: (html: string) => void;
   onInk: (strokes: InkStroke[]) => void;
+  /** Un blocco (immagine, file) è cambiato: si salva come una modifica sola, non come digitazione. */
+  onBlockChange: () => void;
+  /** Incolla: true = gestito da chi chiama (file, HTML); altrimenti si incolla testo semplice. */
+  onPaste?: (e: ClipboardEvent<HTMLDivElement>) => boolean;
+  onNotice?: (message: string) => void;
   /** Tasti dentro il testo prima della pagina (menu "/" aperto): true = gestito. */
   onEditorKeyDown?: (e: KeyboardEvent<HTMLDivElement>) => boolean;
   /** Dopo ogni modifica del testo (serve al menu "/"). */
@@ -29,14 +51,47 @@ interface PageSurfaceProps {
   onHistory?: (direction: "undo" | "redo") => void;
 }
 
+interface BlockEntry {
+  id: number;
+  el: HTMLElement;
+  host: HTMLElement;
+  kind: BlockKind;
+}
+
+/** Mette il cursore all'inizio del blocco dopo `el` (creando un paragrafo se manca). */
+function caretAfter(el: HTMLElement) {
+  let next = el.nextElementSibling as HTMLElement | null;
+  if (!next || next.matches(BLOCK_SELECTOR)) {
+    const p = document.createElement("p");
+    p.appendChild(document.createElement("br"));
+    el.after(p);
+    next = p;
+  }
+  const range = document.createRange();
+  range.setStart(next, 0);
+  range.collapse(true);
+  const sel = window.getSelection();
+  sel?.removeAllRanges();
+  sel?.addRange(range);
+  next.closest<HTMLElement>("[contenteditable='true']")?.focus();
+}
+
 /**
  * Una pagina "di carta". Il testo è un contentEditable NON controllato da
  * React: l'HTML iniziale viene scritto una volta sola quando cambia pagina
  * (React non deve mai riscrivere il contenuto mentre si digita).
+ * I blocchi immagine/file sono nell'HTML; React li disegna con dei portal nei loro nodi di
+ * servizio, che un MutationObserver ritrova anche dopo annulla, incolla o spostamenti.
  */
 function PageSurface(props: PageSurfaceProps) {
-  const { page, editorRef, onContent } = props;
+  const { page, editorRef, onContent, onBlockChange } = props;
   const headRef = useRef<HTMLDivElement | null>(null);
+  const [blocks, setBlocks] = useState<BlockEntry[]>([]);
+  const [selectedState, setSelected] = useState<HTMLElement | null>(null);
+  const ids = useRef(new WeakMap<HTMLElement, number>());
+  const nextId = useRef(1);
+  // Il blocco selezionato vale solo finché è ancora nella pagina.
+  const selected = selectedState && blocks.some((b) => b.el === selectedState) ? selectedState : null;
 
   // I tratti a mano sono salvati rispetto alla pagina com'era prima del titolo nella pagina (testata
   // alta 2.82em): l'inchiostro parte quindi da (altezza della testata − 2.82em), così resta sopra le
@@ -55,11 +110,44 @@ function PageSurface(props: PageSurfaceProps) {
   useLayoutEffect(() => {
     const el = editorRef.current;
     if (!el) return;
+    // Prima l'osservatore, poi l'HTML: così anche i blocchi della pagina appena aperta vengono trovati.
+    const scan = () => {
+      const found = hydrateBlocks(el).map((b) => {
+        let id = ids.current.get(b.el);
+        if (id === undefined) {
+          id = nextId.current++;
+          ids.current.set(b.el, id);
+        }
+        return { ...b, id };
+      });
+      setBlocks((prev) =>
+        prev.length === found.length && prev.every((b, i) => b.el === found[i].el && b.host === found[i].host) ? prev : found
+      );
+    };
+    const observer = new MutationObserver(scan);
+    observer.observe(el, { childList: true });
     el.innerHTML = sanitizeHtml(page.content) || "<p><br></p>";
     // Invio crea un <p> (e non un <div>): le checklist e i titoli restano coerenti.
     document.execCommand("defaultParagraphSeparator", false, "p");
+    return () => observer.disconnect();
     // Solo al cambio di pagina: page.content cambia a ogni tasto e NON deve rientrare qui.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page.id, editorRef]);
+
+  // Il blocco selezionato ha data-selected (forma per tema nel CSS); il resto no.
+  useEffect(() => {
+    for (const b of blocks) b.el.toggleAttribute("data-selected", b.el === selected);
+  }, [blocks, selected]);
+
+  // Click fuori dal blocco selezionato: si deseleziona.
+  useEffect(() => {
+    if (!selected) return;
+    const onDown = (e: PointerEvent) => {
+      if (!(e.target instanceof Node) || !selected.contains(e.target)) setSelected(null);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [selected]);
 
   // L'annulla del browser conosce solo il testo: lo sostituisce la cronologia della nota (lib/history.ts).
   const historyRef = useRef(props.onHistory);
@@ -79,11 +167,38 @@ function PageSurface(props: PageSurfaceProps) {
   }, [editorRef]);
 
   function emit() {
-    if (editorRef.current) onContent(editorRef.current.innerHTML);
+    if (editorRef.current) onContent(serializeEditor(editorRef.current));
   }
 
-  // Incolla sempre testo semplice: niente HTML esterno dentro le note.
+  function selectBlock(el: HTMLElement) {
+    setSelected(el);
+    if (document.activeElement !== el && !el.contains(document.activeElement)) el.focus({ preventScroll: true });
+  }
+
+  function removeBlock(el: HTMLElement) {
+    const root = editorRef.current;
+    if (!root) return;
+    const next = el.nextElementSibling as HTMLElement | null;
+    const prev = el.previousElementSibling as HTMLElement | null;
+    el.remove();
+    if (!root.firstElementChild) root.innerHTML = "<p><br></p>";
+    setSelected(null);
+    const target = next ?? prev ?? (root.firstElementChild as HTMLElement | null);
+    if (target && !target.matches(BLOCK_SELECTOR)) {
+      const range = document.createRange();
+      range.setStart(target, 0);
+      range.collapse(true);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+      root.focus();
+    } else target?.focus();
+    onBlockChange();
+  }
+
   function handlePaste(e: ClipboardEvent<HTMLDivElement>) {
+    if (props.onPaste?.(e)) return;
+    // Se nessuno lo gestisce si incolla testo semplice.
     e.preventDefault();
     document.execCommand("insertText", false, e.clipboardData.getData("text/plain"));
   }
@@ -99,12 +214,37 @@ function PageSurface(props: PageSurfaceProps) {
     emit();
   }
 
-  // Invio dentro una checklist: la nuova riga parte sempre da "non spuntata".
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (props.onEditorKeyDown?.(e)) {
       e.preventDefault();
       return;
     }
+    const target = e.target as HTMLElement;
+    // Tasti su un blocco con il focus (immagine o file).
+    if (target.parentElement === editorRef.current && target.matches(BLOCK_SELECTOR) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.key === "Delete" || e.key === "Backspace") {
+        e.preventDefault();
+        removeBlock(target);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        setSelected(null);
+        caretAfter(target);
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setSelected(null);
+        target.blur();
+      }
+      return;
+    }
+    // Invio nella didascalia: la didascalia è una riga sola, si va al testo sotto l'immagine.
+    const caption = target.closest?.("figcaption");
+    if (caption && e.key === "Enter") {
+      e.preventDefault();
+      const figure = caption.closest<HTMLElement>("figure");
+      if (figure) caretAfter(figure);
+      return;
+    }
+    // Invio dentro una checklist: la nuova riga parte sempre da "non spuntata".
     // Ctrl+Invio spunta la riga (scorciatoia): non è un a capo.
     if (e.key !== "Enter" || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
     window.setTimeout(() => {
@@ -140,6 +280,10 @@ function PageSurface(props: PageSurfaceProps) {
           onDrop={(e) => e.preventDefault()}
           onClick={handleClick}
           onKeyDown={handleKeyDown}
+          onFocus={(e) => {
+            const t = e.target as HTMLElement;
+            if (t.parentElement === editorRef.current && t.matches(BLOCK_SELECTOR)) setSelected(t);
+          }}
         />
 
         <InkLayer
@@ -151,6 +295,33 @@ function PageSurface(props: PageSurfaceProps) {
           onChange={props.onInk}
         />
       </div>
+
+      {blocks.map((b) =>
+        createPortal(
+          b.kind === "image" ? (
+            <ImageBlock
+              figure={b.el}
+              noteDir={props.noteDir}
+              selected={b.el === selected}
+              onSelect={() => selectBlock(b.el)}
+              onCommit={onBlockChange}
+              onDelete={() => removeBlock(b.el)}
+              ink={{ tool: props.tool, color: props.color, size: props.size }}
+            />
+          ) : (
+            <FileCard
+              block={b.el}
+              noteDir={props.noteDir}
+              selected={b.el === selected}
+              onSelect={() => selectBlock(b.el)}
+              onDelete={() => removeBlock(b.el)}
+              onError={(message) => props.onNotice?.(message)}
+            />
+          ),
+          b.host,
+          String(b.id)
+        )
+      )}
     </div>
   );
 }

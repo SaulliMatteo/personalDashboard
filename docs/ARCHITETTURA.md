@@ -101,7 +101,9 @@ notes/
 │                            Crumbs, PageSurface (pagina di carta: contentEditable NON controllato da React;
 │                            testata col titolo sulla prima pagina), InkLayer (penna/evidenziatore/gomma)
 ├─ data/notesRepository.ts   tutte le query SQL (note_folders, notes, note_pages)
-│                            FindBar (Ctrl+F), InsertMenu (menu "/"), ShortcutsPanel (Ctrl+/ o F1)
+│                            FindBar (Ctrl+F), InsertMenu (menu "/"), ShortcutsPanel (Ctrl+/ o F1),
+│                            ImageBlock (immagine nella pagina, modifiche non distruttive), FileCard,
+│                            DropOverlay (file trascinati: "Inserisci nella pagina" / "Allega alla nota")
 └─ lib/                      drag.ts, editorDom.ts, folders.ts, html.ts (sanitizeHtml),
                              history.ts (annulla/ripeti per nota, puro: orologio iniettato),
                              shortcuts.ts (UNICO elenco delle scorciatoie: tasti, etichette, tooltip),
@@ -109,7 +111,12 @@ notes/
                              (duplica/sposta il blocco), insertItems.ts (voci del menu "/"),
                              textStyle.ts (font, dimensione 12–40, colori ed evidenziatore come
                              span data-*; elenchi che sanitizeHtml accetta), pageColor.ts (colore
-                             pagina: chiave della palette, token --nq-page-*, o #rrggbb libero)
+                             pagina: chiave della palette, token --nq-page-*, o #rrggbb libero),
+                             blocks.ts (blocchi immagine/file: salvataggio senza i nodi di React,
+                             preparazione, inserimento), imageEdit.ts (data-edit: ritaglio, rotazione,
+                             filtri, geometria; puro), attachmentUrls.ts (file della nota → blob: URL),
+                             insertFiles.ts (smista i file per tipo), blockExport.ts (blocchi statici
+                             per PDF/PNG), editorApi.ts (scorciatoie e trascinamento tra pagina ed editor)
 ```
 
 La geometria del testo nella pagina (larghezza 58em, margini interni, corpo, dimensioni e margini dei titoli
@@ -120,7 +127,14 @@ dell'inchiostro parte da (testata − 2.82em), così il titolo sulla prima pagin
 Annulla/ripeti: ogni modifica a testo, inchiostro, colore o sfondo passa da `patchPage`/`history.record` in
 `NoteEditor`, che salva lo stato della pagina PRIMA della modifica; l'annulla del browser è bloccato. Le
 scorciatoie si aggiungono solo in `lib/shortcuts.ts`: un solo ascoltatore in `NotesDetail` le smista all'editor
-del riquadro attivo (`registerShortcuts`).
+del riquadro attivo (`registerEditor`).
+
+Blocchi nella pagina: `<figure data-block="image" data-attachment data-edit data-align data-width data-ink>`
+(+ `figcaption`) e `<div data-block="file" data-attachment data-bytes>`. Nell'HTML salvato c'è solo la
+descrizione: il file sta in `<nota>/allegati/` (mai nel DB) e quello che si vede lo disegna React con un portal
+nel nodo `[data-runtime]` del blocco, che `serializeEditor` toglie prima di salvare. Un MutationObserver in
+`PageSurface` ritrova i blocchi dopo annulla, incolla e spostamenti. L'HTML incollato da altre app passa da
+`sanitizeHtml(html, { source: "esterno" })`, che toglie i blocchi.
 
 ### Il widget Companion (`widgets/companion/`)
 

@@ -4,6 +4,7 @@ import type { NotePage } from "../data/notesRepository";
 import { htmlToMarkdown, monthYear, sanitizeHtml } from "./html";
 import { isPageColorKey, luminance, paperVars } from "./pageColor";
 import type { NoteFont } from "./textStyle";
+import { renderStaticBlocks } from "./blockExport";
 import { THEME_INK, drawStrokes } from "./ink"; // al posto del solo drawStrokes
 
 export interface ExportMeta {
@@ -13,6 +14,8 @@ export interface ExportMeta {
   createdAt: number;
   /** Font predefinito della nota. */
   font?: NoteFont | null;
+  /** Cartella della nota su disco: da lì si leggono le immagini dei blocchi. */
+  noteDir?: string | null;
 }
 
 export interface RenderOptions {
@@ -144,6 +147,8 @@ async function renderPage(
 
   const { stage, paper } = buildStage(page, number, meta, light, minHeight);
   try {
+    // Immagini e schede file come HTML statico (prima di misurare l'altezza).
+    await renderStaticBlocks(paper, meta.noteDir ?? null);
     const width = PAPER_WIDTH;
     const height = Math.ceil(paper.getBoundingClientRect().height);
     const background = getComputedStyle(paper).backgroundColor;

@@ -13,8 +13,12 @@ export function duplicateBlock(root: HTMLElement): boolean {
   if (!block) return false;
   const offsets = getTextOffsets(block);
   const copy = block.cloneNode(true) as HTMLElement;
+  // Il disegno di React (immagine, barra) non si copia: lo rifà da sé sul blocco nuovo.
+  copy.querySelectorAll("[data-runtime]").forEach((n) => n.remove());
+  copy.removeAttribute("data-selected");
   block.after(copy);
   if (offsets) setTextOffsets(copy, offsets);
+  else if (copy.hasAttribute("data-block")) copy.focus();
   return true;
 }
 
@@ -28,6 +32,7 @@ export function moveBlock(root: HTMLElement, direction: -1 | 1): boolean {
   if (direction < 0) sibling.before(block);
   else sibling.after(block);
   if (offsets) setTextOffsets(block, offsets);
+  else if (block.hasAttribute("data-block")) block.focus();
   block.scrollIntoView({ block: "nearest" });
   return true;
 }
