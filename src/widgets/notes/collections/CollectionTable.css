@@ -1,0 +1,161 @@
+/* Tabella della raccolta (mockup: .ctable). Spigoli vivi, come le tabelle nella pagina. */
+
+.nq-ctable-wrap {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.nq-ctable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.nq-ctable th {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.nq-ctable td {
+  padding: 5px 6px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 60%, transparent);
+  vertical-align: middle;
+}
+
+.nq-ctable td.is-primary {
+  font-weight: 600;
+}
+
+.nq-ctable .is-num,
+.nq-ctable .is-num .nq-cell-input {
+  text-align: right;
+}
+
+.nq-ficon {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+
+.nq-ctable-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.nq-ctable-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 4px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.nq-ctable-field:hover,
+.nq-ctable-field:focus-visible,
+.nq-ctable-field[aria-expanded="true"] {
+  color: var(--accent);
+  outline: none;
+}
+
+.nq-ctable-tools {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.nq-ctable-add,
+.nq-ctable-rowbtns button {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.nq-ctable-add:hover,
+.nq-ctable-add:focus-visible,
+.nq-ctable-rowbtns button:hover,
+.nq-ctable-rowbtns button:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.nq-ctable-rowbtns {
+  display: inline-flex;
+  gap: 4px;
+  opacity: 0;
+}
+
+.nq-ctable tr:hover .nq-ctable-rowbtns,
+.nq-ctable tr:focus-within .nq-ctable-rowbtns {
+  opacity: 1;
+}
+
+.nq-ctable-types {
+  right: 0;
+  left: auto;
+  width: 200px;
+}
+
+.nq-ctable-types .nq-fmenu-btn {
+  justify-content: flex-start;
+}
+
+.nq-ctable-addrow td {
+  border-bottom: 0;
+}
+
+.nq-ctable-addrow button {
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.nq-ctable-addrow button:hover,
+.nq-ctable-addrow button:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+
+/* Opaco: righe a fasce, senza linee */
+:root[data-theme="opaco"] .nq-ctable th,
+:root[data-theme="opaco"] .nq-ctable td {
+  border: 0;
+}
+
+:root[data-theme="opaco"] .nq-ctable tbody tr:not(.nq-ctable-addrow):nth-child(odd) td {
+  background: var(--surface-2);
+}
+
+/* Quaderno: intestazione a mano */
+:root[data-theme="quaderno"] .nq-ctable th {
+  border-bottom: 1.5px solid var(--text-primary);
+  color: var(--accent);
+  font-family: var(--font-title);
+  font-size: 19px;
+  font-weight: 700;
+}
+
+/* Fosforo: separatori a punti */
+:root[data-theme="fosforo"] .nq-ctable td {
+  border-bottom-style: dotted;
+}

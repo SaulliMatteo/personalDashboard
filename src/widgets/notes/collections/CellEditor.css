@@ -1,0 +1,173 @@
+/* Editor delle celle: sembrano testo finché non li si usa. */
+
+.nq-cell-input,
+.nq-cell-select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 4em;
+  padding: 3px 4px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.nq-cell-input:hover,
+.nq-cell-select--plain:hover {
+  border-color: var(--border-subtle);
+}
+
+.nq-cell-input:focus,
+.nq-cell-select:focus-visible {
+  border-color: var(--accent);
+  background: var(--surface-1);
+}
+
+.nq-cell-date {
+  min-width: 9.5em;
+  color-scheme: light dark;
+}
+
+/* Scelta: il <select> ha l'aspetto del chip */
+.nq-cell-select:not(.nq-cell-select--plain) {
+  width: auto;
+  max-width: 100%;
+  appearance: none;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--nq-choice-bg, transparent);
+  color: var(--nq-choice-ink, var(--text-muted));
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nq-cell-select:not(.nq-cell-select--plain):not([data-color]) {
+  border: 1px dashed var(--border-subtle);
+}
+
+:root[data-theme="quaderno"] .nq-cell-select:not(.nq-cell-select--plain) {
+  border-radius: 3px;
+}
+
+:root[data-theme="fosforo"] .nq-cell-select:not(.nq-cell-select--plain) {
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: inherit;
+}
+
+.nq-cell-select option {
+  background: var(--modal-bg);
+  color: var(--text-primary);
+}
+
+.nq-cell-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.nq-cell-row,
+.nq-cell-multi {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.nq-cell-row {
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.nq-cell-mini {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.nq-cell-mini:hover,
+.nq-cell-mini:focus-visible,
+.nq-cell-file:hover,
+.nq-cell-file:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.nq-cell-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 2px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.nq-cell-pop-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.nq-cell-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.nq-cell-pop {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+  padding: 8px;
+  border: var(--modal-border);
+  border-radius: 12px;
+  background: var(--modal-bg);
+  box-shadow: var(--shadow-pop);
+  color: var(--text-primary);
+}
+
+.nq-cell-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 4px;
+  cursor: pointer;
+}
+
+.nq-cell-check input {
+  accent-color: var(--accent);
+}
+
+.nq-cell-empty {
+  margin: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
