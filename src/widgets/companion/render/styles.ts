@@ -1,3 +1,4 @@
+import type { ThemeVariants } from "../../../core/theme/variants";
 import type { FaceFrame } from "../engine/animator";
 import { drawLedFace } from "./ledRenderer";
 import { drawSolidFace } from "./solidRenderer";
@@ -50,3 +51,11 @@ export const COMPANION_STYLES = {
       drawLedFace(canvas, frame, { color: o.color, offAlpha: 0, showMouth: o.showMouth, padding: o.padding ?? FACE_PADDING, maxPitch: o.maxPointSize * o.dpr }),
   },
 } satisfies Record<string, CompanionStyle>;
+
+/** Come viene disegnata la faccia in ogni tema (mockup: card del Companion). Usato dal canvas e dalle notifiche. */
+export const FACE_STYLES: ThemeVariants<CompanionStyle> = {
+  notte: COMPANION_STYLES.soft,
+  opaco: COMPANION_STYLES.pill,
+  quaderno: COMPANION_STYLES.pill,
+  fosforo: COMPANION_STYLES.led,
+};

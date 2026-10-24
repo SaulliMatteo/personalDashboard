@@ -1,5 +1,5 @@
 import type { ActivityEvent, ActivityStatus } from "../../../core/activity/activityBus";
-import type { AppId, ForegroundApp } from "./appCategory";
+import type { AppId, ForegroundApp } from "../../../core/system/appCategory";
 import { ANIMATIONS } from "./animations";
 import { EMOTIONS, type EmotionId, type FaceMotion, type GlyphId } from "./face";
 import { PERSONALITIES, fillPhrase, type PersonalityId, type PhraseKey } from "./personalities";

@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useSettings } from "../../../core/settings/useSettings";
 import { useTheme } from "../../../core/theme/useTheme";
-import { useThemeVariant, type ThemeVariants } from "../../../core/theme/variants";
+import { useThemeVariant } from "../../../core/theme/variants";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import { useCompanion } from "../useCompanion";
-import { COMPANION_STYLES, type CompanionStyle } from "../render/styles";
+import { FACE_STYLES } from "../render/styles";
 import "./CompanionFace.css";
 
 interface CompanionFaceProps {
@@ -17,14 +17,6 @@ interface CompanionFaceProps {
   padding?: number;
   className?: string;
 }
-
-/** Come viene disegnata la faccia in ogni tema (mockup: card del Companion). */
-const FACE_STYLES: ThemeVariants<CompanionStyle> = {
-  notte: COMPANION_STYLES.soft,
-  opaco: COMPANION_STYLES.pill,
-  quaderno: COMPANION_STYLES.pill,
-  fosforo: COMPANION_STYLES.led,
-};
 
 /** Nei mockup un punto della faccia è grande circa 7px (occhi di ~46×64 nella card 2×2). */
 const MAX_POINT_SIZE = 7;

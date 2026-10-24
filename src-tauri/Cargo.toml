@@ -47,6 +47,9 @@ windows-sys = { version = "0.59", features = [
   "Win32_UI_Input_KeyboardAndMouse",
   "Win32_UI_WindowsAndMessaging",
 ] }
+# Notifiche con la faccia di Pixy (src/notify.rs). Pinnata ESATTA alla versione
+# già nel Cargo.lock come dipendenza di tauri-plugin-notification 2.4.0.
+tauri-winrt-notification = "=0.8.1"
 
 # Companion su macOS: app in primo piano (NSWorkspace). Versioni già nel
 # Cargo.lock come dipendenze di tauri su macOS. L'inattività arriva da

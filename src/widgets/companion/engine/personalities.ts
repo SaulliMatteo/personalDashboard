@@ -15,6 +15,9 @@ export type PhraseKey =
   | "pomodoro_done"
   | "break_over"
   | "study_stopped"
+  | "autostop_warning"
+  | "autostop_idle"
+  | "autostop_app"
   | "goal_reached"
   | "video_start"
   | "video_end"
@@ -120,6 +123,9 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       pomodoro_done: ["Pomodoro fatto! 🍅", "Grande! Ti meriti una pausa.", "Un altro in cassaforte!"],
       break_over: ["Pausa finita, si riparte!", "Ricaricato? Andiamo!"],
       study_stopped: ["Bel lavoro: {min} minuti!", "Fatto! {min} minuti di studio."],
+      autostop_warning: ["Ehi{,name}, ci sei ancora? 👀", "Psst! Sto per fermare il timer!", "Muovi il mouse se ci sei!"],
+      autostop_idle: ["Ti ho aspettato, poi ho fermato tutto!", "Sparito{,name}? Ho salvato io il tuo studio!"],
+      autostop_app: ["Beccato! Ho fermato il timer 😄", "Pausa vera allora! Timer fermato."],
       goal_reached: ["OBIETTIVO RAGGIUNTO! 🎉", "Ce l'hai fatta! Sono fiero di te!"],
       video_start: ["Cosa guardiamo?", "Popcorn pronti!"],
       video_end: ["Finito! Bello?", "E il prossimo?"],
@@ -186,6 +192,9 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       pomodoro_done: ["Bene. Ora riposa un po'.", "Un pomodoro in più."],
       break_over: ["Riprendiamo, piano piano."],
       study_stopped: ["{min} minuti. Ottimo lavoro."],
+      autostop_warning: ["Tutto bene{,name}? Tra poco fermo il timer.", "Mi sembri lontano. Fermo il timer tra poco."],
+      autostop_idle: ["Ho fermato il timer con calma, mentre eri via.", "Eri via: ho salvato lo studio fatto."],
+      autostop_app: ["Ho fermato il timer: ti stai prendendo una pausa.", "Va bene staccare. Timer fermato."],
       goal_reached: ["Obiettivo raggiunto. Bravo.", "Ce l'hai fatta, con costanza."],
       video_start: ["Buona visione."],
       video_end: ["Finito."],
@@ -252,6 +261,9 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       pomodoro_done: ["Pausa! Finalmente…", "Fatto. Posso dormire 5 minuti?"],
       break_over: ["Di già? …va bene."],
       study_stopped: ["{min} minuti… impressionante, io sarei crollato."],
+      autostop_warning: ["Anche tu ti sei addormentato…? Tra poco fermo il timer.", "Mmh… ci sei? …sto per fermare tutto."],
+      autostop_idle: ["Zzz… ho fermato il timer. Dormivi anche tu?", "Eri sparito… ho fermato il timer e mi sono appisolato."],
+      autostop_app: ["Timer fermato… tanto ormai giochi.", "Ho fermato il timer. Pausa per tutti e due."],
       goal_reached: ["Obiettivo! Mi sono pure svegliato per festeggiare!"],
       video_start: ["Se mi addormento svegliami a metà."],
       video_end: ["Ah, è già finito? Dormivo."],
@@ -318,6 +330,9 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       pomodoro_done: ["Non male. Non male davvero.", "Ok, te lo concedo: pausa."],
       break_over: ["Basta pausa. Al lavoro."],
       study_stopped: ["Solo {min} minuti? …va beh, meglio di niente."],
+      autostop_warning: ["Ehi. Sei ancora lì o devo fermare tutto?", "Ultimo avviso: tra poco fermo il timer."],
+      autostop_idle: ["Te ne sei andato senza fermare il timer. L'ho fatto io.", "Timer lasciato acceso. Di nuovo. Fermato."],
+      autostop_app: ["Studiare, eh? Timer fermato.", "Ti ho visto. Timer fermato."],
       goal_reached: ["Obiettivo raggiunto. Ok, sono colpito.", "Non lo dirò due volte: bravo."],
       video_start: ["Studio o svago? Non dirmelo."],
       video_end: ["E adesso torniamo a cose serie?"],
