@@ -691,3 +691,37 @@
   --tint-malva: #36263A;
   --tint-malva-ink: #EBD7E8;
 }
+
+/* ==========================================================================
+   NOTES: palette di pagine, testo ed evidenziatore — variante GIORNO
+   (la notte è in tokens-varianti.css). Dipendono solo dalla variante, non dal
+   tema: una pagina crema resta leggibile in ogni tema. .nq-export-light forza
+   i valori del giorno nell'esportazione con "sfondo chiaro".
+   ========================================================================== */
+:root[data-mode="giorno"],
+.nq-export-light {
+  --nq-page-crema-bg: #FBF3DC;
+  --nq-page-crema-ink: #3A3220;
+  --nq-page-salvia-bg: #E4EBDC;
+  --nq-page-salvia-ink: #24301F;
+  --nq-page-cielo-bg: #DFE9F6;
+  --nq-page-cielo-ink: #1B2A3A;
+  --nq-page-rosa-bg: #F7E4E8;
+  --nq-page-rosa-ink: #3A2026;
+  --nq-page-grafite-bg: #2B2E33;
+  --nq-page-grafite-ink: #ECEDEF;
+
+  --nq-ink-rosso: #C0392B;
+  --nq-ink-arancio: #B35C0A;
+  --nq-ink-verde: #2E7D4F;
+  --nq-ink-blu: #2456B8;
+  --nq-ink-viola: #7B3FB0;
+  --nq-ink-grigio: #5F6670;
+
+  --nq-mark-giallo: rgba(255, 214, 0, 0.45);
+  --nq-mark-verde: rgba(80, 200, 120, 0.35);
+  --nq-mark-azzurro: rgba(80, 160, 255, 0.3);
+  --nq-mark-rosa: rgba(255, 120, 170, 0.32);
+  --nq-mark-arancio: rgba(255, 160, 60, 0.38);
+  --nq-mark-viola: rgba(170, 120, 255, 0.3);
+}

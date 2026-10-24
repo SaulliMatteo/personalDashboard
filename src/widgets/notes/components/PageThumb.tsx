@@ -3,7 +3,7 @@ import { useElementSize } from "../../../core/hooks/useElementSize";
 import type { NotePage } from "../data/notesRepository";
 import { sanitizeHtml } from "../lib/html";
 import { THEME_INK } from "../lib/ink";
-import { paperStyle } from "../lib/pageColor";
+import { paperAttrs, paperStyle } from "../lib/pageColor";
 
 /** Pagina "di riferimento": la miniatura è questa pagina scalata, quindi identica all'originale. */
 const PAPER_W = 870;
@@ -26,6 +26,7 @@ function PageThumb({ page, kicker, dateLabel }: PageThumbProps) {
         <span
           className="nq-paper nq-thumb-paper"
           data-bg={page.background}
+          {...paperAttrs(page.color)}
           style={{ ...paperStyle(page.color), "--nq-zoom": 1, transform: `scale(${width / PAPER_W})` } as CSSProperties}
         >
           <span className="nq-paper-head">

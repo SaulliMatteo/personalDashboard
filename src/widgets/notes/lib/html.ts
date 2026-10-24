@@ -1,7 +1,10 @@
+import { validTextAttr } from "./textStyle";
+
 /**
  * Il contenuto delle pagine è HTML scritto in un contentEditable. Prima di
  * rimetterlo nel DOM (editor o anteprime) lo si ripulisce: restano solo i tag
- * di formattazione e due attributi (href sicuri e data-check delle checklist).
+ * di formattazione e pochi attributi (href sicuri, data-check delle checklist,
+ * data-font/size/color/mark con i valori di lib/textStyle.ts).
  */
 const COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\(\s*\d{1,3}(\s*,\s*\d{1,3}){2}(\s*,\s*[\d.]+)?\s*\)|[a-z]+)$/i;
 const SIZE_RE = /^(\d+(\.\d+)?px|calc\(\s*\d+(\.\d+)?\s*\*\s*var\(--nq-px\)\s*\))$/;
@@ -36,6 +39,7 @@ export function sanitizeHtml(html: string): string {
         continue;
       }
       if (name === "data-check" && (attr.value === "0" || attr.value === "1")) continue;
+      if (el.tagName === "SPAN" && validTextAttr(name, attr.value)) continue;
       if (name === "href" && el.tagName === "A" && /^(https?:|mailto:)/i.test(attr.value.trim())) continue;
       el.removeAttribute(attr.name);
     }
