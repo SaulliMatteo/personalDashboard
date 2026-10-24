@@ -39,6 +39,7 @@ import {
   savePage,
   setPageBackground,
   updateNote,
+  setPageColor,
   type Attachment,
   type InkStroke,
   type NotePage,
@@ -49,8 +50,13 @@ import { noteToMarkdown, renderNoteImage, renderNotePdf, saveBytes, saveText } f
 import { attachmentAbsolutePath, removeAttachmentFile, slugify } from "../lib/vault";
 import { BACKGROUND_OPTIONS } from "../lib/templates";
 import { THEME_INK } from "../lib/ink";
-import { normalizeUrl, toggleChecklist } from "../lib/editorDom";
-import { formatWhen, htmlToText, monthYear, wordCount } from "../lib/html";
+import { MdFormatClear, MdFormatColorText, MdOutlineFormatColorFill } from "react-icons/md";
+import NumberField from "../../../ui/NumberField";
+import PageThumb from "./PageThumb";
+import { PAGE_COLORS, TEXT_COLORS } from "../lib/pageColor";
+import { applyFontSize, applyTextColor, clearFormatting, currentFontSizePx, normalizeUrl, toggleChecklist } from "../lib/editorDom";
+// dal repository aggiungi anche: setPageColor
+import { formatWhen, monthYear, wordCount } from "../lib/html";
 import type { InkTool } from "./InkLayer";
 import PageSurface from "./PageSurface";
 import "./noteEditor.css";
@@ -81,7 +87,7 @@ function formatBytes(size: number): string {
 
 const INK_SIZES = [1, 2, 3, 5, 8];
 // L'ultimo è l'inchiostro del tema: chiaro di notte, scuro di giorno (vedi THEME_INK).
-const INK_COLORS = ["#6c8dff", "#f472b6", "#34d399", "#fbbf24", THEME_INK];
+const INK_COLORS = ["#6c8dff", "#f472b6", "#34d399", "#fbbf24", "#ef4444", "#a855f7", "#000000", "#ffffff", THEME_INK];
 
 function NoteEditor({
   note,
@@ -114,10 +120,14 @@ function NoteEditor({
   const [tagDraft, setTagDraft] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [menu, setMenu] = useState<"export" | "split" | null>(null);
+  const [fontSize, setFontSize] = useState(15);
+  const [textColor, setTextColor] = useState("#e03131");
+  const [menu, setMenu] = useState<"export" | "split" | "color" | "pagecolor" | null>(null);
+  const zoomRef = useLatestRef(zoom);
   const [lightExport, setLightExport] = useState(true);
   const [busy, setBusy] = useState(false);
   const [splitQuery, setSplitQuery] = useState("");
+  
 
   // pagesRef rispecchia SEMPRE `pages` in modo sincrono: i salvataggi con
   // debounce e il flush allo smontaggio leggono da qui, mai da uno state vecchio.
@@ -129,6 +139,26 @@ function NoteEditor({
   const timer = useRef<number | null>(null);
   const redoInk = useRef(new Map<number, InkStroke[]>());
   const titleRef = useLatestRef(title);
+
+  useEffect(() => {
+    const onSelection = () => {
+      const root = editorRef.current;
+      const sel = window.getSelection();
+      if (!root || !sel || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      if (!root.contains(range.commonAncestorContainer)) return;
+      savedRange.current = range.cloneRange();
+      const px = currentFontSizePx(root, zoomRef.current / 100);
+      if (px) setFontSize(px);
+    };
+    document.addEventListener("selectionchange", onSelection);
+    return () => document.removeEventListener("selectionchange", onSelection);
+  }, [zoomRef]);
+
+  // Cambiando pagina l'editor viene ricreato: la vecchia selezione non vale più.
+  useEffect(() => {
+    savedRange.current = null;
+  }, [index]);
 
   useEffect(() => {
     let cancelled = false;
@@ -260,6 +290,41 @@ function NoteEditor({
     if (toggleChecklist(el)) commitEditor();
   }
 
+  function withSelection(action: (root: HTMLElement) => boolean) {
+  const el = editorRef.current;
+  if (!el || mode !== "text") return;
+  el.focus();
+  const sel = window.getSelection();
+  if (savedRange.current && sel) {
+    sel.removeAllRanges();
+    sel.addRange(savedRange.current);
+  }
+  if (action(el)) commitEditor();
+}
+
+function handleFontSize(px: number) {
+  const value = Math.min(200, Math.max(8, Math.round(px)));
+  setFontSize(value);
+  withSelection((root) => applyFontSize(root, value));
+}
+
+function handleTextColor(color: string) {
+  setTextColor(color);
+  withSelection((root) => applyTextColor(root, color));
+}
+
+async function changePageColor(color: string | null) {
+  if (!page) return;
+  const next = pagesRef.current.map((p) => (p.id === page.id ? { ...p, color } : p));
+  pagesRef.current = next;
+  setPages(next);
+  await attempt("Impossibile cambiare il colore della pagina", async () => {
+    await setPageColor(page.id, note.id, color);
+    setSavedAt(Date.now());
+    onChanged();
+  });
+}
+
   function handleBlockChange(value: string) {
     setBlock(value);
     exec("formatBlock", `<${value}>`);
@@ -358,7 +423,7 @@ function NoteEditor({
   async function handleAddPage() {
     await flush();
     await attempt("Impossibile aggiungere la pagina", async () => {
-      const created = await addPage(note.id, page?.background ?? "none");
+      const created = await addPage(note.id, page?.background ?? "none", page?.color ?? null);
       const next = [...pagesRef.current, created];
       pagesRef.current = next;
       setPages(next);
@@ -647,6 +712,33 @@ function NoteEditor({
         <button type="button" className="nq-tool" disabled={mode !== "text"} onClick={() => exec("insertUnorderedList")} aria-label="Elenco puntato"><MdFormatListBulleted /></button>
         <button type="button" className="nq-tool" disabled={mode !== "text"} onClick={handleChecklist} aria-label="Checklist"><MdChecklist /></button>
         <button type="button" className="nq-tool" disabled={mode !== "text"} onClick={openLink} aria-label="Link"><MdLink /></button>
+        <span className="nq-tool-sep" />
+          <button type="button" className="nq-tool nq-tool--wide" disabled={mode !== "text"} onClick={() => handleFontSize(fontSize - 1)} aria-label="Riduci il testo">A−</button>
+          <NumberField className="nq-size-input" value={fontSize} min={8} max={200} disabled={mode !== "text"} onCommit={handleFontSize} aria-label="Dimensione del testo in pixel" title="Dimensione del testo (px)" />
+          <button type="button" className="nq-tool nq-tool--wide" disabled={mode !== "text"} onClick={() => handleFontSize(fontSize + 1)} aria-label="Ingrandisci il testo">A+</button>
+
+          <div className="nq-menu-anchor">
+            <button type="button" className="nq-tool" disabled={mode !== "text"} onClick={() => setMenu(menu === "color" ? null : "color")} aria-label="Colore del testo" title="Colore del testo">
+              <MdFormatColorText style={{ color: textColor }} />
+            </button>
+            {menu === "color" && (
+              <>
+                <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+                <div className="nq-menu nq-menu--swatches">
+                  <div className="nq-swatch-grid">
+                    {TEXT_COLORS.map((c) => (
+                      <button key={c} type="button" className="nq-sw" style={{ background: c }} aria-label={`Colore ${c}`} onClick={() => handleTextColor(c)} />
+                    ))}
+                  </div>
+                  <label className="nq-sw-custom-row">
+                    <input type="color" value={textColor} onChange={(e) => handleTextColor(e.target.value)} />
+                    <span>Altro colore…</span>
+                  </label>
+                </div>
+              </>
+            )}
+          </div>
+<button type="button" className="nq-tool" disabled={mode !== "text"} onClick={() => withSelection(clearFormatting)} aria-label="Cancella la formattazione" title="Cancella la formattazione"><MdFormatClear /></button>
         {linkOpen && (
           <span className="nq-link-pop">
             <input
@@ -685,6 +777,30 @@ function NoteEditor({
             </option>
           ))}
         </select>
+        <div className="nq-menu-anchor">
+  <button type="button" className="nq-tool nq-tool--wide" onClick={() => setMenu(menu === "pagecolor" ? null : "pagecolor")} title="Colore della pagina">
+    <MdOutlineFormatColorFill style={{ color: page.color ?? undefined }} /> Colore pagina
+  </button>
+  {menu === "pagecolor" && (
+    <>
+      <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+      <div className="nq-menu nq-menu--right nq-menu--swatches">
+        <button type="button" className="nq-menu-reset" onClick={() => void changePageColor(null)}>
+          <strong>Colore del tema</strong>
+        </button>
+        <div className="nq-swatch-grid">
+          {PAGE_COLORS.map((c) => (
+            <button key={c.value} type="button" className="nq-sw" style={{ background: c.value }} title={c.label} aria-label={c.label} onClick={() => void changePageColor(c.value)} />
+          ))}
+        </div>
+        <label className="nq-sw-custom-row">
+          <input type="color" value={page.color ?? "#ffffff"} onChange={(e) => void changePageColor(e.target.value)} />
+          <span>Altro colore…</span>
+        </label>
+      </div>
+    </>
+  )}
+</div>
       </div>
 
       {attachments.length > 0 && (
@@ -711,11 +827,21 @@ function NoteEditor({
           <div className="nq-pages-list">
             {pages.map((p, i) => (
               <div key={p.id} className={`nq-thumb-wrap${i === index ? " is-active" : ""}`}>
-                <button type="button" className="nq-thumb" onClick={() => setIndex(i)}>
-                  <span className="nq-thumb-kicker">{kicker}</span>
-                  <span className="nq-thumb-text">{htmlToText(p.content).slice(0, 110) || "Pagina vuota"}</span>
-                  {p.ink.length > 0 && <MdOutlineGesture className="nq-thumb-ink" />}
-                </button>
+                <div
+                  className="nq-thumb"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Pagina ${i + 1}`}
+                  onClick={() => setIndex(i)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setIndex(i);
+                    }
+                  }}
+                >
+                  <PageThumb page={p} kicker={kicker} dateLabel={monthYear(note.createdAt)} />
+                </div>
                 <div className="nq-thumb-foot">
                   <span>Pagina {i + 1}</span>
                   <span className="nq-thumb-tools">
@@ -752,6 +878,9 @@ function NoteEditor({
                   aria-label={c === THEME_INK ? "Inchiostro del tema" : `Colore ${c}`}
                 />
               ))}
+              <label className={`nq-ink-dot nq-ink-custom${INK_COLORS.includes(color) ? "" : " is-on"}`} title="Colore personalizzato" style={INK_COLORS.includes(color) ? undefined : { background: color }}>
+                <input type="color" value={color} onChange={(e) => setColor(e.target.value)} aria-label="Colore personalizzato" />
+              </label>
               <select className="nq-select" value={size} onChange={(e) => setSize(Number(e.target.value))} aria-label="Spessore">
                 {INK_SIZES.map((s) => (
                   <option key={s} value={s}>{s} px</option>

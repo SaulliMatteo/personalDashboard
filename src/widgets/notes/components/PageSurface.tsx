@@ -3,6 +3,7 @@ import type { InkStroke, NotePage, PageBackground } from "../data/notesRepositor
 import { currentBlock } from "../lib/editorDom";
 import { sanitizeHtml } from "../lib/html";
 import InkLayer, { type InkTool } from "./InkLayer";
+import { paperStyle } from "../lib/pageColor";
 
 interface PageSurfaceProps {
   page: NotePage;
@@ -70,7 +71,11 @@ function PageSurface(props: PageSurfaceProps) {
 
   return (
     <div className="nq-paper-wrap">
-      <div className="nq-paper" data-bg={props.background} style={{ "--nq-zoom": props.zoom / 100 } as CSSProperties}>
+      <div
+        className="nq-paper"
+        data-bg={props.background}
+        style={{ "--nq-zoom": props.zoom / 100, ...paperStyle(page.color) } as CSSProperties}
+      >
         <div className="nq-paper-head">
           <span>{props.kicker}</span>
           <span>{props.dateLabel}</span>

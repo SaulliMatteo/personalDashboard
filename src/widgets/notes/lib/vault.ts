@@ -27,6 +27,8 @@ import {
 import { htmlToMarkdown } from "./html";
 import { markdownToHtml, parseFrontmatter, parseMetaString, parseMetaTags } from "./markdown";
 
+import { asPageColor } from "./pageColor";
+
 /**
  * COPIA SU DISCO (Documenti/Notes). SQLite resta il database di lavoro; ogni
  * nota viene rispecchiata in formati aperti:
@@ -120,7 +122,7 @@ function buildMarkdown(note: NoteSummary, pages: NotePage[]): string {
 function buildCanvasJson(pages: NotePage[]): string {
   return JSON.stringify({
     version: 1,
-    pages: pages.map((p) => ({ background: p.background, strokes: p.ink, html: p.content })),
+    pages: pages.map((p) => ({ background: p.background, color: p.color, strokes: p.ink, html: p.content })),
   });
 }
 
@@ -241,6 +243,7 @@ interface CanvasFilePage {
   background?: string;
   strokes?: InkStroke[];
   html?: string;
+  color?: string | null;
 }
 
 async function readCanvasFile(dir: string): Promise<CanvasFilePage[] | null> {
@@ -318,6 +321,7 @@ export async function importVault(knownPaths: Set<string>, folders: Folder[]): P
     for (let i = 0; i < count; i++) {
       const fromCanvas = canvas?.[i];
       pages.push({
+        color: asPageColor(fromCanvas?.color),
         content: fromCanvas?.html ? fromCanvas.html : markdownToHtml(mdPages[i] ?? ""),
         ink: Array.isArray(fromCanvas?.strokes) ? fromCanvas.strokes : [],
         background: asBackground(fromCanvas?.background),
