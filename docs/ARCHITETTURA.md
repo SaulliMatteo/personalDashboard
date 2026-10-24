@@ -22,6 +22,12 @@ src/
 │   ├─ activity/             bacheca delle attività: i widget pubblicano (studio, video, file)
 │   │                        e chi vuole ascolta, senza importarsi a vicenda
 │   │                        (lo Studio pubblica anche studyTodaySeconds/Spans per intestazione e sidebar)
+│   ├─ system/               systemApi.ts: invoke("companion_snapshot") → src-tauri/src/companion.rs (inattività
+│   │                        di sistema + app in primo piano; Windows, macOS); appCategory.ts: app → categoria
+│   │                        (pura). Li usano il Companion e lo stop automatico dello Studio
+│   ├─ notify/               notifier.ts: UNICO punto da cui partono le notifiche (sendAppNotification); un
+│   │                        decoratore registrato dal Companion le firma Pixy. notifyApi.ts: invoke
+│   │                        "notify_with_image" (src-tauri/src/notify.rs, toast con immagine su Windows)
 │   ├─ report/               periods.ts: periodi (settimana/mese/anno) e barre per i grafici di report
 │   └─ hooks/                hook generici (useLatestRef, useNow)
 ├─ features/                 schermate dell'app (dashboard + intestazione, sidebar,
@@ -53,7 +59,8 @@ study/
 ├─ detail/                   TimerTab, SubjectList, ReportTab (+ css accanto)
 ├─ components/               TimerRing, ModeToggle, SubjectSettingsPopup, NumberField
 ├─ timer/                    TimerContext (stato e logica), useTimerView (come si DISEGNA il timer),
-│                            alerts.ts (suono + notifica di sistema)
+│                            alerts.ts (suono di fine fase), autoStop.ts (quando fermarsi da solo:
+│                            inattività o app che distrae, puro con orologio iniettato)
 ├─ data/studyRepository.ts   tutte le query SQL di Studio
 └─ lib/                      format.ts, colors.ts, report.ts (funzioni pure)
 ```
@@ -111,12 +118,12 @@ companion/
 │   ├─ animations.ts         catalogo delle animazioni accendibili/spegnibili
 │   ├─ personalities.ts      personalità (frasi, ritmo, ritocchi della faccia)
 │   ├─ poses.ts              pose di Pixy (umore, sguardo, costume, fumetto) e varianti per personalità
-│   ├─ subjectKind.ts        nome della materia → tipo (matematica, scienze, lingue…)
-│   └─ appCategory.ts        app in primo piano → categoria e app specifica (processo, percorso,
-│                            descrizione dell'eseguibile, scelta manuale dell'utente)
+│   └─ subjectKind.ts        nome della materia → tipo (matematica, scienze, lingue…)
+├─ notify/                   notifiche firmate da Pixy: pixyNotifications.ts (espressione, emoji, frase per tipo,
+│                            puro), renderNotificationFace.ts (faccia nello stile del tema → PNG)
 ├─ render/                   stili grafici: ledRenderer.ts (matrice LED), solidRenderer.ts, styles.ts (registro);
 │                            costumes.ts (forme dei costumi: fiamma, coperta, libro…) e sdf.ts (distanze)
-└─ data/systemApi.ts         invoke("companion_snapshot") → src-tauri/src/companion.rs (Windows, macOS)
+└─ (segnali di sistema e categorie delle app: core/system/, condivisi con lo Studio)
 ```
 
 Dati che Pixy legge dall'activityBus oltre a studio e video: `studySubjectName` (Studio), `weatherTemperature`
@@ -173,6 +180,12 @@ restringe (`min-width: 0`, testi con l'ellissi) invece di allargarsi.
    da `core/activity/activityBus.ts` (aggiungi il tipo lì).
 2. In `widgets/companion/engine/brain.ts`: gestiscilo in `handleEvent` o `decideBehavior`.
 3. Se serve una frase: una chiave in `personalities.ts` per ogni personalità.
+
+### Mandare una notifica di sistema
+1. Un nuovo `kind` in `AppNotificationKind` (`core/notify/notifier.ts`), poi `sendAppNotification({ kind, title, body })`
+   dal widget (rispettando le sue impostazioni di notifica). Mai `sendNotification` del plugin direttamente.
+2. In `widgets/companion/notify/pixyNotifications.ts`: espressione, emoji e chiave della frase per quel `kind`;
+   se la frase è nuova, una chiave in `personalities.ts` per ogni personalità.
 
 ### Cambiare lo schema del DB
 Aggiungi un elemento **in fondo** a `core/db/migrations.ts` (`version` = ultima + 1).

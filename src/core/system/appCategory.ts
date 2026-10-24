@@ -16,7 +16,7 @@
 export const APP_CATEGORIES = ["coding", "office", "design", "game", "chat", "video", "music", "browser", "other"] as const;
 export type AppCategory = (typeof APP_CATEGORIES)[number];
 
-/** App con una posa dedicata (vedi poses.ts). */
+/** App con una posa dedicata del Companion (vedi widgets/companion/engine/poses.ts). */
 export type AppId =
   | "discord"
   | "lol"

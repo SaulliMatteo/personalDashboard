@@ -65,10 +65,16 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
   prova le porte successive.
 - Companion (Pixy): `companion_snapshot` in `src/companion.rs` (inattività, app in primo piano e descrizione
   dell'eseguibile via `windows-sys`; su macOS inattività da CoreGraphics e app via `NSWorkspace`, con il bundle `.app`
-  come "processo" e titolo vuoto). Lato frontend la catena è `engine/appCategory.ts` (classifica l'app) →
+  come "processo" e titolo vuoto). Lato frontend la catena è `core/system/appCategory.ts` (classifica l'app; con
+  `core/system/systemApi.ts` serve anche allo stop automatico dello Studio, `study/timer/autoStop.ts`) →
   `engine/brain.ts` (sceglie la posa, puro) → `engine/poses.ts` (com'è fatta, con varianti per personalità) →
   `engine/animator.ts` (fotogrammi) → `render/` (campo SDF della faccia + costumi; LED in Fosforo, pieno negli altri temi).
-- Lato frontend, ogni widget chiama `invoke()` da un solo file `data/*Api.ts`; allo stesso modo l'unica chiamata
+- Notifiche: tutte da `core/notify/notifier.ts` (`sendAppNotification` con un `kind`), mai dal plugin direttamente.
+  Il Companion registra un decoratore che le firma Pixy (faccia nello stile del tema, emoji, frase della personalità,
+  `widgets/companion/notify/`); su Windows il toast con l'immagine lo mostra il comando `notify_with_image`
+  (`src/notify.rs`, `tauri-winrt-notification`), altrove si ripiega sul plugin senza immagine.
+- Lato frontend, ogni widget chiama `invoke()` da un solo file `data/*Api.ts` (i segnali di sistema condivisi da
+  `core/system/systemApi.ts`, le notifiche con immagine da `core/notify/notifyApi.ts`); allo stesso modo l'unica chiamata
   in rete (`fetch`) è `widgets/weather/data/weatherApi.ts`.
 - Sui sistemi non supportati (oggi: oltre Windows e macOS, il Companion su Linux) l'app deve compilare e i widget
   mostrano un errore chiaro.
@@ -120,7 +126,7 @@ componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è 
   (es. aprirebbe un video o una nota).
 - Valori "ultimi" in interval/listener di lunga durata → `core/hooks/useLatestRef.ts`.
 - Contesti: `XContext.tsx` esporta solo il provider; contesto, tipo e hook in `useX.ts` (es. `useSettings.ts`).
-- `tauri-plugin-notification` è pinnato `=2.4.0` perché la 2.5 richiede `tauri ^2.12` (il progetto usa `2.11.3`):
+- `tauri-plugin-notification` è pinnato `=2.4.0` (e `tauri-winrt-notification` `=0.8.1`, la versione che usa) perché la 2.5 richiede `tauri ^2.12` (il progetto usa `2.11.3`):
   non aggiornarlo senza controllare il manifesto su crates.io. Idem `tauri-plugin-localhost` (`=2.3.1`, la 2.4 vuole `^2.12`).
 - Su macOS l'app installata serve il frontend da `http://localhost:14321` (`tauri-plugin-localhost`, `src/lib.rs`):
   da `tauri://localhost` YouTube rifiuta il player (errore 153, niente referrer). La porta è anche in
