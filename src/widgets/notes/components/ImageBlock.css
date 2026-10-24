@@ -217,25 +217,31 @@
   background: var(--note-page-bg);
 }
 
-.nq-h-tl { top: -6px; left: -6px; }
-.nq-h-tr { top: -6px; right: -6px; }
-.nq-h-bl { bottom: -6px; left: -6px; }
-.nq-h-br { bottom: -6px; right: -6px; cursor: nwse-resize; touch-action: none; }
+/* Tutte le maniglie ridimensionano: angoli in diagonale, lati in orizzontale. */
+.nq-handle {
+  touch-action: none;
+}
 
+.nq-h-tl { top: -6px; left: -6px; cursor: nwse-resize; }
+.nq-h-tr { top: -6px; right: -6px; cursor: nesw-resize; }
+.nq-h-bl { bottom: -6px; left: -6px; cursor: nesw-resize; }
+.nq-h-br { bottom: -6px; right: -6px; cursor: nwse-resize; }
+
+.nq-h-l,
 .nq-h-r {
   top: 50%;
-  right: -5px;
   width: 8px;
   height: 22px;
   margin-top: -11px;
   border-radius: 3px;
   cursor: ew-resize;
-  touch-action: none;
 }
 
-/* Area più grande da prendere attorno alle maniglie che ridimensionano. */
-.nq-h-br::after,
-.nq-h-r::after {
+.nq-h-l { left: -5px; }
+.nq-h-r { right: -5px; }
+
+/* Area più grande da prendere attorno alle maniglie. */
+.nq-handle::after {
   content: "";
   position: absolute;
   inset: -8px;
@@ -498,6 +504,7 @@ figure[data-selected] .nq-imgbox {
 :root[data-theme="fosforo"] .nq-h-bl { border-bottom: 2px solid var(--led); border-left: 2px solid var(--led); }
 :root[data-theme="fosforo"] .nq-h-br { border-bottom: 2px solid var(--led); border-right: 2px solid var(--led); }
 
+:root[data-theme="fosforo"] .nq-h-l,
 :root[data-theme="fosforo"] .nq-h-r {
   display: none;
 }
