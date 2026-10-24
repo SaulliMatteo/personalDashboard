@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gruppi: Stanza comune (mockup)</title>
+<!-- Mockup approvato della funzione Gruppi. Riferimento visivo per l'implementazione:
+     4 temi × versione chiara e scura, scegli dal selettore in basso a destra o con #tema=opaco&modo=notte.
+     I font qui arrivano da Google Fonts solo per comodità: nell'app si usano i pacchetti @fontsource locali. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,300..800&amp;family=Figtree:wght@300..800&amp;family=Caveat:wght@400..700&amp;family=JetBrains+Mono:wght@300..700&amp;family=Doto:wght@400..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit}
+button:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+</style>
+<style>
+#mockup-bar{position:fixed;right:12px;bottom:12px;z-index:9999;display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:10px;background:#111;color:#eee;font:13px/1.2 system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+#mockup-bar select{font:inherit;padding:3px 6px;border-radius:6px}
+#mockup-bar span{opacity:.75}
+</style>
+</head>
+<body>
+<div id="mockup-root"></div>
+<div id="mockup-bar" role="group" aria-label="Versione del mockup">
+  <span>Mockup approvato</span>
+  <label>Tema <select name="tema"><option value="notte">Notte</option><option value="opaco">Opaco</option><option value="quaderno">Quaderno</option><option value="fosforo">Fosforo</option></select></label>
+  <label>Versione <select name="modo"><option value="giorno">Chiara</option><option value="notte">Scura</option></select></label>
+</div>
+<template id="mockup-markup">
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; background: {{t.mainBg}}; color: {{t.text}}; font-family: {{t.font}}; font-size: {{t.size}}; line-height: 1.5;">
+
+  <aside style="flex: 1 1 216px; max-width: 216px; min-width: 200px; box-sizing: border-box; display: flex; flex-direction: column; gap: 26px; padding: 26px 14px; background: {{t.sideBg}}; border-right: {{t.sideBorder}};">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 10px; font-size: 15px; font-weight: 600;">
+      <sc-if value="{{logoMoon}}" hint-placeholder-val="{{true}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{t.logo}}" stroke-width="1.6" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg></sc-if>
+      <sc-if value="{{logoBook}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{t.logo}}" stroke-width="1.6" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M4 9h16M4 15h16M10 3v18"></path></svg></sc-if>
+      <sc-if value="{{logoDot}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{t.logo}};"></span></sc-if>
+      <span>Personal Dashboard</span>
+    </div>
+    <nav aria-label="Navigazione principale" style="display: flex; flex-direction: column; gap: 2px;">
+      <button type="button" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 0; border-radius: {{t.rItem}}; background: transparent; color: {{t.navIdle}}; text-align: left; cursor: pointer;"><span style="display: {{navDot}}; width: 6px; height: 6px; visibility: hidden;"></span>Dashboard</button>
+      <button type="button" aria-current="page" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 0; border-radius: {{t.rItem}}; background: {{t.navBg}}; color: {{t.navFg}}; font-weight: 500; text-align: left; cursor: pointer;"><span style="display: {{navDot}}; width: 6px; height: 6px; border-radius: 50%; background: {{t.accent}};"></span><span style="flex-grow: 1;">Stanza comune</span><span aria-label="{{studyingCount}} stanno studiando" style="min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 10px; background: {{t.navFg}}; color: {{t.navBg}}; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center;">{{studyingCount}}</span></button>
+    </nav>
+    <div style="margin-top: auto;">
+      <button type="button" style="width: 100%; display: flex; align-items: center; height: 40px; padding: 0 12px; border: 0; border-radius: {{t.rItem}}; background: transparent; color: {{t.navIdle}}; cursor: pointer;">Impostazioni</button>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 26px 32px 28px; display: flex; flex-direction: column; gap: 18px;">
+    <header style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px;">
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <h1 style="margin: 0; font-size: 30px; font-weight: {{t.headW}}; letter-spacing: -0.02em;">{{groupName}}</h1>
+        <span style="color: {{t.text2}};">{{subtitle}}</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+        <div role="group" aria-label="I miei gruppi" style="display: flex; gap: 4px; padding: 4px; border-radius: {{t.rItem}}; background: {{t.panelBg}}; border: {{t.panelBorder}};">
+          <sc-for list="{{groups}}" as="grp" hint-placeholder-count="2">
+            <button type="button" onClick="{{grp.pick}}" aria-pressed="{{grp.active}}" style="height: 34px; padding: 0 14px; border: 0; border-radius: {{t.rItem}}; background: {{grp.bg}}; color: {{grp.fg}}; font-weight: 500; cursor: pointer;">{{grp.name}}</button>
+          </sc-for>
+        </div>
+        <button type="button" style="height: 42px; padding: 0 14px; border: {{t.ghostBorder}}; border-radius: {{t.rItem}}; background: {{t.ghostBg}}; color: {{t.ghostFg}}; cursor: pointer;">Entra con codice</button>
+        <button type="button" style="height: 42px; padding: 0 16px; border: 0; border-radius: {{t.rItem}}; background: {{t.accent}}; color: {{t.onAccent}}; font-weight: 600; cursor: pointer;">Crea gruppo</button>
+        <button type="button" aria-label="Impostazioni della stanza" style="width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border: {{t.ghostBorder}}; border-radius: {{t.rItem}}; background: {{t.ghostBg}}; color: {{t.ghostFg}}; cursor: pointer;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"></path><circle cx="16" cy="6" r="2"></circle><circle cx="10" cy="12" r="2"></circle><circle cx="18" cy="18" r="2"></circle></svg>
+        </button>
+      </div>
+    </header>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: stretch;">
+
+      <section aria-label="La stanza" style="flex: 999 1 620px; min-width: 0; overflow-x: auto; border-radius: {{t.rCard}}; border: {{t.cardBorder}}; box-shadow: {{t.cardShadow}}; background: {{sc.bg}};">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: {{t.panelBg}}; border-bottom: {{t.panelBorder}};">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" onClick="{{prevRoom}}" disabled="{{prevDisabled}}" aria-label="Sala precedente" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: {{t.ghostBorder}}; border-radius: {{t.rItem}}; background: {{t.ghostBg}}; color: {{t.ghostFg}}; cursor: pointer; opacity: {{prevOpacity}};">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+            </button>
+            <span style="min-width: 92px; text-align: center; font-weight: 500;">{{roomLabel}}</span>
+            <button type="button" onClick="{{nextRoom}}" disabled="{{nextDisabled}}" aria-label="Sala successiva" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: {{t.ghostBorder}}; border-radius: {{t.rItem}}; background: {{t.ghostBg}}; color: {{t.ghostFg}}; cursor: pointer; opacity: {{nextOpacity}};">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+            </button>
+            <span style="margin-left: 6px; font-size: 13px; color: {{t.muted}};">{{roomInfo}}</span>
+          </div>
+          <sc-if value="{{isMyRoom}}" hint-placeholder-val="{{true}}">
+            <span style="padding: 4px 12px; border-radius: {{t.rItem}}; background: {{t.accentSoft}}; color: {{t.accentStrong}}; font-size: 13px;">Sei seduto qui</span>
+          </sc-if>
+          <sc-if value="{{canMoveHere}}" hint-placeholder-val="{{false}}">
+            <button type="button" onClick="{{moveHere}}" style="height: 36px; padding: 0 14px; border: 0; border-radius: {{t.rItem}}; background: {{t.accent}}; color: {{t.onAccent}}; font-weight: 600; cursor: pointer;">Siediti in questa sala</button>
+          </sc-if>
+          <sc-if value="{{roomFull}}" hint-placeholder-val="{{false}}">
+            <span style="font-size: 13px; color: {{t.muted}};">Sala piena</span>
+          </sc-if>
+        </div>
+
+        <div style="position: relative; width: 720px; height: 470px; margin: 0 auto; background: {{sc.wall}};">
+          <svg width="0" height="0" style="position: absolute;" aria-hidden="true">
+            <defs>
+              <pattern id="fzA" width="3.2" height="3.2" patternUnits="userSpaceOnUse"><circle cx="1.6" cy="1.6" r="1" fill="{{sc.dotA}}"></circle></pattern>
+              <pattern id="fzB" width="3.2" height="3.2" patternUnits="userSpaceOnUse"><circle cx="1.6" cy="1.6" r="0.9" fill="{{sc.dotB}}"></circle></pattern>
+              <pattern id="fzR" width="3.2" height="3.2" patternUnits="userSpaceOnUse"><circle cx="1.6" cy="1.6" r="1.1" fill="{{sc.dotR}}"></circle></pattern>
+            </defs>
+          </svg>
+
+          <div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 150px; background: {{sc.floor}}; border-top: 1.5px solid {{sc.floorLine}};"></div>
+
+          <div aria-hidden="true" style="position: absolute; top: 26px; left: 0; right: 0; display: flex; justify-content: center; align-items: flex-end; gap: 28px;">
+            <svg width="96" height="112" viewBox="0 0 96 112"><rect x="2" y="10" width="92" height="100" rx="4" fill="{{sc.shelf}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="8" y="20" width="80" height="4" fill="{{sc.board}}"></rect><rect x="8" y="58" width="80" height="4" fill="{{sc.board}}"></rect><rect x="8" y="96" width="80" height="4" fill="{{sc.board}}"></rect><rect x="12" y="34" width="8" height="24" fill="{{sc.b1}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="22" y="30" width="6" height="28" fill="{{sc.b2}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="30" y="36" width="9" height="22" fill="{{sc.b3}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="41" y="32" width="6" height="26" fill="{{sc.b1}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="58" y="38" width="10" height="20" fill="{{sc.b2}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="70" y="33" width="7" height="25" fill="{{sc.b3}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="14" y="72" width="7" height="24" fill="{{sc.b2}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="23" y="75" width="10" height="21" fill="{{sc.b3}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="44" y="70" width="6" height="26" fill="{{sc.b1}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="52" y="74" width="9" height="22" fill="{{sc.b2}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="63" y="71" width="6" height="25" fill="{{sc.b3}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect></svg>
+            <svg width="120" height="150" viewBox="0 0 120 150"><path d="M6 148V60a54 54 0 0 1 108 0v88z" fill="{{sc.win}}" stroke="{{sc.winFrame}}" stroke-width="{{sc.winSw}}"></path><path d="M60 8v140M6 92h108" stroke="{{sc.winFrame}}" stroke-width="{{sc.mullion}}"></path><circle cx="26" cy="72" r="1.3" fill="{{sc.star}}"></circle><circle cx="44" cy="40" r="1.1" fill="{{sc.star}}"></circle><circle cx="96" cy="118" r="1.3" fill="{{sc.star}}"></circle><circle cx="30" cy="124" r="1.1" fill="{{sc.star}}"></circle></svg>
+            <svg width="120" height="150" viewBox="0 0 120 150"><path d="M6 148V60a54 54 0 0 1 108 0v88z" fill="{{sc.win}}" stroke="{{sc.winFrame}}" stroke-width="{{sc.winSw}}"></path><path d="M60 8v140M6 92h108" stroke="{{sc.winFrame}}" stroke-width="{{sc.mullion}}"></path><path d="M96 46a14 14 0 1 1-12-14a11 11 0 0 0 12 14z" fill="{{sc.moon}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></path><circle cx="28" cy="50" r="1.3" fill="{{sc.star}}"></circle><circle cx="38" cy="116" r="1.1" fill="{{sc.star}}"></circle><circle cx="88" cy="122" r="1.3" fill="{{sc.star}}"></circle></svg>
+            <svg width="120" height="150" viewBox="0 0 120 150"><path d="M6 148V60a54 54 0 0 1 108 0v88z" fill="{{sc.win}}" stroke="{{sc.winFrame}}" stroke-width="{{sc.winSw}}"></path><path d="M60 8v140M6 92h108" stroke="{{sc.winFrame}}" stroke-width="{{sc.mullion}}"></path><circle cx="92" cy="66" r="1.3" fill="{{sc.star}}"></circle><circle cx="24" cy="110" r="1.1" fill="{{sc.star}}"></circle><circle cx="80" cy="40" r="1.1" fill="{{sc.star}}"></circle></svg>
+            <svg width="96" height="112" viewBox="0 0 96 112"><rect x="2" y="10" width="92" height="100" rx="4" fill="{{sc.shelf}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="8" y="20" width="80" height="4" fill="{{sc.board}}"></rect><rect x="8" y="58" width="80" height="4" fill="{{sc.board}}"></rect><rect x="8" y="96" width="80" height="4" fill="{{sc.board}}"></rect><rect x="14" y="32" width="9" height="26" fill="{{sc.b2}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="25" y="36" width="6" height="22" fill="{{sc.b1}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="40" y="30" width="8" height="28" fill="{{sc.b3}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="50" y="35" width="10" height="23" fill="{{sc.b1}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="62" y="33" width="6" height="25" fill="{{sc.b2}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="12" y="74" width="10" height="22" fill="{{sc.b1}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="30" y="70" width="6" height="26" fill="{{sc.b2}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="38" y="73" width="8" height="23" fill="{{sc.b3}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="60" y="71" width="9" height="25" fill="{{sc.b1}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect><rect x="71" y="75" width="6" height="21" fill="{{sc.b2}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect></svg>
+          </div>
+
+          <sc-for list="{{rows}}" as="row" hint-placeholder-count="2">
+            <div style="position: absolute; left: 0; right: 0; top: {{row.top}}; display: flex; justify-content: center; gap: 64px; transform: scale({{row.scale}}); transform-origin: top center;">
+              <sc-for list="{{row.tables}}" as="tbl" hint-placeholder-count="2">
+                <div style="display: flex;">
+                  <sc-for list="{{tbl.seats}}" as="s" hint-placeholder-count="2">
+                    <div style="position: relative; width: 150px; height: 170px;">
+                      <div aria-hidden="true" style="position: absolute; inset: 0; transform: {{s.flip}};">
+                        <svg width="150" height="170" viewBox="0 0 150 170">
+                          <rect x="45" y="30" width="60" height="82" rx="12" fill="{{sc.chair}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect>
+                          <g opacity="{{s.workOp}}">
+                            <polygon points="134,62 92,110 150,110 150,74" fill="{{sc.cone}}" fill-opacity="{{sc.coneOp}}"></polygon>
+                            <rect x="48" y="42" width="54" height="40" rx="14" fill="{{sc.head}}" stroke="{{sc.headStroke}}" stroke-width="{{sc.headSw}}"></rect>
+                            <rect x="60" y="60" width="8" height="7" rx="3.5" fill="{{sc.face}}"></rect>
+                            <rect x="82" y="60" width="8" height="7" rx="3.5" fill="{{sc.face}}"></rect>
+                            <rect x="71" y="73" width="8" height="2" rx="1" fill="{{sc.face}}"></rect>
+                            <rect x="58" y="82" width="34" height="26" rx="10" fill="{{sc.body}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect>
+                          </g>
+                          <g opacity="{{s.breakOp}}">
+                            <ellipse cx="128" cy="96" rx="26" ry="18" fill="{{sc.warm}}"></ellipse>
+                            <rect x="48" y="38" width="54" height="40" rx="14" fill="{{sc.head}}" stroke="{{sc.headStroke}}" stroke-width="{{sc.headSw}}"></rect>
+                            <path d="M59 58q4.5-5 9 0M82 58q4.5-5 9 0" stroke="{{sc.face}}" stroke-width="2.2" fill="none" stroke-linecap="round"></path>
+                            <path d="M69 66q6 5 12 0" stroke="{{sc.face}}" stroke-width="2.2" fill="none" stroke-linecap="round"></path>
+                            <rect x="58" y="78" width="34" height="30" rx="10" fill="{{sc.body}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect>
+                            <rect x="16" y="94" width="14" height="16" rx="3" fill="{{sc.mug}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect>
+                            <path d="M30 98h3a3 3 0 0 1 0 7h-3" stroke="{{sc.steam}}" stroke-width="1.8" fill="none"></path>
+                            <path d="M20 90q-3-4 0-8M26 90q-3-4 0-8" stroke="{{sc.steam}}" stroke-width="1.3" fill="none" stroke-linecap="round"></path>
+                          </g>
+                          <rect x="0" y="110" width="150" height="8" fill="{{sc.top}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect>
+                          <rect x="0" y="110" width="150" height="1.5" fill="{{sc.topHi}}"></rect>
+                          <rect x="0" y="118" width="150" height="52" fill="{{sc.front}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect>
+                          <g opacity="{{s.workOp}}">
+                            <ellipse cx="122" cy="111" rx="30" ry="4" fill="{{sc.pool}}"></ellipse>
+                            <rect x="52" y="102" width="14" height="7" rx="3.5" fill="{{sc.body}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect>
+                            <rect x="84" y="102" width="14" height="7" rx="3.5" fill="{{sc.body}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></rect>
+                            <path d="M56 109l19-4 19 4v2l-19-3-19 3z" fill="{{sc.page}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}"></path>
+                          </g>
+                          <rect x="60" y="104" width="30" height="6" rx="1" fill="{{sc.b2}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}" opacity="{{s.breakOp}}"></rect>
+                          <rect x="112" y="104" width="22" height="6" rx="3" fill="{{sc.lamp}}"></rect>
+                          <path d="M123 104l-6-32 15-12" stroke="{{sc.lamp}}" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>
+                          <path d="M124 52l22 9-7 9z" fill="{{s.shade}}" stroke="{{sc.line}}" stroke-width="{{sc.sw}}" stroke-linejoin="round"></path>
+                          <circle cx="137" cy="66" r="3.2" fill="{{s.bulb}}"></circle>
+                        </svg>
+                      </div>
+
+                      <sc-if value="{{s.isEmpty}}" hint-placeholder-val="{{false}}">
+                        <span style="position: absolute; left: 0; right: 0; bottom: 18px; text-align: center; font-size: 12px; color: {{sc.freeFg}};">posto libero</span>
+                      </sc-if>
+                      <sc-if value="{{s.isPresent}}" hint-placeholder-val="{{true}}">
+                        <button type="button" onClick="{{s.pick}}" aria-pressed="{{s.selected}}" aria-label="{{s.label}}" style="position: absolute; inset: 0; border: 0; padding: 0; background: transparent; color: {{t.text}}; cursor: pointer; border-radius: 14px;">
+                          <span style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); padding: 1px 10px; border-radius: {{t.rItem}}; background: {{s.pillBg}}; color: {{s.pillFg}}; font-family: {{t.disp}}; font-weight: {{t.pillW}}; font-size: {{t.pillSize}}; font-variant-numeric: tabular-nums; white-space: nowrap;">{{s.clock}}</span>
+                          <span style="position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); max-width: 128px; box-sizing: border-box; padding: 3px 10px; border-radius: {{t.rItem}}; background: {{sc.plateBg}}; border: 1.5px solid {{s.plateBorder}}; color: {{s.plateFg}}; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{s.name}}</span>
+                        </button>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <aside aria-label="Dettagli" style="flex: 1 1 250px; box-sizing: border-box; padding: 22px; border-radius: {{t.rCard}}; background: {{t.cardBg}}; border: {{t.cardBorder}}; box-shadow: {{t.cardShadow}}; display: flex; flex-direction: column; gap: 18px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <span style="font-size: 18px; font-weight: {{t.titleW}};">{{sel.name}}</span>
+          <span style="display: flex; align-items: center; gap: 6px; color: {{t.soft}};">
+            <span style="width: 7px; height: 7px; border-radius: 50%; background: {{sel.dot}};" aria-hidden="true"></span>{{sel.status}}</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 2px; padding: 16px; border-radius: {{t.rPanel}}; background: {{t.panelBg}}; border: {{t.panelBorder}};">
+          <span style="font-size: 12px; color: {{t.muted}};">{{sel.clockLabel}}</span>
+          <span style="font-family: {{t.disp}}; font-size: 44px; font-weight: {{t.dispW}}; letter-spacing: {{t.dispTrack}}; line-height: 1.1; font-variant-numeric: tabular-nums; color: {{sel.clockFg}};">{{sel.clock}}</span>
+          <span style="font-size: 13px; color: {{t.text2}};">{{sel.subject}}</span>
+        </div>
+        <dl style="margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+          <div style="display: flex; flex-direction: column;"><dt style="font-size: 12px; color: {{t.muted}};">Oggi</dt><dd style="margin: 0; font-family: {{t.disp}}; font-size: 22px; font-weight: {{t.dispW}}; font-variant-numeric: tabular-nums; white-space: nowrap;">{{sel.today}}</dd></div>
+          <div style="display: flex; flex-direction: column;"><dt style="font-size: 12px; color: {{t.muted}};">Settimana</dt><dd style="margin: 0; font-family: {{t.disp}}; font-size: 22px; font-weight: {{t.dispW}}; font-variant-numeric: tabular-nums; white-space: nowrap;">{{sel.week}}</dd></div>
+        </dl>
+      </aside>
+    </div>
+
+    <section aria-labelledby="fuori" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+      <h2 id="fuori" style="margin: 0 8px 0 0; font-size: 14px; font-weight: 500; color: {{t.text2}};">Fuori dalla stanza</h2>
+      <sc-for list="{{away}}" as="a" hint-placeholder-count="3">
+        <span style="display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border-radius: {{t.rItem}}; background: {{t.panelBg}}; border: {{t.panelBorder}}; font-size: 13px;">
+          <span style="width: 7px; height: 7px; border-radius: 50%; background: {{t.off}};" aria-hidden="true"></span>
+          <span style="color: {{t.soft}};">{{a.name}}</span>
+          <span style="color: {{t.muted}};">{{a.seen}}, oggi {{a.today}}</span>
+        </span>
+      </sc-for>
+    </section>
+  </main>
+</div>
+</template>
+<script type="text/plain" id="mockup-logic">
+class Component extends DCLogic {
+// Token dei temi presi da src/styles/tokens.css (variante nativa) e tokens-varianti.css (l'altra).
+  static NATIVE = { notte: 'notte', opaco: 'giorno', quaderno: 'giorno', fosforo: 'notte' };
+  static BASE = {
+  notte: { font: "'Manrope', system-ui, sans-serif", disp: "'Manrope', system-ui, sans-serif", dispW: 200, dispTrack: '-0.04em', headW: 300, titleW: 500, size: '14px', pillW: 500, pillSize: '13px',
+    mainBg: '#090C15', sideBg: '#090C15', sideBorder: '1px solid #161D30',
+    cardBg: 'linear-gradient(180deg, #151B2E 0%, #10152A 100%)', cardBorder: '1px solid #1F2740', cardShadow: 'inset 0 1px 0 rgba(200,215,255,0.07)', rCard: '22px',
+    panelBg: '#0B0F1C', panelBorder: '1px solid #182036', rPanel: '16px', rItem: '12px',
+    text: '#E9ECF5', text2: '#9AA2BA', muted: '#8890A8', soft: '#C9CFE0', faint: '#7A83A0',
+    accent: '#8EA6FF', accentStrong: '#B7C6FF', accentSoft: 'rgba(142,166,255,0.14)', onAccent: '#090C15',
+    navBg: '#161C2E', navFg: '#E9ECF5', navIdle: '#9AA2BA', ghostBorder: '1px solid #2A3350', ghostBg: 'transparent', ghostFg: '#C9CFE0',
+    modalBg: '#121726', modalBorder: '1px solid #1E2538', overlay: '#06080F', shadowPop: '0 18px 48px rgba(0,0,0,0.5)',
+    work: '#8EA6FF', workSoft: 'rgba(142,166,255,0.14)', workFg: '#B7C6FF', brk: '#F5A35C', brkSoft: 'rgba(245,163,92,0.14)', brkFg: '#F5A35C', off: '#3A4566',
+    danger: '#F08A8A', dangerSoft: 'rgba(240,138,138,0.16)', dangerBorder: '1px solid rgba(240,138,138,0.45)', success: '#7DD3B0', warn: '#F0B47A', warnSoft: 'rgba(240,180,122,0.12)', warnBorder: '1px solid rgba(240,180,122,0.3)',
+    track: '#1E2538', fieldBg: '#0B0F1C', fieldBorder: '1px solid #182036', dashed: '1px dashed #2A3350', logo: '#8EA6FF' },
+  opaco: { font: "'Bricolage Grotesque', system-ui, sans-serif", disp: "'Bricolage Grotesque', system-ui, sans-serif", dispW: 800, dispTrack: '-0.05em', headW: 800, titleW: 600, size: '14px', pillW: 700, pillSize: '13px',
+    mainBg: '#D8D5CD', sideBg: '#D8D5CD', sideBorder: '0',
+    cardBg: '#EFECE5', cardBorder: '0', cardShadow: 'none', rCard: '28px',
+    panelBg: '#E2DED5', panelBorder: '0', rPanel: '18px', rItem: '999px',
+    text: '#22251F', text2: '#4D5047', muted: '#4D5047', soft: '#22251F', faint: '#5E6159',
+    accent: '#22251F', accentStrong: '#22251F', accentSoft: 'rgba(34,37,31,0.10)', onAccent: '#ECE9E2',
+    navBg: '#22251F', navFg: '#ECE9E2', navIdle: '#4D5047', ghostBorder: '0', ghostBg: '#C9C5BB', ghostFg: '#22251F',
+    modalBg: '#EFECE5', modalBorder: '0', overlay: '#A8A49A', shadowPop: 'none',
+    work: '#22251F', workSoft: 'rgba(34,37,31,0.10)', workFg: '#22251F', brk: '#7A4E12', brkSoft: 'rgba(122,78,18,0.14)', brkFg: '#7A4E12', off: '#A8A49A',
+    danger: '#8A2A1E', dangerSoft: 'rgba(138,42,30,0.10)', dangerBorder: '0', success: '#3F6B3A', warn: '#7A4E12', warnSoft: 'rgba(122,78,18,0.12)', warnBorder: '0',
+    track: '#C9C5BB', fieldBg: '#E2DED5', fieldBorder: '0', dashed: '2px dashed #C9C5BB', logo: '#22251F' },
+  quaderno: { font: "'Figtree', system-ui, sans-serif", disp: "'Caveat', cursive", dispW: 600, dispTrack: '0', headW: 600, titleW: 600, size: '14px', pillW: 700, pillSize: '17px',
+    mainBg: 'linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, #FCFDFF', sideBg: '#FFFFFF', sideBorder: '1px solid #D6DEEA',
+    cardBg: '#FFFFFF', cardBorder: '1px solid #C9D3E3', cardShadow: '0 3px 0 #DCE4F0', rCard: '8px',
+    panelBg: '#FFFFFF', panelBorder: '1px solid #DCE6F5', rPanel: '6px', rItem: '8px',
+    text: '#1B2433', text2: '#556178', muted: '#556178', soft: '#1B2433', faint: '#6A7690',
+    accent: '#2340A0', accentStrong: '#2340A0', accentSoft: 'rgba(35,64,160,0.08)', onAccent: '#FFFFFF',
+    navBg: '#EEF2FB', navFg: '#2340A0', navIdle: '#556178', ghostBorder: '1.5px solid #2340A0', ghostBg: 'transparent', ghostFg: '#2340A0',
+    modalBg: '#FFFFFF', modalBorder: '1px solid #C9D3E3', overlay: '#DCE3EE', shadowPop: '0 3px 0 #DCE4F0',
+    work: '#2340A0', workSoft: 'rgba(35,64,160,0.08)', workFg: '#2340A0', brk: '#9A5B12', brkSoft: '#FFF1A8', brkFg: '#7A4A10', off: '#B8C4D8',
+    danger: '#B3261E', dangerSoft: 'rgba(179,38,30,0.08)', dangerBorder: '1.5px solid #B3261E', success: '#2F9E6B', warn: '#7A4A10', warnSoft: '#FFF1A8', warnBorder: '0',
+    track: '#B8C4D8', fieldBg: '#FFFFFF', fieldBorder: '1.5px solid #C9D3E3', dashed: '1.5px dashed #B8C4D8', logo: '#2340A0' },
+  fosforo: { font: "'JetBrains Mono', ui-monospace, monospace", disp: "'Doto', monospace", dispW: 900, dispTrack: '0', headW: 400, titleW: 400, size: '13px', pillW: 900, pillSize: '15px',
+    mainBg: 'radial-gradient(circle at 96% 104%, #4A131B 0%, #2A0A10 14%, #170609 24%, transparent 25%), #110709', sideBg: 'transparent', sideBorder: '0',
+    cardBg: 'rgba(26,13,15,0.9)', cardBorder: '1px solid rgba(255,214,206,0.12)', cardShadow: 'none', rCard: '14px',
+    panelBg: '#0B0405', panelBorder: '1px solid rgba(255,214,206,0.12)', rPanel: '8px', rItem: '999px',
+    text: '#F2E6E1', text2: '#B39C97', muted: '#B39C97', soft: '#F4E9E4', faint: '#8E7A76',
+    accent: '#F4E9E4', accentStrong: '#F4E9E4', accentSoft: 'rgba(255,214,206,0.07)', onAccent: '#110709',
+    navBg: '#F4E9E4', navFg: '#110709', navIdle: '#B39C97', ghostBorder: '1px solid rgba(255,214,206,0.16)', ghostBg: 'transparent', ghostFg: '#B39C97',
+    modalBg: '#1A0D0F', modalBorder: '1px solid rgba(255,214,206,0.12)', overlay: '#080304', shadowPop: 'none',
+    work: '#FF4A3D', workSoft: 'rgba(255,74,61,0.12)', workFg: '#FF6B60', brk: '#B39C97', brkSoft: 'rgba(255,214,206,0.07)', brkFg: '#B39C97', off: '#3A2326',
+    danger: '#FF4A3D', dangerSoft: 'rgba(255,74,61,0.12)', dangerBorder: '1px solid rgba(255,74,61,0.4)', success: '#F4E9E4', warn: '#F4E9E4', warnSoft: 'rgba(255,214,206,0.07)', warnBorder: '1px solid rgba(255,214,206,0.16)',
+    track: '#3A2326', fieldBg: '#0B0405', fieldBorder: '1px solid rgba(255,214,206,0.12)', dashed: '1px dashed rgba(255,214,206,0.2)', logo: '#FF4A3D' }
+};
+  static OTHER = {
+  notte: { mainBg: '#EEF1F7', sideBg: '#EEF1F7', sideBorder: '1px solid #DCE2EE',
+    cardBg: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFD 100%)', cardBorder: '1px solid #DCE2EE', cardShadow: 'none',
+    panelBg: '#F4F6FB', panelBorder: '1px solid #E1E6F0',
+    text: '#141A2E', text2: '#5B6480', muted: '#646C89', soft: '#2A3350', faint: '#6B7491',
+    accent: '#3B57D6', accentStrong: '#3049B8', accentSoft: 'rgba(59,87,214,0.10)', onAccent: '#FFFFFF',
+    navBg: '#E4E9F6', navFg: '#141A2E', navIdle: '#5B6480', ghostBorder: '1px solid #CBD3E4', ghostFg: '#2A3350',
+    modalBg: '#FFFFFF', modalBorder: '1px solid #E3E8F1', overlay: '#C9D0DE', shadowPop: '0 18px 48px rgba(20,26,46,0.18)',
+    work: '#3B57D6', workSoft: 'rgba(59,87,214,0.10)', workFg: '#3049B8', brk: '#C27628', brkSoft: 'rgba(194,118,40,0.12)', brkFg: '#9A5B12', off: '#C3CBDC',
+    danger: '#C2413A', dangerSoft: 'rgba(194,65,58,0.10)', dangerBorder: '1px solid rgba(194,65,58,0.4)', success: '#187A56', warn: '#9A5B12', warnSoft: 'rgba(194,118,40,0.10)', warnBorder: '1px solid rgba(194,118,40,0.3)',
+    track: '#E3E8F1', fieldBg: '#F4F6FB', fieldBorder: '1px solid #DCE2EE', dashed: '1px dashed #CBD3E4', logo: '#3B57D6' },
+  opaco: { mainBg: '#1B1C18', sideBg: '#1B1C18', cardBg: '#2A2B26', panelBg: '#34352F',
+    text: '#ECE9E2', text2: '#A9A79E', muted: '#A9A79E', soft: '#ECE9E2', faint: '#9A988F',
+    accent: '#ECE9E2', accentStrong: '#ECE9E2', accentSoft: 'rgba(236,233,226,0.10)', onAccent: '#1E1F1B',
+    navBg: '#ECE9E2', navFg: '#1E1F1B', navIdle: '#A9A79E', ghostBg: '#34352F', ghostFg: '#ECE9E2',
+    modalBg: '#2A2B26', overlay: '#121310',
+    work: '#ECE9E2', workSoft: 'rgba(236,233,226,0.12)', workFg: '#ECE9E2', brk: '#E0B070', brkSoft: 'rgba(224,176,112,0.16)', brkFg: '#E0B070', off: '#4A4B44',
+    danger: '#E38B7C', dangerSoft: 'rgba(227,139,124,0.14)', success: '#9DC28F', warn: '#E0B070', warnSoft: 'rgba(224,176,112,0.12)',
+    track: '#34352F', fieldBg: '#34352F', dashed: '2px dashed #3F403A', logo: '#ECE9E2' },
+  quaderno: { mainBg: 'linear-gradient(#1C2330 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #1C2330 1px, transparent 1px) 0 0 / 24px 24px, #121620', sideBg: '#121620', sideBorder: '1px solid #262D3B',
+    cardBg: '#1A1F2B', cardBorder: '1px solid #2C3446', cardShadow: '0 3px 0 #0C0F16', panelBg: '#1A1F2B', panelBorder: '1px solid #262E3D',
+    text: '#E6EAF2', text2: '#98A3B8', muted: '#98A3B8', soft: '#E6EAF2', faint: '#8792A8',
+    accent: '#9FB6FF', accentStrong: '#9FB6FF', accentSoft: 'rgba(159,182,255,0.10)', onAccent: '#121620',
+    navBg: '#222A3B', navFg: '#9FB6FF', navIdle: '#98A3B8', ghostBorder: '1.5px solid #9FB6FF', ghostFg: '#9FB6FF',
+    modalBg: '#1A1F2B', modalBorder: '1px solid #2C3446', overlay: '#0B0E14', shadowPop: '0 3px 0 #0C0F16',
+    work: '#9FB6FF', workSoft: 'rgba(159,182,255,0.10)', workFg: '#9FB6FF', brk: '#E0A25A', brkSoft: 'rgba(224,162,90,0.14)', brkFg: '#E0A25A', off: '#3A4459',
+    danger: '#F08A80', dangerSoft: 'rgba(240,138,128,0.12)', dangerBorder: '1.5px solid #F08A80', success: '#4CC38A', warn: '#E0A25A', warnSoft: 'rgba(224,162,90,0.12)',
+    track: '#3A4459', fieldBg: '#121620', fieldBorder: '1.5px solid #2C3446', dashed: '1.5px dashed #3A4459', logo: '#9FB6FF' },
+  fosforo: { mainBg: 'radial-gradient(circle at 96% 104%, #E6C3C1 0%, #EDD5D2 14%, #F0E3DF 24%, transparent 25%), #EFE9E5',
+    cardBg: 'rgba(253,250,248,0.92)', cardBorder: '1px solid rgba(70,24,28,0.12)', panelBg: '#E5DDD7', panelBorder: '1px solid rgba(70,24,28,0.12)',
+    text: '#2A1517', text2: '#77605D', muted: '#77605D', soft: '#2A1215', faint: '#7D6865',
+    accent: '#2A1215', accentStrong: '#2A1215', accentSoft: 'rgba(70,24,28,0.07)', onAccent: '#EFE9E5',
+    navBg: '#2A1215', navFg: '#EFE9E5', navIdle: '#77605D', ghostBorder: '1px solid rgba(70,24,28,0.16)', ghostFg: '#77605D',
+    modalBg: '#FDFAF8', modalBorder: '1px solid rgba(70,24,28,0.12)', overlay: '#D9CFC9',
+    work: '#E0352B', workSoft: 'rgba(224,53,43,0.10)', workFg: '#B8241B', brk: '#77605D', brkSoft: 'rgba(70,24,28,0.07)', brkFg: '#77605D', off: '#D6C9C4',
+    danger: '#E0352B', dangerSoft: 'rgba(224,53,43,0.10)', dangerBorder: '1px solid rgba(224,53,43,0.4)', success: '#2A1215', warn: '#2A1215', warnSoft: 'rgba(70,24,28,0.07)', warnBorder: '1px solid rgba(70,24,28,0.16)',
+    track: '#D6C9C4', fieldBg: '#FDFAF8', fieldBorder: '1px solid rgba(70,24,28,0.16)', dashed: '1px dashed rgba(70,24,28,0.25)', logo: '#E0352B' }
+};
+// La sala, ridisegnata per tema: Notte illustrazione notturna, Opaco blocchi di pigmento (blu),
+// Quaderno disegno a penna con l'evidenziatore, Fosforo matrice di LED.
+  static SCENE = {
+  'notte-notte': { bg: '#0E1324', wall: '#0E1324', floor: '#0B0F1C', floorLine: '#182036', win: '#0A0F22', winFrame: '#1F2740', winSw: 4, mullion: 3, moon: '#DCE3FF', star: '#9AA2BA',
+    shelf: '#121831', board: '#232B44', b1: '#2A3350', b2: '#3A4566', b3: '#232B44', chair: '#1A2032', top: '#232B44', topHi: '#2E3756', front: '#141A2C',
+    head: '#0B0F1C', headStroke: '#3A4566', headSw: 1.5, body: '#161C2E', face: '#DCE3FF', page: '#C9CFE0', lamp: '#2A3350', lampOn: '#3A4566', lampOff: '#232B44', bulbOn: '#DCE3FF', bulbBrk: '#F5A35C',
+    cone: 'rgba(142,166,255,0.14)', coneOp: 1, pool: 'rgba(142,166,255,0.32)', warm: 'rgba(245,163,92,0.10)', mug: '#2A3350', steam: '#8890A8', line: 'none', sw: 0,
+    plateBg: '#0B0F1C', plateBorder: '#2A3350', freeFg: '#7A83A0', dotA: '#000', dotB: '#000', dotR: '#000' },
+  'notte-giorno': { bg: '#E4E9F3', wall: '#E4E9F3', floor: '#D9DFEC', floorLine: '#CBD3E4', win: '#D6E4FA', winFrame: '#C3CBDC', moon: '#E9B85A', star: '#D6E4FA',
+    shelf: '#D3DAE8', board: '#B5C0D8', b1: '#8D9BC0', b2: '#6F7FAD', b3: '#A7B3CF', chair: '#C3CBDC', top: '#B5C0D8', topHi: '#CBD3E4', front: '#DCE2EE',
+    head: '#FFFFFF', headStroke: '#8D9BC0', body: '#CBD3E4', face: '#22305E', page: '#FFFFFF', lamp: '#8D9BC0', lampOn: '#6F7FAD', lampOff: '#B5C0D8', bulbOn: '#3B57D6', bulbBrk: '#C27628',
+    cone: 'rgba(59,87,214,0.12)', pool: 'rgba(59,87,214,0.28)', warm: 'rgba(194,118,40,0.12)', mug: '#8D9BC0', steam: '#646C89',
+    plateBg: '#FFFFFF', plateBorder: '#CBD3E4', freeFg: '#5B6480' },
+  'opaco-giorno': { bg: '#9DB0C0', wall: '#9DB0C0', floor: '#8296A8', floorLine: '#8296A8', win: '#ECE9E2', winFrame: '#9DB0C0', winSw: 6, mullion: 6, moon: '#D2B26A', star: '#ECE9E2',
+    shelf: '#4E6273', board: '#1B2A36', b1: '#D2B26A', b2: '#B8A1B4', b3: '#A9B59C', chair: '#4E6273', top: '#1B2A36', topHi: '#1B2A36', front: '#8EA2B3',
+    head: '#ECE9E2', headStroke: '#ECE9E2', headSw: 0, body: '#4E6273', face: '#1B2A36', page: '#ECE9E2', lamp: '#1B2A36', lampOn: '#1B2A36', lampOff: '#4E6273', bulbOn: '#ECE9E2', bulbBrk: '#D2B26A',
+    cone: 'rgba(236,233,226,0.35)', coneOp: 1, pool: 'rgba(236,233,226,0.75)', warm: 'rgba(210,178,106,0.45)', mug: '#D2B26A', steam: '#1B2A36', line: 'none', sw: 0,
+    plateBg: '#ECE9E2', plateBorder: '#ECE9E2', freeFg: '#1B2A36', dotA: '#000', dotB: '#000', dotR: '#000' },
+  'opaco-notte': { bg: '#34475A', wall: '#34475A', floor: '#2B3C4D', floorLine: '#2B3C4D', win: '#1B2A36', winFrame: '#34475A', moon: '#F3E3BA', star: '#9DB0C0',
+    shelf: '#1B2A36', board: '#4A5F73', b1: '#836A30', b2: '#6A566D', b3: '#56654D', chair: '#4A5F73', top: '#9DB0C0', topHi: '#9DB0C0', front: '#40546A',
+    head: '#1B2A36', headStroke: '#1B2A36', body: '#4A5F73', face: '#E1EAF2', page: '#E1EAF2', lamp: '#9DB0C0', lampOn: '#9DB0C0', lampOff: '#4A5F73', bulbOn: '#F3E3BA', bulbBrk: '#E0B070',
+    cone: 'rgba(243,227,186,0.16)', pool: 'rgba(243,227,186,0.5)', warm: 'rgba(224,176,112,0.22)', mug: '#836A30', steam: '#9DB0C0',
+    plateBg: '#1B2A36', plateBorder: '#1B2A36', freeFg: '#C9D5E0' },
+  'quaderno-giorno': { bg: 'linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, #FCFDFF', wall: 'transparent', floor: 'transparent', floorLine: '#2340A0',
+    win: '#FFFFFF', winFrame: '#2340A0', winSw: 2, mullion: 1.6, moon: '#FFF1A8', star: '#2340A0',
+    shelf: '#FFFFFF', board: '#2340A0', b1: '#FFFFFF', b2: '#EEF2FB', b3: '#FFF1A8', chair: '#FFFFFF', top: '#FFFFFF', topHi: '#2340A0', front: '#FFFFFF',
+    head: '#FFFFFF', headStroke: '#2340A0', headSw: 1.6, body: '#FFFFFF', face: '#1B2433', page: '#FFFFFF', lamp: '#2340A0', lampOn: '#FFFFFF', lampOff: '#FFFFFF', bulbOn: '#FFD83D', bulbBrk: '#9A5B12',
+    cone: 'rgba(255,228,92,0.45)', coneOp: 1, pool: 'rgba(255,228,92,0.8)', warm: 'rgba(154,91,18,0.10)', mug: '#FFFFFF', steam: '#556178', line: '#2340A0', sw: 1.6,
+    plateBg: '#FFFFFF', plateBorder: '#2340A0', freeFg: '#556178', dotA: '#000', dotB: '#000', dotR: '#000' },
+  'quaderno-notte': { bg: 'linear-gradient(#1C2330 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #1C2330 1px, transparent 1px) 0 0 / 24px 24px, #121620', floorLine: '#9FB6FF',
+    win: '#121620', winFrame: '#9FB6FF', moon: '#E3D58C', star: '#9FB6FF',
+    shelf: '#1A1F2B', board: '#9FB6FF', b1: '#1A1F2B', b2: '#222A3B', b3: '#E3D58C', chair: '#1A1F2B', top: '#1A1F2B', topHi: '#9FB6FF', front: '#1A1F2B',
+    head: '#1A1F2B', headStroke: '#9FB6FF', body: '#1A1F2B', face: '#E6EAF2', page: '#1A1F2B', lamp: '#9FB6FF', lampOn: '#1A1F2B', lampOff: '#1A1F2B', bulbOn: '#E3D58C', bulbBrk: '#E0A25A',
+    cone: 'rgba(227,213,140,0.22)', pool: 'rgba(227,213,140,0.55)', warm: 'rgba(224,162,90,0.14)', mug: '#1A1F2B', steam: '#98A3B8', line: '#9FB6FF',
+    plateBg: '#1A1F2B', plateBorder: '#9FB6FF', freeFg: '#98A3B8' },
+  'fosforo-notte': { bg: 'radial-gradient(rgba(255,230,220,0.07) 1px, transparent 1.3px) 0 0 / 7px 7px, #0B0405', wall: 'transparent', floor: 'transparent', floorLine: 'rgba(255,214,206,0.2)',
+    win: 'url(#fzB)', winFrame: 'none', winSw: 0, mullion: 0, moon: 'url(#fzA)', star: '#F4E9E4',
+    shelf: 'transparent', board: 'url(#fzB)', b1: 'url(#fzA)', b2: 'url(#fzB)', b3: 'url(#fzB)', chair: 'url(#fzB)', top: 'url(#fzA)', topHi: 'url(#fzA)', front: 'url(#fzB)',
+    head: '#0B0405', headStroke: 'rgba(255,214,206,0.35)', headSw: 1, body: 'url(#fzB)', face: '#F4E9E4', page: 'url(#fzA)', lamp: 'rgba(255,214,206,0.4)', lampOn: 'url(#fzA)', lampOff: 'url(#fzB)', bulbOn: '#FF4A3D', bulbBrk: '#B39C97',
+    cone: 'url(#fzR)', coneOp: 0.55, pool: 'url(#fzR)', warm: 'rgba(255,214,206,0.06)', mug: 'url(#fzA)', steam: '#B39C97', line: 'none', sw: 0,
+    plateBg: '#0B0405', plateBorder: 'rgba(255,214,206,0.2)', freeFg: '#8E7A76', dotA: 'rgba(244,233,228,0.75)', dotB: 'rgba(255,214,206,0.26)', dotR: '#FF4A3D' },
+  'fosforo-giorno': { bg: 'radial-gradient(rgba(70,24,28,0.07) 1px, transparent 1.3px) 0 0 / 7px 7px, #E5DDD7', floorLine: 'rgba(70,24,28,0.2)', star: '#2A1215',
+    head: '#E5DDD7', headStroke: 'rgba(70,24,28,0.35)', face: '#2A1215', lamp: 'rgba(70,24,28,0.4)', bulbOn: '#E0352B', bulbBrk: '#77605D', warm: 'rgba(70,24,28,0.05)', steam: '#77605D',
+    plateBg: '#FDFAF8', plateBorder: 'rgba(70,24,28,0.2)', freeFg: '#77605D', dotA: 'rgba(42,18,21,0.8)', dotB: 'rgba(70,24,28,0.28)', dotR: '#E0352B' }
+};
+
+
+  state = { g: 0, sel: 'matteo_s', now: Date.now(), myRoom: 0, view: 0 };
+
+  componentDidMount() {
+    this.timer = setInterval(() => this.setState({ now: Date.now() }), 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+
+  renderVals() {
+    const tema = Component.BASE[this.props.tema] ? this.props.tema : 'notte';
+    const modo = this.props.modo === 'giorno' || this.props.modo === 'notte' ? this.props.modo : Component.NATIVE[tema];
+    const t = Object.assign({}, Component.BASE[tema], modo === Component.NATIVE[tema] ? {} : Component.OTHER[tema]);
+    const sc = Object.assign({}, Component.SCENE[tema + '-' + Component.NATIVE[tema]], Component.SCENE[tema + '-' + modo]);
+
+    if (!this.t0) this.t0 = Date.now();
+    const elapsed = Math.max(0, Math.floor((this.state.now - this.t0) / 1000));
+
+    const me = { name: 'matteo_s', me: true, state: 'work', subject: 'Analisi 2', since: 1512, today: 5400, week: 41000 };
+    const groups = [
+      { name: 'Ingegneria', members: [
+        me,
+        { name: 'giulia.r', state: 'work', subject: 'Fisica 1', since: 2537, today: 9000, week: 52300 },
+        { name: 'chiara_b', state: 'work', subject: null, since: 4020, today: 1800, week: 30100 },
+        { name: 'luca04', state: 'work', subject: null, since: 612, today: 3100, week: 22800 },
+        { name: 'sara.m', state: 'break', since: 190, today: 6300, week: 47200 },
+        { name: 'nico.p', state: 'work', subject: 'Analisi 2', since: 900, today: 2900, week: 25400 },
+        { name: 'bea_', state: 'work', subject: null, since: 2200, today: 3800, week: 33000 },
+        { name: 'tommy', state: 'break', since: 300, today: 4100, week: 28700 },
+        { name: 'giorgia.f', state: 'work', subject: 'Fisica 1', since: 3300, today: 6000, week: 39900 },
+        { name: 'leo', state: 'work', subject: null, since: 450, today: 1200, week: 9800 },
+        { name: 'marco_t', state: 'off', seen: 'visto 5 min fa', today: 2400, week: 18000 },
+        { name: 'davide', state: 'off', seen: 'visto 2 h fa', today: 4500, week: 26500 },
+        { name: 'elena.v', state: 'off', seen: 'vista ieri', today: 0, week: 3600 }
+      ] },
+      { name: 'Studio ITA', members: [
+        me,
+        { name: 'paolo_g', state: 'work', subject: 'Storia', since: 1300, today: 4200, week: 21000 },
+        { name: 'fede', state: 'break', since: 75, today: 3600, week: 19800 },
+        { name: 'anna.l', state: 'off', seen: 'vista 40 min fa', today: 2700, week: 15400 },
+        { name: 'ire_99', state: 'off', seen: 'vista 3 giorni fa', today: 0, week: 0 }
+      ] }
+    ];
+
+    const pad = (n) => String(n).padStart(2, '0');
+    const clock = (s) => { const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return h > 0 ? h + ':' + pad(m) + ':' + pad(x) : pad(m) + ':' + pad(x); };
+    const hm = (s) => { const m = Math.floor(s / 60), h = Math.floor(m / 60); return h > 0 ? h + 'h ' + pad(m % 60) + 'm' : (m % 60) + 'm'; };
+
+    const g = groups[this.state.g];
+    const live = (m) => (m.state === 'work' ? m.since + elapsed : 0);
+    const present = g.members.filter((m) => m.state !== 'off');
+
+    // Sale da 8 posti. Riempimento automatico in ordine stabile (uguale su tutti i computer);
+    // tu stai nella sala che hai scelto, all'apertura la prima libera.
+    const CAP = 8;
+    const others = present.filter((m) => !m.me);
+    const roomCount = Math.max(Math.ceil(present.length / CAP), this.state.myRoom + 1);
+    const rooms = Array.from({ length: roomCount }, (_, r) => (r === this.state.myRoom ? [me] : []));
+    let r = 0;
+    for (const m of others) {
+      while (rooms[r] && rooms[r].length >= CAP) r++;
+      if (!rooms[r]) rooms[r] = [];
+      rooms[r].push(m);
+    }
+    const view = Math.min(this.state.view, rooms.length - 1);
+    const ordered = rooms[view].slice().sort((a, b) => (b.me ? 1 : 0) - (a.me ? 1 : 0) || (a.state === 'work' ? 0 : 1) - (b.state === 'work' ? 0 : 1));
+
+    const front = [2, 1, 0, 3];
+    const back = [6, 5, 4, 7];
+    const seat = (idx, side) => {
+      const m = ordered[idx] || null;
+      const flip = side === 'left' ? 'scaleX(-1)' : 'none';
+      if (!m) return { workOp: 0, breakOp: 0, isEmpty: true, isPresent: false, flip, shade: sc.lampOff, bulb: sc.lampOff };
+      const work = m.state === 'work';
+      const selected = this.state.sel === m.name;
+      return {
+        isEmpty: false, isPresent: true, flip, workOp: work ? 1 : 0, breakOp: work ? 0 : 1,
+        shade: sc.lampOn, bulb: work ? sc.bulbOn : sc.bulbBrk,
+        name: m.me ? m.name + ' (tu)' : m.name,
+        clock: work ? clock(live(m)) : 'pausa ' + clock(m.since + elapsed),
+        pillBg: work ? t.workSoft : t.brkSoft,
+        pillFg: work ? t.workFg : t.brkFg,
+        plateBorder: selected ? t.accent : sc.plateBorder,
+        plateFg: t.text,
+        selected,
+        label: m.name + ', ' + (work ? 'sta studiando' : 'in pausa'),
+        pick: () => this.setState({ sel: m.name })
+      };
+    };
+    const table = (a, b) => ({ seats: [seat(a, 'left'), seat(b, 'right')] });
+    const rows = [
+      { top: '118px', scale: 0.8, tables: [table(back[0], back[1]), table(back[2], back[3])] },
+      { top: '286px', scale: 1, tables: [table(front[0], front[1]), table(front[2], front[3])] }
+    ];
+
+    const s = g.members.find((m) => m.name === this.state.sel) || me;
+    const sWork = s.state === 'work';
+    const sel = {
+      name: s.me ? s.name + ' (tu)' : s.name,
+      status: sWork ? 'Sta studiando' : s.state === 'break' ? 'In pausa' : 'Fuori dalla stanza',
+      dot: sWork ? t.work : s.state === 'break' ? t.brk : t.off,
+      clockLabel: sWork ? 'Sessione in corso' : s.state === 'break' ? 'In pausa da' : 'Ultima volta',
+      clock: sWork ? clock(live(s)) : s.state === 'break' ? clock(s.since + elapsed) : '—',
+      clockFg: sWork ? t.text : s.state === 'break' ? t.brkFg : t.faint,
+      subject: sWork ? (s.subject || 'Materia non condivisa') : ' ',
+      today: hm(s.today + live(s)),
+      week: hm(s.week + live(s))
+    };
+
+    const studyingCount = g.members.filter((m) => m.state === 'work').length;
+    const isMyRoom = view === this.state.myRoom;
+    const roomFull = !isMyRoom && rooms[view].length >= CAP;
+    return {
+      t, sc,
+      logoMoon: tema === 'notte', logoBook: tema === 'quaderno', logoDot: tema === 'fosforo',
+      navDot: tema === 'notte' ? 'block' : 'none',
+      roomLabel: 'Sala ' + (view + 1) + ' di ' + rooms.length,
+      roomInfo: rooms[view].length + ' al tavolo, ' + (CAP - rooms[view].length) + ' posti liberi',
+      isMyRoom, roomFull, canMoveHere: !isMyRoom && !roomFull,
+      moveHere: () => this.setState({ myRoom: view }),
+      prevDisabled: view === 0, nextDisabled: view >= rooms.length - 1,
+      prevOpacity: view === 0 ? 0.35 : 1, nextOpacity: view >= rooms.length - 1 ? 0.35 : 1,
+      prevRoom: () => this.setState({ view: Math.max(0, view - 1) }),
+      nextRoom: () => this.setState({ view: Math.min(rooms.length - 1, view + 1) }),
+      groupName: g.name,
+      subtitle: present.length + ' presenti in ' + (rooms.length > 1 ? rooms.length + ' sale' : 'una sala') + ', ' + studyingCount + ' stanno studiando. ' + g.members.length + ' membri in tutto.',
+      studyingCount,
+      rows,
+      sel,
+      away: g.members.filter((m) => m.state === 'off').map((m) => ({ name: m.name, seen: m.seen, today: hm(m.today) })),
+      groups: groups.map((x, i) => ({
+        name: x.name, active: i === this.state.g,
+        bg: i === this.state.g ? t.navBg : 'transparent',
+        fg: i === this.state.g ? t.navFg : t.navIdle,
+        pick: () => this.setState({ g: i, sel: 'matteo_s', myRoom: 0, view: 0 })
+      }))
+    };
+  }
+}
+</script>
+<script>
+/* Mini-motore per vedere i mockup fuori dall'editor: legge il markup del mockup
+   (segnaposto {{...}}, <sc-for>, <sc-if>, onClick/onChange) e lo ridisegna a ogni setState.
+   Serve solo come riferimento visivo: NON è codice da riusare nell'app. */
+(function () {
+  const tpl = document.getElementById('mockup-markup');
+  const src = document.getElementById('mockup-logic').textContent;
+  const root = document.getElementById('mockup-root');
+
+  class DCLogic {
+    constructor(props) { this.props = props || {}; }
+    setState(patch) { this.state = Object.assign({}, this.state, typeof patch === 'function' ? patch(this.state) : patch); schedule(); }
+    forceUpdate() { schedule(); }
+  }
+  const Component = new Function('DCLogic', src + '\n;return Component;')(DCLogic);
+
+  const params = new URLSearchParams(location.hash.slice(1));
+  const props = { tema: params.get('tema') || 'notte', modo: params.get('modo') || '' };
+  const NATIVE = { notte: 'notte', opaco: 'giorno', quaderno: 'giorno', fosforo: 'notte' };
+  if (!props.modo) props.modo = NATIVE[props.tema] || 'notte';
+
+  let inst = new Component(props);
+  inst.state = inst.state || {};
+  if (inst.componentDidMount) inst.componentDidMount();
+
+  function lookup(path, scope) {
+    path = path.trim();
+    if (path === 'true') return true;
+    if (path === 'false') return false;
+    let o = scope;
+    for (const k of path.split('.')) { if (o == null) return undefined; o = o[k]; }
+    return o;
+  }
+  const WHOLE = /^\s*\{\{\s*([\w.$]+)\s*\}\}\s*$/;
+  const ANY = /\{\{\s*([\w.$]+)\s*\}\}/g;
+  const interp = (s, scope) => s.replace(ANY, (_, p) => { const v = lookup(p, scope); return v == null ? '' : String(v); });
+
+  function process(node, scope) {
+    if (node.nodeType === 3) { if (node.nodeValue.includes('{{')) node.nodeValue = interp(node.nodeValue, scope); return; }
+    if (node.nodeType !== 1) return;
+    const tag = node.localName;
+    if (tag === 'sc-for') {
+      const list = lookup((node.getAttribute('list').match(WHOLE) || [])[1] || '', scope) || [];
+      const as = node.getAttribute('as') || 'item';
+      const frag = document.createDocumentFragment();
+      list.forEach((item, i) => {
+        for (const child of Array.from(node.childNodes)) {
+          const c = child.cloneNode(true);
+          const s = Object.assign({}, scope, { [as]: item, $index: i });
+          const holder = document.createElement('div'); holder.appendChild(c);
+          process(c, s);
+          while (holder.firstChild) frag.appendChild(holder.firstChild);
+        }
+      });
+      node.replaceWith(frag);
+      return;
+    }
+    if (tag === 'sc-if') {
+      const v = lookup((node.getAttribute('value').match(WHOLE) || [])[1] || '', scope);
+      if (!v) { node.remove(); return; }
+      const kids = Array.from(node.childNodes);
+      kids.forEach((k) => process(k, scope));
+      node.replaceWith(...Array.from(node.childNodes));
+      return;
+    }
+    for (const attr of Array.from(node.attributes)) {
+      const name = attr.name, val = attr.value;
+      if (name.startsWith('hint-')) { node.removeAttribute(name); continue; }
+      if (name.startsWith('on')) {
+        node.removeAttribute(name);
+        const m = val.match(WHOLE); const fn = m && lookup(m[1], scope);
+        const ev = name.slice(2).toLowerCase() === 'change' ? 'change' : name.slice(2).toLowerCase();
+        if (typeof fn === 'function') node.addEventListener(ev, fn);
+        continue;
+      }
+      if (!val.includes('{{')) continue;
+      const m = val.match(WHOLE);
+      if (m) {
+        const v = lookup(m[1], scope);
+        if (typeof v === 'boolean' && !name.startsWith('aria-')) {
+          if (v) node.setAttribute(name, ''); else node.removeAttribute(name);
+          if (name === 'checked' || name === 'disabled') node[name] = v;
+        } else node.setAttribute(name, v == null ? '' : String(v));
+      } else node.setAttribute(name, interp(val, scope));
+    }
+    for (const child of Array.from(node.childNodes)) process(child, scope);
+  }
+
+  let pending = false;
+  function schedule() { if (!pending) { pending = true; requestAnimationFrame(() => { pending = false; render(); }); } }
+  function render() {
+    const vals = inst.renderVals();
+    const frag = tpl.content.cloneNode(true);
+    const holder = document.createElement('div');
+    holder.appendChild(frag);
+    for (const c of Array.from(holder.childNodes)) process(c, vals);
+    root.replaceChildren(...Array.from(holder.childNodes));
+  }
+  render();
+
+  // Selettore tema / chiaro-scuro.
+  const bar = document.getElementById('mockup-bar');
+  const selT = bar.querySelector('[name=tema]'), selM = bar.querySelector('[name=modo]');
+  selT.value = props.tema; selM.value = props.modo;
+  function change() {
+    location.hash = 'tema=' + selT.value + '&modo=' + selM.value;
+    if (inst.componentWillUnmount) inst.componentWillUnmount();
+    inst = new Component({ tema: selT.value, modo: selM.value });
+    inst.state = inst.state || {};
+    if (inst.componentDidMount) inst.componentDidMount();
+    render();
+  }
+  selT.addEventListener('change', change);
+  selM.addEventListener('change', change);
+})();
+
+</script>
+</body>
+</html>

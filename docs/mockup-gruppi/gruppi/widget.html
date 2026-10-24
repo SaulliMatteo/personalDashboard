@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gruppi: Widget Gruppi (1×1, M, L) (mockup)</title>
+<!-- Mockup approvato della funzione Gruppi. Riferimento visivo per l'implementazione:
+     4 temi × versione chiara e scura, scegli dal selettore in basso a destra o con #tema=opaco&modo=notte.
+     I font qui arrivano da Google Fonts solo per comodità: nell'app si usano i pacchetti @fontsource locali. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,300..800&amp;family=Figtree:wght@300..800&amp;family=Caveat:wght@400..700&amp;family=JetBrains+Mono:wght@300..700&amp;family=Doto:wght@400..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font:inherit}
+button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+</style>
+<style>
+#mockup-bar{position:fixed;right:12px;bottom:12px;z-index:9999;display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:10px;background:#111;color:#eee;font:13px/1.2 system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+#mockup-bar select{font:inherit;padding:3px 6px;border-radius:6px}
+#mockup-bar span{opacity:.75}
+</style>
+</head>
+<body>
+<div id="mockup-root"></div>
+<div id="mockup-bar" role="group" aria-label="Versione del mockup">
+  <span>Mockup approvato</span>
+  <label>Tema <select name="tema"><option value="notte">Notte</option><option value="opaco">Opaco</option><option value="quaderno">Quaderno</option><option value="fosforo">Fosforo</option></select></label>
+  <label>Versione <select name="modo"><option value="giorno">Chiara</option><option value="notte">Scura</option></select></label>
+</div>
+<template id="mockup-markup">
+<div style="width: 1280px; height: 600px; box-sizing: border-box; padding: 48px 40px; display: flex; align-items: flex-start; gap: 14px; background: {{t.mainBg}}; color: {{t.text}}; font-family: {{t.font}}; font-size: {{t.size}}; line-height: 1.5;">
+
+  <article aria-label="Gruppi, 1×1" style="width: 180px; height: 170px; flex: 0 0 auto; box-sizing: border-box; padding: 18px; border-radius: {{t.rCard}}; background: {{t.cardBg}}; border: {{t.cardBorder}}; box-shadow: {{t.cardShadow}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;">
+    <span style="font-family: {{t.disp}}; font-size: {{t.bigSize}}; font-weight: {{t.dispW}}; letter-spacing: {{t.dispTrack}}; line-height: 1;">{{studying}}</span>
+    <span style="font-size: 12px; color: {{t.text2}};">studiano ora</span>
+    <span style="display: flex; gap: 4px; margin-top: 10px;" aria-hidden="true">
+      <sc-for list="{{dots}}" as="d" hint-placeholder-count="8">
+        <span style="width: 7px; height: 7px; border-radius: 50%; background: {{d.c}};"></span>
+      </sc-for>
+    </span>
+  </article>
+
+  <article aria-label="Gruppi, classifica" style="width: 374px; height: 354px; flex: 0 0 auto; box-sizing: border-box; padding: 22px; border-radius: {{t.rCard}}; background: {{t.cardBg}}; border: {{t.cardBorder}}; box-shadow: {{t.cardShadow}}; display: flex; flex-direction: column; gap: 14px;">
+    <header style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+      <div style="display: flex; flex-direction: column; min-width: 0;">
+        <h2 style="margin: 0; font-size: 16px; font-weight: {{t.titleW}};">Classifica</h2>
+        <span style="font-size: 12px; color: {{t.muted}};">Ingegneria</span>
+      </div>
+      <div role="group" aria-label="Periodo" style="display: flex; gap: 2px; padding: 3px; border-radius: {{t.rItem}}; background: {{t.panelBg}}; border: {{t.panelBorder}};">
+        <button type="button" onClick="{{pickToday}}" aria-pressed="{{isToday}}" style="height: 28px; padding: 0 10px; border: 0; border-radius: {{t.rItem}}; background: {{todayBg}}; color: {{todayFg}}; font-size: 12px; cursor: pointer;">Oggi</button>
+        <button type="button" onClick="{{pickWeek}}" aria-pressed="{{isWeek}}" style="height: 28px; padding: 0 10px; border: 0; border-radius: {{t.rItem}}; background: {{weekBg}}; color: {{weekFg}}; font-size: 12px; cursor: pointer;">Settimana</button>
+      </div>
+    </header>
+    <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px;">
+      <sc-for list="{{top5}}" as="r" hint-placeholder-count="5">
+        <li style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; border-radius: {{t.rRow}}; background: {{r.bg}};">
+          <span style="width: 18px; font-size: 13px; font-weight: 600; color: {{r.rankFg}}; font-variant-numeric: tabular-nums;">{{r.rank}}</span>
+          <span style="width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: {{r.dot}};" aria-hidden="true"></span>
+          <span style="flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.name}}</span>
+          <span style="font-family: {{t.disp}}; font-size: {{t.rowNumSize}}; font-weight: {{t.rowNumW}}; font-variant-numeric: tabular-nums;">{{r.time}}</span>
+        </li>
+      </sc-for>
+    </ol>
+  </article>
+
+  <article aria-label="Gruppi, classifica e messaggi" style="width: 568px; height: 354px; flex: 0 0 auto; box-sizing: border-box; padding: 22px; border-radius: {{t.rCard}}; background: {{t.cardBg}}; border: {{t.cardBorder}}; box-shadow: {{t.cardShadow}}; display: flex; gap: 18px;">
+    <div style="flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 12px;">
+      <header style="display: flex; flex-direction: column;">
+        <h2 style="margin: 0; font-size: 16px; font-weight: {{t.titleW}};">Classifica di {{periodLabel}}</h2>
+        <span style="font-size: 12px; color: {{t.muted}};">Ingegneria, {{studying}} studiano ora</span>
+      </header>
+      <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px;">
+        <sc-for list="{{top5}}" as="r" hint-placeholder-count="5">
+          <li style="display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px; border-radius: {{t.rRow}}; background: {{r.bg}};">
+            <span style="width: 18px; font-size: 13px; font-weight: 600; color: {{r.rankFg}};">{{r.rank}}</span>
+            <span style="width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: {{r.dot}};" aria-hidden="true"></span>
+            <span style="flex-grow: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.name}}</span>
+            <span style="font-family: {{t.disp}}; font-size: {{t.rowNumSize}}; font-weight: {{t.rowNumW}}; font-variant-numeric: tabular-nums;">{{r.time}}</span>
+          </li>
+        </sc-for>
+      </ol>
+    </div>
+    <div style="width: 210px; flex: 0 0 auto; box-sizing: border-box; padding: 16px; border-radius: {{t.rPanel}}; border: {{t.dashed}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; color: {{t.text2}};">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"></path></svg>
+      <span style="font-weight: 500; color: {{t.text}};">Messaggi</span>
+      <span style="font-size: 12px;">Dopo la v1</span>
+    </div>
+  </article>
+</div>
+</template>
+<script type="text/plain" id="mockup-logic">
+class Component extends DCLogic {
+  // Token dei temi presi da src/styles/tokens.css (variante nativa) e tokens-varianti.css (l'altra).
+  static NATIVE = { notte: 'notte', opaco: 'giorno', quaderno: 'giorno', fosforo: 'notte' };
+  static BASE = {
+    notte: { font: "'Manrope', system-ui, sans-serif", disp: "'Manrope', system-ui, sans-serif", dispW: 200, dispTrack: '-0.04em', titleW: 500, size: '14px', bigSize: '52px', rowNumSize: '15px', rowNumW: 300,
+      mainBg: '#090C15', cardBg: 'linear-gradient(180deg, #151B2E 0%, #10152A 100%)', cardBorder: '1px solid #1F2740', cardShadow: 'inset 0 1px 0 rgba(200,215,255,0.07)', rCard: '22px',
+      panelBg: '#0B0F1C', panelBorder: '1px solid #182036', rPanel: '16px', rItem: '9px', rRow: '12px',
+      text: '#E9ECF5', text2: '#9AA2BA', muted: '#8890A8', segBg: '#161C2E', segFg: '#E9ECF5', segIdle: '#9AA2BA',
+      meBg: 'rgba(142,166,255,0.14)', rank1: '#B7C6FF', rank2: '#C9CFE0', rank3: '#F0B47A', rankN: '#8890A8',
+      work: '#8EA6FF', brk: '#F5A35C', off: '#3A4566', dashed: '1px dashed #2A3350' },
+    opaco: { font: "'Bricolage Grotesque', system-ui, sans-serif", disp: "'Bricolage Grotesque', system-ui, sans-serif", dispW: 800, dispTrack: '-0.05em', titleW: 600, size: '14px', bigSize: '56px', rowNumSize: '15px', rowNumW: 700,
+      mainBg: '#D8D5CD', cardBg: '#9DB0C0', cardBorder: '0', cardShadow: 'none', rCard: '28px',
+      panelBg: '#8EA2B3', panelBorder: '0', rPanel: '18px', rItem: '999px', rRow: '999px',
+      text: '#1B2A36', text2: '#1B2A36', muted: '#1B2A36', segBg: '#1B2A36', segFg: '#ECE9E2', segIdle: '#1B2A36',
+      meBg: '#8296A8', rank1: '#1B2A36', rank2: '#1B2A36', rank3: '#1B2A36', rankN: '#1B2A36',
+      work: '#1B2A36', brk: '#7A6230', off: '#8296A8', dashed: '2px dashed #8296A8' },
+    quaderno: { font: "'Figtree', system-ui, sans-serif", disp: "'Caveat', cursive", dispW: 600, dispTrack: '0', titleW: 600, size: '14px', bigSize: '64px', rowNumSize: '20px', rowNumW: 600,
+      mainBg: 'linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, #FCFDFF',
+      cardBg: '#FFFFFF', cardBorder: '1px solid #C9D3E3', cardShadow: '0 3px 0 #DCE4F0', rCard: '8px',
+      panelBg: '#FFFFFF', panelBorder: '1px solid #DCE6F5', rPanel: '6px', rItem: '6px', rRow: '4px',
+      text: '#1B2433', text2: '#556178', muted: '#556178', segBg: '#2340A0', segFg: '#FFFFFF', segIdle: '#2340A0',
+      meBg: '#FFF1A8', rank1: '#2340A0', rank2: '#2340A0', rank3: '#2340A0', rankN: '#556178',
+      work: '#2340A0', brk: '#9A5B12', off: '#B8C4D8', dashed: '1.5px dashed #B8C4D8' },
+    fosforo: { font: "'JetBrains Mono', ui-monospace, monospace", disp: "'Doto', monospace", dispW: 900, dispTrack: '0', titleW: 400, size: '13px', bigSize: '58px', rowNumSize: '17px', rowNumW: 900,
+      mainBg: 'radial-gradient(circle at 96% 104%, #4A131B 0%, #2A0A10 14%, #170609 24%, transparent 25%), #110709',
+      cardBg: 'rgba(26,13,15,0.9)', cardBorder: '1px solid rgba(255,214,206,0.12)', cardShadow: 'none', rCard: '14px',
+      panelBg: '#0B0405', panelBorder: '1px solid rgba(255,214,206,0.12)', rPanel: '8px', rItem: '999px', rRow: '8px',
+      text: '#F2E6E1', text2: '#B39C97', muted: '#B39C97', segBg: '#F4E9E4', segFg: '#110709', segIdle: '#B39C97',
+      meBg: 'rgba(255,214,206,0.07)', rank1: '#FF4A3D', rank2: '#F4E9E4', rank3: '#F4E9E4', rankN: '#B39C97',
+      work: '#FF4A3D', brk: '#B39C97', off: '#3A2326', dashed: '1px dashed rgba(255,214,206,0.2)' }
+  };
+  static OTHER = {
+    notte: { mainBg: '#EEF1F7', cardBg: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFD 100%)', cardBorder: '1px solid #DCE2EE', cardShadow: 'none',
+      panelBg: '#F4F6FB', panelBorder: '1px solid #E1E6F0',
+      text: '#141A2E', text2: '#5B6480', muted: '#646C89', segBg: '#E4E9F6', segFg: '#141A2E', segIdle: '#5B6480',
+      meBg: 'rgba(59,87,214,0.10)', rank1: '#3049B8', rank2: '#2A3350', rank3: '#9A5B12', rankN: '#646C89',
+      work: '#3B57D6', brk: '#C27628', off: '#C3CBDC', dashed: '1px dashed #CBD3E4' },
+    opaco: { mainBg: '#1B1C18', cardBg: '#34475A', panelBg: '#40546A',
+      text: '#E1EAF2', text2: '#E1EAF2', muted: '#E1EAF2', segBg: '#E1EAF2', segFg: '#1B2A36', segIdle: '#E1EAF2',
+      meBg: '#4A5F73', rank1: '#E1EAF2', rank2: '#E1EAF2', rank3: '#E1EAF2', rankN: '#E1EAF2',
+      work: '#E1EAF2', brk: '#E0B070', off: '#4A5F73', dashed: '2px dashed #4A5F73' },
+    quaderno: { mainBg: 'linear-gradient(#1C2330 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #1C2330 1px, transparent 1px) 0 0 / 24px 24px, #121620',
+      cardBg: '#1A1F2B', cardBorder: '1px solid #2C3446', cardShadow: '0 3px 0 #0C0F16', panelBg: '#1A1F2B', panelBorder: '1px solid #262E3D',
+      text: '#E6EAF2', text2: '#98A3B8', muted: '#98A3B8', segBg: '#9FB6FF', segFg: '#121620', segIdle: '#9FB6FF',
+      meBg: 'rgba(227,213,140,0.18)', rank1: '#9FB6FF', rank2: '#9FB6FF', rank3: '#9FB6FF', rankN: '#98A3B8',
+      work: '#9FB6FF', brk: '#E0A25A', off: '#3A4459', dashed: '1.5px dashed #3A4459' },
+    fosforo: { mainBg: 'radial-gradient(circle at 96% 104%, #E6C3C1 0%, #EDD5D2 14%, #F0E3DF 24%, transparent 25%), #EFE9E5',
+      cardBg: 'rgba(253,250,248,0.92)', cardBorder: '1px solid rgba(70,24,28,0.12)', panelBg: '#E5DDD7', panelBorder: '1px solid rgba(70,24,28,0.12)',
+      text: '#2A1517', text2: '#77605D', muted: '#77605D', segBg: '#2A1215', segFg: '#EFE9E5', segIdle: '#77605D',
+      meBg: 'rgba(70,24,28,0.07)', rank1: '#E0352B', rank2: '#2A1215', rank3: '#2A1215', rankN: '#77605D',
+      work: '#E0352B', brk: '#77605D', off: '#D6C9C4', dashed: '1px dashed rgba(70,24,28,0.25)' }
+  };
+
+  state = { period: 'today', now: Date.now() };
+
+  componentDidMount() {
+    this.timer = setInterval(() => this.setState({ now: Date.now() }), 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+
+  renderVals() {
+    const tema = Component.BASE[this.props.tema] ? this.props.tema : 'notte';
+    const modo = this.props.modo === 'giorno' || this.props.modo === 'notte' ? this.props.modo : Component.NATIVE[tema];
+    const t = Object.assign({}, Component.BASE[tema], modo === Component.NATIVE[tema] ? {} : Component.OTHER[tema]);
+
+    if (!this.t0) this.t0 = Date.now();
+    const elapsed = Math.max(0, Math.floor((this.state.now - this.t0) / 1000));
+    const people = [
+      { name: 'matteo_s', me: true, state: 'work', since: 1512, today: 5400, week: 41000 },
+      { name: 'giulia.r', state: 'work', since: 2537, today: 9000, week: 52300 },
+      { name: 'chiara_b', state: 'work', since: 4020, today: 1800, week: 30100 },
+      { name: 'luca04', state: 'work', since: 612, today: 3100, week: 22800 },
+      { name: 'sara.m', state: 'break', today: 6300, week: 47200 },
+      { name: 'marco_t', state: 'off', today: 2400, week: 18000 },
+      { name: 'davide', state: 'off', today: 4500, week: 26500 },
+      { name: 'elena.v', state: 'off', today: 0, week: 3600 }
+    ];
+    const dotOf = { work: t.work, break: t.brk, off: t.off };
+    const pad = (n) => String(n).padStart(2, '0');
+    const hm = (s) => { const m = Math.floor(s / 60), h = Math.floor(m / 60); return h > 0 ? h + 'h ' + pad(m % 60) + 'm' : (m % 60) + 'm'; };
+    const isToday = this.state.period === 'today';
+    const rows = people.map((p) => {
+      const live = p.state === 'work' ? p.since + elapsed : 0;
+      return Object.assign({}, p, { total: (isToday ? p.today : p.week) + live });
+    }).sort((a, b) => b.total - a.total);
+    let top5 = rows.slice(0, 5);
+    const meIdx = rows.findIndex((r) => r.me);
+    if (meIdx >= 5) top5 = rows.slice(0, 4).concat([rows[meIdx]]);
+    const rankFg = [t.rank1, t.rank2, t.rank3];
+    return {
+      t,
+      studying: people.filter((p) => p.state === 'work').length,
+      dots: people.map((p) => ({ c: dotOf[p.state] })),
+      isToday, isWeek: !isToday,
+      periodLabel: isToday ? 'oggi' : 'settimana',
+      pickToday: () => this.setState({ period: 'today' }),
+      pickWeek: () => this.setState({ period: 'week' }),
+      todayBg: isToday ? t.segBg : 'transparent', todayFg: isToday ? t.segFg : t.segIdle,
+      weekBg: isToday ? 'transparent' : t.segBg, weekFg: isToday ? t.segIdle : t.segFg,
+      top5: top5.map((r) => {
+        const rank = rows.indexOf(r) + 1;
+        return {
+          rank, name: r.me ? r.name + ' (tu)' : r.name, time: hm(r.total), dot: dotOf[r.state],
+          rankFg: rankFg[rank - 1] || t.rankN,
+          bg: r.me ? t.meBg : 'transparent'
+        };
+      })
+    };
+  }
+}
+</script>
+<script>
+/* Mini-motore per vedere i mockup fuori dall'editor: legge il markup del mockup
+   (segnaposto {{...}}, <sc-for>, <sc-if>, onClick/onChange) e lo ridisegna a ogni setState.
+   Serve solo come riferimento visivo: NON è codice da riusare nell'app. */
+(function () {
+  const tpl = document.getElementById('mockup-markup');
+  const src = document.getElementById('mockup-logic').textContent;
+  const root = document.getElementById('mockup-root');
+
+  class DCLogic {
+    constructor(props) { this.props = props || {}; }
+    setState(patch) { this.state = Object.assign({}, this.state, typeof patch === 'function' ? patch(this.state) : patch); schedule(); }
+    forceUpdate() { schedule(); }
+  }
+  const Component = new Function('DCLogic', src + '\n;return Component;')(DCLogic);
+
+  const params = new URLSearchParams(location.hash.slice(1));
+  const props = { tema: params.get('tema') || 'notte', modo: params.get('modo') || '' };
+  const NATIVE = { notte: 'notte', opaco: 'giorno', quaderno: 'giorno', fosforo: 'notte' };
+  if (!props.modo) props.modo = NATIVE[props.tema] || 'notte';
+
+  let inst = new Component(props);
+  inst.state = inst.state || {};
+  if (inst.componentDidMount) inst.componentDidMount();
+
+  function lookup(path, scope) {
+    path = path.trim();
+    if (path === 'true') return true;
+    if (path === 'false') return false;
+    let o = scope;
+    for (const k of path.split('.')) { if (o == null) return undefined; o = o[k]; }
+    return o;
+  }
+  const WHOLE = /^\s*\{\{\s*([\w.$]+)\s*\}\}\s*$/;
+  const ANY = /\{\{\s*([\w.$]+)\s*\}\}/g;
+  const interp = (s, scope) => s.replace(ANY, (_, p) => { const v = lookup(p, scope); return v == null ? '' : String(v); });
+
+  function process(node, scope) {
+    if (node.nodeType === 3) { if (node.nodeValue.includes('{{')) node.nodeValue = interp(node.nodeValue, scope); return; }
+    if (node.nodeType !== 1) return;
+    const tag = node.localName;
+    if (tag === 'sc-for') {
+      const list = lookup((node.getAttribute('list').match(WHOLE) || [])[1] || '', scope) || [];
+      const as = node.getAttribute('as') || 'item';
+      const frag = document.createDocumentFragment();
+      list.forEach((item, i) => {
+        for (const child of Array.from(node.childNodes)) {
+          const c = child.cloneNode(true);
+          const s = Object.assign({}, scope, { [as]: item, $index: i });
+          const holder = document.createElement('div'); holder.appendChild(c);
+          process(c, s);
+          while (holder.firstChild) frag.appendChild(holder.firstChild);
+        }
+      });
+      node.replaceWith(frag);
+      return;
+    }
+    if (tag === 'sc-if') {
+      const v = lookup((node.getAttribute('value').match(WHOLE) || [])[1] || '', scope);
+      if (!v) { node.remove(); return; }
+      const kids = Array.from(node.childNodes);
+      kids.forEach((k) => process(k, scope));
+      node.replaceWith(...Array.from(node.childNodes));
+      return;
+    }
+    for (const attr of Array.from(node.attributes)) {
+      const name = attr.name, val = attr.value;
+      if (name.startsWith('hint-')) { node.removeAttribute(name); continue; }
+      if (name.startsWith('on')) {
+        node.removeAttribute(name);
+        const m = val.match(WHOLE); const fn = m && lookup(m[1], scope);
+        const ev = name.slice(2).toLowerCase() === 'change' ? 'change' : name.slice(2).toLowerCase();
+        if (typeof fn === 'function') node.addEventListener(ev, fn);
+        continue;
+      }
+      if (!val.includes('{{')) continue;
+      const m = val.match(WHOLE);
+      if (m) {
+        const v = lookup(m[1], scope);
+        if (typeof v === 'boolean' && !name.startsWith('aria-')) {
+          if (v) node.setAttribute(name, ''); else node.removeAttribute(name);
+          if (name === 'checked' || name === 'disabled') node[name] = v;
+        } else node.setAttribute(name, v == null ? '' : String(v));
+      } else node.setAttribute(name, interp(val, scope));
+    }
+    for (const child of Array.from(node.childNodes)) process(child, scope);
+  }
+
+  let pending = false;
+  function schedule() { if (!pending) { pending = true; requestAnimationFrame(() => { pending = false; render(); }); } }
+  function render() {
+    const vals = inst.renderVals();
+    const frag = tpl.content.cloneNode(true);
+    const holder = document.createElement('div');
+    holder.appendChild(frag);
+    for (const c of Array.from(holder.childNodes)) process(c, vals);
+    root.replaceChildren(...Array.from(holder.childNodes));
+  }
+  render();
+
+  // Selettore tema / chiaro-scuro.
+  const bar = document.getElementById('mockup-bar');
+  const selT = bar.querySelector('[name=tema]'), selM = bar.querySelector('[name=modo]');
+  selT.value = props.tema; selM.value = props.modo;
+  function change() {
+    location.hash = 'tema=' + selT.value + '&modo=' + selM.value;
+    if (inst.componentWillUnmount) inst.componentWillUnmount();
+    inst = new Component({ tema: selT.value, modo: selM.value });
+    inst.state = inst.state || {};
+    if (inst.componentDidMount) inst.componentDidMount();
+    render();
+  }
+  selT.addEventListener('change', change);
+  selM.addEventListener('change', change);
+})();
+
+</script>
+</body>
+</html>

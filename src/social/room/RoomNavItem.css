@@ -1,0 +1,22 @@
+/* Voce "Stanza comune" della barra laterale (stile .nav-item in features/sidebar/sidebar.css). */
+
+.room-nav-label {
+  flex-grow: 1;
+  text-align: left;
+}
+
+/* Contatore di chi studia: i colori della voce attiva, invertiti. */
+.room-nav-badge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--nav-active-fg);
+  color: var(--nav-active-bg);
+  font-size: 12px;
+  font-weight: 600;
+}

@@ -162,6 +162,26 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     });
   }, [state.phase, state.runningSince, state.subjectId, subjects]);
 
+  // Il timer per chi deve ricostruirlo altrove (i Gruppi): un oggetto nuovo solo quando cambia lo stato.
+  useEffect(() => {
+    if (state.phase === "idle") {
+      publishActivity({ studyTimer: null });
+      return;
+    }
+    const stopwatch = state.phase === "work" && state.phaseTotalSeconds === 0;
+    publishActivity({
+      studyTimer: {
+        phase: state.phase === "work" ? "work" : "break",
+        mode: stopwatch ? "stopwatch" : "pomodoro",
+        runningSince: state.runningSince,
+        phaseTotalSeconds: state.phaseTotalSeconds,
+        // cronometro: remainingSeconds sono i secondi già fatti; pomodoro: quelli che mancano
+        accumulatedSeconds: stopwatch ? state.remainingSeconds : Math.max(0, state.phaseTotalSeconds - state.remainingSeconds),
+        changedAt: Date.now(),
+      },
+    });
+  }, [state.phase, state.runningSince, state.phaseTotalSeconds, state.remainingSeconds]);
+
   // Obiettivo giornaliero superato: evento UNA volta, nel momento in cui si passa la soglia
   // (non al caricamento se era già superato).
   const prevTodayTotalRef = useRef<number | null>(null);

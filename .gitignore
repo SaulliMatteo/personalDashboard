@@ -22,7 +22,24 @@ lerna-debug.log*
 # Segreti e configurazioni locali
 .env
 .env.*
-!.env.example
+
+
+# Supabase CLI (stato locale, link al progetto, credenziali)
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+supabase/.env.*
+supabase/**/*.local.*
+
+# Credenziali e dump (mai nel repo)
+*.pem
+*.key
+credentials*.json
+service-account*.json
+client_secret*.json
+*.dump
+*.sql.gz
+dump*.sql
 
 # Database locali (non vanno mai nel repo)
 *.db

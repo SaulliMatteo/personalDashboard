@@ -9,6 +9,8 @@ import { companionWidget } from "./companion";
 import { clockWidget } from "./clock";
 import { dateWidget } from "./date";
 import { weatherWidget } from "./weather";
+// L'unica eccezione a "widgets non importa social": il widget Gruppi sta con i moduli che legge.
+import { groupsWidget } from "../social/widget";
 
 /**
  * L'UNICO elenco dei widget dell'app. Per aggiungerne uno:
@@ -18,7 +20,7 @@ import { weatherWidget } from "./weather";
  * Catalogo, dashboard, layout di default e provider si aggiornano da soli.
  * L'ordine determina anche l'ordine delle righe nel layout di default.
  */
-export const WIDGET_REGISTRY: WidgetDefinition[] = [studyWidget, fileTransferWidget, youtubeWidget, notesWidget, companionWidget, clockWidget, dateWidget, weatherWidget];
+export const WIDGET_REGISTRY: WidgetDefinition[] = [studyWidget, fileTransferWidget, youtubeWidget, notesWidget, companionWidget, clockWidget, dateWidget, weatherWidget, groupsWidget];
 
 const widgetsById = new Map(WIDGET_REGISTRY.map((widget) => [widget.id, widget] as const));
 

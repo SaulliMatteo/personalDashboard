@@ -2,7 +2,7 @@ import { getDatabase } from "./client";
 import { MIGRATIONS } from "./migrations";
 
 export { getDatabase } from "./client";
-export { getMeta, setMeta } from "./meta";
+export { getDeviceId, getMeta, setMeta } from "./meta";
 
 // Promise condivisa: chiamarla più volte riusa la stessa esecuzione.
 let initPromise: Promise<void> | null = null;
