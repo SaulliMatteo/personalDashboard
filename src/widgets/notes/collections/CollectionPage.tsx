@@ -1,9 +1,10 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
-import { MdDeleteOutline, MdMoreHoriz, MdOutlineGridView, MdOutlineTableChart, MdOutlineViewKanban } from "react-icons/md";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { MdDeleteOutline, MdMoreHoriz, MdOutlineDescription, MdOutlineGridView, MdOutlineTableChart, MdOutlineViewKanban } from "react-icons/md";
 import { groupableFields, viewRows, type CellValue, type Field, type FieldType, type Row, type ValueContext, type ViewLayout } from "../lib/collections";
 import {
   addField,
   addRow,
+  fetchCollectionUses,
   fieldsOf,
   pageViewOf,
   renameCollection,
@@ -17,6 +18,7 @@ import {
   useCollections,
 } from "../lib/collectionsStore";
 import type { NoteRef } from "./CellEditor";
+import type { CollectionUse } from "../data/collectionsRepository";
 import CollectionBoard from "./CollectionBoard";
 import CollectionCards from "./CollectionCards";
 import CollectionTable from "./CollectionTable";
@@ -50,6 +52,21 @@ function CollectionPage({ collectionId, notes, onOpenNote, onNotice, onTrashed }
   const [menuOpen, setMenuOpen] = useState(false);
   const [armed, setArmed] = useState(false);
   const menuAnchor = useRef<HTMLButtonElement | null>(null);
+  const [uses, setUses] = useState<CollectionUse[] | null>(null);
+
+  // "Usata in": letto dal database all'apertura (e quando cambiano le viste o le righe della raccolta).
+  const viewCount = store.views.filter((v) => v.collectionId === collectionId).length;
+  const rowCount = store.rows.filter((r) => r.collectionId === collectionId).length;
+  useEffect(() => {
+    if (!store.loaded) return;
+    let alive = true;
+    fetchCollectionUses(collectionId)
+      .then((list) => alive && setUses(list))
+      .catch(() => alive && setUses(null));
+    return () => {
+      alive = false;
+    };
+  }, [collectionId, store.loaded, viewCount, rowCount]);
 
   const titles = useMemo(() => new Map(notes.map((n) => [n.id, n.title || "Senza titolo"])), [notes]);
   const ctx: ValueContext = useMemo(() => ({ now, noteTitle: (id) => titles.get(id) ?? null }), [now, titles]);
@@ -111,8 +128,6 @@ function CollectionPage({ collectionId, notes, onOpenNote, onNotice, onTrashed }
   function newField(type: FieldType) {
     void run(() => addField(collectionId, type), "Impossibile aggiungere il campo");
   }
-
-  const used: NoteRef[] = []; // Fase 6b: note che mostrano una vista o un riferimento a una riga.
 
   return (
     <div className="nq-coll">
@@ -234,7 +249,21 @@ function CollectionPage({ collectionId, notes, onOpenNote, onNotice, onTrashed }
 
       <aside className="nq-usedin" aria-label="Usata in">
         <h4>Usata in</h4>
-        {used.length === 0 && <p className="nq-usedin-hint">Non è ancora mostrata in nessuna nota.</p>}
+        {uses === null && <p className="nq-usedin-hint">Cerco nelle note…</p>}
+        {uses?.length === 0 && <p className="nq-usedin-hint">Non è ancora mostrata in nessuna nota. Inseriscila con il pulsante «racc.» della barra o scrivendo / nella nota.</p>}
+        {uses?.map((u) => (
+          <button key={u.noteId} type="button" className="nq-usedin-item" onClick={() => onOpenNote(u.noteId)}>
+            <MdOutlineDescription aria-hidden="true" />
+            <span>
+              <b>{u.title || "Senza titolo"}</b>
+              <small>
+                {[u.views > 0 ? (u.views === 1 ? "una vista" : `${u.views} viste`) : "", u.refs > 0 ? (u.refs === 1 ? "un riferimento a una riga" : `${u.refs} riferimenti a righe`) : ""]
+                  .filter(Boolean)
+                  .join(", ")}
+              </small>
+            </span>
+          </button>
+        ))}
         <p className="nq-usedin-hint">Eliminando la raccolta, le viste nelle note mostrano «Raccolta eliminata» con il pulsante Ripristina.</p>
       </aside>
 

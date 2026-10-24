@@ -6,6 +6,7 @@ import { isPageColorKey, luminance, paperVars } from "./pageColor";
 import type { NoteFont } from "./textStyle";
 import { renderStaticBlocks } from "./blockExport";
 import { layoutTables } from "./tableDom";
+import { expandCollectionBlocks } from "./viewExport";
 import { THEME_INK, drawStrokes } from "./ink"; // al posto del solo drawStrokes
 
 export interface ExportMeta {
@@ -48,7 +49,8 @@ const LIGHT_VARS: Record<string, string> = {
 // ---------------------------------------------------------------------
 
 export function noteToMarkdown(title: string, pages: NotePage[]): string {
-  const body = pages.map((p) => htmlToMarkdown(p.content)).join("\n\n---\n\n");
+  // Le viste collegate diventano tabelle con i dati del momento (lib/viewExport.ts).
+  const body = pages.map((p) => htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }))).join("\n\n---\n\n");
   return `# ${title || "Senza titolo"}\n\n${body}\n`;
 }
 
@@ -102,7 +104,7 @@ function buildStage(page: NotePage, number: number, meta: ExportMeta, light: boo
 
   const doc = paper.querySelector<HTMLElement>(".nq-doc");
   if (doc) {
-    doc.innerHTML = sanitizeHtml(page.content);
+    doc.innerHTML = sanitizeHtml(expandCollectionBlocks(page.content));
     layoutTables(doc); // larghezze delle colonne
   }
 

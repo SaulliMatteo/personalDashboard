@@ -11,6 +11,7 @@ import {
   MdFormatAlignRight,
   MdFormatColorReset,
   MdOutlinePalette,
+  MdOutlineStorage,
   MdMoreHoriz,
   MdOutlineTableChart,
 } from "react-icons/md";
@@ -22,6 +23,7 @@ import {
   TABLE_INKS,
   alignColumn,
   cellBoxes,
+  cellText,
   colCount,
   columnAlign,
   deleteCol,
@@ -42,6 +44,9 @@ import {
   type TableModel,
 } from "../lib/tables";
 import { applyWidths, caretCell, cellOf, layoutTable, pageTables, placeCaret, readTable, rectBetween, replaceTable, type CellEl } from "../lib/tableDom";
+import { tableToCollection } from "../lib/collections";
+import { createCollectionFrom } from "../lib/collectionsStore";
+import { createViewBlock } from "../lib/blocks";
 import "./TableTools.css";
 
 interface TableToolsProps {
@@ -396,6 +401,48 @@ function TableTools({ paper, editorRef, onChange, onNotice }: TableToolsProps) {
     onChange();
   }
 
+  /**
+   * "Trasforma in raccolta": le colonne diventano campi (numero o data se lo sono tutti i valori),
+   * le righe righe della raccolta; al posto della tabella resta una vista collegata.
+   * Il nome viene dal titolo appena sopra la tabella, se c'è.
+   */
+  async function toCollection() {
+    if (!table) return;
+    const t = table;
+    setMenu(null);
+    const C = colCount(model);
+    const origin = new Map(cellBoxes(model).map((b) => [b.id, `${b.row}:${b.col}`]));
+    const text = model.grid.map((row, r) =>
+      Array.from({ length: C }, (_, c) => (origin.get(row[c]) === `${r}:${c}` ? cellText(model.cells[row[c]].html) : ""))
+    );
+    const header = model.head ? (text.shift() ?? null) : null;
+    const { fields, rows } = tableToCollection(header, text);
+    let name = "Raccolta da tabella";
+    let prev = t.previousElementSibling;
+    for (let i = 0; prev && i < 3; i++, prev = prev.previousElementSibling) {
+      if (/^H[1-3]$/.test(prev.tagName) && prev.textContent?.trim()) {
+        name = prev.textContent.trim().slice(0, 80);
+        break;
+      }
+    }
+    try {
+      const viewId = await createCollectionFrom(name, fields, rows);
+      if (!t.isConnected) return;
+      const block = createViewBlock(viewId);
+      t.replaceWith(block);
+      if (!block.nextElementSibling) {
+        const p = document.createElement("p");
+        p.appendChild(document.createElement("br"));
+        block.after(p);
+      }
+      onChange();
+      onNotice(`Creata la raccolta «${name}»: la trovi anche nella barra laterale`);
+    } catch (error) {
+      console.error("Raccolta non creata dalla tabella:", error);
+      onNotice("Impossibile trasformare la tabella in raccolta");
+    }
+  }
+
   function addColumn() {
     const at = colCount(model);
     commit(insertCol(model, at), [active?.row ?? 0, at]);
@@ -547,6 +594,12 @@ function TableTools({ paper, editorRef, onChange, onNotice }: TableToolsProps) {
             </button>
             <button type="button" role="menuitem" disabled={!hasWidths} onClick={() => commit(setWidths(model, null), active ? [active.row, active.col] : null)}>
               <strong>Colonne di uguale larghezza</strong>
+            </button>
+            <button type="button" role="menuitem" onClick={() => void toCollection()}>
+              <strong>
+                <MdOutlineStorage aria-hidden="true" /> Trasforma in raccolta
+              </strong>
+              <span>I dati vanno in una raccolta, qui resta una vista collegata</span>
             </button>
             <button type="button" role="menuitem" onClick={() => menu && setMenu({ ...menu, kind: "look" })}>
               <strong>

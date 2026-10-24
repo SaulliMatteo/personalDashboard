@@ -103,7 +103,8 @@ notes/
 ├─ collections/              pagina di una raccolta: CollectionPage (tabella/schede/bacheca, "Usata in"),
 │                            CollectionTable, CollectionCards, CollectionBoard, RowTile, RowCard (scheda
 │                            di una riga), FieldMenu (nome, tipo, scelte), ViewBar (ordina, filtri),
-│                            CellEditor (un editor per tipo di campo), ChoiceChip, FieldIcon
+│                            CellEditor (un editor per tipo di campo), ChoicePicker, ChoiceChip, FieldIcon,
+│                            Popover (menu sopra tutta la pagina), CollectionView (vista collegata nella nota)
 ├─ data/notesRepository.ts   tutte le query SQL (note_folders, notes, note_pages)
 ├─ data/collectionsRepository.ts  SQL delle raccolte (note_collections, _fields, _rows, _views)
 │                            FindBar (Ctrl+F), InsertMenu (menu "/"), ShortcutsPanel (Ctrl+/ o F1),
@@ -126,7 +127,8 @@ notes/
                              tables.ts (modello puro delle tabelle: griglia di celle, unisci/dividi,
                              ordina, GFM), tableDom.ts (tabella ⇄ modello, cursore, larghezze),
                              collections.ts (raccolte, puro: tipi di campo, valori, filtro, ordine,
-                             bacheca, CSV/JSON), collectionsStore.ts (cache condivisa + useCollections)
+                             bacheca, CSV/JSON), collectionsStore.ts (cache condivisa + useCollections),
+                             viewExport.ts (viste e riferimenti @ → tabelle e testo per l'esportazione)
 ```
 
 La geometria del testo nella pagina (larghezza 58em, margini interni, corpo, dimensioni e margini dei titoli
@@ -162,6 +164,11 @@ aperta. La pagina di una raccolta usa la sua prima vista (`note_collection_views
 hanno `deleted_at` e si ripristinano. Con la copia su disco attiva ogni raccolta viva è scritta in
 `Notes/Raccolte/<nome>.json` e `.csv`; i file dei campi "File" stanno in `Notes/Raccolte/allegati/<id>/`. Si tolgono
 solo i .json scritti dall'app (campo `kind`).
+Nella nota una raccolta si mostra con una **vista collegata**: `<div data-block="collection-view" data-view="ID">` (una riga di
+`note_collection_views` per blocco, con filtro e layout suoi), disegnata da `collections/CollectionView` con un portal come le
+immagini. I **riferimenti** a una riga sono `<span data-ref-row="ID">titolo</span>` (si scrive `@`); `PageSurface` ne tiene
+aggiornato il titolo. "Usata in" cerca nelle pagine `data-view`/`data-ref-row` (`collectionUses`). In esportazione e in
+`nota.md` `lib/viewExport.ts` trasforma viste e riferimenti in tabelle e testo con i dati del momento.
 
 ### Il widget Companion (`widgets/companion/`)
 

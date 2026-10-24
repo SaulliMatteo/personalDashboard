@@ -29,6 +29,8 @@ import { markdownToHtml, parseFrontmatter, parseMetaString, parseMetaTags } from
 
 import { asPageColor } from "./pageColor";
 import { isNoteFont } from "./textStyle";
+import { loadCollections } from "./collectionsStore";
+import { expandCollectionBlocks } from "./viewExport";
 
 /**
  * COPIA SU DISCO (Documenti/Notes). SQLite resta il database di lavoro; ogni
@@ -117,7 +119,8 @@ function buildMarkdown(note: NoteSummary, pages: NotePage[]): string {
     "---",
     "",
   ].join("\n");
-  const body = pages.map((p) => htmlToMarkdown(p.content)).join(`\n\n${PAGE_MARKER}\n\n`);
+  // In nota.md le viste collegate sono tabelle con i dati del momento; canvas.json tiene l'HTML vero.
+  const body = pages.map((p) => htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }))).join(`\n\n${PAGE_MARKER}\n\n`);
   return `${front}\n${body}\n`;
 }
 
@@ -164,6 +167,7 @@ async function writeNote(note: NoteSummary, pages: NotePage[], byId: Map<number,
 /** Riscrive su disco solo le note cambiate (o spostate/rinominate). Ritorna quante. */
 export async function syncPending(notes: NoteSummary[], folders: Folder[]): Promise<number> {
   const byId = new Map(folders.map((f) => [f.id, f]));
+  await loadCollections(); // per scrivere le viste collegate con i loro dati
   await ensureVaultDir();
   let written = 0;
   for (const note of notes) {

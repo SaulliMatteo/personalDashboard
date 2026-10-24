@@ -37,6 +37,8 @@ import {
   MdOutlineLayers,
   MdOutlineStarBorder,
   MdOutlineTableChart,
+  MdOutlineStorage,
+  MdAlternateEmail,
   MdOutlineVerticalSplit,
   MdOutlineViewSidebar,
   MdRedo,
@@ -104,7 +106,11 @@ import { duplicateBlock, moveBlock } from "../lib/blockActions";
 import { createTableElement, placeCaret } from "../lib/tableDom";
 import { shortcutLabel, type ShortcutAction } from "../lib/shortcuts";
 import { filterInsertItems, type InsertItem } from "../lib/insertItems";
-import { createFileBlock, createImageBlock, insertBlocks, caretAt, serializeEditor } from "../lib/blocks";
+import { createFileBlock, createImageBlock, createRowRef, createViewBlock, insertBlocks, caretAt, serializeEditor } from "../lib/blocks";
+import { rowTitle } from "../lib/collections";
+import { createCollection, createView, fieldsOf, restoreRow, rowInfo, setCell, trashRow, useCollections } from "../lib/collectionsStore";
+import type { CollectionLinks } from "../collections/CollectionView";
+import RowCard from "../collections/RowCard";
 import { attachmentUrl, imageSize, isImageName, IMAGE_EXTENSIONS } from "../lib/attachmentUrls";
 import { MAX_FILE_BYTES, classifyFile, formatBytes, pastedImageName, readPaths, textFileToHtml, type IncomingFile } from "../lib/insertFiles";
 import type { EditorApi, ScreenPoint, StoredFile } from "../lib/editorApi";
@@ -143,6 +149,8 @@ interface NoteEditorProps {
   /** Copia i file nella cartella della nota e li aggiunge agli allegati; restituisce i nomi finali. */
   onStoreFiles: (noteId: number, files: IncomingFile[]) => Promise<StoredFile[]>;
   onOpenShortcuts?: () => void;
+  /** Note e navigazione per raccolte, viste collegate e riferimenti @. */
+  collections: CollectionLinks;
 }
 
 /** Stato di una pagina per la cronologia (lib/history.ts). */
@@ -197,6 +205,7 @@ function NoteEditor({
   registerEditor,
   onStoreFiles,
   onOpenShortcuts,
+  collections,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(note.title);
   const [pages, setPages] = useState<NotePage[]>([]);
@@ -224,7 +233,11 @@ function NoteEditor({
   const [colorKey, setColorKey] = useState("");
   const [inTitle, setInTitle] = useState(false);
   const [noteFont, setNoteFont] = useState<NoteFont | null>(note.font);
-  const [menu, setMenu] = useState<"export" | "split" | "color" | "mark" | "more" | "pages" | null>(null);
+  const [menu, setMenu] = useState<"export" | "split" | "color" | "mark" | "more" | "pages" | "views" | null>(null);
+  const store = useCollections();
+  const [mentionState, setMention] = useState<SlashState | null>(null);
+  /** Riga aperta da un riferimento @ (scheda della riga). */
+  const [refRow, setRefRow] = useState<number | null>(null);
   const zoomRef = useLatestRef(zoom);
   const [lightExport, setLightExport] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -235,6 +248,7 @@ function NoteEditor({
   const scrollWrapRef = useRef<HTMLDivElement | null>(null);
   const [slashState, setSlash] = useState<SlashState | null>(null);
   const slash = slashState && slashState.pageIndex === index ? slashState : null;
+  const mention = mentionState && mentionState.pageIndex === index ? mentionState : null;
   // Cronologia della nota: una per editor (cambiando nota l'editor si ricrea e la cronologia riparte).
   const [history] = useState(() => createHistory<PageSnapshot>({ now: () => Date.now() }));
   
@@ -742,8 +756,9 @@ async function changePageColor(color: string | null) {
         return true;
       case "escape": {
         // Chiude quello che è aperto; se non c'è niente esce dal disegno o deseleziona.
-        const open = Boolean(slash || menu || linkOpen || findOpen);
+        const open = Boolean(slash || mention || menu || linkOpen || findOpen);
         setSlash(null);
+        setMention(null);
         setMenu(null);
         setLinkOpen(false);
         setFindOpen(false);
@@ -789,6 +804,8 @@ async function changePageColor(color: string | null) {
     { id: "numbers", label: "Elenco numerato", icon: <MdFormatListNumbered />, hint: shortcutLabel("numbers"), keywords: "lista elenco numeri" },
     { id: "checklist", label: "Checklist", icon: <MdChecklist />, hint: shortcutLabel("checklist"), keywords: "cose da fare spunta todo" },
     { id: "table", label: "Tabella", icon: <MdOutlineTableChart />, hint: shortcutLabel("table"), keywords: "tabella griglia righe colonne" },
+    { id: "view", label: "Tabella da una raccolta", icon: <MdOutlineStorage />, hint: "vista", keywords: "raccolta vista collegata database dati" },
+    { id: "ref", label: "Riferimento a una riga", icon: <MdAlternateEmail />, hint: "@", keywords: "riferimento riga raccolta menzione chiocciola" },
     { id: "divider", label: "Divisore", icon: <MdHorizontalRule />, keywords: "linea separatore riga" },
     { id: "image", label: "Immagine", icon: <MdOutlineImage />, hint: "Ctrl V", keywords: "foto figura png jpg" },
     { id: "file", label: "File", icon: <MdOutlineAttachFile />, hint: "nella pagina", keywords: "allegato documento pdf scheda" },
@@ -820,6 +837,96 @@ async function changePageColor(color: string | null) {
     setSlash((s) => ({ pageIndex: index, query: match[1], left, top, active: s && s.query === match[1] ? s.active : 0 }));
   }
 
+
+  // ---------------- Riferimenti "@" a una riga di raccolta ----------------
+
+  const mentionCtx = { now: new Date(), noteTitle: () => null };
+  const mentionItems: InsertItem[] = mention
+    ? store.rows
+        .flatMap((r) => {
+          if (r.deletedAt !== null) return [];
+          const info = rowInfo(store, r.id);
+          if (!info || info.collection.deletedAt !== null) return [];
+          const label = rowTitle(info.fields, r, mentionCtx);
+          return label.toLowerCase().includes(mention.query.toLowerCase())
+            ? [{ id: String(r.id), label, hint: info.collection.name, icon: <MdAlternateEmail /> }]
+            : [];
+        })
+        .slice(0, 8)
+    : [];
+
+  /** Il "@testo" appena prima del cursore (anche dentro una cella), o null. */
+  function mentionBefore(): { node: Text; start: number; end: number; query: string } | null {
+    const el = editorRef.current;
+    const sel = window.getSelection();
+    if (!el || !sel || sel.rangeCount === 0 || !sel.isCollapsed) return null;
+    const node = sel.anchorNode;
+    if (!(node instanceof Text) || !el.contains(node) || node.parentElement?.closest("[data-block], [data-ref-row]")) return null;
+    const before = (node.textContent ?? "").slice(0, sel.anchorOffset);
+    const m = /(?:^|[\s(\u00a0])@([^\s@]{0,30})$/.exec(before);
+    if (!m) return null;
+    return { node, start: sel.anchorOffset - m[1].length - 1, end: sel.anchorOffset, query: m[1] };
+  }
+
+  function checkMention(open: boolean) {
+    const found = mode === "text" ? mentionBefore() : null;
+    if (!found) {
+      setMention((s) => (s ? null : s));
+      return;
+    }
+    if (!open && !mention) return;
+    const range = document.createRange();
+    range.setStart(found.node, found.start);
+    range.setEnd(found.node, found.end);
+    const rect = range.getBoundingClientRect();
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - 300));
+    const below = rect.bottom + 6;
+    const top = below + 320 > window.innerHeight ? Math.max(8, rect.top - 326) : below;
+    setMention((s) => ({ pageIndex: index, query: found.query, left, top, active: s && s.query === found.query ? s.active : 0 }));
+  }
+
+  function pickMention(item: InsertItem) {
+    setMention(null);
+    const found = mentionBefore();
+    const info = rowInfo(store, Number(item.id));
+    if (!found || !info) return;
+    const range = document.createRange();
+    range.setStart(found.node, found.start);
+    range.setEnd(found.node, found.end);
+    range.deleteContents();
+    const chip = createRowRef(info.row.id, rowTitle(info.fields, info.row, mentionCtx));
+    const space = document.createTextNode("\u00a0");
+    range.insertNode(space);
+    range.insertNode(chip);
+    const sel = window.getSelection();
+    const caret = document.createRange();
+    caret.setStartAfter(space);
+    caret.collapse(true);
+    sel?.removeAllRanges();
+    sel?.addRange(caret);
+    commitEditor();
+  }
+
+  // ---------------- Viste collegate ----------------
+
+  /** Mette nella pagina una vista (nuova) della raccolta; "nuova" = crea prima la raccolta. */
+  async function insertView(collectionId: number | "nuova") {
+    setMenu(null);
+    const el = editorRef.current;
+    if (!el || !page) return;
+    const at = insertionPoint();
+    try {
+      const id = collectionId === "nuova" ? await createCollection() : collectionId;
+      const viewId = await createView(id);
+      if (editorRef.current !== el) return;
+      el.focus({ preventScroll: true });
+      insertBlocks(el, at && el.contains(at.startContainer) ? at : null, [createViewBlock(viewId)]);
+      commitEditor();
+    } catch (error) {
+      console.error("Vista non inserita:", error);
+      showToast("Impossibile inserire la vista della raccolta");
+    }
+  }
 
   function pickInsert(item: InsertItem) {
     const el = editorRef.current;
@@ -862,6 +969,15 @@ async function changePageColor(color: string | null) {
       case "table":
         insertTable();
         break;
+      case "view":
+        commitEditor();
+        setMenu("views");
+        break;
+      case "ref":
+        // Scrive "@": si apre il menu dei riferimenti.
+        exec("insertText", "@");
+        checkMention(true);
+        break;
       case "image":
         commitEditor();
         void pickAndInsert("image");
@@ -874,6 +990,26 @@ async function changePageColor(color: string | null) {
   }
 
   function handleEditorKey(e: KeyboardEvent<HTMLDivElement>): boolean {
+    if (mention) {
+      const count = mentionItems.length;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        if (count > 0) setMention({ ...mention, active: (mention.active + (e.key === "ArrowDown" ? 1 : -1) + count) % count });
+        return true;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        const item = mentionItems[mention.active];
+        if (!item) {
+          setMention(null);
+          return false;
+        }
+        pickMention(item);
+        return true;
+      }
+      if (e.key === "Escape") {
+        setMention(null);
+        return true;
+      }
+    }
     if (!slash) return false;
     const count = slashItems.length;
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -1619,6 +1755,38 @@ async function changePageColor(color: string | null) {
         <ToolButton label="Inserisci tabella" shortcut="table" icon={<MdOutlineTableChart />} disabled={textOff} onClick={insertTable} />
         <ToolButton label="Inserisci immagine" legend="img" icon={<MdOutlineImage />} disabled={busy} onClick={() => void pickAndInsert("image")} />
         <ToolButton label="Allega file" legend="file" icon={<MdOutlineAttachFile />} onClick={() => void pickFiles()} />
+        <div className="nq-menu-anchor">
+          <ToolButton
+            label="Inserisci vista di una raccolta"
+            legend="racc."
+            icon={<MdOutlineStorage />}
+            disabled={textOff}
+            pressed={menu === "views"}
+            onClick={() => {
+              commitEditor();
+              setMenu(menu === "views" ? null : "views");
+            }}
+          />
+          {menu === "views" && (
+            <>
+              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+              <div className="nq-menu" role="menu" aria-label="Vista di una raccolta" onMouseDown={(e) => e.preventDefault()}>
+                {store.collections
+                  .filter((c) => c.deletedAt === null)
+                  .map((c) => (
+                    <button key={c.id} type="button" role="menuitem" onClick={() => void insertView(c.id)}>
+                      <strong>{c.name}</strong>
+                      <span>{fieldsOf(store, c.id).length} campi</span>
+                    </button>
+                  ))}
+                <button type="button" role="menuitem" onClick={() => void insertView("nuova")}>
+                  <strong>+ Nuova raccolta</strong>
+                  <span>Con i campi Titolo, Stato e Data</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
         <span className="nq-tsep" />
         <span className="nq-swatches" role="group" aria-label="Colore della pagina">
           <button
@@ -1776,7 +1944,16 @@ async function changePageColor(color: string | null) {
             onNotice={showToast}
             onInk={handleInk}
             onEditorKeyDown={handleEditorKey}
-            onAfterInput={() => checkSlash(true)}
+            onAfterInput={() => {
+              checkSlash(true);
+              checkMention(true);
+            }}
+            collections={collections}
+            onRefClick={(rowId) => {
+              const info = rowInfo(store, rowId);
+              if (!info) showToast("Riga eliminata per sempre dalla sua raccolta");
+              else setRefRow(rowId);
+            }}
             onHistory={(direction) => (direction === "undo" ? handleUndo() : handleRedo())}
           />
         </div>
@@ -1893,6 +2070,68 @@ async function changePageColor(color: string | null) {
           onHover={(i) => setSlash({ ...slash, active: i })}
         />
       )}
+
+      {mention && (
+        <InsertMenu
+          items={mentionItems}
+          active={mention.active}
+          left={mention.left}
+          top={mention.top}
+          onPick={pickMention}
+          onHover={(i) => setMention({ ...mention, active: i })}
+        />
+      )}
+
+      {refRow !== null &&
+        (() => {
+          const info = rowInfo(store, refRow);
+          if (!info) return null;
+          if (info.row.deletedAt !== null || info.collection.deletedAt !== null) {
+            return (
+              <div className="nq-ref-gone" role="dialog" aria-label="Riga eliminata">
+                <span>
+                  Riga eliminata da «{info.collection.name}»
+                  {info.collection.deletedAt !== null ? " (la raccolta è nel cestino)" : ""}
+                </span>
+                {info.collection.deletedAt === null && (
+                  <button
+                    type="button"
+                    className="nq-btn nq-btn--small"
+                    onClick={() => {
+                      setRefRow(null);
+                      void restoreRow(info.row.id).catch(() => showToast("Impossibile ripristinare la riga"));
+                    }}
+                  >
+                    Ripristina
+                  </button>
+                )}
+                <button type="button" className="nq-icon-btn" aria-label="Chiudi" onClick={() => setRefRow(null)}>
+                  ×
+                </button>
+              </div>
+            );
+          }
+          return (
+            <RowCard
+              collectionName={info.collection.name}
+              fields={info.fields}
+              row={info.row}
+              notes={collections.notes}
+              ctx={{ now: new Date(), noteTitle: (id) => collections.notes.find((n) => n.id === id)?.title ?? null }}
+              onCell={(f, v) => void setCell(info.row.id, f.id, v).catch(() => showToast("Impossibile salvare la cella"))}
+              onDelete={() => {
+                setRefRow(null);
+                void trashRow(info.row.id).catch(() => showToast("Impossibile eliminare la riga"));
+              }}
+              onClose={() => setRefRow(null)}
+              onOpenNote={(id) => {
+                setRefRow(null);
+                collections.onOpenNote(id);
+              }}
+              onNotice={showToast}
+            />
+          );
+        })()}
 
       {toast && (
         <div className="nq-toast" role="status">

@@ -248,6 +248,14 @@ function NotesDetail() {
   const trashedCollections = collectionsState.collections.filter((c) => c.deletedAt !== null);
   const [armedCollection, setArmedCollection] = useState<number | null>(null);
   const noteRefs = useMemo(() => live.map((n) => ({ id: n.id, title: n.title })), [live]);
+  const collectionLinks = {
+    notes: noteRefs,
+    onOpenNote: (id: number) => {
+      setSplitId(null);
+      setOpenId(id);
+    },
+    onOpenCollection: (id: number) => goTo({ kind: "collection", id }),
+  };
 
 
   // Copia su disco delle raccolte (Notes/Raccolte/<nome>.json e .csv), poco dopo ogni modifica.
@@ -882,6 +890,7 @@ function NotesDetail() {
         splitCandidates={live}
         compact={compact}
         onClosePane={onClosePane}
+        collections={collectionLinks}
       />
     );
   }

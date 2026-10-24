@@ -33,9 +33,12 @@ function safeStyle(css: string): string {
  * Attributi dei blocchi immagine/file (lib/blocks.ts), ripuliti: il valore normalizzato da tenere,
  * oppure null per toglierlo.
  */
+const asId = (value: string) => (/^\d{1,12}$/.test(value) && Number(value) > 0 ? String(Number(value)) : null);
+
 function blockAttr(el: Element, name: string, value: string): string | null {
   const kind = el.getAttribute("data-block");
   if (name === "data-block") return value;
+  if (kind === "collection-view") return name === "data-view" ? asId(value) : null;
   if (name === "data-attachment") return asAttachmentName(value);
   if (kind === "image" && el.tagName === "FIGURE") {
     if (name === "data-edit") return serializeImageEdit(parseImageEdit(value));
@@ -58,9 +61,10 @@ function blockAttr(el: Element, name: string, value: string): string | null {
   return null;
 }
 
-/** Un blocco vero: figure immagine o div file, con il nome del file valido. */
+/** Un blocco vero: figure immagine o div file con il nome del file valido, o vista collegata. */
 function isValidBlock(el: Element): boolean {
   const kind = el.getAttribute("data-block");
+  if (kind === "collection-view") return el.tagName === "DIV" && asId(el.getAttribute("data-view") ?? "") !== null;
   const okTag = (kind === "image" && el.tagName === "FIGURE") || (kind === "file" && el.tagName === "DIV");
   return okTag && asAttachmentName(el.getAttribute("data-attachment")) !== null;
 }
@@ -115,6 +119,7 @@ export function sanitizeHtml(html: string, options: SanitizeOptions = {}): strin
       }
       if (name === "data-check" && (attr.value === "0" || attr.value === "1")) continue;
       if (el.tagName === "SPAN" && validTextAttr(name, attr.value)) continue;
+      if (el.tagName === "SPAN" && name === "data-ref-row" && !external && asId(attr.value) !== null) continue;
       if (el.tagName === "TD" || el.tagName === "TH" || el.tagName === "TABLE") {
         const kept = el.tagName === "TABLE" ? tableAttr(name, attr.value) : cellAttr(name, attr.value);
         if (kept !== null) {

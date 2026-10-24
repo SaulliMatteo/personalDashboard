@@ -538,3 +538,70 @@ export function collectionToCsv(fields: Field[], rows: Row[], ctx: ValueContext)
   }
   return lines.join("\r\n") + "\r\n";
 }
+
+// ---------------------------------------------------------------------
+// Da una tabella della nota a una raccolta ("Trasforma in raccolta")
+// ---------------------------------------------------------------------
+
+const NUMBER_RE = /^-?\d+([.,]\d+)?$/;
+const IT_DATE_RE = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/;
+
+/** "12/11/2026" o "2026-11-12" → "2026-11-12" (o null). */
+export function parseDateText(text: string): string | null {
+  const t = text.trim();
+  if (isDateString(t)) return t;
+  const m = IT_DATE_RE.exec(t);
+  if (!m) return null;
+  const v = `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  return isDateString(v) ? v : null;
+}
+
+/** Il tipo di una colonna dai suoi valori: numero o data se lo sono tutti, altrimenti testo. */
+export function inferFieldType(values: string[]): "text" | "number" | "date" {
+  const filled = values.map((v) => v.trim()).filter(Boolean);
+  if (filled.length === 0) return "text";
+  if (filled.every((v) => NUMBER_RE.test(v))) return "number";
+  if (filled.every((v) => parseDateText(v) !== null)) return "date";
+  return "text";
+}
+
+export interface TableImport {
+  fields: { name: string; type: "text" | "number" | "date" }[];
+  /** Per riga, i valori nell'ordine dei campi (già del tipo giusto). */
+  rows: CellValue[][];
+}
+
+/**
+ * Colonne e righe di una tabella (testo delle celle) → campi e valori di una raccolta.
+ * `header` = testo dell'intestazione, null se la tabella non ce l'ha ("Colonna 1"…).
+ * Le righe del tutto vuote si saltano.
+ */
+export function tableToCollection(header: string[] | null, body: string[][]): TableImport {
+  const width = Math.max(header?.length ?? 0, ...body.map((r) => r.length), 1);
+  const used = new Set<string>();
+  const fields = Array.from({ length: width }, (_, c) => {
+    let name = (header?.[c] ?? "").trim() || `Colonna ${c + 1}`;
+    const base = name;
+    for (let n = 2; used.has(name.toLowerCase()); n++) name = `${base} ${n}`;
+    used.add(name.toLowerCase());
+    return { name, type: inferFieldType(body.map((r) => r[c] ?? "")) };
+  });
+  const rows = body
+    .filter((r) => r.some((v) => v.trim() !== ""))
+    .map((r) =>
+      fields.map((f, c): CellValue => {
+        const v = (r[c] ?? "").trim();
+        if (!v) return null;
+        if (f.type === "number") return Number(v.replace(",", "."));
+        if (f.type === "date") return parseDateText(v);
+        return v;
+      })
+    );
+  return { fields, rows };
+}
+
+/** Il titolo di una riga: il testo del primo campo. */
+export function rowTitle(fields: Field[], row: Row, ctx: ValueContext): string {
+  const first = fields[0];
+  return (first ? valueText(first, row.data[String(first.id)] ?? null, ctx) : "") || "Senza titolo";
+}

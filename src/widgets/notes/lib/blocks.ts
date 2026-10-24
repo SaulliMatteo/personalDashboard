@@ -2,24 +2,34 @@ import { defaultEdit, initialWidth, parseImageEdit, parseWidth, serializeImageEd
 import { stripLookVars } from "./tableDom";
 
 /**
- * Blocchi nella pagina: <figure data-block="image"> e <div data-block="file">.
+ * Blocchi nella pagina: <figure data-block="image">, <div data-block="file"> e
+ * <div data-block="collection-view" data-view="ID"> (vista collegata di una raccolta).
+ * Riferimenti a una riga di raccolta: <span data-ref-row="ID">titolo</span> nel testo.
  * Nell'HTML salvato c'è solo la descrizione (file, modifiche, didascalia); quello che si vede
  * (immagine, barra, maniglie, scheda del file) lo disegna React dentro un nodo "di servizio"
  * [data-runtime], che non viene mai salvato.
  */
 
-export const BLOCK_SELECTOR = '[data-block="image"], [data-block="file"]';
-export type BlockKind = "image" | "file";
+export const BLOCK_SELECTOR = '[data-block="image"], [data-block="file"], [data-block="collection-view"]';
+export type BlockKind = "image" | "file" | "view";
+
+function kindOf(el: HTMLElement): BlockKind {
+  return el.dataset.block === "collection-view" ? "view" : el.dataset.block === "file" ? "file" : "image";
+}
 
 /** HTML da salvare: senza i nodi di React e senza gli attributi messi solo per l'editor. */
 export function serializeEditor(root: HTMLElement): string {
-  if (!root.querySelector("[data-runtime], [data-block], [data-cur], table")) return root.innerHTML;
+  if (!root.querySelector("[data-runtime], [data-block], [data-cur], [data-ref-row], table")) return root.innerHTML;
   const clone = root.cloneNode(true) as HTMLElement;
   clone.querySelectorAll("[data-runtime]").forEach((n) => n.remove());
   // La riga della tabella dove sta il cursore (lib/tableDom.ts): solo per l'editor.
   clone.querySelectorAll("[data-cur]").forEach((n) => n.removeAttribute("data-cur"));
   // Colori delle tabelle in linea: si rifanno dagli attributi (lib/tableDom.ts).
   stripLookVars(clone);
+  clone.querySelectorAll("[data-ref-row]").forEach((el) => {
+    el.removeAttribute("contenteditable");
+    el.removeAttribute("data-missing");
+  });
   clone.querySelectorAll<HTMLElement>("[data-block]").forEach((el) => {
     el.removeAttribute("contenteditable");
     el.removeAttribute("tabindex");
@@ -40,7 +50,7 @@ export function hydrateBlocks(root: HTMLElement): { el: HTMLElement; host: HTMLE
   root.querySelectorAll<HTMLElement>(BLOCK_SELECTOR).forEach((el) => {
     // Solo blocchi di primo livello: un blocco dentro un altro (incolla strano) non vale.
     if (el.parentElement !== root) return;
-    const kind = el.dataset.block as BlockKind;
+    const kind = kindOf(el);
     if (el.getAttribute("contenteditable") !== "false") el.setAttribute("contenteditable", "false");
     if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
     el.querySelectorAll("figcaption").forEach((c) => {
@@ -55,7 +65,28 @@ export function hydrateBlocks(root: HTMLElement): { el: HTMLElement; host: HTMLE
     }
     out.push({ el, host, kind });
   });
+  // I riferimenti a una riga sono un pezzo unico nel testo (si cancellano interi).
+  root.querySelectorAll<HTMLElement>("[data-ref-row]").forEach((el) => {
+    if (el.getAttribute("contenteditable") !== "false") el.setAttribute("contenteditable", "false");
+  });
   return out;
+}
+
+/** Il blocco di una vista collegata (la vista è una riga di note_collection_views). */
+export function createViewBlock(viewId: number): HTMLElement {
+  const el = document.createElement("div");
+  el.dataset.block = "collection-view";
+  el.dataset.view = String(viewId);
+  return el;
+}
+
+/** Il riferimento a una riga: un chip nel testo con il titolo della riga. */
+export function createRowRef(rowId: number, title: string): HTMLElement {
+  const el = document.createElement("span");
+  el.dataset.refRow = String(rowId);
+  el.setAttribute("contenteditable", "false");
+  el.textContent = title || "Senza titolo";
+  return el;
 }
 
 /** Il nuovo blocco per un'immagine appena aggiunta. */

@@ -7,7 +7,10 @@ const GROUPS: ShortcutGroup[] = ["Modifica", "Testo", "Tabelle", "Navigazione", 
 
 /** Voci che nel pannello stanno su una riga sola (come nel mockup). */
 const EXTRA_ROWS: Partial<Record<ShortcutGroup, { label: string; keys: string[] }[]>> = {
-  Modifica: [{ label: "Menu inserisci", keys: ["/"] }],
+  Modifica: [
+    { label: "Menu inserisci", keys: ["/"] },
+    { label: "Riferimento a una riga", keys: ["@"] },
+  ],
   Tabelle: [
     { label: "Cella successiva", keys: ["Tab"] },
     { label: "Cella precedente", keys: ["⇧", "Tab"] },
