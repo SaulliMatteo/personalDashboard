@@ -186,6 +186,19 @@ export async function setFieldChoices(id: number, choices: Choice[]): Promise<vo
   setState({ ...state, fields: state.fields.map((f) => (f.id === id ? next : f)), rows });
 }
 
+/** Aggiunge una scelta (dalla cella: "Crea …"); se c'è già con lo stesso nome restituisce quella. */
+export async function addChoice(fieldId: number, label: string): Promise<string> {
+  const field = state.fields.find((f) => f.id === fieldId);
+  if (!field) throw new Error("Campo non trovato");
+  const choices = field.options.choices ?? [];
+  const clean = label.trim().slice(0, 80);
+  const found = choices.find((c) => c.label.trim().toLowerCase() === clean.toLowerCase());
+  if (found) return found.id;
+  const choice: Choice = { id: newChoiceId(), label: clean, color: nextChoiceColor(choices) };
+  await setFieldChoices(fieldId, [...choices, choice]);
+  return choice.id;
+}
+
 /** Cambia il tipo convertendo i valori (quello che non si può convertire si perde). */
 export async function changeFieldType(id: number, type: FieldType, ctx: ValueContext): Promise<void> {
   const field = state.fields.find((f) => f.id === id);

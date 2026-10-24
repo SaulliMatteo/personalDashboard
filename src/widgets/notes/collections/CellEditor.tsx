@@ -1,12 +1,11 @@
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { readFile } from "@tauri-apps/plugin-fs";
 import { openPath, openUrl } from "@tauri-apps/plugin-opener";
-import { MdAdd, MdClose, MdOpenInNew, MdOutlineAttachFile } from "react-icons/md";
-import { choiceOf, type CellValue, type Field, type FileValue } from "../lib/collections";
+import { MdClose, MdOpenInNew, MdOutlineAttachFile } from "react-icons/md";
+import { type CellValue, type Field, type FileValue } from "../lib/collections";
 import { baseName, collectionFilePath, saveCollectionFile } from "../lib/vault";
-import ChoiceChip from "./ChoiceChip";
-import Popover from "./Popover";
+import ChoicePicker from "./ChoicePicker";
 import "./CellEditor.css";
 
 export interface NoteRef {
@@ -54,41 +53,6 @@ function TextInput({ value, label, inputMode, onCommit }: { value: string; label
   );
 }
 
-/** Scelte multiple: i chip scelti e un menu con tutte le scelte. */
-function MultiEditor({ field, value, onChange }: { field: Field; value: string[]; onChange: (v: CellValue) => void }) {
-  const [open, setOpen] = useState(false);
-  const anchor = useRef<HTMLButtonElement | null>(null);
-  const choices = field.options.choices ?? [];
-  return (
-    <span className="nq-cell-multi">
-      {value.map((id) => {
-        const c = choiceOf(field, id);
-        return c ? <ChoiceChip key={id} label={c.label} color={c.color} /> : null;
-      })}
-      <span className="nq-cell-pop-anchor">
-        <button ref={anchor} type="button" className="nq-cell-mini" aria-label={`Scegli: ${field.name}`} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-          <MdAdd />
-        </button>
-        {open && (
-          <Popover anchor={anchor} onClose={() => setOpen(false)} className="nq-cell-pop" role="group" label={field.name}>
-              {choices.length === 0 && <p className="nq-cell-empty">Nessuna scelta: aggiungile dal menu del campo.</p>}
-              {choices.map((c) => (
-                <label key={c.id} className="nq-cell-check">
-                  <input
-                    type="checkbox"
-                    checked={value.includes(c.id)}
-                    onChange={(e) => onChange(e.target.checked ? [...value, c.id] : value.filter((x) => x !== c.id))}
-                  />
-                  <ChoiceChip label={c.label} color={c.color} />
-                </label>
-              ))}
-          </Popover>
-        )}
-      </span>
-    </span>
-  );
-}
-
 /** L'editor giusto per il tipo del campo. */
 function CellEditor({ field, value, onChange, notes, onOpenNote, onNotice }: CellEditorProps) {
   const label = field.name;
@@ -132,27 +96,9 @@ function CellEditor({ field, value, onChange, notes, onOpenNote, onNotice }: Cel
       );
     case "check":
       return <input type="checkbox" className="nq-cell-checkbox" aria-label={label} checked={value === true} onChange={(e) => onChange(e.target.checked)} />;
-    case "select": {
-      const current = typeof value === "string" ? choiceOf(field, value) : null;
-      return (
-        <select
-          className="nq-cell-select"
-          data-color={current?.color}
-          aria-label={label}
-          value={current?.id ?? ""}
-          onChange={(e) => onChange(e.target.value || null)}
-        >
-          <option value="">—</option>
-          {(field.options.choices ?? []).map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.label || "Senza nome"}
-            </option>
-          ))}
-        </select>
-      );
-    }
+    case "select":
     case "multi":
-      return <MultiEditor field={field} value={Array.isArray(value) ? value : []} onChange={onChange} />;
+      return <ChoicePicker field={field} value={value} onChange={onChange} onNotice={onNotice} />;
     case "note": {
       const id = typeof value === "number" ? value : null;
       const missing = id !== null && !notes.some((n) => n.id === id);
