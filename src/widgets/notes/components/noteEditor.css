@@ -1683,3 +1683,129 @@
 :root[data-theme="fosforo"] .nq-psw {
   border-radius: 3px;
 }
+
+/* ---------- Tabelle (lib/tables.ts, components/TableTools.tsx) ----------
+   Misure del mockup in em (13.5px su 15px di corpo). Margine sotto più largo: lì sta "+ riga". */
+
+.nq-doc table {
+  width: 100%;
+  margin: 0.9em 0 1.6em;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Con le larghezze trascinate (colgroup) le colonne le rispettano. */
+.nq-doc table:has(> colgroup) {
+  table-layout: fixed;
+}
+
+.nq-doc th,
+.nq-doc td {
+  min-width: 2.5em;
+  padding: 0.59em 0.89em;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.nq-doc th {
+  font-weight: 600;
+}
+
+.nq-doc :is(th, td)[data-align="center"] {
+  text-align: center;
+}
+
+.nq-doc :is(th, td)[data-align="right"] {
+  text-align: right;
+}
+
+.nq-doc :is(th, td) > :is(p, div, ul, ol):last-child {
+  margin-bottom: 0;
+}
+
+/* Notte (e base): righe morbide */
+.nq-doc th {
+  color: color-mix(in srgb, var(--note-page-ink) 60%, transparent);
+  font-weight: 500;
+  border-bottom: 1px solid color-mix(in srgb, var(--note-page-ink) 18%, transparent);
+}
+
+.nq-doc td {
+  border-bottom: 1px solid color-mix(in srgb, var(--note-page-ink) 10%, transparent);
+}
+
+.nq-doc tr[data-cur] > td {
+  background: var(--accent-soft);
+}
+
+/* Opaco: intestazione piena a pillola, righe a fasce */
+:root[data-theme="opaco"] .nq-doc th {
+  border: 0;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+:root[data-theme="opaco"] .nq-doc th:first-child {
+  border-radius: 999px 0 0 999px;
+}
+
+:root[data-theme="opaco"] .nq-doc th:last-child {
+  border-radius: 0 999px 999px 0;
+}
+
+:root[data-theme="opaco"] .nq-doc th:only-child {
+  border-radius: 999px;
+}
+
+:root[data-theme="opaco"] .nq-doc td {
+  border: 0;
+}
+
+:root[data-theme="opaco"] .nq-doc tbody tr:nth-child(odd) > td {
+  background: color-mix(in srgb, var(--note-page-ink) 7%, transparent);
+}
+
+:root[data-theme="opaco"] .nq-doc tr[data-cur] > td {
+  background: var(--tint-senape);
+  color: var(--tint-senape-ink);
+}
+
+/* Quaderno: griglia d'inchiostro, intestazione a mano */
+:root[data-theme="quaderno"] .nq-doc th,
+:root[data-theme="quaderno"] .nq-doc td {
+  border: 1.5px solid var(--note-page-ink);
+}
+
+:root[data-theme="quaderno"] .nq-doc th {
+  padding: 0.2em 0.6em;
+  font-family: var(--font-title);
+  font-size: 1.48em;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .nq-doc tr[data-cur] > td {
+  background: color-mix(in srgb, var(--note-postit-bg) 70%, transparent);
+}
+
+/* Fosforo: separatori a punti, cifre allineate */
+:root[data-theme="fosforo"] .nq-doc th {
+  color: color-mix(in srgb, var(--note-page-ink) 55%, transparent);
+  font-weight: 500;
+  border-bottom: 1px dashed var(--border-subtle);
+}
+
+:root[data-theme="fosforo"] .nq-doc td {
+  border-bottom: 1px dotted var(--border-subtle);
+}
+
+:root[data-theme="fosforo"] .nq-doc tr[data-cur] > td {
+  background: transparent;
+}
+
+:root[data-theme="fosforo"] .nq-doc tr[data-cur] > td:first-child {
+  box-shadow: inset 2px 0 0 var(--led);
+}

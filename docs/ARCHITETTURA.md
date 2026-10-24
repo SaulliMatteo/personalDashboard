@@ -103,7 +103,8 @@ notes/
 ├─ data/notesRepository.ts   tutte le query SQL (note_folders, notes, note_pages)
 │                            FindBar (Ctrl+F), InsertMenu (menu "/"), ShortcutsPanel (Ctrl+/ o F1),
 │                            ImageBlock (immagine nella pagina, modifiche non distruttive), FileCard,
-│                            DropOverlay (file trascinati: "Inserisci nella pagina" / "Allega alla nota")
+│                            DropOverlay (file trascinati: "Inserisci nella pagina" / "Allega alla nota"),
+│                            TableTools (comandi delle tabelle: + riga/colonna, menu, larghezze)
 └─ lib/                      drag.ts, editorDom.ts, folders.ts, html.ts (sanitizeHtml),
                              history.ts (annulla/ripeti per nota, puro: orologio iniettato),
                              shortcuts.ts (UNICO elenco delle scorciatoie: tasti, etichette, tooltip),
@@ -116,7 +117,9 @@ notes/
                              preparazione, inserimento), imageEdit.ts (data-edit: ritaglio, rotazione,
                              filtri, geometria; puro), attachmentUrls.ts (file della nota → blob: URL),
                              insertFiles.ts (smista i file per tipo), blockExport.ts (blocchi statici
-                             per PDF/PNG), editorApi.ts (scorciatoie e trascinamento tra pagina ed editor)
+                             per PDF/PNG), editorApi.ts (scorciatoie e trascinamento tra pagina ed editor),
+                             tables.ts (modello puro delle tabelle: griglia di celle, unisci/dividi,
+                             ordina, GFM), tableDom.ts (tabella ⇄ modello, cursore, larghezze)
 ```
 
 La geometria del testo nella pagina (larghezza 58em, margini interni, corpo, dimensioni e margini dei titoli
@@ -135,6 +138,12 @@ descrizione: il file sta in `<nota>/allegati/` (mai nel DB) e quello che si vede
 nel nodo `[data-runtime]` del blocco, che `serializeEditor` toglie prima di salvare. Un MutationObserver in
 `PageSurface` ritrova i blocchi dopo annulla, incolla e spostamenti. L'HTML incollato da altre app passa da
 `sanitizeHtml(html, { source: "esterno" })`, che toglie i blocchi.
+
+Tabelle: HTML normale e modificabile (`<table><thead><tr><th>…`), con `colspan`/`rowspan` e `data-align` sulle
+celle e `data-width` (in %) sulle celle della prima riga. I comandi non scrivono sulle celle: leggono la tabella
+nel modello di `lib/tables.ts` (una griglia di id: una cella unita occupa un rettangolo), lo cambiano e la
+riscrivono (`replaceTable`). Le larghezze si vedono grazie a un `<colgroup data-runtime>` rifatto da
+`layoutTables` (editor ed esportazione); la riga del cursore ha `data-cur`. Nessuno dei due viene salvato.
 
 ### Il widget Companion (`widgets/companion/`)
 

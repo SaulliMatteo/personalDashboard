@@ -2,12 +2,15 @@ import { validTextAttr } from "./textStyle";
 import { asAttachmentName, parseAlign, parseImageEdit, parseWidth, serializeImageEdit } from "./imageEdit";
 import { asFreeCoord } from "./blocks";
 import { asStrokes } from "./ink";
+import { asCellAlign, asCellWidth, readTable } from "./tableDom";
+import { MAX_SPAN, tableToMarkdown } from "./tables";
 
 /**
  * Il contenuto delle pagine è HTML scritto in un contentEditable. Prima di
  * rimetterlo nel DOM (editor o anteprime) lo si ripulisce: restano solo i tag
  * di formattazione e pochi attributi (href sicuri, data-check delle checklist,
- * data-font/size/color/mark con i valori di lib/textStyle.ts).
+ * data-font/size/color/mark con i valori di lib/textStyle.ts, colspan/rowspan e
+ * data-align/data-width delle celle di tabella).
  */
 const COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\(\s*\d{1,3}(\s*,\s*\d{1,3}){2}(\s*,\s*[\d.]+)?\s*\)|[a-z]+)$/i;
 const SIZE_RE = /^(\d+(\.\d+)?px|calc\(\s*\d+(\.\d+)?\s*\*\s*var\(--nq-px\)\s*\))$/;
@@ -62,6 +65,17 @@ function isValidBlock(el: Element): boolean {
   return okTag && asAttachmentName(el.getAttribute("data-attachment")) !== null;
 }
 
+/** Attributi delle celle di tabella (lib/tableDom.ts): il valore da tenere, o null. */
+function cellAttr(name: string, value: string): string | null {
+  if (name === "colspan" || name === "rowspan") {
+    const n = Number(value);
+    return Number.isInteger(n) && n > 1 && n <= MAX_SPAN ? String(n) : null;
+  }
+  if (name === "data-align") return asCellAlign(value);
+  if (name === "data-width") return asCellWidth(value)?.toString() ?? null;
+  return null;
+}
+
 export interface SanitizeOptions {
   /** "esterno" = HTML incollato da un'altra app: niente blocchi (riferimenti a file della nota). */
   source?: "app" | "esterno";
@@ -72,8 +86,10 @@ export function sanitizeHtml(html: string, options: SanitizeOptions = {}): strin
   const external = options.source === "esterno";
   const doc = new DOMParser().parseFromString(html, "text/html");
   doc
-    .querySelectorAll("script, style, iframe, object, embed, link, meta, form, img, video, audio, svg, input, button, [data-runtime]")
+    .querySelectorAll("script, style, iframe, object, embed, link, meta, form, img, video, audio, svg, input, button, colgroup, col, [data-runtime]")
     .forEach((n) => n.remove());
+  // Niente tabelle dentro le celle: quella interna diventa testo.
+  doc.body.querySelectorAll("td table, th table").forEach((t) => t.replaceWith(doc.createTextNode(t.textContent ?? "")));
   doc.body.querySelectorAll("[data-block]").forEach((el) => {
     // Un blocco non valido o arrivato da fuori diventa un elemento normale (le didascalie restano testo).
     if (external || !isValidBlock(el)) el.removeAttribute("data-block");
@@ -90,6 +106,13 @@ export function sanitizeHtml(html: string, options: SanitizeOptions = {}): strin
       }
       if (name === "data-check" && (attr.value === "0" || attr.value === "1")) continue;
       if (el.tagName === "SPAN" && validTextAttr(name, attr.value)) continue;
+      if (el.tagName === "TD" || el.tagName === "TH") {
+        const kept = cellAttr(name, attr.value);
+        if (kept !== null) {
+          if (kept !== attr.value) el.setAttribute(attr.name, kept);
+          continue;
+        }
+      }
       if (isBlock && name.startsWith("data-")) {
         const kept = blockAttr(el, name, attr.value);
         if (kept !== null) {
@@ -109,7 +132,7 @@ export function sanitizeHtml(html: string, options: SanitizeOptions = {}): strin
 export function htmlToText(html: string): string {
   return html
     .replace(/<br\s*\/?>/gi, " ")
-    .replace(/<\/(p|div|h[1-6]|li)>/gi, " ")
+    .replace(/<\/(p|div|h[1-6]|li|td|th|tr)>/gi, " ")
     .replace(/<[^>]*>/g, "")
     .replace(/&nbsp;/g, " ")
     .replace(/&lt;/g, "<")
@@ -151,6 +174,14 @@ export function htmlToMarkdown(html: string): string {
     }
   };
 
+  /** Una cella in Markdown: il suo contenuto in linea (i blocchi interni vanno a capo). */
+  const cellMarkdown = (html: string): string => {
+    const box = doc.createElement("div");
+    box.innerHTML = html;
+    const parts = Array.from(box.childNodes).map((n) => inline(n).trim());
+    return parts.filter(Boolean).join("\n");
+  };
+
   const blocks: string[] = [];
   for (const node of Array.from(doc.body.childNodes)) {
     if (!(node instanceof HTMLElement)) {
@@ -171,6 +202,9 @@ export function htmlToMarkdown(html: string): string {
         break;
       case "HR":
         blocks.push("---");
+        break;
+      case "TABLE":
+        blocks.push(tableToMarkdown(readTable(node as HTMLTableElement).model, cellMarkdown));
         break;
       case "UL":
         blocks.push(Array.from(node.children).map((li) => `- ${inline(li).trim()}`).join("\n"));

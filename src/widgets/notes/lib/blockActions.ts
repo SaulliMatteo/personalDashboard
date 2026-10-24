@@ -3,7 +3,7 @@ import { getTextOffsets, setTextOffsets } from "./selectionOffsets";
 
 /**
  * Azioni sul blocco sotto il cursore (Ctrl+D, Alt+↑/↓). Un blocco è un figlio diretto della
- * pagina: paragrafo, titolo, elenco intero; dalle fasi successive anche tabelle e immagini.
+ * pagina: paragrafo, titolo, elenco intero, tabella, immagine, scheda di un file.
  * Il cursore resta nello stesso punto del blocco.
  */
 
@@ -16,6 +16,7 @@ export function duplicateBlock(root: HTMLElement): boolean {
   // Il disegno di React (immagine, barra) non si copia: lo rifà da sé sul blocco nuovo.
   copy.querySelectorAll("[data-runtime]").forEach((n) => n.remove());
   copy.removeAttribute("data-selected");
+  copy.querySelectorAll("[data-cur]").forEach((n) => n.removeAttribute("data-cur"));
   block.after(copy);
   if (offsets) setTextOffsets(copy, offsets);
   else if (copy.hasAttribute("data-block")) copy.focus();

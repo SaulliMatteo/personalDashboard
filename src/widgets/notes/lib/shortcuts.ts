@@ -4,7 +4,7 @@
  *
  * Regole per le tastiere non inglesi (italiana compresa):
  * - le cifre si riconoscono dal tasto fisico (`code`), perché Shift+8 scrive "(";
- * - Ctrl+Alt su Windows è anche AltGr (es. AltGr+ò = "@"): se AltGraph è premuto non scatta nulla;
+ * - Ctrl+Alt su Windows è anche AltGr (es. AltGr+ò = "@"): se il tasto scrive un simbolo non scatta nulla;
  * - Ctrl+/ vale solo dove "/" non richiede Shift; sulla tastiera italiana c'è F1.
  * Su macOS Ctrl diventa Cmd.
  */
@@ -26,6 +26,7 @@ export type ShortcutAction =
   | "checklist"
   | "toggleCheck"
   | "duplicate"
+  | "table"
   | "moveUp"
   | "moveDown"
   | "find"
@@ -56,7 +57,7 @@ interface Combo {
   mac?: boolean;
 }
 
-export type ShortcutGroup = "Modifica" | "Testo" | "Navigazione" | "Scrittura a mano";
+export type ShortcutGroup = "Modifica" | "Testo" | "Tabelle" | "Navigazione" | "Scrittura a mano";
 
 interface ShortcutDef {
   label: string;
@@ -96,6 +97,8 @@ export const SHORTCUTS: Record<ShortcutAction, ShortcutDef> = {
     group: "Testo",
     combos: [{ code: "Enter", mod: true }, { code: "NumpadEnter", mod: true }],
   },
+
+  table: { label: "Nuova tabella", group: "Tabelle", combos: [{ key: "t", mod: true, alt: true }] },
 
   find: { label: "Cerca nella nota", group: "Navigazione", combos: [{ key: "f", mod: true }] },
   findAll: { label: "Cerca in tutte le note", group: "Navigazione", combos: [{ key: "f", mod: true, shift: true }] },
@@ -157,8 +160,9 @@ function matches(e: KeyLike, combo: Combo, mac: boolean): boolean {
 
 /** L'azione corrispondente al tasto, o null. */
 export function matchShortcut(e: KeyLike, mac = isMacPlatform()): ShortcutAction | null {
-  // AltGr (Ctrl+Alt su Windows) scrive caratteri come @ [ ] #: non è mai una scorciatoia.
-  if (e.getModifierState?.("AltGraph")) return null;
+  // AltGr (Ctrl+Alt su Windows) scrive caratteri come @ [ ] # €: quelli non sono scorciatoie.
+  // Se invece il tasto resta una lettera o una cifra (AltGr+T non scrive nulla) vale come Ctrl+Alt.
+  if (e.getModifierState?.("AltGraph") && !/^[a-z0-9]$/i.test(e.key)) return null;
   for (const action of Object.keys(SHORTCUTS) as ShortcutAction[]) {
     if (SHORTCUTS[action].combos.some((c) => matches(e, c, mac))) return action;
   }

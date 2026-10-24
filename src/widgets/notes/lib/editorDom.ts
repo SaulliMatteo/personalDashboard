@@ -1,9 +1,10 @@
 import { focusedBlock } from "./blocks";
+import { caretCell } from "./tableDom";
 
 /**
  * Blocco "corrente" dell'editor: l'<li> che contiene il cursore, altrimenti
- * il figlio diretto della radice. Null se il cursore è fuori dall'editor o
- * se il testo è ancora "nudo" (senza blocco).
+ * il figlio diretto della radice. Null se il cursore è fuori dall'editor,
+ * se il testo è ancora "nudo" (senza blocco) o se è in una tabella.
  */
 export function currentBlock(root: HTMLElement | null): HTMLElement | null {
   if (!root) return null;
@@ -18,11 +19,12 @@ export function currentBlock(root: HTMLElement | null): HTMLElement | null {
     }
     node = node.parentNode;
   }
-  return found;
+  return found?.tagName === "TABLE" ? null : found;
 }
 
 /** Trasforma la riga corrente in voce di checklist (o la riporta a testo normale). */
 export function toggleChecklist(root: HTMLElement): boolean {
+  if (caretCell(root)) return false; // nelle celle niente checklist
   let block = currentBlock(root);
   if (!block) {
     document.execCommand("formatBlock", false, "<p>");
