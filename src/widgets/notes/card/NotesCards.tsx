@@ -32,8 +32,8 @@ function Shell({ theme, size, data, label, children, frameClass }: {
 }
 
 /** Corpo per le taglie grandi (3×1 e 2×2), uguale nei temi: cambia solo il CSS. */
-function Body({ size, data, quickIcon }: { size: SizeKey; data: NotesCardData; quickIcon: boolean }) {
-  return size === "STRIP" ? <NotesCardStrip data={data} /> : <NotesCardM data={data} quickIcon={quickIcon} />;
+function Body({ size, data, quickIcon, limit }: { size: SizeKey; data: NotesCardData; quickIcon: boolean; limit?: number }) {
+  return size === "STRIP" ? <NotesCardStrip data={data} /> : <NotesCardM data={data} quickIcon={quickIcon} limit={limit} />;
 }
 
 function countText(data: NotesCardData): string {
@@ -60,17 +60,15 @@ function NotteRing({ data }: { data: NotesCardData }) {
     );
   });
   return (
-    <>
+    <div className="nc-ring-wrap">
       <svg className="nc-ring" viewBox="0 0 120 120" aria-hidden="true">
         {lines}
       </svg>
       <div className="nc-ring-num">
-        <div>
-          <div className="nc-big">{countText(data)}</div>
-          <small>{data.countLabel}</small>
-        </div>
+        <div className="nc-big">{countText(data)}</div>
+        <small>{data.countLabel}</small>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -78,7 +76,8 @@ export function NotesCardNotte({ size }: CardProps) {
   const data = useNotesCard();
   return (
     <Shell theme="notte" size={size} data={data} label={size === "S" ? `Note: ${countText(data)}` : undefined}>
-      {size === "S" ? <NotteRing data={data} /> : <Body size={size} data={data} quickIcon />}
+      {/* In Notte le righe sono più alte: 3 note che si dividono lo spazio. */}
+      {size === "S" ? <NotteRing data={data} /> : <Body size={size} data={data} quickIcon limit={3} />}
     </Shell>
   );
 }

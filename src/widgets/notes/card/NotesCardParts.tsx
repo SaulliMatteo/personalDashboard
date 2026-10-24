@@ -79,8 +79,8 @@ export function QuickNoteField({ data, icon }: { data: NotesCardData; icon: bool
   );
 }
 
-/** 2×2: titolo, scrittura veloce, ultime 4 note. */
-export function NotesCardM({ data, quickIcon = true, extra }: { data: NotesCardData; quickIcon?: boolean; extra?: ReactNode }) {
+/** 2×2: titolo, scrittura veloce, ultime note (4, o meno dove il tema le vuole più alte). */
+export function NotesCardM({ data, quickIcon = true, limit = 4, extra }: { data: NotesCardData; quickIcon?: boolean; limit?: number; extra?: ReactNode }) {
   return (
     <div className="nc-m">
       <div className="nc-ttl">
@@ -91,7 +91,7 @@ export function NotesCardM({ data, quickIcon = true, extra }: { data: NotesCardD
       <QuickNoteField data={data} icon={quickIcon} />
       <div className="nc-list">
         <NotesEmpty data={data} />
-        <NoteRows data={data} limit={4} />
+        <NoteRows data={data} limit={limit} />
       </div>
       {extra}
     </div>
