@@ -1,0 +1,50 @@
+/* Celle 1×1 del File transfer: parti comuni ai quattro temi.
+   Mockup: temi-dashboard/docs/design/temi/widget-1x1.html (proposte in docs/design/temi/filetransfer-1x1-proposte.html).
+   La cella può essere molto più bassa dei 184px del mockup: misure in cqw/cqh e, sotto
+   certe altezze, si nascondono prima "File transfer", poi la didascalia, poi l'icona. */
+
+.widget.ftc {
+  container-type: size;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  color: var(--text-primary);
+}
+
+.ftc-num {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ftc-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.ftc-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dot-off);
+}
+
+.ftc.is-online .ftc-dot {
+  background: var(--led);
+}
+
+.ftc-st {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
