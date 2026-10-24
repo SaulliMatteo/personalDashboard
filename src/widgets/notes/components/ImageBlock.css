@@ -125,7 +125,8 @@
 .nq-imgbox {
   position: relative;
   width: 100%;
-  border-radius: 0.8em;
+  /* Immagine a spigoli vivi in tutti i temi. */
+  border-radius: 0;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -193,9 +194,9 @@
   box-sizing: border-box;
   width: 11px;
   height: 11px;
-  border: 2px solid var(--accent);
+  border: 2px solid var(--note-page-ink);
   border-radius: 50%;
-  background: var(--bg-card);
+  background: var(--note-page-bg);
 }
 
 .nq-h-tl { top: -6px; left: -6px; }
@@ -254,7 +255,8 @@
   position: absolute;
   z-index: 5;
   box-sizing: border-box;
-  border: 2px solid var(--accent);
+  border: 2px solid var(--note-page-ink);
+  outline: 1px solid var(--note-page-bg);
   cursor: move;
   touch-action: none;
 }
@@ -263,9 +265,9 @@
   position: absolute;
   width: 16px;
   height: 16px;
-  border: 2px solid var(--bg-card);
+  border: 2px solid var(--note-page-bg);
   border-radius: 3px;
-  background: var(--accent);
+  background: var(--note-page-ink);
   touch-action: none;
 }
 
@@ -367,26 +369,31 @@ figure[data-moving] .nq-imgbox {
   accent-color: var(--accent);
 }
 
-/* ---------- Immagine selezionata, per tema ---------- */
+/* ---------- Immagine selezionata, per tema ----------
+   Il bordo usa l'inchiostro della pagina (sempre in contrasto con il suo fondo, anche su pagine
+   scure o colorate) con un filo del colore della pagina tra immagine e bordo: si vede anche
+   quando l'immagine è scura. */
+
+figure[data-selected] .nq-imgbox {
+  box-shadow: 0 0 0 2px var(--note-page-bg), 0 0 0 4px var(--note-page-ink);
+}
 
 /* Notte: anello luminoso */
 :root[data-theme="notte"] figure[data-selected] .nq-imgbox {
-  box-shadow: 0 0 0 2px var(--accent), 0 0 24px color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow: 0 0 0 2px var(--note-page-bg), 0 0 0 4px var(--note-page-ink), 0 0 24px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
-/* Opaco: contorno spesso staccato, angoli molto tondi */
-:root[data-theme="opaco"] .nq-imgbox {
-  border-radius: 1.47em;
-}
+/* Opaco: contorno spesso staccato */
 
 :root[data-theme="opaco"] figure[data-selected] .nq-imgbox {
-  outline: 3px solid var(--accent);
+  box-shadow: none;
+  outline: 3px solid var(--note-page-ink);
   outline-offset: 5px;
 }
 
 :root[data-theme="opaco"] .nq-handle {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: var(--note-page-ink);
+  background: var(--note-page-ink);
 }
 
 :root[data-theme="opaco"] .nq-imgbar {
@@ -412,16 +419,17 @@ figure[data-moving] .nq-imgbox {
 }
 
 /* Quaderno: fissata col nastro adesivo, leggermente storta */
-:root[data-theme="quaderno"] .nq-imgbox {
-  border-radius: 2px;
-}
 
 :root[data-theme="quaderno"] figure[data-selected] {
   transform: rotate(-1deg);
 }
 
+:root[data-theme="quaderno"] figure[data-selected] .nq-imgbox {
+  box-shadow: none;
+}
+
 :root[data-theme="quaderno"] figure[data-selected] .nq-img-inner {
-  outline: 1.5px dashed var(--accent);
+  outline: 2px dashed var(--note-page-ink);
   outline-offset: 4px;
   overflow: visible;
 }
@@ -467,9 +475,6 @@ figure[data-moving] .nq-imgbox {
 }
 
 /* Fosforo: mirino agli angoli e misure in pixel */
-:root[data-theme="fosforo"] .nq-imgbox {
-  border-radius: 4px;
-}
 
 :root[data-theme="fosforo"] .nq-handle {
   width: 14px;
