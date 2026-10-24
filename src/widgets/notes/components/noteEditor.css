@@ -1460,7 +1460,8 @@
   color: var(--nq-ink);
 }
 
-.nq-sw--ink {
+/* .nq-menu button azzera lo stile (all: unset): i campioni vanno ripresi con la stessa forza. */
+.nq-menu button.nq-sw--ink {
   background: var(--nq-ink);
 }
 
@@ -1496,25 +1497,43 @@
 
 .nq-doc [data-mark="tema"],
 .nq-sw--mark[data-mark="tema"] {
-  --nq-mark: color-mix(in srgb, var(--accent) 24%, transparent);
+  --nq-mark: var(--accent);
+}
+
+/* Colore pieno (il colore mescolato al fondo della pagina): dove due parti evidenziate si
+   sovrappongono non si scurisce. Lo prendono anche i pezzi di testo più grandi dentro
+   l'evidenziatura, così lo sfondo è alto quanto il loro testo. */
+.nq-doc [data-mark],
+.nq-sw--mark {
+  --nq-mark-fill: color-mix(in srgb, var(--nq-mark) var(--nq-mark-strength), var(--note-page-bg));
 }
 
 .nq-doc [data-mark] {
   padding: 0 0.1em;
   border-radius: 0.15em;
-  background: var(--nq-mark);
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
 
-.nq-sw--mark {
-  background: var(--nq-mark);
+.nq-doc [data-mark],
+.nq-doc [data-mark] [data-size],
+.nq-doc [data-mark] [style*="font-size"] {
+  background: var(--nq-mark-fill);
+}
+
+.nq-menu button.nq-sw--mark {
+  background: var(--nq-mark-fill);
 }
 
 /* In Quaderno l'evidenziatore è un tratto di pennarello sulla metà bassa della riga. */
 :root[data-theme="quaderno"] .nq-doc [data-mark] {
   border-radius: 0;
-  background: linear-gradient(transparent 50%, var(--nq-mark) 50%, var(--nq-mark) 92%, transparent 92%);
+}
+
+:root[data-theme="quaderno"] .nq-doc [data-mark],
+:root[data-theme="quaderno"] .nq-doc [data-mark] [data-size],
+:root[data-theme="quaderno"] .nq-doc [data-mark] [style*="font-size"] {
+  background: linear-gradient(transparent 50%, var(--nq-mark-fill) 50%, var(--nq-mark-fill) 92%, transparent 92%);
 }
 
 /* Pagine della palette: fondo e inchiostro dai token; testo, bordi e inchiostro a mano seguono la pagina. */
