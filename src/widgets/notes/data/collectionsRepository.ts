@@ -301,3 +301,50 @@ export async function updateView(id: number, patch: ViewPatch): Promise<void> {
   const db = await getDatabase();
   await db.execute(`UPDATE note_collection_views SET ${sets.join(", ")} WHERE id = ?`, [...values, id]);
 }
+
+// ---------------------------------------------------------------------
+// "Usata in": note (non nel cestino) che mostrano una vista o citano una riga
+// ---------------------------------------------------------------------
+
+export interface CollectionUse {
+  noteId: number;
+  title: string;
+  folderId: number | null;
+  /** Viste della raccolta nella nota. */
+  views: number;
+  /** Riferimenti a sue righe nella nota. */
+  refs: number;
+}
+
+interface UseRow {
+  id: number;
+  title: string;
+  folder_id: number | null;
+  content: string;
+}
+
+export async function collectionUses(viewIds: number[], rowIds: number[]): Promise<CollectionUse[]> {
+  if (viewIds.length === 0 && rowIds.length === 0) return [];
+  const db = await getDatabase();
+  // Prima un filtro grossolano in SQL (solo le pagine con viste o riferimenti), poi i conti esatti qui.
+  const rows = await db.select<UseRow[]>(
+    `SELECT n.id, n.title, n.folder_id, p.content
+     FROM notes n JOIN note_pages p ON p.note_id = n.id
+     WHERE n.deleted_at IS NULL AND (p.content LIKE '%data-view="%' OR p.content LIKE '%data-ref-row="%')`
+  );
+  const views = new Set(viewIds.map(String));
+  const refs = new Set(rowIds.map(String));
+  const byNote = new Map<number, CollectionUse>();
+  for (const r of rows) {
+    let v = 0;
+    let f = 0;
+    for (const m of r.content.matchAll(/data-view="(\d+)"/g)) if (views.has(m[1])) v++;
+    for (const m of r.content.matchAll(/data-ref-row="(\d+)"/g)) if (refs.has(m[1])) f++;
+    if (v === 0 && f === 0) continue;
+    const use = byNote.get(r.id) ?? { noteId: r.id, title: r.title, folderId: r.folder_id, views: 0, refs: 0 };
+    use.views += v;
+    use.refs += f;
+    byNote.set(r.id, use);
+  }
+  return [...byNote.values()].sort((a, b) => a.title.localeCompare(b.title, "it"));
+}

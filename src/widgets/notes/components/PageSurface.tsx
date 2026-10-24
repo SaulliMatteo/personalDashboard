@@ -17,6 +17,9 @@ import { currentBlock } from "../lib/editorDom";
 import { sanitizeHtml } from "../lib/html";
 import { paperAttrs, paperStyle } from "../lib/pageColor";
 import { caretCell, layoutTables, moveToCell } from "../lib/tableDom";
+import { getCollectionsState, rowInfo, subscribeCollections } from "../lib/collectionsStore";
+import { rowTitle } from "../lib/collections";
+import CollectionView, { type CollectionLinks } from "../collections/CollectionView";
 import type { NoteFont } from "../lib/textStyle";
 import FileCard from "./FileCard";
 import ImageBlock from "./ImageBlock";
@@ -51,6 +54,25 @@ interface PageSurfaceProps {
   onAfterInput?: () => void;
   /** Annulla/ripeti chiesti dal browser (menu contestuale): si usa la cronologia della nota. */
   onHistory?: (direction: "undo" | "redo") => void;
+  /** Note e navigazione per le viste collegate delle raccolte. */
+  collections: CollectionLinks;
+  /** Clic su un riferimento a una riga (@). */
+  onRefClick?: (rowId: number) => void;
+}
+
+/** Testo dei riferimenti @ allineato ai dati della raccolta (e segno sulle righe eliminate). */
+function refreshRefs(root: HTMLElement) {
+  const s = getCollectionsState();
+  if (!s.loaded) return;
+  const ctx = { now: new Date(), noteTitle: () => null };
+  root.querySelectorAll<HTMLElement>("[data-ref-row]").forEach((el) => {
+    const info = rowInfo(s, Number(el.dataset.refRow));
+    const gone = !info || info.row.deletedAt !== null || info.collection.deletedAt !== null;
+    el.toggleAttribute("data-missing", gone);
+    const title = info ? rowTitle(info.fields, info.row, ctx) : "Riga eliminata";
+    if (el.textContent !== title) el.textContent = title;
+    el.title = info ? `${info.collection.name}${gone ? " (eliminata)" : ""}` : "Riga eliminata";
+  });
 }
 
 interface BlockEntry {
@@ -124,6 +146,7 @@ function PageSurface(props: PageSurfaceProps) {
     const scan = () => {
       // Le larghezze delle colonne (colgroup) si rifanno da data-width: dopo annulla, incolla…
       layoutTables(el);
+      refreshRefs(el);
       const found = hydrateBlocks(el).map((b) => {
         let id = ids.current.get(b.el);
         if (id === undefined) {
@@ -145,6 +168,13 @@ function PageSurface(props: PageSurfaceProps) {
     // Solo al cambio di pagina: page.content cambia a ogni tasto e NON deve rientrare qui.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page.id, editorRef]);
+
+  // I riferimenti @ seguono la raccolta: titolo cambiato, riga eliminata o ripristinata.
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+    return subscribeCollections(() => refreshRefs(el));
+  }, [editorRef]);
 
   // Il blocco selezionato ha data-selected (forma per tema nel CSS); il resto no.
   useEffect(() => {
@@ -170,6 +200,8 @@ function PageSurface(props: PageSurfaceProps) {
     const el = editorRef.current;
     if (!el) return;
     const onBeforeInput = (e: InputEvent) => {
+      // Solo il testo della nota: i campi dentro una vista collegata hanno il loro annulla.
+      if (e.target !== el) return;
       if (e.inputType !== "historyUndo" && e.inputType !== "historyRedo") return;
       e.preventDefault();
       historyRef.current?.(e.inputType === "historyUndo" ? "undo" : "redo");
@@ -218,6 +250,11 @@ function PageSurface(props: PageSurfaceProps) {
   // Click sul "cerchietto" di una voce di checklist = la spunta/toglie.
   function handleClick(e: MouseEvent<HTMLDivElement>) {
     const root = editorRef.current;
+    const ref = (e.target as HTMLElement).closest<HTMLElement>("[data-ref-row]");
+    if (root && ref && root.contains(ref)) {
+      props.onRefClick?.(Number(ref.dataset.refRow));
+      return;
+    }
     const block = (e.target as HTMLElement).closest("[data-check]");
     if (!root || !block || !root.contains(block)) return;
     const fontSize = parseFloat(getComputedStyle(block).fontSize) || 15;
@@ -333,7 +370,14 @@ function PageSurface(props: PageSurfaceProps) {
 
       {blocks.map((b) =>
         createPortal(
-          b.kind === "image" ? (
+          b.kind === "view" ? (
+            <CollectionView
+              viewId={Number(b.el.dataset.view)}
+              {...props.collections}
+              onNotice={(message) => props.onNotice?.(message)}
+              onRemove={() => removeBlock(b.el)}
+            />
+          ) : b.kind === "image" ? (
             <ImageBlock
               figure={b.el}
               noteDir={props.noteDir}

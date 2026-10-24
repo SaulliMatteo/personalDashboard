@@ -4,6 +4,8 @@ import { useNav } from "../../../core/nav/useNav";
 import { createNote, listFolders, listNotes, type Folder, type NoteSummary } from "../data/notesRepository";
 import { htmlToText, relativeWhen } from "../lib/html";
 import { requestOpenNote } from "../lib/launch";
+import { formatDate, rowTitle, toDateString } from "../lib/collections";
+import { fieldsOf, loadCollections, rowsOf, useCollections, type CollectionsState } from "../lib/collectionsStore";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -16,6 +18,36 @@ export interface NotesCardNote {
   when: string;
   /** Colore della cartella (scelto dall'utente), null = senza cartella o senza colore. */
   color: string | null;
+}
+
+/** La prossima voce di una raccolta (riga con una data da oggi in poi): riga in fondo alla 2×2. */
+export interface NotesCardNext {
+  collection: string;
+  title: string;
+  /** "12 nov" */
+  when: string;
+}
+
+/** Tra tutte le raccolte vive, la riga con la data più vicina da oggi in poi. */
+function nextRow(s: CollectionsState, now: number): NotesCardNext | null {
+  const today = toDateString(new Date(now));
+  const ctx = { now: new Date(now), noteTitle: () => null };
+  let best: { date: string; next: NotesCardNext } | null = null;
+  for (const c of s.collections) {
+    if (c.deletedAt !== null) continue;
+    const fields = fieldsOf(s, c.id);
+    const dates = fields.filter((f) => f.type === "date");
+    if (dates.length === 0) continue;
+    for (const r of rowsOf(s, c.id)) {
+      if (r.deletedAt !== null) continue;
+      for (const f of dates) {
+        const v = r.data[String(f.id)];
+        if (typeof v !== "string" || v < today || (best && best.date <= v)) continue;
+        best = { date: v, next: { collection: c.name, title: rowTitle(fields, r, ctx), when: formatDate(v, ctx.now) } };
+      }
+    }
+  }
+  return best?.next ?? null;
 }
 
 export interface NotesCardData {
@@ -34,6 +66,7 @@ export interface NotesCardData {
   createAndOpen: (e: MouseEvent) => void;
   /** Nota veloce dalla 2×2: titolo = testo scritto, resta in dashboard. */
   quickCreate: (text: string) => Promise<boolean>;
+  next: NotesCardNext | null;
 }
 
 /** Dati comuni alle card di tutti i temi: le card cambiano solo forma. */
@@ -46,6 +79,12 @@ export function useNotesCard(): NotesCardData {
 
   // "2 min fa" si aggiorna da solo ogni minuto.
   const now = useNow().getTime();
+
+  // Raccolte (cache condivisa con la pagina Notes): per la riga "Prossima…".
+  const collections = useCollections();
+  useEffect(() => {
+    void loadCollections();
+  }, []);
 
   const apply = useCallback(([all, folders]: [NoteSummary[], Folder[]]) => {
     setRaw(all.filter((n) => n.deletedAt === null).sort((a, b) => b.updatedAt - a.updatedAt));
@@ -120,5 +159,6 @@ export function useNotesCard(): NotesCardData {
     open,
     createAndOpen,
     quickCreate,
+    next: collections.loaded ? nextRow(collections, now) : null,
   };
 }

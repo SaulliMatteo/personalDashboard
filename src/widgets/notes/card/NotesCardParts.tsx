@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
-import { MdAdd, MdOutlineDescription } from "react-icons/md";
+import { MdAdd, MdOutlineDescription, MdOutlineStorage } from "react-icons/md";
 import type { NotesCardData } from "./useNotesCard";
 import "./notesCard.css";
 
@@ -93,6 +93,15 @@ export function NotesCardM({ data, quickIcon = true, limit = 4, extra }: { data:
         <NotesEmpty data={data} />
         <NoteRows data={data} limit={limit} />
       </div>
+      {data.next && (
+        <div className="nc-next" title={`${data.next.collection}: ${data.next.title}, ${data.next.when}`}>
+          <span className="nc-next-led" aria-hidden="true" />
+          <MdOutlineStorage className="nc-next-ico" aria-hidden="true" />
+          <span className="nc-next-text">
+            Prossima in {data.next.collection}: <b>{data.next.title}</b>, {data.next.when}
+          </span>
+        </div>
+      )}
       {extra}
     </div>
   );

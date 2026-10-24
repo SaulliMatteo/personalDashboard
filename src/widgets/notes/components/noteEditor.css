@@ -1864,3 +1864,22 @@
   color: var(--nq-cell-ink);
 }
 
+
+/* Riferimento @ a una riga eliminata: avviso in basso con "Ripristina". */
+.nq-ref-gone {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: var(--modal-border);
+  border-radius: 12px;
+  background: var(--modal-bg);
+  box-shadow: var(--shadow-pop);
+  color: var(--text-primary);
+  font-size: 13px;
+  transform: translateX(-50%);
+}

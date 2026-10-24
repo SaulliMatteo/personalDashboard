@@ -322,3 +322,57 @@ export function nextChoiceColor(choices: Choice[]): Choice["color"] {
 }
 
 export { newChoiceId };
+
+// ---------------------------------------------------------------------
+// Viste nelle note, riferimenti, "Usata in", raccolte da una tabella
+// ---------------------------------------------------------------------
+
+/** Una vista nuova (per una nota): parte come la pagina della raccolta, ma ha filtro e layout suoi. */
+export async function createView(collectionId: number): Promise<number> {
+  const page = pageViewOf(state, collectionId);
+  const layout = page?.layout ?? "tabella";
+  const id = await guarded(() => repo.addView(collectionId, layout));
+  const view: View = { id, collectionId, name: "", layout, filter: [], sort: page?.sort ?? null, hidden: [], groupField: page?.groupField ?? null };
+  if (view.sort || view.groupField !== null) await guarded(() => repo.updateView(id, { sort: view.sort, groupField: view.groupField }));
+  setState({ ...state, views: [...state.views, view] });
+  return id;
+}
+
+/** Nuova raccolta con questi campi e righe (da una tabella) e una vista per la nota. Restituisce la vista. */
+export async function createCollectionFrom(name: string, fields: repo.NewField[], rows: CellValue[][]): Promise<number> {
+  const collectionId = await guarded(() => repo.createCollection(name, fields));
+  await loadCollections(true);
+  const created = fieldsOf(state, collectionId);
+  await guarded(async () => {
+    for (let i = 0; i < rows.length; i++) {
+      const data: Record<string, CellValue> = {};
+      created.forEach((f, c) => {
+        const v = asValue(f, rows[i][c] ?? null);
+        if (v !== null) data[String(f.id)] = v;
+      });
+      await repo.addRow(collectionId, data, i);
+    }
+  });
+  await loadCollections(true);
+  return createView(collectionId);
+}
+
+export interface RowInfo {
+  row: Row;
+  collection: Collection;
+  fields: Field[];
+}
+
+/** Riga con la sua raccolta e i campi (per i riferimenti @). */
+export function rowInfo(s: CollectionsState, rowId: number): RowInfo | null {
+  const row = s.rows.find((r) => r.id === rowId);
+  const collection = row ? s.collections.find((c) => c.id === row.collectionId) : undefined;
+  return row && collection ? { row, collection, fields: fieldsOf(s, collection.id) } : null;
+}
+
+/** Le note che usano la raccolta (viste o riferimenti), lette dal database. */
+export function fetchCollectionUses(collectionId: number): Promise<repo.CollectionUse[]> {
+  const viewIds = state.views.filter((v) => v.collectionId === collectionId).map((v) => v.id);
+  const rowIds = rowsOf(state, collectionId).map((r) => r.id);
+  return repo.collectionUses(viewIds, rowIds);
+}

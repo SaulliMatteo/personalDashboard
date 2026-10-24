@@ -546,3 +546,74 @@ div.nc-s-quaderno {
   min-height: 0;
   max-height: 46px;
 }
+
+/* ---------- 2×2: la prossima voce di una raccolta (mockup: .next) ---------- */
+
+.nc-next {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+  font-size: 12px;
+}
+
+.nc-next-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nc-next b {
+  font-weight: 650;
+}
+
+.nc-next-ico {
+  flex: none;
+  color: var(--accent);
+  font-size: 15px;
+}
+
+.nc-next-led {
+  display: none;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--led);
+}
+
+.nc--opaco .nc-next {
+  border: 0;
+  border-radius: 18px;
+  background: var(--tint-salvia);
+  color: var(--tint-salvia-ink);
+}
+
+.nc--opaco .nc-next-ico {
+  color: inherit;
+}
+
+.nc--quaderno .nc-next {
+  border: 1.5px dashed var(--accent);
+}
+
+.nc--fosforo .nc-next-led {
+  display: inline-block;
+}
+
+.nc--fosforo .nc-next-ico {
+  display: none;
+}
+
+/* Se la cella è bassa la riga sparisce: le note hanno la precedenza. */
+@container (max-height: 230px) {
+  .nc-next {
+    display: none;
+  }
+}
