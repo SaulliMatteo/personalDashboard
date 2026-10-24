@@ -3,7 +3,8 @@ import type { InkStroke, NotePage, PageBackground } from "../data/notesRepositor
 import { currentBlock } from "../lib/editorDom";
 import { sanitizeHtml } from "../lib/html";
 import InkLayer, { type InkTool } from "./InkLayer";
-import { paperStyle } from "../lib/pageColor";
+import { paperAttrs, paperStyle } from "../lib/pageColor";
+import type { NoteFont } from "../lib/textStyle";
 
 interface PageSurfaceProps {
   page: NotePage;
@@ -15,6 +16,8 @@ interface PageSurfaceProps {
   size: number;
   /** In cima alla pagina, fuori dal testo modificabile (titolo e proprietà della nota sulla prima pagina). */
   header?: ReactNode;
+  /** Font predefinito della nota (null = quello del tema). */
+  noteFont?: NoteFont | null;
   editorRef: RefObject<HTMLDivElement | null>;
   onContent: (html: string) => void;
   onInk: (strokes: InkStroke[]) => void;
@@ -115,6 +118,8 @@ function PageSurface(props: PageSurfaceProps) {
       <div
         className="nq-paper"
         data-bg={props.background}
+        data-note-font={props.noteFont ?? undefined}
+        {...paperAttrs(page.color)}
         style={{ "--nq-zoom": props.zoom / 100, ...paperStyle(page.color) } as CSSProperties}
       >
         <div ref={headRef} className="nq-page-head">

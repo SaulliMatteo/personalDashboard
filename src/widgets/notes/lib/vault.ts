@@ -28,6 +28,7 @@ import { htmlToMarkdown } from "./html";
 import { markdownToHtml, parseFrontmatter, parseMetaString, parseMetaTags } from "./markdown";
 
 import { asPageColor } from "./pageColor";
+import { isNoteFont } from "./textStyle";
 
 /**
  * COPIA SU DISCO (Documenti/Notes). SQLite resta il database di lavoro; ogni
@@ -110,6 +111,7 @@ function buildMarkdown(note: NoteSummary, pages: NotePage[]): string {
     `title: ${JSON.stringify(note.title)}`,
     `tags: [${note.tags.map((t) => JSON.stringify(t)).join(", ")}]`,
     `starred: ${note.starred}`,
+    ...(note.font ? [`font: ${note.font}`] : []),
     `created: ${new Date(note.createdAt).toISOString()}`,
     `updated: ${new Date(note.updatedAt).toISOString()}`,
     "---",
@@ -336,6 +338,7 @@ export async function importVault(knownPaths: Set<string>, folders: Folder[]): P
       title: parseMetaString(meta.title) ?? segments[segments.length - 1].replace(/--\d+$/, "").replace(/-/g, " "),
       tags: parseMetaTags(meta.tags),
       starred: meta.starred === "true",
+      font: isNoteFont(meta.font) && meta.font !== "punti" ? meta.font : null,
       createdAt: Number.isFinite(created) ? created : now,
       updatedAt: Number.isFinite(updated) ? updated : now,
       deletedAt: trashed ? now : null,

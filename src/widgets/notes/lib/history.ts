@@ -22,12 +22,15 @@ export interface RecordMeta {
   kind: ChangeKind;
   /** Blocco in cui si scrive: cambiarlo apre una voce nuova. */
   blockKey?: string;
+  /** Voci con lo stesso gruppo (una modifica su più pagine) si annullano insieme. */
+  group?: number;
 }
 
 interface Entry<T> {
   snapshot: T;
   kind: ChangeKind;
   blockKey: string | undefined;
+  group: number | undefined;
   /** Ultima modifica unita a questa voce. */
   at: number;
 }
@@ -36,11 +39,11 @@ export interface History<T extends { pageId: number }> {
   /** Da chiamare PRIMA di applicare una modifica, con lo stato che la pagina aveva. */
   record(before: T, meta: RecordMeta): void;
   /**
-   * Toglie l'ultima voce e la restituisce da applicare. `current` dà lo stato attuale di una
+   * Toglie l'ultima voce (o l'ultimo gruppo) e restituisce gli stati da applicare. `current` dà lo stato attuale di una
    * pagina (va in "ripeti"); se restituisce null la pagina non c'è più e la voce si salta.
    */
-  undo(current: (pageId: number) => T | null): T | null;
-  redo(current: (pageId: number) => T | null): T | null;
+  undo(current: (pageId: number) => T | null): T[];
+  redo(current: (pageId: number) => T | null): T[];
   canUndo(): boolean;
   canRedo(): boolean;
   clear(): void;
@@ -53,16 +56,22 @@ export function createHistory<T extends { pageId: number }>({ now, max = 200, me
   let future: Entry<T>[] = [];
   let mergeOpen = false;
 
-  function step(from: Entry<T>[], to: Entry<T>[], current: (pageId: number) => T | null): T | null {
+  function step(from: Entry<T>[], to: Entry<T>[], current: (pageId: number) => T | null): T[] {
     while (from.length > 0) {
-      const entry = from.pop()!;
-      const state = current(entry.snapshot.pageId);
-      if (state === null) continue; // pagina eliminata: la voce non serve più
-      to.push({ snapshot: state, kind: "other", blockKey: undefined, at: now() });
+      const group = from[from.length - 1].group;
+      const out: T[] = [];
+      // Una voce, o tutte quelle consecutive dello stesso gruppo.
+      do {
+        const entry = from.pop()!;
+        const state = current(entry.snapshot.pageId);
+        if (state === null) continue; // pagina eliminata: la voce non serve più
+        to.push({ snapshot: state, kind: "other", blockKey: undefined, group, at: now() });
+        out.push(entry.snapshot);
+      } while (group !== undefined && from.length > 0 && from[from.length - 1].group === group);
       mergeOpen = false;
-      return entry.snapshot;
+      if (out.length > 0) return out;
     }
-    return null;
+    return [];
   }
 
   return {
@@ -82,7 +91,7 @@ export function createHistory<T extends { pageId: number }>({ now, max = 200, me
         last.at = t; // la voce tiene lo stato di PRIMA della prima battuta
         return;
       }
-      past.push({ snapshot: before, kind: meta.kind, blockKey: meta.blockKey, at: t });
+      past.push({ snapshot: before, kind: meta.kind, blockKey: meta.blockKey, group: meta.group, at: t });
       if (past.length > max) past.splice(0, past.length - max);
       mergeOpen = meta.kind === "typing";
     },

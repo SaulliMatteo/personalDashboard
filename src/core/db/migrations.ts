@@ -279,4 +279,12 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE note_pages ADD COLUMN color TEXT`,
     ],
   },
+  {
+    version: 12,
+    description: "Notes: font predefinito della nota",
+    statements: [
+      // NULL = font del tema; altrimenti una chiave di widgets/notes/lib/textStyle.ts (sans, serif…).
+      `ALTER TABLE notes ADD COLUMN font TEXT`,
+    ],
+  },
 ];

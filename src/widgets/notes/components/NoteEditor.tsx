@@ -9,12 +9,15 @@ import {
   MdClose,
   MdFormatBold,
   MdFormatClear,
+  MdFormatColorReset,
   MdFormatColorText,
   MdFormatItalic,
   MdFormatListBulleted,
   MdFormatListNumbered,
   MdFormatStrikethrough,
   MdFormatUnderlined,
+  MdDoneAll,
+  MdHighlight,
   MdHorizontalRule,
   MdKeyboard,
   MdLink,
@@ -28,7 +31,6 @@ import {
   MdOutlineCalendarToday,
   MdOutlineEdit,
   MdOutlineFileUpload,
-  MdOutlineFormatColorFill,
   MdOutlineGesture,
   MdOutlineLayers,
   MdOutlineStarBorder,
@@ -54,6 +56,7 @@ import {
   setPageBackground,
   updateNote,
   setPageColor,
+  setPagesColor,
   type Attachment,
   type InkStroke,
   type NotePage,
@@ -66,9 +69,22 @@ import { BACKGROUND_OPTIONS } from "../lib/templates";
 import { THEME_INK } from "../lib/ink";
 import NumberField from "../../../ui/NumberField";
 import PageThumb from "./PageThumb";
-import { PAGE_COLORS, TEXT_COLORS } from "../lib/pageColor";
+import { PAGE_COLORS, customPageColor, isPageColorKey } from "../lib/pageColor";
 import {
-  applyFontSize,
+  DEFAULT_SIZE,
+  MARK_COLORS,
+  MARK_THEME,
+  NOTE_DEFAULT_FONTS,
+  NOTE_FONTS,
+  SIZE_MAX,
+  SIZE_MIN,
+  TEXT_COLORS,
+  applyTextAttr,
+  inHeading,
+  textAttrAt,
+  type NoteFont,
+} from "../lib/textStyle";
+import {
   applyTextColor,
   clearFormatting,
   currentBlock,
@@ -195,8 +211,14 @@ function NoteEditor({
   const [toast, setToast] = useState<string | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [fontSize, setFontSize] = useState(15);
+  /** Colore libero del testo (l'ultimo scelto nel selettore). */
   const [textColor, setTextColor] = useState("#e03131");
-  const [menu, setMenu] = useState<"export" | "split" | "color" | "pagecolor" | "more" | "pages" | null>(null);
+  /** Font, colore ed evidenziatore sotto il cursore ("" = quello del tema). */
+  const [fontKey, setFontKey] = useState("");
+  const [colorKey, setColorKey] = useState("");
+  const [inTitle, setInTitle] = useState(false);
+  const [noteFont, setNoteFont] = useState<NoteFont | null>(note.font);
+  const [menu, setMenu] = useState<"export" | "split" | "color" | "mark" | "more" | "pages" | null>(null);
   const zoomRef = useLatestRef(zoom);
   const [lightExport, setLightExport] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -237,6 +259,9 @@ function NoteEditor({
       lastSelection.current = getTextOffsets(root);
       const px = currentFontSizePx(root, zoomRef.current / 100);
       if (px) setFontSize(px);
+      setFontKey(textAttrAt(root, "data-font") ?? "");
+      setColorKey(textAttrAt(root, "data-color") ?? "");
+      setInTitle(inHeading(root));
       slashCheckRef.current(false);
     };
     document.addEventListener("selectionchange", onSelection);
@@ -448,15 +473,66 @@ function NoteEditor({
   if (done) commitEditor();
 }
 
-function handleFontSize(px: number) {
-  const value = Math.min(200, Math.max(8, Math.round(px)));
-  setFontSize(value);
-  withSelection((root) => applyFontSize(root, value));
-}
+  /** Dimensione 12–40 px (la normale, 15, non lascia attributi). */
+  function handleFontSize(px: number) {
+    const value = Math.min(SIZE_MAX, Math.max(SIZE_MIN, Math.round(px)));
+    setFontSize(value);
+    withSelection((root) => applyTextAttr(root, "data-size", value === DEFAULT_SIZE ? null : String(value)));
+  }
 
-function handleTextColor(color: string) {
-  setTextColor(color);
-  withSelection((root) => applyTextColor(root, color));
+  /** Font della selezione: "" = quello del tema (o della nota). */
+  function handleFont(key: string) {
+    setFontKey(key);
+    withSelection((root) => applyTextAttr(root, "data-font", key || null));
+  }
+
+  /** Colore della palette (null = colore del tema). */
+  function handleTextColor(key: string | null) {
+    setMenu(null);
+    setColorKey(key ?? "");
+    withSelection((root) => applyTextAttr(root, "data-color", key));
+  }
+
+  /** Colore libero scelto col selettore. */
+  function handleCustomTextColor(color: string) {
+    setTextColor(color);
+    withSelection((root) => applyTextColor(root, color));
+  }
+
+  /** Evidenziatore: chiave della palette, "tema", o null per toglierlo. */
+  function handleMark(key: string | null) {
+    setMenu(null);
+    withSelection((root) => applyTextAttr(root, "data-mark", key));
+  }
+
+  async function changeNoteFont(font: NoteFont | null) {
+    setNoteFont(font);
+    await attempt("Impossibile cambiare il font della nota", async () => {
+      await updateNote(note.id, { font });
+      onChanged();
+    });
+  }
+
+/** "Applica a tutte le pagine": una sola voce nella cronologia per tutte le pagine cambiate. */
+async function applyColorToAll() {
+  if (!page) return;
+  const color = page.color;
+  const group = Date.now();
+  const changed = pagesRef.current.filter((p) => p.color !== color);
+  if (changed.length === 0) {
+    showToast("Tutte le pagine hanno già questo colore");
+    return;
+  }
+  for (const p of changed) history.record(snapshotOf(p), { kind: "other", group });
+  const next = pagesRef.current.map((p) => ({ ...p, color }));
+  pagesRef.current = next;
+  setPages(next);
+  await attempt("Impossibile applicare il colore alle pagine", async () => {
+    await setPagesColor(note.id, color);
+    setSavedAt(Date.now());
+    showToast("Colore applicato a tutte le pagine");
+    onChanged();
+  });
 }
 
 async function changePageColor(color: string | null) {
@@ -507,7 +583,7 @@ async function changePageColor(color: string | null) {
   }
 
   /** Rimette una pagina com'era (testo, inchiostro, colore, sfondo, cursore) e la salva. */
-  function applySnapshot(snap: PageSnapshot) {
+  function applySnapshot(snap: PageSnapshot, navigate: boolean) {
     const prev = pagesRef.current.find((p) => p.id === snap.pageId);
     if (!prev) return;
     const next = pagesRef.current.map((p) =>
@@ -533,21 +609,28 @@ async function changePageColor(color: string | null) {
         el.focus();
         setTextOffsets(el, snap.selection);
       }
-    } else {
+    } else if (navigate) {
       pendingSelection.current = { pageId: snap.pageId, selection: snap.selection };
       setIndex(target);
     }
   }
 
+  /** Applica una voce (o un gruppo): si va alla pagina toccata solo se quella aperta non c'entra. */
+  function applySnapshots(list: PageSnapshot[]) {
+    const openId = pagesRef.current[index]?.id;
+    const touchesOpen = list.some((snap) => snap.pageId === openId);
+    list.forEach((snap, i) => applySnapshot(snap, !touchesOpen && i === 0));
+  }
+
   function handleUndo() {
-    const snap = history.undo(liveSnapshot);
-    if (snap) applySnapshot(snap);
+    const snaps = history.undo(liveSnapshot);
+    if (snaps.length > 0) applySnapshots(snaps);
     else showToast("Niente da annullare");
   }
 
   function handleRedo() {
-    const snap = history.redo(liveSnapshot);
-    if (snap) applySnapshot(snap);
+    const snaps = history.redo(liveSnapshot);
+    if (snaps.length > 0) applySnapshots(snaps);
     else showToast("Niente da ripetere");
   }
 
@@ -860,7 +943,7 @@ async function changePageColor(color: string | null) {
     setMenu(null);
     await flush();
     const list = pagesRef.current;
-    const meta = { title, kicker: (pathLabel || "Senza cartella").toUpperCase(), createdAt: note.createdAt };
+    const meta = { title, kicker: (pathLabel || "Senza cartella").toUpperCase(), createdAt: note.createdAt, font: noteFont };
     const base = slugify(title || "nota");
     setBusy(true);
     try {
@@ -1128,6 +1211,21 @@ async function changePageColor(color: string | null) {
                 <p className="nq-menu-status">
                   {kicker} · Modificata {formatWhen(note.updatedAt).toLowerCase()}
                 </p>
+                <label className="nq-menu-field">
+                  <span>Font della nota</span>
+                  <select
+                    className="nq-tsel"
+                    value={noteFont ?? ""}
+                    onChange={(e) => void changeNoteFont((e.target.value || null) as NoteFont | null)}
+                  >
+                    <option value="">Font del tema</option>
+                    {NOTE_DEFAULT_FONTS.map((f) => (
+                      <option key={f.key} value={f.key}>
+                        {f.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <ConfirmButton
                   className="nq-menu-danger"
                   label="Sposta nel cestino"
@@ -1174,11 +1272,26 @@ async function changePageColor(color: string | null) {
           <option value="h2">Titolo 2</option>
           <option value="h3">Titolo 3</option>
         </select>
+        <select
+          className="nq-tsel nq-tsel--font"
+          value={fontKey}
+          disabled={textOff}
+          onChange={(e) => handleFont(e.target.value)}
+          aria-label="Font della selezione"
+          title="Font della selezione"
+        >
+          <option value="">{noteFont ? "Font della nota" : "Font del tema"}</option>
+          {NOTE_FONTS.map((f) => (
+            <option key={f.key} value={f.key} disabled={f.key === "punti" && !inTitle && fontKey !== "punti"}>
+              {f.label}
+            </option>
+          ))}
+        </select>
         <span className="nq-tsize">
           <button type="button" className="nq-tsize-btn" disabled={textOff} onClick={() => handleFontSize(fontSize - 1)} aria-label="Riduci il testo" title="Riduci il testo">
             A−
           </button>
-          <NumberField className="nq-size-input" value={fontSize} min={8} max={200} disabled={textOff} onCommit={handleFontSize} aria-label="Dimensione del testo in pixel" title="Dimensione del testo (px)" />
+          <NumberField className="nq-size-input" value={fontSize} min={SIZE_MIN} max={SIZE_MAX} disabled={textOff} onCommit={handleFontSize} aria-label="Dimensione del testo in pixel" title={`Dimensione del testo (${SIZE_MIN}–${SIZE_MAX} px)`} />
           <button type="button" className="nq-tsize-btn" disabled={textOff} onClick={() => handleFontSize(fontSize + 1)} aria-label="Ingrandisci il testo" title="Ingrandisci il testo">
             A+
           </button>
@@ -1192,7 +1305,7 @@ async function changePageColor(color: string | null) {
           <ToolButton
             label="Colore del testo"
             legend="colore"
-            icon={<MdFormatColorText style={{ color: textColor }} />}
+            icon={<MdFormatColorText className="nq-color-ico" data-color={colorKey || undefined} />}
             disabled={textOff}
             pressed={menu === "color"}
             onClick={() => setMenu(menu === "color" ? null : "color")}
@@ -1200,16 +1313,62 @@ async function changePageColor(color: string | null) {
           {menu === "color" && (
             <>
               <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
-              <div className="nq-menu nq-menu--swatches">
+              <div className="nq-menu nq-menu--swatches" role="dialog" aria-label="Colore del testo">
                 <div className="nq-swatch-grid">
+                  <button type="button" className="nq-sw nq-sw--theme" aria-label="Colore del tema" title="Colore del tema" aria-pressed={colorKey === ""} onClick={() => handleTextColor(null)}>
+                    <MdFormatColorReset />
+                  </button>
                   {TEXT_COLORS.map((c) => (
-                    <button key={c} type="button" className="nq-sw" style={{ background: c }} aria-label={`Colore ${c}`} onClick={() => handleTextColor(c)} />
+                    <button
+                      key={c.key}
+                      type="button"
+                      className="nq-sw nq-sw--ink"
+                      data-color={c.key}
+                      aria-label={c.label}
+                      title={c.label}
+                      aria-pressed={colorKey === c.key}
+                      onClick={() => handleTextColor(c.key)}
+                    />
                   ))}
                 </div>
                 <label className="nq-sw-custom-row">
-                  <input type="color" value={textColor} onChange={(e) => handleTextColor(e.target.value)} />
+                  <input type="color" value={textColor} onChange={(e) => handleCustomTextColor(e.target.value)} />
                   <span>Altro colore…</span>
                 </label>
+              </div>
+            </>
+          )}
+        </div>
+        <div className="nq-menu-anchor">
+          <ToolButton
+            label="Evidenzia"
+            legend="evid."
+            icon={<MdHighlight />}
+            disabled={textOff}
+            pressed={menu === "mark"}
+            onClick={() => setMenu(menu === "mark" ? null : "mark")}
+          />
+          {menu === "mark" && (
+            <>
+              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+              <div className="nq-menu nq-menu--swatches" role="dialog" aria-label="Evidenziatore">
+                <div className="nq-swatch-grid">
+                  <button type="button" className="nq-sw nq-sw--mark" data-mark={MARK_THEME} aria-label="Colore del tema" title="Colore del tema" onClick={() => handleMark(MARK_THEME)} />
+                  {MARK_COLORS.map((c) => (
+                    <button
+                      key={c.key}
+                      type="button"
+                      className="nq-sw nq-sw--mark"
+                      data-mark={c.key}
+                      aria-label={c.label}
+                      title={c.label}
+                      onClick={() => handleMark(c.key)}
+                    />
+                  ))}
+                </div>
+                <button type="button" className="nq-menu-reset nq-menu-reset--after" onClick={() => handleMark(null)}>
+                  <strong>Togli l'evidenziatura</strong>
+                </button>
               </div>
             </>
           )}
@@ -1240,34 +1399,42 @@ async function changePageColor(color: string | null) {
         <span className="nq-tsep" />
         <ToolButton label="Allega file" legend="file" icon={<MdOutlineAttachFile />} onClick={() => void pickFiles()} />
         <span className="nq-tsep" />
-        <div className="nq-menu-anchor">
-          <ToolButton
-            label="Colore della pagina"
-            legend="pagina"
-            icon={<MdOutlineFormatColorFill style={{ color: page.color ?? undefined }} />}
-            pressed={menu === "pagecolor"}
-            onClick={() => setMenu(menu === "pagecolor" ? null : "pagecolor")}
+        <span className="nq-swatches" role="group" aria-label="Colore della pagina">
+          <button
+            type="button"
+            className="nq-psw nq-psw--theme"
+            aria-label="Pagina: colore del tema"
+            title="Pagina: colore del tema"
+            aria-pressed={page.color === null}
+            onClick={() => void changePageColor(null)}
           />
-          {menu === "pagecolor" && (
-            <>
-              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
-              <div className="nq-menu nq-menu--swatches">
-                <button type="button" className="nq-menu-reset" onClick={() => void changePageColor(null)}>
-                  <strong>Colore del tema</strong>
-                </button>
-                <div className="nq-swatch-grid">
-                  {PAGE_COLORS.map((c) => (
-                    <button key={c.value} type="button" className="nq-sw" style={{ background: c.value }} title={c.label} aria-label={c.label} onClick={() => void changePageColor(c.value)} />
-                  ))}
-                </div>
-                <label className="nq-sw-custom-row">
-                  <input type="color" value={page.color ?? "#ffffff"} onChange={(e) => void changePageColor(e.target.value)} />
-                  <span>Altro colore…</span>
-                </label>
-              </div>
-            </>
-          )}
-        </div>
+          {PAGE_COLORS.map((c) => (
+            <button
+              key={c.key}
+              type="button"
+              className="nq-psw"
+              data-k={c.key}
+              aria-label={`Pagina: ${c.label}`}
+              title={`Pagina: ${c.label}`}
+              aria-pressed={page.color === c.key}
+              onClick={() => void changePageColor(c.key)}
+            />
+          ))}
+          <label
+            className="nq-psw nq-psw--custom"
+            title="Pagina: altro colore"
+            data-on={page.color !== null && !isPageColorKey(page.color) ? "" : undefined}
+            style={page.color !== null && !isPageColorKey(page.color) ? { background: page.color } : undefined}
+          >
+            <input
+              type="color"
+              value={customPageColor(page.color)}
+              onChange={(e) => void changePageColor(e.target.value)}
+              aria-label="Pagina: altro colore"
+            />
+          </label>
+        </span>
+        <ToolButton label="Applica il colore a tutte le pagine" legend="tutte" icon={<MdDoneAll />} onClick={() => void applyColorToAll()} />
         <select
           className="nq-tsel"
           value={page.background}
@@ -1370,6 +1537,7 @@ async function changePageColor(color: string | null) {
             color={color}
             size={size}
             header={index === 0 ? titleBlock : null}
+          noteFont={noteFont}
             editorRef={editorRef}
             onContent={handleTyping}
             onInk={handleInk}

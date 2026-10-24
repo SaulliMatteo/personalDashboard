@@ -608,3 +608,34 @@
   --preview-fosforo-giorno-border: 1px solid rgba(70, 24, 28, 0.2);
   --preview-fosforo-giorno-radius: 4px;
 }
+
+/* ==========================================================================
+   NOTES: palette di pagine, testo ed evidenziatore — variante NOTTE
+   (il giorno è in tokens.css).
+   ========================================================================== */
+:root[data-mode="notte"] {
+  --nq-page-crema-bg: #2B261A;
+  --nq-page-crema-ink: #F1E6C8;
+  --nq-page-salvia-bg: #1F2A1D;
+  --nq-page-salvia-ink: #DCE8D2;
+  --nq-page-cielo-bg: #18222F;
+  --nq-page-cielo-ink: #D8E5F4;
+  --nq-page-rosa-bg: #2C1D22;
+  --nq-page-rosa-ink: #F3DCE2;
+  --nq-page-grafite-bg: #3A3D44;
+  --nq-page-grafite-ink: #EEF0F3;
+
+  --nq-ink-rosso: #FF8A80;
+  --nq-ink-arancio: #FFB366;
+  --nq-ink-verde: #7DD3A0;
+  --nq-ink-blu: #8EB4FF;
+  --nq-ink-viola: #C9A2FF;
+  --nq-ink-grigio: #A9AFBA;
+
+  --nq-mark-giallo: rgba(255, 214, 0, 0.3);
+  --nq-mark-verde: rgba(80, 200, 120, 0.3);
+  --nq-mark-azzurro: rgba(80, 160, 255, 0.3);
+  --nq-mark-rosa: rgba(255, 120, 170, 0.28);
+  --nq-mark-arancio: rgba(255, 160, 60, 0.3);
+  --nq-mark-viola: rgba(170, 120, 255, 0.3);
+}

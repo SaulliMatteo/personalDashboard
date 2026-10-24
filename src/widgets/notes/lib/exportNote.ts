@@ -2,7 +2,8 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import type { NotePage } from "../data/notesRepository";
 import { htmlToMarkdown, monthYear, sanitizeHtml } from "./html";
-import { luminance, paperVars } from "./pageColor";
+import { isPageColorKey, luminance, paperVars } from "./pageColor";
+import type { NoteFont } from "./textStyle";
 import { THEME_INK, drawStrokes } from "./ink"; // al posto del solo drawStrokes
 
 export interface ExportMeta {
@@ -10,6 +11,8 @@ export interface ExportMeta {
   /** "LAVORO / PROGETTO ATLANTE" */
   kicker: string;
   createdAt: number;
+  /** Font predefinito della nota. */
+  font?: NoteFont | null;
 }
 
 export interface RenderOptions {
@@ -63,17 +66,24 @@ const lightInk = (color: string) => (luminance(color) > 0.85 ? "#1a1a1e" : color
 function buildStage(page: NotePage, number: number, meta: ExportMeta, light: boolean, minHeight: number) {
   const stage = document.createElement("div");
   stage.style.cssText = "position:fixed;left:-20000px;top:0;pointer-events:none;";
-  if (light) for (const [key, value] of Object.entries(LIGHT_VARS)) stage.style.setProperty(key, value);
+  if (light) {
+    for (const [key, value] of Object.entries(LIGHT_VARS)) stage.style.setProperty(key, value);
+    // Le pagine della palette (crema, salvia…) prendono i colori del giorno (tokens.css).
+    stage.classList.add("nq-export-light");
+  }
 
   const paper = document.createElement("div");
   paper.className = "nq-paper";
   paper.dataset.bg = page.background;
   // Prima le misure (cssText sostituisce tutto lo stile), poi il colore della pagina.
   paper.style.cssText = `--nq-zoom:1;width:${PAPER_WIDTH}px;max-width:none;flex:none;border:none;border-radius:0;box-shadow:none;min-height:${minHeight}px;`;
-  if (page.color) {
+  if (isPageColorKey(page.color)) {
+    paper.dataset.pageColor = page.color;
+  } else if (page.color) {
     paper.style.backgroundColor = page.color;
     for (const [key, value] of Object.entries(paperVars(page.color))) paper.style.setProperty(key, value);
   }
+  if (meta.font) paper.dataset.noteFont = meta.font;
   paper.innerHTML =
     `<div class="nq-paper-head"><span></span><span></span></div>` +
     `<div class="nq-doc"></div>` +
@@ -155,8 +165,10 @@ async function renderPage(
     ctx.fillStyle = background;
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(image, 0, 0, width, height);
+    // Su una pagina colorata l'inchiostro del tema è quello della pagina (scuro o chiaro a seconda del colore).
+    const pageInk = getComputedStyle(paper).getPropertyValue("--note-page-ink").trim() || THEME_INK;
     const mapInk = page.color
-      ? (c: string) => (c.toLowerCase() === THEME_INK ? (luminance(page.color!) > 0.5 ? "#1a1a1e" : "#f2f2f4") : c)
+      ? (c: string) => (c.toLowerCase() === THEME_INK ? pageInk : c)
       : light
         ? lightInk
         : undefined;

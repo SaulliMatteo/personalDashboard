@@ -106,7 +106,10 @@ notes/
                              history.ts (annulla/ripeti per nota, puro: orologio iniettato),
                              shortcuts.ts (UNICO elenco delle scorciatoie: tasti, etichette, tooltip),
                              selectionOffsets.ts (cursore ↔ posizione nel testo), blockActions.ts
-                             (duplica/sposta il blocco), insertItems.ts (voci del menu "/")
+                             (duplica/sposta il blocco), insertItems.ts (voci del menu "/"),
+                             textStyle.ts (font, dimensione 12–40, colori ed evidenziatore come
+                             span data-*; elenchi che sanitizeHtml accetta), pageColor.ts (colore
+                             pagina: chiave della palette, token --nq-page-*, o #rrggbb libero)
 ```
 
 La geometria del testo nella pagina (larghezza 58em, margini interni, corpo, dimensioni e margini dei titoli

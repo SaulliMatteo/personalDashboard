@@ -1329,3 +1329,337 @@
 :root[data-theme="fosforo"] .nq-pdot {
   border-radius: 2px;
 }
+
+/* ==========================================================================
+   Stile del testo scelto dall'utente (lib/textStyle.ts) e colore della pagina
+   ========================================================================== */
+
+/* Font della selezione (span) e font predefinito della nota (pagina). */
+.nq-doc [data-font="sans"] {
+  font-family: "Manrope Variable", system-ui, sans-serif;
+}
+
+.nq-doc [data-font="grottesco"] {
+  font-family: "Bricolage Grotesque Variable", system-ui, sans-serif;
+}
+
+.nq-doc [data-font="figtree"] {
+  font-family: "Figtree Variable", system-ui, sans-serif;
+}
+
+.nq-doc [data-font="serif"] {
+  font-family: "Literata Variable", Georgia, serif;
+}
+
+.nq-doc [data-font="mano"] {
+  font-family: "Caveat Variable", cursive;
+}
+
+.nq-doc [data-font="mono"] {
+  font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+}
+
+.nq-doc [data-font="punti"] {
+  font-family: "Doto Variable", monospace;
+}
+
+.nq-paper[data-note-font="sans"] .nq-doc {
+  font-family: "Manrope Variable", system-ui, sans-serif;
+}
+
+.nq-paper[data-note-font="grottesco"] .nq-doc {
+  font-family: "Bricolage Grotesque Variable", system-ui, sans-serif;
+}
+
+.nq-paper[data-note-font="figtree"] .nq-doc {
+  font-family: "Figtree Variable", system-ui, sans-serif;
+}
+
+.nq-paper[data-note-font="serif"] .nq-doc {
+  font-family: "Literata Variable", Georgia, serif;
+}
+
+.nq-paper[data-note-font="mano"] .nq-doc {
+  font-family: "Caveat Variable", cursive;
+}
+
+.nq-paper[data-note-font="mono"] .nq-doc {
+  font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+}
+
+/* Dimensione in px a zoom 100% (12–40): segue lo zoom come il resto del testo. */
+.nq-doc [data-size="12"] { font-size: calc(12 * var(--nq-px)); }
+.nq-doc [data-size="13"] { font-size: calc(13 * var(--nq-px)); }
+.nq-doc [data-size="14"] { font-size: calc(14 * var(--nq-px)); }
+.nq-doc [data-size="15"] { font-size: calc(15 * var(--nq-px)); }
+.nq-doc [data-size="16"] { font-size: calc(16 * var(--nq-px)); }
+.nq-doc [data-size="17"] { font-size: calc(17 * var(--nq-px)); }
+.nq-doc [data-size="18"] { font-size: calc(18 * var(--nq-px)); }
+.nq-doc [data-size="19"] { font-size: calc(19 * var(--nq-px)); }
+.nq-doc [data-size="20"] { font-size: calc(20 * var(--nq-px)); }
+.nq-doc [data-size="21"] { font-size: calc(21 * var(--nq-px)); }
+.nq-doc [data-size="22"] { font-size: calc(22 * var(--nq-px)); }
+.nq-doc [data-size="23"] { font-size: calc(23 * var(--nq-px)); }
+.nq-doc [data-size="24"] { font-size: calc(24 * var(--nq-px)); }
+.nq-doc [data-size="25"] { font-size: calc(25 * var(--nq-px)); }
+.nq-doc [data-size="26"] { font-size: calc(26 * var(--nq-px)); }
+.nq-doc [data-size="27"] { font-size: calc(27 * var(--nq-px)); }
+.nq-doc [data-size="28"] { font-size: calc(28 * var(--nq-px)); }
+.nq-doc [data-size="29"] { font-size: calc(29 * var(--nq-px)); }
+.nq-doc [data-size="30"] { font-size: calc(30 * var(--nq-px)); }
+.nq-doc [data-size="31"] { font-size: calc(31 * var(--nq-px)); }
+.nq-doc [data-size="32"] { font-size: calc(32 * var(--nq-px)); }
+.nq-doc [data-size="33"] { font-size: calc(33 * var(--nq-px)); }
+.nq-doc [data-size="34"] { font-size: calc(34 * var(--nq-px)); }
+.nq-doc [data-size="35"] { font-size: calc(35 * var(--nq-px)); }
+.nq-doc [data-size="36"] { font-size: calc(36 * var(--nq-px)); }
+.nq-doc [data-size="37"] { font-size: calc(37 * var(--nq-px)); }
+.nq-doc [data-size="38"] { font-size: calc(38 * var(--nq-px)); }
+.nq-doc [data-size="39"] { font-size: calc(39 * var(--nq-px)); }
+.nq-doc [data-size="40"] { font-size: calc(40 * var(--nq-px)); }
+
+/* Colori del testo e dell'evidenziatore: un valore per il giorno e uno per la notte (token). */
+.nq-doc [data-color="rosso"],
+.nq-color-ico[data-color="rosso"],
+.nq-sw--ink[data-color="rosso"] {
+  --nq-ink: var(--nq-ink-rosso);
+}
+
+.nq-doc [data-color="arancio"],
+.nq-color-ico[data-color="arancio"],
+.nq-sw--ink[data-color="arancio"] {
+  --nq-ink: var(--nq-ink-arancio);
+}
+
+.nq-doc [data-color="verde"],
+.nq-color-ico[data-color="verde"],
+.nq-sw--ink[data-color="verde"] {
+  --nq-ink: var(--nq-ink-verde);
+}
+
+.nq-doc [data-color="blu"],
+.nq-color-ico[data-color="blu"],
+.nq-sw--ink[data-color="blu"] {
+  --nq-ink: var(--nq-ink-blu);
+}
+
+.nq-doc [data-color="viola"],
+.nq-color-ico[data-color="viola"],
+.nq-sw--ink[data-color="viola"] {
+  --nq-ink: var(--nq-ink-viola);
+}
+
+.nq-doc [data-color="grigio"],
+.nq-color-ico[data-color="grigio"],
+.nq-sw--ink[data-color="grigio"] {
+  --nq-ink: var(--nq-ink-grigio);
+}
+
+.nq-doc [data-color],
+.nq-color-ico[data-color] {
+  color: var(--nq-ink);
+}
+
+.nq-sw--ink {
+  background: var(--nq-ink);
+}
+
+.nq-doc [data-mark="giallo"],
+.nq-sw--mark[data-mark="giallo"] {
+  --nq-mark: var(--nq-mark-giallo);
+}
+
+.nq-doc [data-mark="verde"],
+.nq-sw--mark[data-mark="verde"] {
+  --nq-mark: var(--nq-mark-verde);
+}
+
+.nq-doc [data-mark="azzurro"],
+.nq-sw--mark[data-mark="azzurro"] {
+  --nq-mark: var(--nq-mark-azzurro);
+}
+
+.nq-doc [data-mark="rosa"],
+.nq-sw--mark[data-mark="rosa"] {
+  --nq-mark: var(--nq-mark-rosa);
+}
+
+.nq-doc [data-mark="arancio"],
+.nq-sw--mark[data-mark="arancio"] {
+  --nq-mark: var(--nq-mark-arancio);
+}
+
+.nq-doc [data-mark="viola"],
+.nq-sw--mark[data-mark="viola"] {
+  --nq-mark: var(--nq-mark-viola);
+}
+
+.nq-doc [data-mark="tema"],
+.nq-sw--mark[data-mark="tema"] {
+  --nq-mark: color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+.nq-doc [data-mark] {
+  padding: 0 0.1em;
+  border-radius: 0.15em;
+  background: var(--nq-mark);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.nq-sw--mark {
+  background: var(--nq-mark);
+}
+
+/* In Quaderno l'evidenziatore è un tratto di pennarello sulla metà bassa della riga. */
+:root[data-theme="quaderno"] .nq-doc [data-mark] {
+  border-radius: 0;
+  background: linear-gradient(transparent 50%, var(--nq-mark) 50%, var(--nq-mark) 92%, transparent 92%);
+}
+
+/* Pagine della palette: fondo e inchiostro dai token; testo, bordi e inchiostro a mano seguono la pagina. */
+.nq-paper[data-page-color="crema"],
+.nq-psw[data-k="crema"] {
+  --note-page-bg: var(--nq-page-crema-bg);
+  --note-page-ink: var(--nq-page-crema-ink);
+}
+
+.nq-paper[data-page-color="salvia"],
+.nq-psw[data-k="salvia"] {
+  --note-page-bg: var(--nq-page-salvia-bg);
+  --note-page-ink: var(--nq-page-salvia-ink);
+}
+
+.nq-paper[data-page-color="cielo"],
+.nq-psw[data-k="cielo"] {
+  --note-page-bg: var(--nq-page-cielo-bg);
+  --note-page-ink: var(--nq-page-cielo-ink);
+}
+
+.nq-paper[data-page-color="rosa"],
+.nq-psw[data-k="rosa"] {
+  --note-page-bg: var(--nq-page-rosa-bg);
+  --note-page-ink: var(--nq-page-rosa-ink);
+}
+
+.nq-paper[data-page-color="grafite"],
+.nq-psw[data-k="grafite"] {
+  --note-page-bg: var(--nq-page-grafite-bg);
+  --note-page-ink: var(--nq-page-grafite-ink);
+}
+
+.nq-paper[data-page-color] {
+  --text-primary: var(--note-page-ink);
+  --text-secondary: color-mix(in srgb, var(--note-page-ink) 78%, transparent);
+  --text-muted: color-mix(in srgb, var(--note-page-ink) 58%, transparent);
+  --border-subtle: color-mix(in srgb, var(--note-page-ink) 16%, transparent);
+  --surface-1: color-mix(in srgb, var(--note-page-ink) 5%, transparent);
+  --surface-2: color-mix(in srgb, var(--note-page-ink) 9%, transparent);
+}
+
+/* ---------- Barra: campioni del colore pagina, palette dei menu ---------- */
+
+.nq-swatches {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 4px;
+}
+
+.nq-psw {
+  all: unset;
+  position: relative;
+  box-sizing: border-box;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  background: var(--note-page-bg);
+  cursor: pointer;
+}
+
+.nq-psw[aria-pressed="true"],
+.nq-psw--custom[data-on] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.nq-psw:focus-visible,
+.nq-psw--custom:focus-within {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Colore del tema: metà pagina, metà accent (come nel mockup). */
+.nq-psw--theme {
+  background: conic-gradient(var(--note-page-bg) 0 50%, var(--accent) 0);
+}
+
+/* Colore libero: il ventaglio è l'icona del selettore. */
+.nq-psw--custom {
+  overflow: hidden;
+  background: conic-gradient(var(--tint-senape), var(--tint-salvia), var(--tint-blu), var(--tint-malva), var(--tint-senape));
+}
+
+.nq-psw--custom input {
+  position: absolute;
+  inset: -6px;
+  width: 32px;
+  height: 32px;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.nq-menu button.nq-sw[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.nq-menu button.nq-sw--theme {
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+.nq-menu-reset--after {
+  margin: 8px 0 0;
+}
+
+.nq-tsel--font {
+  max-width: 170px;
+}
+
+.nq-menu-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 10px 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.nq-menu-field .nq-tsel {
+  max-width: none;
+}
+
+:root[data-theme="opaco"] .nq-swatches {
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+:root[data-theme="fosforo"] .nq-swatches {
+  height: 42px;
+  padding: 0 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+}
+
+:root[data-theme="fosforo"] .nq-psw {
+  border-radius: 3px;
+}
