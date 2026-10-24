@@ -14,15 +14,14 @@ import {
   MdOutlineVerticalSplit,
   MdSearch,
   MdAdd,
-  MdChevronRight,
 } from "react-icons/md";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
-import { useSettings } from "../../core/settings/useSettings";
 import FolderPanel from "./components/FolderPanel";
 import VaultPanel from "./components/VaultPanel";
 import FolderTree from "./components/FolderTree";
 import NoteCollection, { type LayoutMode, type SortKey } from "./components/NoteCollection";
 import NoteEditor from "./components/NoteEditor";
+import Crumbs, { type Crumb } from "./components/Crumbs";
 import { takePendingNote } from "./lib/launch";
 import {
   addAttachment,
@@ -71,20 +70,8 @@ type View =
 const RECENT_LIMIT = 12;
 const MAX_ATTACHMENT_BYTES = 50 * 1024 * 1024;
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "Q";
-  return parts
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase();
-}
-
 /** Pagina "Notes": cartelle, raccolta di note ed editor. */
 function NotesDetail() {
-  const { settings } = useSettings();
-
   const [folders, setFolders] = useState<Folder[]>([]);
   const [notes, setNotes] = useState<NoteSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -257,7 +244,9 @@ function NotesDetail() {
         !!target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable);
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        searchRef.current?.focus();
+        // La ricerca sta nella barra laterale: se è nascosta la si riapre.
+        setSideOpen(true);
+        window.requestAnimationFrame(() => searchRef.current?.focus());
         return;
       }
       if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
@@ -664,6 +653,12 @@ function NotesDetail() {
         key={`${onClosePane ? "side" : "main"}-${note.id}`}
         note={note}
         pathLabel={pathOf(note.folderId)}
+        crumbs={[
+          ...pathFolders(note.folderId).map((f) => ({ label: f.name, onClick: () => selectFolder(f.id) })),
+          { label: note.title || "Senza titolo" },
+        ]}
+        onToggleSide={onClosePane ? undefined : () => setSideOpen((v) => !v)}
+        sideOpen={sideOpen}
         onChanged={() => void reload()}
         onToggleStar={() => void handleToggleStar(note)}
         onTrash={() => {
@@ -720,7 +715,7 @@ function NotesDetail() {
 
   // ---------------- Briciole di pane ----------------
 
-  const crumbs: { label: string; onClick?: () => void }[] = [];
+  const crumbs: Crumb[] = [];
   if (openNote) {
     for (const f of pathFolders(openNote.folderId)) crumbs.push({ label: f.name, onClick: () => selectFolder(f.id) });
     crumbs.push({ label: openNote.title || "Senza titolo" });
@@ -730,8 +725,6 @@ function NotesDetail() {
   } else {
     crumbs.push({ label: header.title });
   }
-
-  const userName = settings.userName.trim();
 
   if (!loaded) {
     if (loadError === null) return <p className="nq-loading">Caricamento…</p>;
@@ -749,42 +742,48 @@ function NotesDetail() {
   return (
     <div className="nq">
       {sideOpen && (
-        <aside className="nq-side">
-          <div className="nq-brand">
-            <span className="nq-brand-icon">
-              <MdOutlineDescription />
-            </span>
-            <span>Notes</span>
-          </div>
-
-          <div className="nq-user">
-            <span className="nq-avatar">{initials(userName)}</span>
-            <div>
-              <strong>{userName || "Il tuo spazio"}</strong>
-              <span>Spazio personale</span>
-            </div>
-          </div>
-
-          <nav className="nq-nav">
-            <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "all" ? " is-active" : ""}`} onClick={() => goTo({ kind: "all" })}>
-              <MdOutlineDescription /> <span>Tutte le note</span> <em>{live.length}</em>
-            </button>
-            <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "starred" ? " is-active" : ""}`} onClick={() => goTo({ kind: "starred" })}>
-              <MdOutlineStarBorder /> <span>Preferiti</span> <em>{live.filter((n) => n.starred).length}</em>
-            </button>
-            <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "recent" ? " is-active" : ""}`} onClick={() => goTo({ kind: "recent" })}>
-              <MdOutlineHistory /> <span>Recenti</span>
-            </button>
-          </nav>
-
-          <div className="nq-section-head">
-            <span>Le tue cartelle</span>
-            <button type="button" className="nq-icon-btn" onClick={() => setNewFolder({ parentId: null })} aria-label="Nuova cartella" title="Nuova cartella">
-              <MdOutlineCreateNewFolder />
-            </button>
-          </div>
+        <aside className="nq-side" aria-label="Note e cartelle">
+          <label className="nq-search">
+            <MdSearch aria-hidden="true" />
+            <input
+              ref={searchRef}
+              value={query}
+              placeholder="Cerca"
+              aria-label="Cerca nelle note"
+              onChange={(e) => {
+                setQuery(e.target.value);
+                if (e.target.value) setOpenId(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setQuery("");
+                  e.currentTarget.blur();
+                }
+              }}
+            />
+            <kbd>Ctrl K</kbd>
+          </label>
 
           <div className="nq-side-scroll">
+            <nav className="nq-nav">
+              <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "all" ? " is-active" : ""}`} onClick={() => goTo({ kind: "all" })}>
+                <MdOutlineDescription /> <span>Tutte le note</span> <em>{live.length}</em>
+              </button>
+              <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "starred" ? " is-active" : ""}`} onClick={() => goTo({ kind: "starred" })}>
+                <MdOutlineStarBorder /> <span>Preferiti</span> <em>{live.filter((n) => n.starred).length}</em>
+              </button>
+              <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "recent" ? " is-active" : ""}`} onClick={() => goTo({ kind: "recent" })}>
+                <MdOutlineHistory /> <span>Recenti</span>
+              </button>
+            </nav>
+
+            <h3 className="nq-section-head">
+              <span>Cartelle</span>
+              <button type="button" className="nq-icon-btn nq-icon-btn--small" onClick={() => setNewFolder({ parentId: null })} aria-label="Nuova cartella" title="Nuova cartella">
+                <MdAdd />
+              </button>
+            </h3>
+
             <FolderTree
               childrenOf={childrenOf}
               counts={counts}
@@ -812,24 +811,21 @@ function NotesDetail() {
               </div>
             )}
 
-            <button type="button" className="nq-nav-item nq-new-folder" onClick={() => setNewFolder({ parentId: null })}>
-              <MdAdd /> <span>Nuova cartella</span>
-            </button>
-
             {allTags.length > 0 && (
               <>
-                <div className="nq-section-head">
+                <h3 className="nq-section-head">
                   <span>Tag</span>
-                </div>
+                </h3>
                 <div className="nq-tags">
                   {allTags.map((tag) => (
                     <button
                       key={tag}
                       type="button"
                       className={`nq-tag${view.kind === "tag" && view.tag === tag && !openNote ? " is-active" : ""}`}
+                      aria-pressed={view.kind === "tag" && view.tag === tag && !openNote}
                       onClick={() => goTo({ kind: "tag", tag })}
                     >
-                      # {tag}
+                      #{tag}
                     </button>
                   ))}
                 </div>
@@ -852,44 +848,14 @@ function NotesDetail() {
       )}
 
       <section className="nq-main">
-        <div className="nq-topbar">
-          <button type="button" className="nq-icon-btn" onClick={() => setSideOpen((v) => !v)} aria-label="Mostra o nascondi la barra laterale">
-            <MdOutlineVerticalSplit />
-          </button>
-          <nav className="nq-crumbs" aria-label="Percorso">
-            {crumbs.map((crumb, i) => (
-              <span key={`${crumb.label}-${i}`} className="nq-crumb">
-                {i > 0 && <MdChevronRight />}
-                {crumb.onClick ? (
-                  <button type="button" onClick={crumb.onClick}>
-                    {crumb.label}
-                  </button>
-                ) : (
-                  <span className={i === crumbs.length - 1 ? "is-current" : ""}>{crumb.label}</span>
-                )}
-              </span>
-            ))}
-          </nav>
-          <label className="nq-search">
-            <MdSearch />
-            <input
-              ref={searchRef}
-              value={query}
-              placeholder="Cerca nelle tue note"
-              onChange={(e) => {
-                setQuery(e.target.value);
-                if (e.target.value) setOpenId(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  setQuery("");
-                  e.currentTarget.blur();
-                }
-              }}
-            />
-            <kbd>Ctrl K</kbd>
-          </label>
-        </div>
+        {!openNote && (
+          <div className="nq-topbar">
+            <button type="button" className="nq-icon-btn" onClick={() => setSideOpen((v) => !v)} aria-label={sideOpen ? "Nascondi la barra laterale" : "Mostra la barra laterale"} aria-pressed={sideOpen}>
+              <MdOutlineVerticalSplit />
+            </button>
+            <Crumbs items={crumbs} />
+          </div>
+        )}
 
         <div className="nq-body">
           {openNote ? (

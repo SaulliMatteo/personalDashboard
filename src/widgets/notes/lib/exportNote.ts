@@ -22,6 +22,11 @@ export interface RenderOptions {
 const PAPER_WIDTH = 870; // = 58em a 15px, la larghezza del foglio nell'editor
 const LIGHT_VARS: Record<string, string> = {
   "--bg-card": "#ffffff",
+  "--note-page-bg": "#ffffff",
+  "--note-page-ink": "#1a1a1e",
+  "--note-page-pattern": "none",
+  "--note-page-border": "0",
+  "--note-page-shadow": "none",
   "--text-primary": "#1a1a1e",
   "--text-secondary": "#3a3a42",
   "--text-muted": "#6e6e78",
@@ -63,11 +68,12 @@ function buildStage(page: NotePage, number: number, meta: ExportMeta, light: boo
   const paper = document.createElement("div");
   paper.className = "nq-paper";
   paper.dataset.bg = page.background;
+  // Prima le misure (cssText sostituisce tutto lo stile), poi il colore della pagina.
+  paper.style.cssText = `--nq-zoom:1;width:${PAPER_WIDTH}px;max-width:none;flex:none;border:none;border-radius:0;box-shadow:none;min-height:${minHeight}px;`;
   if (page.color) {
     paper.style.backgroundColor = page.color;
     for (const [key, value] of Object.entries(paperVars(page.color))) paper.style.setProperty(key, value);
   }
-  paper.style.cssText = `--nq-zoom:1;width:${PAPER_WIDTH}px;max-width:none;flex:none;border:none;border-radius:0;min-height:${minHeight}px;`;
   paper.innerHTML =
     `<div class="nq-paper-head"><span></span><span></span></div>` +
     `<div class="nq-doc"></div>` +
