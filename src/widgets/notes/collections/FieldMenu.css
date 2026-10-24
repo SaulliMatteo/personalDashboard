@@ -1,14 +1,5 @@
-.nq-fmenu-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-}
-
+/* Il menu sta in un Popover (posizione fissa, sopra tutto): qui solo l'aspetto. */
 .nq-fmenu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 41;
   display: flex;
   flex-direction: column;
   gap: 8px;

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { MdDeleteOutline, MdMoreHoriz, MdOutlineGridView, MdOutlineTableChart, MdOutlineViewKanban } from "react-icons/md";
 import { groupableFields, viewRows, type CellValue, type Field, type FieldType, type Row, type ValueContext, type ViewLayout } from "../lib/collections";
 import {
@@ -20,6 +20,7 @@ import type { NoteRef } from "./CellEditor";
 import CollectionBoard from "./CollectionBoard";
 import CollectionCards from "./CollectionCards";
 import CollectionTable from "./CollectionTable";
+import Popover from "./Popover";
 import RowCard from "./RowCard";
 import ViewBar from "./ViewBar";
 import "./CollectionPage.css";
@@ -48,6 +49,7 @@ function CollectionPage({ collectionId, notes, onOpenNote, onNotice, onTrashed }
   const [lastDeleted, setLastDeleted] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [armed, setArmed] = useState(false);
+  const menuAnchor = useRef<HTMLButtonElement | null>(null);
 
   const titles = useMemo(() => new Map(notes.map((n) => [n.id, n.title || "Senza titolo"])), [notes]);
   const ctx: ValueContext = useMemo(() => ({ now, noteTitle: (id) => titles.get(id) ?? null }), [now, titles]);
@@ -143,13 +145,11 @@ function CollectionPage({ collectionId, notes, onOpenNote, onNotice, onTrashed }
             ))}
           </div>
           <span className="nq-coll-anchor">
-            <button type="button" className="nq-icon-btn" aria-label="Altro" title="Altro" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
+            <button ref={menuAnchor} type="button" className="nq-icon-btn" aria-label="Altro" title="Altro" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
               <MdMoreHoriz />
             </button>
             {menuOpen && (
-              <>
-                <div className="nq-fmenu-backdrop" onClick={() => setMenuOpen(false)} />
-                <div className="nq-fmenu nq-coll-menu" role="menu">
+              <Popover anchor={menuAnchor} align="end" onClose={() => setMenuOpen(false)} className="nq-fmenu nq-coll-menu" role="menu" label="Altro">
                   <p className="nq-fmenu-hint">
                     {allRows.filter((r) => r.deletedAt === null).length} righe, {fields.length} campi
                   </p>
@@ -172,8 +172,7 @@ function CollectionPage({ collectionId, notes, onOpenNote, onNotice, onTrashed }
                   >
                     <MdDeleteOutline aria-hidden="true" /> {armed ? "Clicca ancora per eliminare" : "Elimina raccolta"}
                   </button>
-                </div>
-              </>
+              </Popover>
             )}
           </span>
         </div>

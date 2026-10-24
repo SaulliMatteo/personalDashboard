@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { readFile } from "@tauri-apps/plugin-fs";
 import { openPath, openUrl } from "@tauri-apps/plugin-opener";
@@ -6,6 +6,7 @@ import { MdAdd, MdClose, MdOpenInNew, MdOutlineAttachFile } from "react-icons/md
 import { choiceOf, type CellValue, type Field, type FileValue } from "../lib/collections";
 import { baseName, collectionFilePath, saveCollectionFile } from "../lib/vault";
 import ChoiceChip from "./ChoiceChip";
+import Popover from "./Popover";
 import "./CellEditor.css";
 
 export interface NoteRef {
@@ -56,6 +57,7 @@ function TextInput({ value, label, inputMode, onCommit }: { value: string; label
 /** Scelte multiple: i chip scelti e un menu con tutte le scelte. */
 function MultiEditor({ field, value, onChange }: { field: Field; value: string[]; onChange: (v: CellValue) => void }) {
   const [open, setOpen] = useState(false);
+  const anchor = useRef<HTMLButtonElement | null>(null);
   const choices = field.options.choices ?? [];
   return (
     <span className="nq-cell-multi">
@@ -64,13 +66,11 @@ function MultiEditor({ field, value, onChange }: { field: Field; value: string[]
         return c ? <ChoiceChip key={id} label={c.label} color={c.color} /> : null;
       })}
       <span className="nq-cell-pop-anchor">
-        <button type="button" className="nq-cell-mini" aria-label={`Scegli: ${field.name}`} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <button ref={anchor} type="button" className="nq-cell-mini" aria-label={`Scegli: ${field.name}`} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
           <MdAdd />
         </button>
         {open && (
-          <>
-            <div className="nq-cell-backdrop" onClick={() => setOpen(false)} />
-            <div className="nq-cell-pop" role="group" aria-label={field.name}>
+          <Popover anchor={anchor} onClose={() => setOpen(false)} className="nq-cell-pop" role="group" label={field.name}>
               {choices.length === 0 && <p className="nq-cell-empty">Nessuna scelta: aggiungile dal menu del campo.</p>}
               {choices.map((c) => (
                 <label key={c.id} className="nq-cell-check">
@@ -82,8 +82,7 @@ function MultiEditor({ field, value, onChange }: { field: Field; value: string[]
                   <ChoiceChip label={c.label} color={c.color} />
                 </label>
               ))}
-            </div>
-          </>
+          </Popover>
         )}
       </span>
     </span>

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { MdAdd, MdDeleteOutline, MdOpenInFull } from "react-icons/md";
 import { FIELD_TYPES, type CellValue, type Field, type FieldType, type Row, type ValueContext } from "../lib/collections";
 import CellEditor, { type NoteRef } from "./CellEditor";
 import FieldMenu from "./FieldMenu";
 import FieldIcon from "./FieldIcon";
+import Popover from "./Popover";
 import "./CollectionTable.css";
 
 interface CollectionTableProps {
@@ -24,6 +25,9 @@ interface CollectionTableProps {
 function CollectionTable({ fields, rows, notes, ctx, onCell, onAddRow, onAddField, onOpenRow, onDeleteRow, onOpenNote, onNotice }: CollectionTableProps) {
   const [fieldMenu, setFieldMenu] = useState<number | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  /** Il pulsante che ha aperto il menu (uno solo aperto alla volta). */
+  const fieldAnchor = useRef<HTMLButtonElement | null>(null);
+  const addAnchor = useRef<HTMLButtonElement | null>(null);
 
   return (
     <div className="nq-ctable-wrap">
@@ -39,7 +43,10 @@ function CollectionTable({ fields, rows, notes, ctx, onCell, onAddRow, onAddFiel
                     aria-haspopup="dialog"
                     aria-expanded={fieldMenu === f.id}
                     title="Modifica il campo"
-                    onClick={() => setFieldMenu(fieldMenu === f.id ? null : f.id)}
+                    onClick={(e) => {
+                      fieldAnchor.current = e.currentTarget;
+                      setFieldMenu(fieldMenu === f.id ? null : f.id);
+                    }}
                   >
                     <FieldIcon type={f.type} /> {f.name}
                   </button>
@@ -47,6 +54,7 @@ function CollectionTable({ fields, rows, notes, ctx, onCell, onAddRow, onAddFiel
                     <FieldMenu
                       key={`${f.id}-${f.type}`}
                       field={f}
+                      anchor={fieldAnchor}
                       isFirst={i === 0}
                       isLast={i === fields.length - 1}
                       canDelete={fields.length > 1}
@@ -60,13 +68,11 @@ function CollectionTable({ fields, rows, notes, ctx, onCell, onAddRow, onAddFiel
             ))}
             <th className="nq-ctable-tools">
               <span className="nq-ctable-anchor">
-                <button type="button" className="nq-ctable-add" aria-label="Aggiungi campo" title="Aggiungi campo" aria-expanded={addOpen} onClick={() => setAddOpen((v) => !v)}>
+                <button ref={addAnchor} type="button" className="nq-ctable-add" aria-label="Aggiungi campo" title="Aggiungi campo" aria-expanded={addOpen} onClick={() => setAddOpen((v) => !v)}>
                   <MdAdd />
                 </button>
                 {addOpen && (
-                  <>
-                    <div className="nq-fmenu-backdrop" onClick={() => setAddOpen(false)} />
-                    <div className="nq-fmenu nq-ctable-types" role="menu" aria-label="Tipo del campo nuovo">
+                  <Popover anchor={addAnchor} align="end" onClose={() => setAddOpen(false)} className="nq-fmenu nq-ctable-types" role="menu" label="Tipo del campo nuovo">
                       {FIELD_TYPES.map((t) => (
                         <button
                           key={t.key}
@@ -81,8 +87,7 @@ function CollectionTable({ fields, rows, notes, ctx, onCell, onAddRow, onAddFiel
                           <FieldIcon type={t.key} /> {t.label}
                         </button>
                       ))}
-                    </div>
-                  </>
+                  </Popover>
                 )}
               </span>
             </th>
