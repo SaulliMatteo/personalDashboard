@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { createPortal } from "react-dom";
 import {
   MdBrightness6,
   MdCheck,
@@ -62,6 +63,51 @@ function readStrokes(figure: HTMLElement): InkStroke[] {
 const FULL: ImageCrop = { x: 0, y: 0, w: 1, h: 1 };
 
 /**
+ * Segue un trascinamento col puntatore "catturato" dall'elemento premuto: i movimenti arrivano
+ * anche fuori dall'elemento e il gesto non viene interrotto da un trascinamento nativo.
+ */
+function track(e: ReactPointerEvent<HTMLElement>, onMove: (ev: PointerEvent) => void, onEnd: (ev: PointerEvent | null) => void) {
+  e.preventDefault();
+  e.stopPropagation();
+  const el = e.currentTarget;
+  const id = e.pointerId;
+  try {
+    el.setPointerCapture(id);
+  } catch {
+    /* puntatore già rilasciato */
+  }
+  const move = (ev: PointerEvent) => {
+    if (ev.pointerId === id) onMove(ev);
+  };
+  const finish = (ev: PointerEvent) => {
+    if (ev.pointerId !== id) return;
+    el.removeEventListener("pointermove", move);
+    el.removeEventListener("pointerup", finish);
+    el.removeEventListener("pointercancel", finish);
+    if (el.hasPointerCapture(id)) el.releasePointerCapture(id);
+    onEnd(ev.type === "pointerup" ? ev : null);
+  };
+  el.addEventListener("pointermove", move);
+  el.addEventListener("pointerup", finish);
+  el.addEventListener("pointercancel", finish);
+}
+
+/**
+ * Il blocco è "non modificabile" dentro un testo modificabile: per Chromium è trascinabile.
+ * Senza bloccare il mousedown partirebbe il trascinamento nativo, che interrompe maniglie e ritaglio.
+ */
+function stopNative(e: ReactMouseEvent) {
+  e.preventDefault();
+}
+
+/** Il blocco di primo livello della pagina sotto il punto (per spostare l'immagine). */
+function blockAt(root: HTMLElement, x: number, y: number): Element | null {
+  let el = document.elementFromPoint(x, y);
+  while (el && el.parentElement !== root) el = el.parentElement;
+  return el && el.parentElement === root ? el : null;
+}
+
+/**
  * Un'immagine nella pagina (<figure data-block="image">). Le modifiche (ritaglio, rotazione,
  * specchio, luminosità, contrasto, larghezza, allineamento, disegno) stanno negli attributi
  * del figure; il file su disco non cambia mai. Si disegna in un nodo di servizio del figure.
@@ -79,6 +125,8 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
   const drawing = selected && drawingState;
   const crop = selected ? cropState : null;
   const [boxSize, setBoxSize] = useState({ w: 0, h: 0 });
+  /** Dove andrà l'immagine trascinandola (linea tra due blocchi, coordinate della finestra). */
+  const [moveLine, setMoveLine] = useState<{ left: number; top: number; width: number } | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
 
   const edit = parseImageEdit(figure.dataset.edit);
@@ -168,34 +216,84 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
 
   // ---------- Larghezza con le maniglie ----------
   function startResize(e: ReactPointerEvent<HTMLElement>) {
-    e.preventDefault();
-    e.stopPropagation();
     const page = figure.parentElement;
     if (!page) return;
     const pageRect = page.getBoundingClientRect();
     const start = figure.getBoundingClientRect();
-    const centered = align === "center";
-    const move = (ev: PointerEvent) => {
-      // Al centro l'immagine cresce da entrambi i lati: la maniglia si sposta della metà.
-      const grow = (ev.clientX - start.right) * (centered ? 2 : 1);
-      const pct = Math.round(((start.width + grow) / pageRect.width) * 100);
-      figure.setAttribute("data-width", String(Math.min(WIDTH_MAX, Math.max(WIDTH_MIN, pct))));
-      if (align === "full") figure.setAttribute("data-align", "center");
-      setTick((t) => t + 1);
-    };
-    const up = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-      onCommit();
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
+    // "Tutta la pagina" diventa una larghezza normale, centrata.
+    const centered = align === "center" || align === "full";
+    if (align === "full") figure.setAttribute("data-align", "center");
+    const before = figure.dataset.width;
+    track(
+      e,
+      (ev) => {
+        // Al centro l'immagine cresce da entrambi i lati: la maniglia si sposta della metà.
+        const grow = (ev.clientX - start.right) * (centered ? 2 : 1);
+        const pct = Math.round(((start.width + grow) / pageRect.width) * 100);
+        figure.setAttribute("data-width", String(Math.min(WIDTH_MAX, Math.max(WIDTH_MIN, pct))));
+        setTick((t) => t + 1);
+      },
+      () => {
+        if (figure.dataset.width !== before || align === "full") onCommit();
+      }
+    );
+  }
+
+  // ---------- Spostare l'immagine trascinandola ----------
+  function startMove(e: ReactPointerEvent<HTMLElement>) {
+    const root = figure.parentElement;
+    if (!root) return;
+    const sx = e.clientX;
+    const sy = e.clientY;
+    let moving = false;
+    let target: { ref: Element; before: boolean } | null = null;
+    track(
+      e,
+      (ev) => {
+        if (!moving && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return;
+        moving = true;
+        figure.setAttribute("data-moving", "");
+        const over = blockAt(root, ev.clientX, ev.clientY);
+        const rootRect = root.getBoundingClientRect();
+        if (!over || over === figure) {
+          // Sopra se stessa, o fuori dal testo: sotto l'ultimo blocco se si è più in basso.
+          const last = root.lastElementChild;
+          if (!over && last && last !== figure && ev.clientY > last.getBoundingClientRect().bottom) {
+            target = { ref: last, before: false };
+            setMoveLine({ left: rootRect.left, width: rootRect.width, top: last.getBoundingClientRect().bottom });
+          } else {
+            target = null;
+            setMoveLine(null);
+          }
+          return;
+        }
+        const r = over.getBoundingClientRect();
+        const before = ev.clientY < r.top + r.height / 2;
+        target = { ref: over, before };
+        setMoveLine({ left: rootRect.left, width: rootRect.width, top: before ? r.top : r.bottom });
+      },
+      (ev) => {
+        figure.removeAttribute("data-moving");
+        setMoveLine(null);
+        if (!moving || !ev || !target) return;
+        const { ref, before } = target;
+        // Già lì: niente da fare.
+        if ((before && ref.previousElementSibling === figure) || (!before && ref.nextElementSibling === figure)) return;
+        if (before) ref.before(figure);
+        else ref.after(figure);
+        if (!figure.nextElementSibling) {
+          const p = document.createElement("p");
+          p.appendChild(document.createElement("br"));
+          figure.after(p);
+        }
+        figure.focus({ preventScroll: true });
+        onCommit();
+      }
+    );
   }
 
   // ---------- Ritaglio ----------
   function startCropDrag(e: ReactPointerEvent<HTMLElement>, corner: "tl" | "tr" | "bl" | "br" | "move") {
-    e.preventDefault();
-    e.stopPropagation();
     const box = boxRef.current;
     if (!box || !crop) return;
     const rect = box.getBoundingClientRect();
@@ -203,7 +301,7 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
     const sx = e.clientX;
     const sy = e.clientY;
     const min = 0.05;
-    const move = (ev: PointerEvent) => {
+    track(e, (ev) => {
       const dx = (ev.clientX - sx) / rect.width;
       const dy = (ev.clientY - sy) / rect.height;
       let { x, y, w, h } = from;
@@ -227,13 +325,7 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
         }
       }
       setCrop({ x, y, w, h });
-    };
-    const up = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
+    }, () => undefined);
   }
 
   function applyCrop() {
@@ -254,8 +346,10 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
         ref={boxRef}
         className={`nq-imgbox${drawing ? " is-drawing" : ""}`}
         style={{ aspectRatio: String(layout.aspect) }}
+        onMouseDown={stopNative}
+        onDragStart={stopNative}
         onPointerDown={(e) => {
-          if (!drawing) e.preventDefault(); // niente selezione di testo trascinando sull'immagine
+          if (e.button !== 0) return;
           if (!selected) {
             // Si riparte sempre dalla barra semplice.
             setPanel(null);
@@ -263,6 +357,8 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
             setCrop(null);
             onSelect();
           }
+          // Premuto e trascinato: si sposta l'immagine nel testo (non mentre si disegna o si ritaglia).
+          if (!drawing && !crop) startMove(e);
         }}
       >
         {url && !failed ? (
@@ -295,15 +391,25 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
         )}
 
         {crop && (
-          <div
-            className="nq-crop"
-            style={{ left: `${crop.x * 100}%`, top: `${crop.y * 100}%`, width: `${crop.w * 100}%`, height: `${crop.h * 100}%` }}
-            onPointerDown={(e) => startCropDrag(e, "move")}
-          >
-            {(["tl", "tr", "bl", "br"] as const).map((c) => (
-              <span key={c} className={`nq-crop-h nq-crop-h--${c}`} onPointerDown={(e) => startCropDrag(e, c)} />
-            ))}
-          </div>
+          <>
+            {/* L'esterno del ritaglio scurito; il riquadro e gli angoli stanno sopra, senza essere tagliati. */}
+            <div className="nq-crop-shade" aria-hidden="true">
+              <div
+                className="nq-crop-hole"
+                style={{ left: `${crop.x * 100}%`, top: `${crop.y * 100}%`, width: `${crop.w * 100}%`, height: `${crop.h * 100}%` }}
+              />
+            </div>
+            <div
+              className="nq-crop"
+              style={{ left: `${crop.x * 100}%`, top: `${crop.y * 100}%`, width: `${crop.w * 100}%`, height: `${crop.h * 100}%` }}
+              onMouseDown={stopNative}
+              onPointerDown={(e) => startCropDrag(e, "move")}
+            >
+              {(["tl", "tr", "bl", "br"] as const).map((c) => (
+                <span key={c} className={`nq-crop-h nq-crop-h--${c}`} onMouseDown={stopNative} onPointerDown={(e) => startCropDrag(e, c)} />
+              ))}
+            </div>
+          </>
         )}
 
         {selected && !crop && (
@@ -311,14 +417,20 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
             <span className="nq-handle nq-h-tl" aria-hidden="true" />
             <span className="nq-handle nq-h-tr" aria-hidden="true" />
             <span className="nq-handle nq-h-bl" aria-hidden="true" />
-            <span className="nq-handle nq-h-br" onPointerDown={startResize} aria-hidden="true" />
-            <span className="nq-handle nq-h-r" onPointerDown={startResize} aria-hidden="true" />
+            <span className="nq-handle nq-h-br" onMouseDown={stopNative} onPointerDown={startResize} aria-hidden="true" />
+            <span className="nq-handle nq-h-r" onMouseDown={stopNative} onPointerDown={startResize} aria-hidden="true" />
             <span className="nq-measure" aria-hidden="true">
               {Math.round(boxSize.w)} × {Math.round(boxSize.h)} px, {align === "full" ? 100 : width}%
             </span>
           </>
         )}
       </div>
+
+      {moveLine &&
+        createPortal(
+          <div className="nq-move-line" style={{ left: moveLine.left, top: moveLine.top - 1.5, width: moveLine.width }} aria-hidden="true" />,
+          document.body
+        )}
 
       {selected && (
         <div className="nq-imgbar" role="toolbar" aria-label="Modifica immagine" onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => {
