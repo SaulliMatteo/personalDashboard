@@ -1,4 +1,4 @@
-import { defaultEdit, initialWidth, serializeImageEdit } from "./imageEdit";
+import { defaultEdit, initialWidth, parseImageEdit, parseWidth, serializeImageEdit } from "./imageEdit";
 
 /**
  * Blocchi nella pagina: <figure data-block="image"> e <div data-block="file">.
@@ -19,6 +19,8 @@ export function serializeEditor(root: HTMLElement): string {
     el.removeAttribute("contenteditable");
     el.removeAttribute("tabindex");
     el.removeAttribute("data-selected");
+    el.removeAttribute("data-moving");
+    el.removeAttribute("style"); // posizione delle immagini libere: si ricalcola dagli attributi
     el.querySelectorAll("figcaption").forEach((c) => c.removeAttribute("contenteditable"));
   });
   return clone.innerHTML;
@@ -135,4 +137,55 @@ export function caretAt(root: HTMLElement, x: number, y: number): Range | null {
 export function focusedBlock(root: HTMLElement | null): HTMLElement | null {
   const el = document.activeElement;
   return root && el instanceof HTMLElement && el.parentElement === root && el.matches(BLOCK_SELECTOR) ? el : null;
+}
+
+// ---------------------------------------------------------------------
+// Immagine "libera" sulla pagina (data-x, data-y): come un adesivo, sopra il testo.
+// Le coordinate sono frazioni della LARGHEZZA della pagina, misurate dall'origine dell'inchiostro
+// (vedi .nq-ink): immagine e scrittura a mano restano allineate, anche nell'esportazione.
+// ---------------------------------------------------------------------
+
+/** Origine verticale dell'inchiostro in CSS (testata − 2.82em, mai negativa). */
+const INK_ORIGIN = "max(0px, calc(var(--nq-head-h, 2.82em) - 2.82em))";
+
+export function freePosition(el: HTMLElement): { x: number; y: number } | null {
+  if (el.dataset.x === undefined || el.dataset.y === undefined) return null;
+  const x = Number(el.dataset.x);
+  const y = Number(el.dataset.y);
+  return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
+}
+
+/** Valore valido per data-x / data-y (o null). */
+export function asFreeCoord(name: "data-x" | "data-y", raw: string): string | null {
+  const n = Number(raw);
+  if (!raw || !Number.isFinite(n)) return null;
+  const v = name === "data-x" ? Math.min(1, Math.max(0, n)) : Math.min(50, Math.max(-1, n));
+  return String(Math.round(v * 10000) / 10000);
+}
+
+/**
+ * Posizione e larghezza in linea di un'immagine libera (si ricalcolano dagli attributi a ogni
+ * disegno; serializeEditor toglie lo style prima di salvare). La larghezza (data-width) è in %
+ * della larghezza del testo, come per le immagini nel testo.
+ */
+export function applyFreeStyle(el: HTMLElement): void {
+  const pos = freePosition(el);
+  if (!pos) {
+    el.style.removeProperty("left");
+    el.style.removeProperty("top");
+    el.style.removeProperty("width");
+    return;
+  }
+  const width = parseWidth(el.dataset.width) ?? initialWidth(parseImageEdit(el.dataset.edit).nw);
+  el.style.left = `${pos.x * 100}%`;
+  el.style.top = `calc(${INK_ORIGIN} + ${pos.y} * var(--nq-paper-w, 870px))`;
+  // La pagina ha 3.4em di margine per lato: il testo è largo (100% − 6.8em).
+  el.style.width = `calc((100% - 6.8em) * ${width / 100})`;
+}
+
+/** Origine dell'inchiostro in px, dentro la pagina `paper`. */
+export function inkOriginPx(paper: HTMLElement): number {
+  const head = paper.querySelector<HTMLElement>(":scope > .nq-page-head");
+  const em = parseFloat(getComputedStyle(paper).fontSize) || 15;
+  return Math.max(0, (head?.offsetHeight ?? 2.82 * em) - 2.82 * em);
 }

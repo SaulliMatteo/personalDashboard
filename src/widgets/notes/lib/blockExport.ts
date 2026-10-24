@@ -1,6 +1,7 @@
 import { attachmentDataUrl, extensionOf } from "./attachmentUrls";
 import { imageLayout, parseImageEdit } from "./imageEdit";
 import { formatBytes } from "./insertFiles";
+import { applyFreeStyle } from "./blocks";
 import { asStrokes, THEME_INK } from "./ink";
 
 /**
@@ -73,6 +74,7 @@ async function staticImage(figure: HTMLElement, noteDir: string | null, ink: str
   const drawn = inkSvg(figure.dataset.ink, ink, layout.aspect);
   if (drawn) box.appendChild(drawn);
   figure.prepend(box);
+  applyFreeStyle(figure); // immagine libera: stessa posizione della pagina
 }
 
 function staticFile(block: HTMLElement) {

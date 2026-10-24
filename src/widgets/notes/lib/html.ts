@@ -1,5 +1,6 @@
 import { validTextAttr } from "./textStyle";
 import { asAttachmentName, parseAlign, parseImageEdit, parseWidth, serializeImageEdit } from "./imageEdit";
+import { asFreeCoord } from "./blocks";
 import { asStrokes } from "./ink";
 
 /**
@@ -37,6 +38,7 @@ function blockAttr(el: Element, name: string, value: string): string | null {
     if (name === "data-edit") return serializeImageEdit(parseImageEdit(value));
     if (name === "data-align") return parseAlign(value) === value ? value : null;
     if (name === "data-width") return parseWidth(value)?.toString() ?? null;
+    if (name === "data-x" || name === "data-y") return asFreeCoord(name, value);
     if (name === "data-ink") {
       try {
         const strokes = asStrokes(JSON.parse(value));

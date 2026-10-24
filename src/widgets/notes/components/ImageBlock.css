@@ -117,6 +117,24 @@
   width: 100%;
 }
 
+/* Immagine libera (data-x, data-y): sopra il testo, come un adesivo. Posizione e larghezza
+   le scrive applyFreeStyle (lib/blocks.ts); la scrittura a mano resta sopra (z-index di .nq-ink). */
+.nq-doc figure[data-block="image"][data-x] {
+  position: absolute;
+  z-index: 1;
+  margin: 0;
+}
+
+/* Selezionata (libera o nel testo): sopra l'inchiostro, così la barra si vede tutta. */
+.nq-doc figure[data-block="image"][data-selected] {
+  z-index: 4;
+}
+
+/* Le miniature non hanno le posizioni calcolate: l'immagine resta nel flusso. */
+.nq-thumb-paper figure[data-block="image"][data-x] {
+  position: static;
+}
+
 .nq-doc figure[data-block="image"]:focus-visible {
   outline: var(--focus-ring);
   outline-offset: 6px;
@@ -289,15 +307,6 @@
 figure[data-moving] .nq-imgbox {
   opacity: 0.45;
   cursor: grabbing;
-}
-
-.nq-move-line {
-  position: fixed;
-  z-index: 80;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--accent);
-  pointer-events: none;
 }
 
 /* ---------- Barra dell'immagine (sopra il blocco) ---------- */

@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from "react";
 import {
   MdBrightness6,
   MdCheck,
@@ -12,12 +11,14 @@ import {
   MdFormatAlignRight,
   MdOutlineEdit,
   MdOutlineSubtitles,
+  MdOutlineWrapText,
   MdRestartAlt,
   MdRotateRight,
   MdWidthFull,
 } from "react-icons/md";
 import type { InkStroke } from "../data/notesRepository";
 import { attachmentUrl } from "../lib/attachmentUrls";
+import { applyFreeStyle, freePosition, inkOriginPx } from "../lib/blocks";
 import {
   FILTER_MAX,
   FILTER_MIN,
@@ -100,13 +101,6 @@ function stopNative(e: ReactMouseEvent) {
   e.preventDefault();
 }
 
-/** Il blocco di primo livello della pagina sotto il punto (per spostare l'immagine). */
-function blockAt(root: HTMLElement, x: number, y: number): Element | null {
-  let el = document.elementFromPoint(x, y);
-  while (el && el.parentElement !== root) el = el.parentElement;
-  return el && el.parentElement === root ? el : null;
-}
-
 /**
  * Un'immagine nella pagina (<figure data-block="image">). Le modifiche (ritaglio, rotazione,
  * specchio, luminosità, contrasto, larghezza, allineamento, disegno) stanno negli attributi
@@ -125,8 +119,7 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
   const drawing = selected && drawingState;
   const crop = selected ? cropState : null;
   const [boxSize, setBoxSize] = useState({ w: 0, h: 0 });
-  /** Dove andrà l'immagine trascinandola (linea tra due blocchi, coordinate della finestra). */
-  const [moveLine, setMoveLine] = useState<{ left: number; top: number; width: number } | null>(null);
+
   const boxRef = useRef<HTMLDivElement | null>(null);
 
   const edit = parseImageEdit(figure.dataset.edit);
@@ -134,6 +127,12 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
   const width = parseWidth(figure.dataset.width) ?? initialWidth(edit.nw);
   const strokes = readStrokes(figure);
   const caption = figure.querySelector(":scope > figcaption");
+  const free = freePosition(figure) !== null;
+
+  // Immagine libera: posizione e larghezza in linea, ricalcolate dagli attributi a ogni disegno.
+  useLayoutEffect(() => {
+    applyFreeStyle(figure);
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -174,8 +173,20 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
     update(() => figure.setAttribute("data-edit", serializeImageEdit(next)), commit);
   }
 
+  /** Allineare vuol dire stare nel testo: un'immagine libera ci torna. */
   function setAlign(next: ImageAlign) {
-    update(() => figure.setAttribute("data-align", next));
+    update(() => {
+      figure.removeAttribute("data-x");
+      figure.removeAttribute("data-y");
+      figure.setAttribute("data-align", next);
+    });
+  }
+
+  function backToText() {
+    update(() => {
+      figure.removeAttribute("data-x");
+      figure.removeAttribute("data-y");
+    });
   }
 
   function toggleCaption() {
@@ -202,6 +213,8 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
     update(() => {
       figure.setAttribute("data-edit", serializeImageEdit(resetEdit(edit)));
       figure.removeAttribute("data-ink");
+      figure.removeAttribute("data-x");
+      figure.removeAttribute("data-y");
       figure.setAttribute("data-align", "center");
       figure.setAttribute("data-width", String(initialWidth(edit.nw)));
     });
@@ -221,7 +234,7 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
     const pageRect = page.getBoundingClientRect();
     const start = figure.getBoundingClientRect();
     // "Tutta la pagina" diventa una larghezza normale, centrata.
-    const centered = align === "center" || align === "full";
+    const centered = !free && (align === "center" || align === "full");
     if (align === "full") figure.setAttribute("data-align", "center");
     const before = figure.dataset.width;
     track(
@@ -239,53 +252,43 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
     );
   }
 
-  // ---------- Spostare l'immagine trascinandola ----------
+  // ---------- Spostare l'immagine trascinandola: libera sulla pagina ----------
   function startMove(e: ReactPointerEvent<HTMLElement>) {
-    const root = figure.parentElement;
-    if (!root) return;
+    const paper = figure.closest<HTMLElement>(".nq-paper");
+    if (!paper) return;
     const sx = e.clientX;
     const sy = e.clientY;
     let moving = false;
-    let target: { ref: Element; before: boolean } | null = null;
+    let startLeft = 0;
+    let startTop = 0;
     track(
       e,
       (ev) => {
-        if (!moving && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return;
-        moving = true;
-        figure.setAttribute("data-moving", "");
-        const over = blockAt(root, ev.clientX, ev.clientY);
-        const rootRect = root.getBoundingClientRect();
-        if (!over || over === figure) {
-          // Sopra se stessa, o fuori dal testo: sotto l'ultimo blocco se si è più in basso.
-          const last = root.lastElementChild;
-          if (!over && last && last !== figure && ev.clientY > last.getBoundingClientRect().bottom) {
-            target = { ref: last, before: false };
-            setMoveLine({ left: rootRect.left, width: rootRect.width, top: last.getBoundingClientRect().bottom });
-          } else {
-            target = null;
-            setMoveLine(null);
-          }
-          return;
+        if (!moving) {
+          if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 5) return;
+          moving = true;
+          // Da dove si trova adesso (nel testo o già libera) diventa libera in quel punto.
+          const pr = paper.getBoundingClientRect();
+          const fr = figure.getBoundingClientRect();
+          startLeft = fr.left - pr.left;
+          startTop = fr.top - pr.top;
+          if (!free && !figure.dataset.width) figure.setAttribute("data-width", String(width));
+          figure.setAttribute("data-moving", "");
         }
-        const r = over.getBoundingClientRect();
-        const before = ev.clientY < r.top + r.height / 2;
-        target = { ref: over, before };
-        setMoveLine({ left: rootRect.left, width: rootRect.width, top: before ? r.top : r.bottom });
+        const pr = paper.getBoundingClientRect();
+        const fw = figure.offsetWidth;
+        const fh = figure.offsetHeight;
+        const left = Math.min(Math.max(0, startLeft + ev.clientX - sx), Math.max(0, pr.width - fw));
+        const top = Math.min(Math.max(0, startTop + ev.clientY - sy), Math.max(0, pr.height - fh));
+        const round = (v: number) => String(Math.round(v * 10000) / 10000);
+        figure.setAttribute("data-x", round(left / pr.width));
+        figure.setAttribute("data-y", round((top - inkOriginPx(paper)) / pr.width));
+        applyFreeStyle(figure);
       },
-      (ev) => {
+      () => {
         figure.removeAttribute("data-moving");
-        setMoveLine(null);
-        if (!moving || !ev || !target) return;
-        const { ref, before } = target;
-        // Già lì: niente da fare.
-        if ((before && ref.previousElementSibling === figure) || (!before && ref.nextElementSibling === figure)) return;
-        if (before) ref.before(figure);
-        else ref.after(figure);
-        if (!figure.nextElementSibling) {
-          const p = document.createElement("p");
-          p.appendChild(document.createElement("br"));
-          figure.after(p);
-        }
+        if (!moving) return;
+        setTick((t) => t + 1);
         figure.focus({ preventScroll: true });
         onCommit();
       }
@@ -426,12 +429,6 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
         )}
       </div>
 
-      {moveLine &&
-        createPortal(
-          <div className="nq-move-line" style={{ left: moveLine.left, top: moveLine.top - 1.5, width: moveLine.width }} aria-hidden="true" />,
-          document.body
-        )}
-
       {selected && (
         <div className="nq-imgbar" role="toolbar" aria-label="Modifica immagine" onPointerDown={(e) => e.stopPropagation()} onMouseDown={(e) => {
             // I pulsanti non rubano il focus al blocco; i cursori (luminosità, contrasto) sì, devono funzionare.
@@ -479,16 +476,21 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
                 <MdOutlineEdit />
               </button>
               <span className="nq-tsep" />
-              <button type="button" className="nq-tb" aria-pressed={align === "left"} onClick={() => setAlign("left")} aria-label="Allinea a sinistra" title="Allinea a sinistra">
+              {free && (
+                <button type="button" className="nq-tb" onClick={backToText} aria-label="Rimetti nel testo" title="Rimetti nel testo">
+                  <MdOutlineWrapText />
+                </button>
+              )}
+              <button type="button" className="nq-tb" aria-pressed={!free && align === "left"} onClick={() => setAlign("left")} aria-label="Allinea a sinistra" title="Allinea a sinistra">
                 <MdFormatAlignLeft />
               </button>
-              <button type="button" className="nq-tb" aria-pressed={align === "center"} onClick={() => setAlign("center")} aria-label="Al centro" title="Al centro">
+              <button type="button" className="nq-tb" aria-pressed={!free && align === "center"} onClick={() => setAlign("center")} aria-label="Al centro" title="Al centro">
                 <MdFormatAlignCenter />
               </button>
-              <button type="button" className="nq-tb" aria-pressed={align === "right"} onClick={() => setAlign("right")} aria-label="Allinea a destra" title="Allinea a destra">
+              <button type="button" className="nq-tb" aria-pressed={!free && align === "right"} onClick={() => setAlign("right")} aria-label="Allinea a destra" title="Allinea a destra">
                 <MdFormatAlignRight />
               </button>
-              <button type="button" className="nq-tb" aria-pressed={align === "full"} onClick={() => setAlign("full")} aria-label="Tutta la pagina" title="Tutta la pagina">
+              <button type="button" className="nq-tb" aria-pressed={!free && align === "full"} onClick={() => setAlign("full")} aria-label="Tutta la pagina" title="Tutta la pagina">
                 <MdWidthFull />
               </button>
               <span className="nq-tsep" />
@@ -498,7 +500,7 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
               <button
                 type="button"
                 className="nq-tb"
-                disabled={!isEdited(edit) && strokes.length === 0 && align === "center" && width === initialWidth(edit.nw)}
+                disabled={!isEdited(edit) && strokes.length === 0 && !free && align === "center" && width === initialWidth(edit.nw)}
                 onClick={reset}
                 aria-label="Ripristina originale"
                 title="Ripristina originale"
