@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useState, type RefObject } from "react";
 import { MdAdd, MdChevronLeft, MdChevronRight, MdClose, MdDeleteOutline } from "react-icons/md";
 import { CHOICE_COLORS, FIELD_TYPES, type Choice, type Field, type FieldType, type ValueContext } from "../lib/collections";
 import { changeFieldType, deleteField, moveField, newChoiceId, nextChoiceColor, renameField, setFieldChoices } from "../lib/collectionsStore";
 import ChoiceChip from "./ChoiceChip";
+import Popover from "./Popover";
 import "./FieldMenu.css";
 
 interface FieldMenuProps {
   field: Field;
+  /** Il pulsante dell'intestazione che lo ha aperto. */
+  anchor: RefObject<HTMLElement | null>;
   isFirst: boolean;
   isLast: boolean;
   canDelete: boolean;
@@ -16,7 +19,7 @@ interface FieldMenuProps {
 }
 
 /** Menu di un campo (dall'intestazione della colonna): nome, tipo, scelte, posizione, elimina. */
-function FieldMenu({ field, isFirst, isLast, canDelete, ctx, onClose, onNotice }: FieldMenuProps) {
+function FieldMenu({ field, anchor, isFirst, isLast, canDelete, ctx, onClose, onNotice }: FieldMenuProps) {
   const [name, setName] = useState(field.name);
   const [choices, setChoices] = useState<Choice[]>(field.options.choices ?? []);
   const [armed, setArmed] = useState(false);
@@ -38,19 +41,7 @@ function FieldMenu({ field, isFirst, isLast, canDelete, ctx, onClose, onNotice }
   const hasChoices = field.type === "select" || field.type === "multi";
 
   return (
-    <>
-      <div className="nq-fmenu-backdrop" onClick={onClose} />
-      <div
-        className="nq-fmenu"
-        role="dialog"
-        aria-label={`Campo ${field.name}`}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            e.stopPropagation();
-            onClose();
-          }
-        }}
-      >
+    <Popover anchor={anchor} onClose={onClose} className="nq-fmenu" label={`Campo ${field.name}`}>
         <label className="nq-fmenu-row">
           <span>Nome</span>
           <input
@@ -140,8 +131,7 @@ function FieldMenu({ field, isFirst, isLast, canDelete, ctx, onClose, onNotice }
         >
           <MdDeleteOutline aria-hidden="true" /> {armed ? "Clicca ancora per eliminare" : "Elimina campo"}
         </button>
-      </div>
-    </>
+    </Popover>
   );
 }
 
