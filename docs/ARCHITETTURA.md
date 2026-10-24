@@ -92,14 +92,22 @@ Va spostato in `core/` (o fatto passare dall'activityBus) quando si tocca quella
 ```
 notes/
 ├─ index.ts                  WidgetDefinition (taglie 3×1, 1×1, 2×2)
-├─ NotesWidget.tsx/.css      widget in dashboard
-├─ NotesDetail.tsx/.css      pagina: cartelle a sinistra, elenco note, editor
-├─ components/               FolderPanel, FolderTree, NoteCollection, NoteEditor,
-│                            PageSurface (pagina di carta: contentEditable NON controllato da React),
-│                            InkLayer (canvas per penna/evidenziatore/gomma)
+├─ NotesWidget.tsx           widget in dashboard: smista sulla card del tema
+├─ card/                     cards.ts (NOTES_CARDS, una card per tema), NotesCards.tsx (le 1×1 per tema),
+│                            NotesCardParts.tsx (3×1, 2×2, nota veloce), useNotesCard.ts (dati comuni)
+├─ NotesDetail.tsx/.css      pagina: barra laterale (ricerca, cartelle, tag, cestino), elenco note, editor
+├─ components/               FolderPanel, FolderTree, NoteCollection, NoteEditor (intestazione, barra
+│                            strumenti, barra delle pagine), ToolButton (tasto con legenda, Fosforo),
+│                            Crumbs, PageSurface (pagina di carta: contentEditable NON controllato da React;
+│                            testata col titolo sulla prima pagina), InkLayer (penna/evidenziatore/gomma)
 ├─ data/notesRepository.ts   tutte le query SQL (note_folders, notes, note_pages)
 └─ lib/                      drag.ts, editorDom.ts, folders.ts, html.ts (sanitizeHtml)
 ```
+
+La geometria del testo nella pagina (larghezza 58em, margini interni, corpo, dimensioni e margini dei titoli
+nel testo) è la stessa in tutti i temi e non va cambiata: i tratti a mano sono salvati in coordinate della
+pagina e devono restare sopra le parole. I temi cambiano solo font, colori e decorazioni; lo strato
+dell'inchiostro parte da (testata − 2.82em), così il titolo sulla prima pagina non sposta i tratti.
 
 ### Il widget Companion (`widgets/companion/`)
 

@@ -1,4 +1,4 @@
-import { useLayoutEffect, type CSSProperties, type ClipboardEvent, type KeyboardEvent, type MouseEvent, type RefObject } from "react";
+import { useLayoutEffect, useRef, type CSSProperties, type ClipboardEvent, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject } from "react";
 import type { InkStroke, NotePage, PageBackground } from "../data/notesRepository";
 import { currentBlock } from "../lib/editorDom";
 import { sanitizeHtml } from "../lib/html";
@@ -7,16 +7,14 @@ import { paperStyle } from "../lib/pageColor";
 
 interface PageSurfaceProps {
   page: NotePage;
-  pageNumber: number;
   zoom: number;
   background: PageBackground;
   mode: "text" | "ink";
   tool: InkTool;
   color: string;
   size: number;
-  kicker: string;
-  dateLabel: string;
-  footerLabel: string;
+  /** In cima alla pagina, fuori dal testo modificabile (titolo e proprietà della nota sulla prima pagina). */
+  header?: ReactNode;
   editorRef: RefObject<HTMLDivElement | null>;
   onContent: (html: string) => void;
   onInk: (strokes: InkStroke[]) => void;
@@ -29,6 +27,21 @@ interface PageSurfaceProps {
  */
 function PageSurface(props: PageSurfaceProps) {
   const { page, editorRef, onContent } = props;
+  const headRef = useRef<HTMLDivElement | null>(null);
+
+  // I tratti a mano sono salvati rispetto alla pagina com'era prima del titolo nella pagina (testata
+  // alta 2.82em): l'inchiostro parte quindi da (altezza della testata − 2.82em), così resta sopra le
+  // parole giuste anche quando il titolo va a capo. La misura va sulla pagina come variabile CSS.
+  useLayoutEffect(() => {
+    const head = headRef.current;
+    const paper = head?.parentElement;
+    if (!head || !paper) return;
+    const update = () => paper.style.setProperty("--nq-head-h", `${head.offsetHeight}px`);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(head);
+    return () => observer.disconnect();
+  }, []);
 
   useLayoutEffect(() => {
     const el = editorRef.current;
@@ -76,9 +89,8 @@ function PageSurface(props: PageSurfaceProps) {
         data-bg={props.background}
         style={{ "--nq-zoom": props.zoom / 100, ...paperStyle(page.color) } as CSSProperties}
       >
-        <div className="nq-paper-head">
-          <span>{props.kicker}</span>
-          <span>{props.dateLabel}</span>
+        <div ref={headRef} className="nq-page-head">
+          {props.header}
         </div>
 
         <div
@@ -93,11 +105,6 @@ function PageSurface(props: PageSurfaceProps) {
           onClick={handleClick}
           onKeyDown={handleKeyDown}
         />
-
-        <div className="nq-paper-foot">
-          <span>{props.footerLabel}</span>
-          <span>{String(props.pageNumber).padStart(2, "0")}</span>
-        </div>
 
         <InkLayer
           strokes={page.ink}

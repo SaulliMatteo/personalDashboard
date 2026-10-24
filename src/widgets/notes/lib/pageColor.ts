@@ -37,6 +37,9 @@ export function paperVars(color: string | null): Record<string, string> {
   return light
     ? {
         "--bg-card": color,
+        "--note-page-bg": color,
+        "--note-page-ink": "#1a1a1e",
+        "--note-page-pattern": "none",
         "--text-primary": "#1a1a1e",
         "--text-secondary": "#3a3a42",
         "--text-muted": "#6e6e78",
@@ -46,6 +49,9 @@ export function paperVars(color: string | null): Record<string, string> {
       }
     : {
         "--bg-card": color,
+        "--note-page-bg": color,
+        "--note-page-ink": "#f2f2f4",
+        "--note-page-pattern": "none",
         "--text-primary": "#f2f2f4",
         "--text-secondary": "#d0d0d6",
         "--text-muted": "#9a9aa6",
