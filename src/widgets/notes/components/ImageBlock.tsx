@@ -228,26 +228,51 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
   }
 
   // ---------- Larghezza con le maniglie ----------
-  function startResize(e: ReactPointerEvent<HTMLElement>) {
+  /**
+   * Ridimensionare da un angolo o da un lato (le proporzioni restano quelle dell'immagine).
+   * dirX/dirY: verso in cui la maniglia allarga (+1 destra/giù, -1 sinistra/su, 0 = asse ignorato).
+   * Nel testo al centro cresce da entrambi i lati; libera, resta fermo l'angolo opposto.
+   */
+  function startResize(e: ReactPointerEvent<HTMLElement>, dirX: -1 | 0 | 1, dirY: -1 | 0 | 1) {
     const page = figure.parentElement;
-    if (!page) return;
-    const pageRect = page.getBoundingClientRect();
-    const start = figure.getBoundingClientRect();
+    const paper = figure.closest<HTMLElement>(".nq-paper");
+    const box = boxRef.current;
+    if (!page || !paper || !box) return;
+    const textWidth = page.getBoundingClientRect().width;
+    const startW = box.offsetWidth;
+    const startH = box.offsetHeight || 1;
+    const ratio = startW / startH;
+    const sx = e.clientX;
+    const sy = e.clientY;
+    const startPos = freePosition(figure);
     // "Tutta la pagina" diventa una larghezza normale, centrata.
-    const centered = !free && (align === "center" || align === "full");
+    const centered = !startPos && (align === "center" || align === "full");
     if (align === "full") figure.setAttribute("data-align", "center");
-    const before = figure.dataset.width;
+    const before = `${figure.dataset.width}|${figure.dataset.x}|${figure.dataset.y}`;
     track(
       e,
       (ev) => {
-        // Al centro l'immagine cresce da entrambi i lati: la maniglia si sposta della metà.
-        const grow = (ev.clientX - start.right) * (centered ? 2 : 1);
-        const pct = Math.round(((start.width + grow) / pageRect.width) * 100);
-        figure.setAttribute("data-width", String(Math.min(WIDTH_MAX, Math.max(WIDTH_MIN, pct))));
+        // Di quanto allarga: il movimento più grande tra orizzontale e verticale (riportato in larghezza).
+        const byX = dirX * (ev.clientX - sx);
+        const byY = dirY * (ev.clientY - sy) * ratio;
+        const grow = (Math.abs(byX) >= Math.abs(byY) ? byX : byY) * (centered ? 2 : 1);
+        const pct = Math.min(WIDTH_MAX, Math.max(WIDTH_MIN, Math.round(((startW + grow) / textWidth) * 100)));
+        figure.setAttribute("data-width", String(pct));
+        if (startPos) {
+          // Libera: l'angolo opposto alla maniglia non si muove.
+          const pw = paper.getBoundingClientRect().width || 1;
+          const newW = (pct / 100) * textWidth;
+          const newH = newW / ratio;
+          const round = (v: number) => String(Math.round(v * 10000) / 10000);
+          if (dirX < 0) figure.setAttribute("data-x", round(Math.max(0, startPos.x + (startW - newW) / pw)));
+          if (dirY < 0) figure.setAttribute("data-y", round(startPos.y + (startH - newH) / pw));
+          applyFreeStyle(figure);
+        }
         setTick((t) => t + 1);
       },
       () => {
-        if (figure.dataset.width !== before || align === "full") onCommit();
+        const after = `${figure.dataset.width}|${figure.dataset.x}|${figure.dataset.y}`;
+        if (after !== before || align === "full") onCommit();
       }
     );
   }
@@ -417,11 +442,12 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
 
         {selected && !crop && (
           <>
-            <span className="nq-handle nq-h-tl" aria-hidden="true" />
-            <span className="nq-handle nq-h-tr" aria-hidden="true" />
-            <span className="nq-handle nq-h-bl" aria-hidden="true" />
-            <span className="nq-handle nq-h-br" onMouseDown={stopNative} onPointerDown={startResize} aria-hidden="true" />
-            <span className="nq-handle nq-h-r" onMouseDown={stopNative} onPointerDown={startResize} aria-hidden="true" />
+            <span className="nq-handle nq-h-tl" onMouseDown={stopNative} onPointerDown={(e) => startResize(e, -1, -1)} aria-hidden="true" />
+            <span className="nq-handle nq-h-tr" onMouseDown={stopNative} onPointerDown={(e) => startResize(e, 1, -1)} aria-hidden="true" />
+            <span className="nq-handle nq-h-bl" onMouseDown={stopNative} onPointerDown={(e) => startResize(e, -1, 1)} aria-hidden="true" />
+            <span className="nq-handle nq-h-br" onMouseDown={stopNative} onPointerDown={(e) => startResize(e, 1, 1)} aria-hidden="true" />
+            <span className="nq-handle nq-h-l" onMouseDown={stopNative} onPointerDown={(e) => startResize(e, -1, 0)} aria-hidden="true" />
+            <span className="nq-handle nq-h-r" onMouseDown={stopNative} onPointerDown={(e) => startResize(e, 1, 0)} aria-hidden="true" />
             <span className="nq-measure" aria-hidden="true">
               {Math.round(boxSize.w)} × {Math.round(boxSize.h)} px, {align === "full" ? 100 : width}%
             </span>
