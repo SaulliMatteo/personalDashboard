@@ -3,13 +3,18 @@ import { getActivity, subscribeActivity, subscribeActivityEvents } from "../../c
 import { useLayout } from "../../core/layout/useLayout";
 import { useSettings } from "../../core/settings/useSettings";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
+import { useThemeVariant } from "../../core/theme/variants";
+import { setNotificationDecorator } from "../../core/notify/notifier";
 import { CompanionBrain, type BrainConfig, type BrainInput } from "./engine/brain";
 import { FaceAnimator, type FaceFrame } from "./engine/animator";
-import { classifyApp, parseAppCategories, serializeAppCategories, type AppCategory, type ForegroundApp } from "./engine/appCategory";
+import { classifyApp, parseAppCategories, serializeAppCategories, type AppCategory, type ForegroundApp } from "../../core/system/appCategory";
 import { parseDisabled, serializeDisabled } from "./engine/animations";
 import type { PoseId } from "./engine/poses";
 import { PERSONALITIES } from "./engine/personalities";
-import { readSystemSnapshot } from "./data/systemApi";
+import { readSystemSnapshot } from "../../core/system/systemApi";
+import { FACE_STYLES } from "./render/styles";
+import { pixyLook, pixyText } from "./notify/pixyNotifications";
+import { renderNotificationFace } from "./notify/renderNotificationFace";
 import { COMPANION_WIDGET_ID, CompanionContext, type CompanionContextValue, type SeenApp } from "./useCompanion";
 
 /**
@@ -197,6 +202,33 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       window.clearInterval(interval);
     };
   }, [active, pushInput, settingsRef, appChoicesRef, settings.companionWatchForegroundApp]);
+
+  // --- Notifiche dell'app: le firma Pixy (faccia nello stile del tema, emoji, frase della
+  // personalità). Il provider è sempre montato, quindi vale anche se Pixy non è in dashboard.
+  const faceStyleRef = useLatestRef(useThemeVariant(FACE_STYLES));
+  useEffect(() => {
+    setNotificationDecorator(async (n) => {
+      const cfg = settingsRef.current;
+      const personality = PERSONALITIES[cfg.companionPersonality];
+      const look = pixyLook(n);
+      const text = pixyText(n, look, {
+        companionName: cfg.companionName,
+        personality: personality.id,
+        userName: cfg.userName,
+        random: Math.random,
+      });
+      const imageDataUrl = renderNotificationFace(look, {
+        style: faceStyleRef.current,
+        tweak: personality.faceTweak,
+        showMouth: cfg.companionShowMouth,
+        useAccent: cfg.companionColor === "accent",
+        // Una faccia già a schermo porta i token del suo pigmento (Opaco); altrimenti la radice.
+        tokensFrom: document.querySelector(".companion-face") ?? document.documentElement,
+      });
+      return { ...text, imageDataUrl };
+    });
+    return () => setNotificationDecorator(null);
+  }, [settingsRef, faceStyleRef]);
 
   // --- Orologio del cervello: scadenze, emozioni casuali, chiacchiere.
   useEffect(() => {
