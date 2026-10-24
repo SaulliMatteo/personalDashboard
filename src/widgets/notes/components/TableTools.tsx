@@ -1,4 +1,5 @@
-import { useEffect, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode, type RefObject } from "react";
+import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import {
   MdAdd,
   MdCallMerge,
@@ -8,10 +9,17 @@ import {
   MdFormatAlignCenter,
   MdFormatAlignLeft,
   MdFormatAlignRight,
+  MdFormatColorReset,
+  MdOutlinePalette,
   MdMoreHoriz,
   MdOutlineTableChart,
 } from "react-icons/md";
 import {
+  BORDER_STYLES,
+  BORDER_WIDTHS,
+  CELL_FILLS,
+  FREE_COLOR_START,
+  TABLE_INKS,
   alignColumn,
   cellBoxes,
   colCount,
@@ -33,7 +41,7 @@ import {
   type Rect,
   type TableModel,
 } from "../lib/tables";
-import { applyWidths, caretCell, cellOf, pageTables, placeCaret, readTable, rectBetween, replaceTable, type CellEl } from "../lib/tableDom";
+import { applyWidths, caretCell, cellOf, layoutTable, pageTables, placeCaret, readTable, rectBetween, replaceTable, type CellEl } from "../lib/tableDom";
 import "./TableTools.css";
 
 interface TableToolsProps {
@@ -45,7 +53,7 @@ interface TableToolsProps {
   onNotice: (message: string) => void;
 }
 
-type MenuKind = "row" | "col" | "table";
+type MenuKind = "row" | "col" | "table" | "look";
 
 interface MenuState {
   kind: MenuKind;
@@ -106,6 +114,85 @@ function columnEdges(model: TableModel, idOf: Map<CellEl, number>, tableLeft: nu
     edges[i] = edges[i - 1] + (edges[j] - edges[i - 1]) / (j - i + 1);
   }
   return edges;
+}
+
+/**
+ * "Altro colore…": il selettore del sistema. Mentre si sceglie il colore si vede subito
+ * (onPreview); si salva una volta sola, quando il selettore si chiude (evento change).
+ */
+function FreeColor({ value, onPreview, onSave }: { value: string | null; onPreview: (hex: string) => void; onSave: () => void }) {
+  const ref = useRef<HTMLInputElement | null>(null);
+  const saveRef = useLatestRef(onSave);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const done = () => saveRef.current();
+    el.addEventListener("change", done);
+    return () => el.removeEventListener("change", done);
+  }, [saveRef]);
+  return (
+    <label className="nq-sw-custom-row">
+      <input ref={ref} type="color" value={value?.startsWith("#") ? value : FREE_COLOR_START} onChange={(e) => onPreview(e.target.value)} />
+      <span>Altro colore…</span>
+    </label>
+  );
+}
+
+interface ColorChoicesProps {
+  label: string;
+  /** "ink" = colori pieni (bordi, intestazione); "fill" = colori tenui (sfondo delle celle). */
+  kind: "ink" | "fill";
+  value: string | null;
+  /** Applica (e salva, se save). null = colore del tema. */
+  onPick: (value: string | null, save: boolean) => void;
+  onSave: () => void;
+}
+
+function ColorChoices({ label, kind, value, onPick, onSave }: ColorChoicesProps) {
+  const list = kind === "ink" ? TABLE_INKS : CELL_FILLS;
+  return (
+    <div className="nq-tbl-section" role="group" aria-label={label}>
+      <span className="nq-tbl-label">{label}</span>
+      <div className="nq-swatch-grid">
+        <button type="button" className="nq-sw nq-sw--theme" aria-label="Colore del tema" title="Colore del tema" aria-pressed={value === null} onClick={() => onPick(null, true)}>
+          <MdFormatColorReset />
+        </button>
+        {list.map((c) => (
+          <button
+            key={c.key}
+            type="button"
+            className={kind === "ink" ? "nq-sw nq-sw--ink" : "nq-sw nq-sw--mark"}
+            data-color={kind === "ink" ? c.key : undefined}
+            data-mark={kind === "fill" ? c.key : undefined}
+            aria-label={c.label}
+            title={c.label}
+            aria-pressed={value === c.key}
+            onClick={() => onPick(c.key, true)}
+          />
+        ))}
+      </div>
+      <FreeColor value={value} onPreview={(hex) => onPick(hex, false)} onSave={onSave} />
+    </div>
+  );
+}
+
+/** Scelta tra poche opzioni (spessore, stile) con "Tema" per tornare al predefinito. */
+function Choice<T extends string>({ label, items, value, onPick }: { label: string; items: readonly { key: T; label: string }[]; value: T | null; onPick: (v: T | null) => void }) {
+  return (
+    <div className="nq-tbl-section" role="group" aria-label={label}>
+      <span className="nq-tbl-label">{label}</span>
+      <div className="nq-tbl-seg">
+        <button type="button" aria-pressed={value === null} onClick={() => onPick(null)}>
+          Tema
+        </button>
+        {items.map((it) => (
+          <button key={it.key} type="button" aria-pressed={value === it.key} onClick={() => onPick(it.key)}>
+            {it.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 const ALIGN_ITEMS: { value: CellAlign; label: string; icon: ReactNode }[] = [
@@ -272,6 +359,43 @@ function TableTools({ paper, editorRef, onChange, onNotice }: TableToolsProps) {
     setMenu({ kind, table, cell, merge });
   }
 
+  // ---------- Aspetto: si scrive sugli attributi, la tabella resta la stessa (il menu resta aperto) ----------
+
+  function setLookAttr(attr: string, value: string | null, save = true) {
+    if (!table) return;
+    if (value) table.setAttribute(attr, value);
+    else table.removeAttribute(attr);
+    layoutTable(table);
+    redraw();
+    if (save) onChange();
+  }
+
+  /** Sfondo di tutte le celle della riga o della colonna attiva. */
+  function fillCells(which: "row" | "col", value: string | null, save = true) {
+    if (!table || !active) return;
+    for (const [el, id] of idOf) {
+      const b = boxes.get(id);
+      if (!b) continue;
+      const hit =
+        which === "row" ? b.row <= active.row && active.row < b.row + b.rowspan : b.col <= active.col && active.col < b.col + b.colspan;
+      if (!hit) continue;
+      if (value) el.setAttribute("data-bg", value);
+      else el.removeAttribute("data-bg");
+    }
+    layoutTable(table);
+    redraw();
+    if (save) onChange();
+  }
+
+  function resetLook() {
+    if (!table) return;
+    for (const attr of ["data-border-color", "data-border-width", "data-border-style", "data-head-color"]) table.removeAttribute(attr);
+    table.querySelectorAll("[data-bg]").forEach((el) => el.removeAttribute("data-bg"));
+    layoutTable(table);
+    redraw();
+    onChange();
+  }
+
   function addColumn() {
     const at = colCount(model);
     commit(insertCol(model, at), [active?.row ?? 0, at]);
@@ -394,7 +518,7 @@ function TableTools({ paper, editorRef, onChange, onNotice }: TableToolsProps) {
           aria-label="Menu della tabella"
           title="Menu della tabella"
           aria-haspopup="menu"
-          aria-expanded={open?.kind === "table"}
+          aria-expanded={open?.kind === "table" || open?.kind === "look"}
           onMouseDown={keepCaret}
           onClick={() => openMenu("table")}
         >
@@ -424,10 +548,44 @@ function TableTools({ paper, editorRef, onChange, onNotice }: TableToolsProps) {
             <button type="button" role="menuitem" disabled={!hasWidths} onClick={() => commit(setWidths(model, null), active ? [active.row, active.col] : null)}>
               <strong>Colonne di uguale larghezza</strong>
             </button>
+            <button type="button" role="menuitem" onClick={() => menu && setMenu({ ...menu, kind: "look" })}>
+              <strong>
+                <MdOutlinePalette aria-hidden="true" /> Aspetto della tabella…
+              </strong>
+              <span>Bordi, intestazione, colori</span>
+            </button>
             <button type="button" role="menuitem" className="nq-menu-danger" onClick={removeTable}>
               <strong>
                 <MdDeleteOutline aria-hidden="true" /> Elimina tabella
               </strong>
+            </button>
+          </div>
+        )}
+        {open?.kind === "look" && (
+          <div className="nq-menu nq-tbl-menu nq-tbl-look" role="dialog" aria-label="Aspetto della tabella" onMouseDown={keepCaret}>
+            <ColorChoices
+              label="Colore dei bordi"
+              kind="ink"
+              value={model.look.borderColor}
+              onPick={(v, save) => setLookAttr("data-border-color", v, save)}
+              onSave={onChange}
+            />
+            <Choice label="Spessore dei bordi" items={BORDER_WIDTHS} value={model.look.borderWidth} onPick={(v) => setLookAttr("data-border-width", v)} />
+            <Choice label="Stile dei bordi" items={BORDER_STYLES} value={model.look.borderStyle} onPick={(v) => setLookAttr("data-border-style", v)} />
+            {model.head ? (
+              <ColorChoices
+                label="Colore dell'intestazione"
+                kind="ink"
+                value={model.look.headColor}
+                onPick={(v, save) => setLookAttr("data-head-color", v, save)}
+                onSave={onChange}
+              />
+            ) : (
+              <p className="nq-tbl-hint">Il colore dell'intestazione si sceglie quando la prima riga è intestazione.</p>
+            )}
+            <p className="nq-tbl-hint">Lo sfondo di righe e colonne si sceglie dai loro menu.</p>
+            <button type="button" onClick={resetLook}>
+              <strong>Torna all'aspetto del tema</strong>
             </button>
           </div>
         )}
@@ -455,6 +613,13 @@ function TableTools({ paper, editorRef, onChange, onNotice }: TableToolsProps) {
               <button type="button" role="menuitem" onClick={() => commit(insertRow(model, active.row + active.rowspan), [active.row + active.rowspan, active.col])}>
                 <strong>Inserisci riga sotto</strong>
               </button>
+              <ColorChoices
+                label="Sfondo della riga"
+                kind="fill"
+                value={model.cells[active.id]?.bg ?? null}
+                onPick={(v, save) => fillCells("row", v, save)}
+                onSave={onChange}
+              />
               <button type="button" role="menuitem" className="nq-menu-danger" onClick={() => commit(deleteRow(model, active.row), [active.row, active.col])}>
                 <strong>
                   <MdDeleteOutline aria-hidden="true" /> Elimina riga
@@ -507,6 +672,13 @@ function TableTools({ paper, editorRef, onChange, onNotice }: TableToolsProps) {
               <button type="button" role="menuitem" onClick={() => sort(-1)}>
                 <strong>Ordina Z → A</strong>
               </button>
+              <ColorChoices
+                label="Sfondo della colonna"
+                kind="fill"
+                value={model.cells[active.id]?.bg ?? null}
+                onPick={(v, save) => fillCells("col", v, save)}
+                onSave={onChange}
+              />
               <button type="button" role="menuitem" className="nq-menu-danger" onClick={() => commit(deleteCol(model, active.col), [active.row, active.col])}>
                 <strong>
                   <MdDeleteOutline aria-hidden="true" /> Elimina colonna

@@ -182,3 +182,58 @@
 :root[data-theme="fosforo"] .nq-tbl-colh::after {
   background: var(--led);
 }
+
+/* ---------- Aspetto della tabella (colori, spessore, stile) ---------- */
+
+.nq-tbl-look {
+  width: 250px;
+  min-width: 0;
+  max-height: 420px;
+}
+
+.nq-tbl-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 6px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.nq-tbl-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.nq-tbl-section .nq-swatch-grid {
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.nq-tbl-section .nq-sw-custom-row {
+  margin-top: 0;
+}
+
+.nq-tbl-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.nq-menu .nq-tbl-seg button {
+  padding: 5px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
+  font-size: 12px;
+}
+
+.nq-menu .nq-tbl-seg button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.nq-tbl-hint {
+  margin: 6px 8px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}

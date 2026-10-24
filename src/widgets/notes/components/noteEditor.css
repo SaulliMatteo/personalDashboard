@@ -1820,3 +1820,47 @@
 :root[data-theme="fosforo"] .nq-doc tr[data-cur] > td:first-child {
   box-shadow: inset 2px 0 0 var(--led);
 }
+
+/* ---------- Tabelle personalizzate (menu "Aspetto della tabella") ----------
+   I valori arrivano da lib/tableDom.ts: attributi sulla tabella e sulle celle, colori come
+   variabili in linea. Spessore o stile scelti = griglia completa (tutti i lati delle celle). */
+
+.nq-doc table[data-border-width="sottile"] { --nq-tb-w: 1px; --nq-tb-wo: 1.5px; }
+.nq-doc table[data-border-width="medio"] { --nq-tb-w: 2px; --nq-tb-wo: 3px; }
+.nq-doc table[data-border-width="spesso"] { --nq-tb-w: 3px; --nq-tb-wo: 4.5px; }
+.nq-doc table[data-border-style="continuo"] { --nq-tb-s: solid; }
+.nq-doc table[data-border-style="tratteggiato"] { --nq-tb-s: dashed; }
+.nq-doc table[data-border-style="puntini"] { --nq-tb-s: dotted; }
+
+:root .nq-doc table:is([data-border-width], [data-border-style]) {
+  border-width: var(--nq-tb-wo, 2px);
+  border-style: var(--nq-tb-s, solid);
+}
+
+:root .nq-doc table:is([data-border-width], [data-border-style]) :is(th, td) {
+  border-width: var(--nq-tb-w, 1px);
+  border-style: var(--nq-tb-s, solid);
+  border-color: color-mix(in srgb, var(--note-page-ink) 45%, transparent);
+}
+
+/* Colore dei bordi (dopo: vince sul colore predefinito della griglia) */
+:root .nq-doc table[data-border-color],
+:root .nq-doc table[data-border-color] :is(th, td) {
+  border-color: var(--nq-tb-c);
+}
+
+/* Intestazione colorata */
+:root .nq-doc table[data-head-color] th {
+  background: var(--nq-tb-head-bg);
+  color: var(--nq-tb-head-ink);
+}
+
+/* Sfondo di righe e colonne: vince su fasce e riga del cursore (è una scelta dell'utente). */
+:root .nq-doc :is(th, td)[data-bg] {
+  background: var(--nq-cell-bg) !important;
+}
+
+:root .nq-doc :is(th, td)[data-bg^="#"] {
+  color: var(--nq-cell-ink);
+}
+

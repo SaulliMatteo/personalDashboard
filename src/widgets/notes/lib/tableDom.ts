@@ -1,5 +1,10 @@
+import { luminance } from "./pageColor";
 import {
   EMPTY_CELL,
+  asBorderStyle,
+  asBorderWidth,
+  asFillColor,
+  asInkColor,
   boxOf,
   cellOrder,
   createTable,
@@ -9,6 +14,7 @@ import {
   rowCount,
   type CellAlign,
   type RawCell,
+  type TableLook,
   type TableModel,
 } from "./tables";
 
@@ -18,6 +24,9 @@ import {
  *   <table><thead><tr><th data-width="30" data-align="right">…</th>…</tr></thead><tbody>…</tbody></table>
  * Le larghezze si vedono grazie a un <colgroup data-runtime> che si rifà da data-width a ogni
  * disegno (layoutTables) e non viene mai salvato; la riga del cursore ha data-cur (non salvato).
+ * Aspetto scelto dall'utente: data-border-color/-width/-style e data-head-color sulla tabella,
+ * data-bg sulle celle. I colori arrivano al CSS come variabili in linea (--nq-tb-*, --nq-cell-*),
+ * rifatte anche loro da layoutTables e tolte prima di salvare (stripLookVars).
  */
 
 export type CellEl = HTMLTableCellElement;
@@ -52,6 +61,31 @@ export function caretCell(root: HTMLElement | null): CellEl | null {
   return cellOf(root, window.getSelection()?.anchorNode ?? null);
 }
 
+/** L'aspetto scritto sulla tabella. */
+export function readLook(table: Element): TableLook {
+  return {
+    borderColor: asInkColor(table.getAttribute("data-border-color")),
+    borderWidth: asBorderWidth(table.getAttribute("data-border-width")),
+    borderStyle: asBorderStyle(table.getAttribute("data-border-style")),
+    headColor: asInkColor(table.getAttribute("data-head-color")),
+  };
+}
+
+const LOOK_ATTRS: [keyof TableLook, string][] = [
+  ["borderColor", "data-border-color"],
+  ["borderWidth", "data-border-width"],
+  ["borderStyle", "data-border-style"],
+  ["headColor", "data-head-color"],
+];
+
+export function writeLook(table: Element, look: TableLook): void {
+  for (const [key, attr] of LOOK_ATTRS) {
+    const v = look[key];
+    if (v) table.setAttribute(attr, v);
+    else table.removeAttribute(attr);
+  }
+}
+
 export interface ReadTable {
   model: TableModel;
   /** Id del modello di ogni cella del DOM. */
@@ -72,10 +106,11 @@ export function readTable(table: HTMLTableElement): ReadTable {
         rowspan: cell.rowSpan === 0 ? rows.length - r : cell.rowSpan || 1,
         align: asCellAlign(cell.getAttribute("data-align")),
         width: r === 0 ? asCellWidth(cell.getAttribute("data-width")) : null,
+        bg: asFillColor(cell.getAttribute("data-bg")),
       };
     })
   );
-  const { model, ids } = fromRows(raw, head);
+  const { model, ids } = fromRows(raw, head, readLook(table));
   const idOf = new Map<CellEl, number>();
   rows.forEach((tr, r) => Array.from(tr.cells).forEach((cell, i) => idOf.set(cell, ids[r][i])));
   return { model, idOf };
@@ -88,6 +123,7 @@ export interface WrittenTable {
 
 export function writeTable(model: TableModel): WrittenTable {
   const table = document.createElement("table");
+  writeLook(table, model.look);
   const cellMap = new Map<number, CellEl>();
   const layout = layoutRows(model);
   let body: HTMLTableSectionElement | null = null;
@@ -112,6 +148,7 @@ export function writeTable(model: TableModel): WrittenTable {
       if (box.colspan > 1) cell.colSpan = box.colspan;
       if (box.rowspan > 1) cell.rowSpan = box.rowspan;
       if (data.align) cell.setAttribute("data-align", data.align);
+      if (data.bg) cell.setAttribute("data-bg", data.bg);
       if (r === 0) {
         const parts = model.widths.slice(box.col, box.col + box.colspan);
         if (parts.every((w) => w !== null)) {
@@ -158,8 +195,46 @@ function columnWidths(table: HTMLTableElement): number[] | null {
   return widths.map((w) => (Number.isNaN(w) ? rest : w));
 }
 
-/** Rifà il <colgroup> di una tabella dalle sue data-width (o lo toglie). */
+/** Testo leggibile su un colore libero. */
+const inkOn = (hex: string) => (luminance(hex) > 0.5 ? "#1a1a1e" : "#f7f7f8");
+
+const LOOK_VARS = ["--nq-tb-c", "--nq-tb-head-bg", "--nq-tb-head-ink", "--nq-cell-bg", "--nq-cell-ink"];
+
+function setVar(el: HTMLElement, name: string, value: string | null) {
+  if (value) el.style.setProperty(name, value);
+  else el.style.removeProperty(name);
+  if (!el.getAttribute("style")) el.removeAttribute("style");
+}
+
+/** Colori dell'aspetto come variabili CSS (palette → token del tema, #rrggbb → così com'è). */
+function applyLook(table: HTMLTableElement): void {
+  const look = readLook(table);
+  const ink = (c: string | null) => (!c ? null : c.startsWith("#") ? c : `var(--nq-ink-${c})`);
+  setVar(table, "--nq-tb-c", ink(look.borderColor));
+  setVar(table, "--nq-tb-head-bg", ink(look.headColor));
+  // Sull'intestazione colorata dalla palette il testo prende il fondo della pagina (sempre in contrasto).
+  const head = look.headColor;
+  setVar(table, "--nq-tb-head-ink", !head ? null : head.startsWith("#") ? inkOn(head) : "var(--note-page-bg)");
+  table.querySelectorAll<HTMLTableCellElement>("th, td").forEach((cell) => {
+    if (cell.closest("table") !== table) return;
+    const bg = asFillColor(cell.getAttribute("data-bg"));
+    const fill = !bg ? null : bg.startsWith("#") ? bg : `color-mix(in srgb, var(--nq-mark-${bg}) var(--nq-mark-strength), var(--note-page-bg))`;
+    setVar(cell, "--nq-cell-bg", fill);
+    setVar(cell, "--nq-cell-ink", bg?.startsWith("#") ? inkOn(bg) : null);
+  });
+}
+
+/** Toglie le variabili messe da applyLook (prima di salvare). */
+export function stripLookVars(root: ParentNode): void {
+  root.querySelectorAll<HTMLElement>("table[style], th[style], td[style]").forEach((el) => {
+    for (const name of LOOK_VARS) el.style.removeProperty(name);
+    if (!el.getAttribute("style")) el.removeAttribute("style");
+  });
+}
+
+/** Rifà <colgroup> (dalle data-width) e colori dell'aspetto di una tabella. */
 export function layoutTable(table: HTMLTableElement): void {
+  applyLook(table);
   const widths = columnWidths(table);
   let group = table.querySelector<HTMLTableColElement>(":scope > colgroup[data-runtime]");
   if (!widths) {

@@ -1,4 +1,5 @@
 import { defaultEdit, initialWidth, parseImageEdit, parseWidth, serializeImageEdit } from "./imageEdit";
+import { stripLookVars } from "./tableDom";
 
 /**
  * Blocchi nella pagina: <figure data-block="image"> e <div data-block="file">.
@@ -12,11 +13,13 @@ export type BlockKind = "image" | "file";
 
 /** HTML da salvare: senza i nodi di React e senza gli attributi messi solo per l'editor. */
 export function serializeEditor(root: HTMLElement): string {
-  if (!root.querySelector("[data-runtime], [data-block], [data-cur]")) return root.innerHTML;
+  if (!root.querySelector("[data-runtime], [data-block], [data-cur], table")) return root.innerHTML;
   const clone = root.cloneNode(true) as HTMLElement;
   clone.querySelectorAll("[data-runtime]").forEach((n) => n.remove());
   // La riga della tabella dove sta il cursore (lib/tableDom.ts): solo per l'editor.
   clone.querySelectorAll("[data-cur]").forEach((n) => n.removeAttribute("data-cur"));
+  // Colori delle tabelle in linea: si rifanno dagli attributi (lib/tableDom.ts).
+  stripLookVars(clone);
   clone.querySelectorAll<HTMLElement>("[data-block]").forEach((el) => {
     el.removeAttribute("contenteditable");
     el.removeAttribute("tabindex");
