@@ -22,6 +22,8 @@ import FolderTree from "./components/FolderTree";
 import NoteCollection, { type LayoutMode, type SortKey } from "./components/NoteCollection";
 import NoteEditor from "./components/NoteEditor";
 import Crumbs, { type Crumb } from "./components/Crumbs";
+import ShortcutsPanel from "./components/ShortcutsPanel";
+import { fromFormField, matchShortcut, shortcutLabel, type ShortcutAction } from "./lib/shortcuts";
 import { takePendingNote } from "./lib/launch";
 import {
   addAttachment,
@@ -221,7 +223,8 @@ function NotesDetail() {
   // ---------------- Azioni ----------------
 
   async function handleNewNote(templateId?: string) {
-    const folderId = view.kind === "folder" ? view.id : null;
+    // Nella cartella aperta: quella selezionata, o quella della nota che si sta leggendo.
+    const folderId = view.kind === "folder" ? view.id : openNote?.folderId ?? null;
     try {
       const id = await createNote(folderId, templateId ? buildFromTemplate(templateId) : undefined);
       setQuery("");
@@ -236,28 +239,82 @@ function NotesDetail() {
   const newNoteRef = useLatestRef(handleNewNote);
   const openIdRef = useLatestRef(openId);
 
-  // Scorciatoie: Ctrl/Cmd+K cerca, N crea una nota (solo fuori dall'editor e dai campi di testo).
+  // ---------------- Scorciatoie (lib/shortcuts.ts) ----------------
+  // Un solo ascoltatore per la pagina: le azioni della pagina si fanno qui, quelle sul testo
+  // vanno all'editor del riquadro attivo (quello cliccato o con il focus, nello schermo diviso).
+
+  const editorHandlers = useRef(new Map<"main" | "side", (action: ShortcutAction) => boolean>());
+  const activePane = useRef<"main" | "side">("main");
+  const [keysOpen, setKeysOpen] = useState(false);
+  const keysOpenRef = useLatestRef(keysOpen);
+
+  const registerMain = useCallback((handler: ((action: ShortcutAction) => boolean) | null) => {
+    if (handler) editorHandlers.current.set("main", handler);
+    else editorHandlers.current.delete("main");
+  }, []);
+  const registerSide = useCallback((handler: ((action: ShortcutAction) => boolean) | null) => {
+    if (handler) editorHandlers.current.set("side", handler);
+    else {
+      editorHandlers.current.delete("side");
+      activePane.current = "main";
+    }
+  }, []);
+
+  function focusSearch() {
+    // La ricerca sta nella barra laterale: se è nascosta la si riapre.
+    setSideOpen(true);
+    window.requestAnimationFrame(() => searchRef.current?.focus());
+  }
+  const focusSearchRef = useLatestRef(focusSearch);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const typing =
-        !!target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable);
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        // La ricerca sta nella barra laterale: se è nascosta la si riapre.
-        setSideOpen(true);
-        window.requestAnimationFrame(() => searchRef.current?.focus());
+      if (e.defaultPrevented) return; // già gestito (menu "/", campi del pannello…)
+      const action = matchShortcut(e);
+      if (fromFormField(e.target)) return; // nei campi di testo i tasti restano loro
+      if (!action) {
+        // N senza modificatori, fuori dal testo e senza nota aperta: nuova nota (come prima).
+        const target = e.target as HTMLElement | null;
+        const plain = !e.ctrlKey && !e.metaKey && !e.altKey && !target?.isContentEditable;
+        if (plain && e.key.toLowerCase() === "n" && openIdRef.current === null) {
+          e.preventDefault();
+          void newNoteRef.current();
+        }
         return;
       }
-      if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
-      if (e.key.toLowerCase() === "n" && openIdRef.current === null) {
+      if (action === "help") {
+        e.preventDefault();
+        setKeysOpen((v) => !v);
+        return;
+      }
+      if (keysOpenRef.current) {
+        if (action === "escape") {
+          e.preventDefault();
+          setKeysOpen(false);
+        }
+        return;
+      }
+      if (action === "findAll") {
+        e.preventDefault();
+        focusSearchRef.current();
+        return;
+      }
+      if (action === "newNote") {
         e.preventDefault();
         void newNoteRef.current();
+        return;
+      }
+      const handler = editorHandlers.current.get(activePane.current) ?? editorHandlers.current.get("main");
+      if (handler?.(action)) e.preventDefault();
+      // Senza una nota aperta Ctrl+F apre la ricerca (e non quella del browser).
+      else if (action === "find") {
+        e.preventDefault();
+        focusSearchRef.current();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [newNoteRef, openIdRef]);
+  }, [newNoteRef, openIdRef, keysOpenRef, focusSearchRef]);
 
   function goTo(next: View) {
     setView(next);
@@ -650,6 +707,8 @@ function NotesDetail() {
   function renderEditor(note: NoteSummary, compact: boolean, onClosePane?: () => void) {
     return (
       <NoteEditor
+        registerShortcuts={onClosePane ? registerSide : registerMain}
+        onOpenShortcuts={() => setKeysOpen(true)}
         key={`${onClosePane ? "side" : "main"}-${note.id}`}
         note={note}
         pathLabel={pathOf(note.folderId)}
@@ -761,7 +820,7 @@ function NotesDetail() {
                 }
               }}
             />
-            <kbd>Ctrl K</kbd>
+            <kbd>{shortcutLabel("findAll")}</kbd>
           </label>
 
           <div className="nq-side-scroll">
@@ -861,8 +920,20 @@ function NotesDetail() {
           {openNote ? (
             splitNote ? (
               <div className="nq-split">
-                <div className="nq-pane">{renderEditor(openNote, true)}</div>
-                <div className="nq-pane nq-pane--side">{renderEditor(splitNote, true, () => setSplitId(null))}</div>
+                <div
+                  className="nq-pane"
+                  onPointerDownCapture={() => (activePane.current = "main")}
+                  onFocusCapture={() => (activePane.current = "main")}
+                >
+                  {renderEditor(openNote, true)}
+                </div>
+                <div
+                  className="nq-pane nq-pane--side"
+                  onPointerDownCapture={() => (activePane.current = "side")}
+                  onFocusCapture={() => (activePane.current = "side")}
+                >
+                  {renderEditor(splitNote, true, () => setSplitId(null))}
+                </div>
               </div>
             ) : (
               renderEditor(openNote, false)
@@ -902,6 +973,8 @@ function NotesDetail() {
       )}
 
       {notice && <div className="nq-notice">{notice}</div>}
+
+      {keysOpen && <ShortcutsPanel onClose={() => setKeysOpen(false)} />}
 
       {vaultPanel && (
         <VaultPanel
