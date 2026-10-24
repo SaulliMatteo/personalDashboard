@@ -120,3 +120,26 @@ export function currentFontSizePx(root: HTMLElement, zoom: number): number | nul
   const px = parseFloat(getComputedStyle(el).fontSize) / zoom;
   return Number.isFinite(px) ? Math.round(px) : null;
 }
+/** Il figlio diretto della radice che contiene il cursore (paragrafo, titolo, elenco intero…). */
+export function topBlock(root: HTMLElement | null): HTMLElement | null {
+  if (!root) return null;
+  let node: Node | null = window.getSelection()?.anchorNode ?? null;
+  if (!node || !root.contains(node) || node === root) return null;
+  while (node && node.parentNode !== root) node = node.parentNode;
+  return node instanceof HTMLElement ? node : null;
+}
+
+/** Posizione del blocco tra i figli della radice: distingue "stesso blocco" per la cronologia. */
+export function topBlockKey(root: HTMLElement | null): string | undefined {
+  const block = topBlock(root);
+  if (!root || !block) return undefined;
+  return String(Array.prototype.indexOf.call(root.children, block));
+}
+
+/** Spunta/toglie la riga di checklist sotto il cursore. False se il cursore non è in una checklist. */
+export function toggleCurrentCheck(root: HTMLElement): boolean {
+  const block = currentBlock(root);
+  if (!block?.hasAttribute("data-check")) return false;
+  block.setAttribute("data-check", block.getAttribute("data-check") === "1" ? "0" : "1");
+  return true;
+}

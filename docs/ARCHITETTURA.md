@@ -101,13 +101,23 @@ notes/
 │                            Crumbs, PageSurface (pagina di carta: contentEditable NON controllato da React;
 │                            testata col titolo sulla prima pagina), InkLayer (penna/evidenziatore/gomma)
 ├─ data/notesRepository.ts   tutte le query SQL (note_folders, notes, note_pages)
-└─ lib/                      drag.ts, editorDom.ts, folders.ts, html.ts (sanitizeHtml)
+│                            FindBar (Ctrl+F), InsertMenu (menu "/"), ShortcutsPanel (Ctrl+/ o F1)
+└─ lib/                      drag.ts, editorDom.ts, folders.ts, html.ts (sanitizeHtml),
+                             history.ts (annulla/ripeti per nota, puro: orologio iniettato),
+                             shortcuts.ts (UNICO elenco delle scorciatoie: tasti, etichette, tooltip),
+                             selectionOffsets.ts (cursore ↔ posizione nel testo), blockActions.ts
+                             (duplica/sposta il blocco), insertItems.ts (voci del menu "/")
 ```
 
 La geometria del testo nella pagina (larghezza 58em, margini interni, corpo, dimensioni e margini dei titoli
 nel testo) è la stessa in tutti i temi e non va cambiata: i tratti a mano sono salvati in coordinate della
 pagina e devono restare sopra le parole. I temi cambiano solo font, colori e decorazioni; lo strato
 dell'inchiostro parte da (testata − 2.82em), così il titolo sulla prima pagina non sposta i tratti.
+
+Annulla/ripeti: ogni modifica a testo, inchiostro, colore o sfondo passa da `patchPage`/`history.record` in
+`NoteEditor`, che salva lo stato della pagina PRIMA della modifica; l'annulla del browser è bloccato. Le
+scorciatoie si aggiungono solo in `lib/shortcuts.ts`: un solo ascoltatore in `NotesDetail` le smista all'editor
+del riquadro attivo (`registerShortcuts`).
 
 ### Il widget Companion (`widgets/companion/`)
 

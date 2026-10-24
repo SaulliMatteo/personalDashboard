@@ -18,6 +18,12 @@ interface PageSurfaceProps {
   editorRef: RefObject<HTMLDivElement | null>;
   onContent: (html: string) => void;
   onInk: (strokes: InkStroke[]) => void;
+  /** Tasti dentro il testo prima della pagina (menu "/" aperto): true = gestito. */
+  onEditorKeyDown?: (e: KeyboardEvent<HTMLDivElement>) => boolean;
+  /** Dopo ogni modifica del testo (serve al menu "/"). */
+  onAfterInput?: () => void;
+  /** Annulla/ripeti chiesti dal browser (menu contestuale): si usa la cronologia della nota. */
+  onHistory?: (direction: "undo" | "redo") => void;
 }
 
 /**
@@ -52,6 +58,23 @@ function PageSurface(props: PageSurfaceProps) {
     // Solo al cambio di pagina: page.content cambia a ogni tasto e NON deve rientrare qui.
   }, [page.id, editorRef]);
 
+  // L'annulla del browser conosce solo il testo: lo sostituisce la cronologia della nota (lib/history.ts).
+  const historyRef = useRef(props.onHistory);
+  useLayoutEffect(() => {
+    historyRef.current = props.onHistory;
+  });
+  useLayoutEffect(() => {
+    const el = editorRef.current;
+    if (!el) return;
+    const onBeforeInput = (e: InputEvent) => {
+      if (e.inputType !== "historyUndo" && e.inputType !== "historyRedo") return;
+      e.preventDefault();
+      historyRef.current?.(e.inputType === "historyUndo" ? "undo" : "redo");
+    };
+    el.addEventListener("beforeinput", onBeforeInput);
+    return () => el.removeEventListener("beforeinput", onBeforeInput);
+  }, [editorRef]);
+
   function emit() {
     if (editorRef.current) onContent(editorRef.current.innerHTML);
   }
@@ -75,7 +98,12 @@ function PageSurface(props: PageSurfaceProps) {
 
   // Invio dentro una checklist: la nuova riga parte sempre da "non spuntata".
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-    if (e.key !== "Enter" || e.shiftKey) return;
+    if (props.onEditorKeyDown?.(e)) {
+      e.preventDefault();
+      return;
+    }
+    // Ctrl+Invio spunta la riga (scorciatoia): non è un a capo.
+    if (e.key !== "Enter" || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
     window.setTimeout(() => {
       const block = currentBlock(editorRef.current);
       if (block?.hasAttribute("data-check")) block.setAttribute("data-check", "0");
@@ -99,7 +127,10 @@ function PageSurface(props: PageSurfaceProps) {
           contentEditable={props.mode === "text"}
           suppressContentEditableWarning
           spellCheck
-          onInput={emit}
+          onInput={() => {
+            emit();
+            props.onAfterInput?.();
+          }}
           onPaste={handlePaste}
           onDrop={(e) => e.preventDefault()}
           onClick={handleClick}

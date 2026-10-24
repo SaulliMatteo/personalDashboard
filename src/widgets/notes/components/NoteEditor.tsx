@@ -12,9 +12,15 @@ import {
   MdFormatColorText,
   MdFormatItalic,
   MdFormatListBulleted,
+  MdFormatListNumbered,
   MdFormatStrikethrough,
   MdFormatUnderlined,
+  MdHorizontalRule,
+  MdKeyboard,
   MdLink,
+  MdLooks3,
+  MdLooksOne,
+  MdLooksTwo,
   MdMoreHoriz,
   MdOutlineAttachFile,
   MdOutlineBackspace,
@@ -61,8 +67,25 @@ import { THEME_INK } from "../lib/ink";
 import NumberField from "../../../ui/NumberField";
 import PageThumb from "./PageThumb";
 import { PAGE_COLORS, TEXT_COLORS } from "../lib/pageColor";
-import { applyFontSize, applyTextColor, clearFormatting, currentFontSizePx, normalizeUrl, toggleChecklist } from "../lib/editorDom";
-import { formatWhen, monthYear, wordCount } from "../lib/html";
+import {
+  applyFontSize,
+  applyTextColor,
+  clearFormatting,
+  currentBlock,
+  currentFontSizePx,
+  normalizeUrl,
+  toggleChecklist,
+  toggleCurrentCheck,
+  topBlockKey,
+} from "../lib/editorDom";
+import { formatWhen, monthYear, sanitizeHtml, wordCount } from "../lib/html";
+import { createHistory, type RecordMeta } from "../lib/history";
+import { getTextOffsets, setTextOffsets, type TextOffsets } from "../lib/selectionOffsets";
+import { duplicateBlock, moveBlock } from "../lib/blockActions";
+import { shortcutLabel, type ShortcutAction } from "../lib/shortcuts";
+import { filterInsertItems, type InsertItem } from "../lib/insertItems";
+import FindBar from "./FindBar";
+import InsertMenu from "./InsertMenu";
 import type { InkTool } from "./InkLayer";
 import PageSurface from "./PageSurface";
 import Crumbs, { type Crumb } from "./Crumbs";
@@ -90,7 +113,40 @@ interface NoteEditorProps {
   /** Pannello stretto (schermo diviso): niente colonna delle pagine. */
   compact?: boolean;
   onClosePane?: () => void;
+  /** Il pannello si registra per ricevere le scorciatoie (lib/shortcuts.ts); null = si toglie. */
+  registerShortcuts?: (handler: ((action: ShortcutAction) => boolean) | null) => void;
+  onOpenShortcuts?: () => void;
 }
+
+/** Stato di una pagina per la cronologia (lib/history.ts). */
+interface PageSnapshot {
+  pageId: number;
+  html: string;
+  ink: InkStroke[];
+  color: string | null;
+  background: PageBackground;
+  selection: TextOffsets | null;
+}
+
+interface SlashState {
+  /** Pagina in cui è stato aperto: cambiando pagina il menu non vale più. */
+  pageIndex: number;
+  query: string;
+  left: number;
+  top: number;
+  active: number;
+}
+
+const FORMAT_COMMANDS: Partial<Record<ShortcutAction, string>> = {
+  bold: "bold",
+  italic: "italic",
+  underline: "underline",
+  strike: "strikeThrough",
+  bullets: "insertUnorderedList",
+  numbers: "insertOrderedList",
+};
+
+const HEADING_TAGS: Partial<Record<ShortcutAction, string>> = { h1: "h1", h2: "h2", h3: "h3", paragraph: "p" };
 
 function formatBytes(size: number): string {
   if (size < 1024) return `${size} B`;
@@ -117,6 +173,8 @@ function NoteEditor({
   splitCandidates = [],
   compact = false,
   onClosePane,
+  registerShortcuts,
+  onOpenShortcuts,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(note.title);
   const [pages, setPages] = useState<NotePage[]>([]);
@@ -143,6 +201,11 @@ function NoteEditor({
   const [lightExport, setLightExport] = useState(true);
   const [busy, setBusy] = useState(false);
   const [splitQuery, setSplitQuery] = useState("");
+  const [findOpen, setFindOpen] = useState(false);
+  const [slashState, setSlash] = useState<SlashState | null>(null);
+  const slash = slashState && slashState.pageIndex === index ? slashState : null;
+  // Cronologia della nota: una per editor (cambiando nota l'editor si ricrea e la cronologia riparte).
+  const [history] = useState(() => createHistory<PageSnapshot>({ now: () => Date.now() }));
   
 
   // pagesRef rispecchia SEMPRE `pages` in modo sincrono: i salvataggi con
@@ -153,8 +216,15 @@ function NoteEditor({
   const dirtyPages = useRef(new Set<number>());
   const titleDirty = useRef(false);
   const timer = useRef<number | null>(null);
-  const redoInk = useRef(new Map<number, InkStroke[]>());
   const titleRef = useLatestRef(title);
+  /** Cursore prima dell'ultima modifica (la voce della cronologia lo rimette). */
+  const lastSelection = useRef<TextOffsets | null>(null);
+  /** Cursore da rimettere quando la pagina giusta sarà aperta (annulla su un'altra pagina). */
+  const pendingSelection = useRef<{ pageId: number; selection: TextOffsets | null } | null>(null);
+  /** True mentre gira un comando della barra: la modifica non è "digitazione". */
+  const commandActive = useRef(false);
+  // Il menu "/" si aggiorna anche quando si sposta il cursore (selectionchange).
+  const slashCheckRef = useLatestRef(checkSlash);
 
   useEffect(() => {
     const onSelection = () => {
@@ -164,17 +234,32 @@ function NoteEditor({
       const range = sel.getRangeAt(0);
       if (!root.contains(range.commonAncestorContainer)) return;
       savedRange.current = range.cloneRange();
+      lastSelection.current = getTextOffsets(root);
       const px = currentFontSizePx(root, zoomRef.current / 100);
       if (px) setFontSize(px);
+      slashCheckRef.current(false);
     };
     document.addEventListener("selectionchange", onSelection);
     return () => document.removeEventListener("selectionchange", onSelection);
-  }, [zoomRef]);
+  }, [zoomRef, slashCheckRef]);
 
   // Cambiando pagina l'editor viene ricreato: la vecchia selezione non vale più.
   useEffect(() => {
     savedRange.current = null;
+    lastSelection.current = null;
   }, [index]);
+
+  // Dopo un annulla su un'altra pagina: la pagina è stata aperta, si rimette il cursore.
+  useEffect(() => {
+    const pending = pendingSelection.current;
+    const el = editorRef.current;
+    if (!pending || !el || pagesRef.current[index]?.id !== pending.pageId) return;
+    pendingSelection.current = null;
+    if (pending.selection) {
+      el.focus();
+      setTextOffsets(el, pending.selection);
+    }
+  }, [index, ready]);
 
   useEffect(() => {
     let cancelled = false;
@@ -253,7 +338,32 @@ function NoteEditor({
     timer.current = window.setTimeout(() => void flushRef.current(), 700);
   }, [flushRef]);
 
-  function patchPage(id: number, patch: Partial<Pick<NotePage, "content" | "ink">>) {
+  function snapshotOf(p: NotePage): PageSnapshot {
+    return {
+      pageId: p.id,
+      html: p.content,
+      ink: p.ink,
+      color: p.color,
+      background: p.background,
+      selection: p.id === pagesRef.current[index]?.id ? lastSelection.current : null,
+    };
+  }
+
+  /** Stato attuale di una pagina (va in "ripeti" quando si annulla). */
+  function liveSnapshot(pageId: number): PageSnapshot | null {
+    const p = pagesRef.current.find((x) => x.id === pageId);
+    if (!p) return null;
+    const isOpen = p.id === pagesRef.current[index]?.id && editorRef.current;
+    return { ...snapshotOf(p), selection: isOpen ? getTextOffsets(editorRef.current!) ?? lastSelection.current : null };
+  }
+
+  /** Modifica di testo o inchiostro: prima entra nella cronologia lo stato di adesso. */
+  function patchPage(id: number, patch: Partial<Pick<NotePage, "content" | "ink">>, meta: RecordMeta = { kind: "other" }) {
+    const prev = pagesRef.current.find((p) => p.id === id);
+    if (!prev) return;
+    const changed = (patch.content !== undefined && patch.content !== prev.content) || (patch.ink !== undefined && patch.ink !== prev.ink);
+    if (!changed) return;
+    history.record(snapshotOf(prev), meta);
     const next = pagesRef.current.map((p) => (p.id === id ? { ...p, ...patch } : p));
     pagesRef.current = next;
     setPages(next);
@@ -291,12 +401,25 @@ function NoteEditor({
     if (el && page) patchPage(page.id, { content: el.innerHTML });
   }
 
+  /** Comando del browser sul testo: è una voce sola nella cronologia, non digitazione. */
   function exec(command: string, value?: string) {
     const el = editorRef.current;
     if (!el || mode !== "text") return;
     el.focus();
-    document.execCommand(command, false, value);
+    commandActive.current = true;
+    try {
+      document.execCommand(command, false, value);
+    } finally {
+      commandActive.current = false;
+    }
     commitEditor();
+  }
+
+  /** Testo scritto nella pagina: si unisce alla voce precedente se si continua nello stesso blocco. */
+  function handleTyping(html: string) {
+    if (!page) return;
+    const meta: RecordMeta = commandActive.current ? { kind: "other" } : { kind: "typing", blockKey: topBlockKey(editorRef.current) };
+    patchPage(page.id, { content: html }, meta);
   }
 
   function handleChecklist() {
@@ -315,7 +438,14 @@ function NoteEditor({
     sel.removeAllRanges();
     sel.addRange(savedRange.current);
   }
-  if (action(el)) commitEditor();
+  commandActive.current = true;
+  let done = false;
+  try {
+    done = action(el);
+  } finally {
+    commandActive.current = false;
+  }
+  if (done) commitEditor();
 }
 
 function handleFontSize(px: number) {
@@ -330,7 +460,8 @@ function handleTextColor(color: string) {
 }
 
 async function changePageColor(color: string | null) {
-  if (!page) return;
+  if (!page || page.color === color) return;
+  history.record(snapshotOf(page), { kind: "other" });
   const next = pagesRef.current.map((p) => (p.id === page.id ? { ...p, color } : p));
   pagesRef.current = next;
   setPages(next);
@@ -375,34 +506,272 @@ async function changePageColor(color: string | null) {
     commitEditor();
   }
 
-  function handleUndo() {
-    if (mode === "ink" && page) {
-      if (page.ink.length === 0) return;
-      const removed = page.ink[page.ink.length - 1];
-      redoInk.current.set(page.id, [...(redoInk.current.get(page.id) ?? []), removed]);
-      patchPage(page.id, { ink: page.ink.slice(0, -1) });
+  /** Rimette una pagina com'era (testo, inchiostro, colore, sfondo, cursore) e la salva. */
+  function applySnapshot(snap: PageSnapshot) {
+    const prev = pagesRef.current.find((p) => p.id === snap.pageId);
+    if (!prev) return;
+    const next = pagesRef.current.map((p) =>
+      p.id === snap.pageId ? { ...p, content: snap.html, ink: snap.ink, color: snap.color, background: snap.background } : p
+    );
+    pagesRef.current = next;
+    setPages(next);
+    dirtyPages.current.add(snap.pageId);
+    schedule();
+    if (prev.color !== snap.color) {
+      void attempt("Impossibile ripristinare il colore della pagina", () => setPageColor(snap.pageId, note.id, snap.color));
+    }
+    if (prev.background !== snap.background) {
+      void attempt("Impossibile ripristinare lo sfondo della pagina", () => setPageBackground(snap.pageId, note.id, snap.background));
+    }
+    const target = next.findIndex((p) => p.id === snap.pageId);
+    const el = editorRef.current;
+    if (target === index && el) {
+      // PageSurface non è controllato da React: l'HTML si riscrive a mano.
+      el.innerHTML = sanitizeHtml(snap.html) || "<p><br></p>";
+      lastSelection.current = snap.selection;
+      if (snap.selection && mode === "text") {
+        el.focus();
+        setTextOffsets(el, snap.selection);
+      }
     } else {
-      exec("undo");
+      pendingSelection.current = { pageId: snap.pageId, selection: snap.selection };
+      setIndex(target);
     }
   }
 
+  function handleUndo() {
+    const snap = history.undo(liveSnapshot);
+    if (snap) applySnapshot(snap);
+    else showToast("Niente da annullare");
+  }
+
   function handleRedo() {
-    if (mode === "ink" && page) {
-      const stack = redoInk.current.get(page.id) ?? [];
-      const restored = stack[stack.length - 1];
-      if (!restored) return;
-      redoInk.current.set(page.id, stack.slice(0, -1));
-      patchPage(page.id, { ink: [...page.ink, restored] });
-    } else {
-      exec("redo");
-    }
+    const snap = history.redo(liveSnapshot);
+    if (snap) applySnapshot(snap);
+    else showToast("Niente da ripetere");
   }
 
   function handleInk(strokes: InkStroke[]) {
     if (!page) return;
-    // Un nuovo tratto (non una cancellazione) azzera la cronologia del "ripeti".
-    if (strokes.length > page.ink.length) redoInk.current.delete(page.id);
     patchPage(page.id, { ink: strokes });
+  }
+
+  /** Azioni sul blocco sotto il cursore (duplica, sposta, spunta). */
+  function blockAction(action: (root: HTMLElement) => boolean): boolean {
+    const el = editorRef.current;
+    if (!el || mode !== "text") return false;
+    if (action(el)) commitEditor();
+    return true;
+  }
+
+  // ---------------- Scorciatoie (lib/shortcuts.ts) ----------------
+
+  /** Esegue l'azione di una scorciatoia; false = non riguarda questo editor (il tasto fa il suo lavoro). */
+  function handleAction(action: ShortcutAction): boolean {
+    const command = FORMAT_COMMANDS[action];
+    if (command) {
+      if (mode !== "text") return false;
+      exec(command);
+      return true;
+    }
+    const heading = HEADING_TAGS[action];
+    if (heading) {
+      if (mode !== "text") return false;
+      handleBlockChange(heading);
+      return true;
+    }
+    switch (action) {
+      case "undo":
+        handleUndo();
+        return true;
+      case "redo":
+        handleRedo();
+        return true;
+      case "link":
+        if (mode !== "text") return false;
+        openLink();
+        return true;
+      case "checklist":
+        if (mode !== "text") return false;
+        handleChecklist();
+        return true;
+      case "toggleCheck":
+        return blockAction(toggleCurrentCheck);
+      case "duplicate":
+        return blockAction(duplicateBlock);
+      case "moveUp":
+        return blockAction((root) => moveBlock(root, -1));
+      case "moveDown":
+        return blockAction((root) => moveBlock(root, 1));
+      case "find":
+        setFindOpen(true);
+        return true;
+      case "prevPage":
+        setIndex((i) => Math.max(0, i - 1));
+        return true;
+      case "nextPage":
+        setIndex((i) => Math.min(pagesRef.current.length - 1, i + 1));
+        return true;
+      case "zoomIn":
+        setZoom((z) => Math.min(160, z + 10));
+        return true;
+      case "zoomOut":
+        setZoom((z) => Math.max(60, z - 10));
+        return true;
+      case "zoomReset":
+        setZoom(100);
+        return true;
+      case "pen":
+      case "highlighter":
+      case "eraser":
+        if (mode !== "ink") return false;
+        setTool(action === "pen" ? "pen" : action === "highlighter" ? "highlighter" : "eraser");
+        return true;
+      case "textMode":
+        if (mode !== "ink") return false;
+        setMode("text");
+        return true;
+      case "escape": {
+        // Chiude quello che è aperto; se non c'è niente esce dal disegno o deseleziona.
+        const open = Boolean(slash || menu || linkOpen || findOpen);
+        setSlash(null);
+        setMenu(null);
+        setLinkOpen(false);
+        setFindOpen(false);
+        let done = open;
+        if (!done && mode === "ink") {
+          setMode("text");
+          done = true;
+        }
+        if (!done) {
+          const sel = window.getSelection();
+          if (sel && !sel.isCollapsed && editorRef.current?.contains(sel.anchorNode)) {
+            sel.collapseToEnd();
+            done = true;
+          }
+        }
+        return done;
+      }
+      default:
+        return false;
+    }
+  }
+
+  const actionRef = useLatestRef(handleAction);
+  useEffect(() => {
+    if (!registerShortcuts) return;
+    registerShortcuts((action) => actionRef.current(action));
+    return () => registerShortcuts(null);
+  }, [registerShortcuts, actionRef]);
+
+  // ---------------- Menu "/" ----------------
+
+  const insertItems: InsertItem[] = [
+    { id: "h1", label: "Titolo 1", icon: <MdLooksOne />, hint: shortcutLabel("h1"), keywords: "titolo h1 intestazione" },
+    { id: "h2", label: "Titolo 2", icon: <MdLooksTwo />, hint: shortcutLabel("h2"), keywords: "titolo h2 sottotitolo" },
+    { id: "h3", label: "Titolo 3", icon: <MdLooks3 />, hint: shortcutLabel("h3"), keywords: "titolo h3" },
+    { id: "bullets", label: "Elenco puntato", icon: <MdFormatListBulleted />, hint: shortcutLabel("bullets"), keywords: "lista elenco punti" },
+    { id: "numbers", label: "Elenco numerato", icon: <MdFormatListNumbered />, hint: shortcutLabel("numbers"), keywords: "lista elenco numeri" },
+    { id: "checklist", label: "Checklist", icon: <MdChecklist />, hint: shortcutLabel("checklist"), keywords: "cose da fare spunta todo" },
+    { id: "divider", label: "Divisore", icon: <MdHorizontalRule />, keywords: "linea separatore riga" },
+    { id: "file", label: "File", icon: <MdOutlineAttachFile />, hint: "allega", keywords: "allegato documento pdf" },
+  ];
+  const slashItems = slash ? filterInsertItems(insertItems, slash.query) : [];
+
+  /**
+   * Il menu si apre scrivendo "/" a inizio riga e segue quello che si scrive dopo ("/tit").
+   * `open` = può aprirlo (dopo una battuta); spostando il cursore lo si può solo chiudere.
+   */
+  function checkSlash(open: boolean) {
+    const el = editorRef.current;
+    const sel = window.getSelection();
+    const close = () => setSlash((s) => (s ? null : s));
+    if (!el || !sel || sel.rangeCount === 0 || !sel.isCollapsed || mode !== "text") return close();
+    const block = currentBlock(el);
+    if (!block || !sel.anchorNode || !block.contains(sel.anchorNode)) return close();
+    const before = document.createRange();
+    before.selectNodeContents(block);
+    before.setEnd(sel.anchorNode, sel.anchorOffset);
+    const match = /^\/([^\s/]{0,24})$/.exec(before.toString().replace(/\u200b/g, ""));
+    if (!match) return close();
+    if (!open && !slash) return;
+    const caret = sel.getRangeAt(0).getBoundingClientRect();
+    const rect = caret.height > 0 ? caret : block.getBoundingClientRect();
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - 300));
+    const below = rect.bottom + 6;
+    const top = below + 320 > window.innerHeight ? Math.max(8, rect.top - 326) : below;
+    setSlash((s) => ({ pageIndex: index, query: match[1], left, top, active: s && s.query === match[1] ? s.active : 0 }));
+  }
+
+
+  function pickInsert(item: InsertItem) {
+    const el = editorRef.current;
+    setSlash(null);
+    if (!el) return;
+    // Toglie "/testo" scritto per aprire il menu, poi inserisce la voce lì.
+    const block = currentBlock(el);
+    const sel = window.getSelection();
+    if (block && sel && sel.rangeCount > 0 && sel.anchorNode) {
+      const typed = document.createRange();
+      typed.selectNodeContents(block);
+      typed.setEnd(sel.anchorNode, sel.anchorOffset);
+      sel.removeAllRanges();
+      sel.addRange(typed);
+      commandActive.current = true;
+      try {
+        document.execCommand("delete");
+      } finally {
+        commandActive.current = false;
+      }
+    }
+    switch (item.id) {
+      case "h1":
+      case "h2":
+      case "h3":
+        handleBlockChange(item.id);
+        break;
+      case "bullets":
+        exec("insertUnorderedList");
+        break;
+      case "numbers":
+        exec("insertOrderedList");
+        break;
+      case "checklist":
+        handleChecklist();
+        break;
+      case "divider":
+        exec("insertHorizontalRule");
+        break;
+      case "file":
+        commitEditor();
+        void pickFiles();
+        break;
+    }
+  }
+
+  function handleEditorKey(e: KeyboardEvent<HTMLDivElement>): boolean {
+    if (!slash) return false;
+    const count = slashItems.length;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      if (count === 0) return true;
+      const delta = e.key === "ArrowDown" ? 1 : -1;
+      setSlash({ ...slash, active: (slash.active + delta + count) % count });
+      return true;
+    }
+    if (e.key === "Enter" || e.key === "Tab") {
+      const item = slashItems[slash.active];
+      if (!item) {
+        setSlash(null);
+        return false;
+      }
+      pickInsert(item);
+      return true;
+    }
+    if (e.key === "Escape") {
+      setSlash(null);
+      return true;
+    }
+    return false;
   }
 
   // ---------------- Titolo e tag ----------------
@@ -475,7 +844,8 @@ async function changePageColor(color: string | null) {
   }
 
   async function changeBackground(background: PageBackground) {
-    if (!page) return;
+    if (!page || page.background === background) return;
+    history.record(snapshotOf(page), { kind: "other" });
     const next = pagesRef.current.map((p) => (p.id === page.id ? { ...p, background } : p));
     pagesRef.current = next;
     setPages(next);
@@ -788,8 +1158,8 @@ async function changePageColor(color: string | null) {
           if (!(e.target instanceof HTMLSelectElement) && !(e.target instanceof HTMLInputElement)) e.preventDefault();
         }}
       >
-        <ToolButton label="Annulla" keys="Ctrl Z" icon={<MdUndo />} onClick={handleUndo} />
-        <ToolButton label="Ripeti" keys="⇧ Z" icon={<MdRedo />} onClick={handleRedo} />
+        <ToolButton label="Annulla" shortcut="undo" icon={<MdUndo />} onClick={handleUndo} />
+        <ToolButton label="Ripeti" shortcut="redo" icon={<MdRedo />} onClick={handleRedo} />
         <span className="nq-tsep" />
         <select
           className="nq-tsel"
@@ -814,14 +1184,14 @@ async function changePageColor(color: string | null) {
           </button>
         </span>
         <span className="nq-tsep" />
-        <ToolButton label="Grassetto" keys="Ctrl B" icon={<MdFormatBold />} disabled={textOff} onClick={() => exec("bold")} />
-        <ToolButton label="Corsivo" keys="Ctrl I" icon={<MdFormatItalic />} disabled={textOff} onClick={() => exec("italic")} />
-        <ToolButton label="Sottolineato" keys="Ctrl U" icon={<MdFormatUnderlined />} disabled={textOff} onClick={() => exec("underline")} />
-        <ToolButton label="Barrato" keys="⇧ X" icon={<MdFormatStrikethrough />} disabled={textOff} onClick={() => exec("strikeThrough")} />
+        <ToolButton label="Grassetto" shortcut="bold" icon={<MdFormatBold />} disabled={textOff} onClick={() => exec("bold")} />
+        <ToolButton label="Corsivo" shortcut="italic" icon={<MdFormatItalic />} disabled={textOff} onClick={() => exec("italic")} />
+        <ToolButton label="Sottolineato" shortcut="underline" icon={<MdFormatUnderlined />} disabled={textOff} onClick={() => exec("underline")} />
+        <ToolButton label="Barrato" shortcut="strike" icon={<MdFormatStrikethrough />} disabled={textOff} onClick={() => exec("strikeThrough")} />
         <div className="nq-menu-anchor">
           <ToolButton
             label="Colore del testo"
-            keys="colore"
+            legend="colore"
             icon={<MdFormatColorText style={{ color: textColor }} />}
             disabled={textOff}
             pressed={menu === "color"}
@@ -844,11 +1214,11 @@ async function changePageColor(color: string | null) {
             </>
           )}
         </div>
-        <ToolButton label="Cancella la formattazione" keys="pulisci" icon={<MdFormatClear />} disabled={textOff} onClick={() => withSelection(clearFormatting)} />
+        <ToolButton label="Cancella la formattazione" legend="pulisci" icon={<MdFormatClear />} disabled={textOff} onClick={() => withSelection(clearFormatting)} />
         <span className="nq-tsep" />
-        <ToolButton label="Elenco puntato" keys="⇧ 8" icon={<MdFormatListBulleted />} disabled={textOff} onClick={() => exec("insertUnorderedList")} />
-        <ToolButton label="Checklist" keys="⇧ 9" icon={<MdChecklist />} disabled={textOff} onClick={handleChecklist} />
-        <ToolButton label="Link" keys="link" icon={<MdLink />} disabled={textOff} pressed={linkOpen} onClick={openLink} />
+        <ToolButton label="Elenco puntato" shortcut="bullets" icon={<MdFormatListBulleted />} disabled={textOff} onClick={() => exec("insertUnorderedList")} />
+        <ToolButton label="Checklist" shortcut="checklist" icon={<MdChecklist />} disabled={textOff} onClick={handleChecklist} />
+        <ToolButton label="Link" shortcut="link" icon={<MdLink />} disabled={textOff} pressed={linkOpen} onClick={openLink} />
         {linkOpen && (
           <span className="nq-link-pop">
             <input
@@ -868,12 +1238,12 @@ async function changePageColor(color: string | null) {
           </span>
         )}
         <span className="nq-tsep" />
-        <ToolButton label="Allega file" keys="file" icon={<MdOutlineAttachFile />} onClick={() => void pickFiles()} />
+        <ToolButton label="Allega file" legend="file" icon={<MdOutlineAttachFile />} onClick={() => void pickFiles()} />
         <span className="nq-tsep" />
         <div className="nq-menu-anchor">
           <ToolButton
             label="Colore della pagina"
-            keys="pagina"
+            legend="pagina"
             icon={<MdOutlineFormatColorFill style={{ color: page.color ?? undefined }} />}
             pressed={menu === "pagecolor"}
             onClick={() => setMenu(menu === "pagecolor" ? null : "pagecolor")}
@@ -914,18 +1284,21 @@ async function changePageColor(color: string | null) {
         <span className="nq-tsep" />
         <ToolButton
           label={mode === "ink" ? "Torna al testo" : "Scrittura a mano"}
-          keys="P"
+          legend="mano"
           icon={<MdOutlineGesture />}
           pressed={mode === "ink"}
           onClick={() => setMode(mode === "ink" ? "text" : "ink")}
         />
+        {onOpenShortcuts && (
+          <ToolButton label="Scorciatoie" shortcut="help" icon={<MdKeyboard />} onClick={onOpenShortcuts} />
+        )}
       </div>
 
       {mode === "ink" && (
         <div className="nq-toolbar nq-ink-bar" role="toolbar" aria-label="Scrittura a mano">
-          <ToolButton label="Penna" keys="P" text="Penna" icon={<MdOutlineEdit />} pressed={tool === "pen"} onClick={() => setTool("pen")} />
-          <ToolButton label="Evidenziatore" keys="H" text="Evidenziatore" icon={<MdOutlineBorderColor />} pressed={tool === "highlighter"} onClick={() => setTool("highlighter")} />
-          <ToolButton label="Gomma" keys="E" text="Gomma" icon={<MdOutlineBackspace />} pressed={tool === "eraser"} onClick={() => setTool("eraser")} />
+          <ToolButton label="Penna" shortcut="pen" text="Penna" icon={<MdOutlineEdit />} pressed={tool === "pen"} onClick={() => setTool("pen")} />
+          <ToolButton label="Evidenziatore" shortcut="highlighter" text="Evidenziatore" icon={<MdOutlineBorderColor />} pressed={tool === "highlighter"} onClick={() => setTool("highlighter")} />
+          <ToolButton label="Gomma" shortcut="eraser" text="Gomma" icon={<MdOutlineBackspace />} pressed={tool === "eraser"} onClick={() => setTool("eraser")} />
           <span className="nq-tsep" />
           <span className="nq-ink-colors">
             {INK_COLORS.map((c) => (
@@ -972,21 +1345,39 @@ async function changePageColor(color: string | null) {
         </div>
       )}
 
-      <div className="nq-scroll">
-        <PageSurface
-          key={page.id}
-          page={page}
-          zoom={zoom}
-          background={page.background}
-          mode={mode}
-          tool={tool}
-          color={color}
-          size={size}
-          header={index === 0 ? titleBlock : null}
-          editorRef={editorRef}
-          onContent={(html) => patchPage(page.id, { content: html })}
-          onInk={handleInk}
-        />
+      <div className="nq-scroll-wrap">
+        {findOpen && (
+          <FindBar
+            pages={pages}
+            index={index}
+            editorRef={editorRef}
+            onGoToPage={setIndex}
+            onClose={() => {
+              setFindOpen(false);
+              editorRef.current?.focus();
+            }}
+          />
+        )}
+
+        <div className="nq-scroll">
+          <PageSurface
+            key={page.id}
+            page={page}
+            zoom={zoom}
+            background={page.background}
+            mode={mode}
+            tool={tool}
+            color={color}
+            size={size}
+            header={index === 0 ? titleBlock : null}
+            editorRef={editorRef}
+            onContent={handleTyping}
+            onInk={handleInk}
+            onEditorKeyDown={handleEditorKey}
+            onAfterInput={() => checkSlash(true)}
+            onHistory={(direction) => (direction === "undo" ? handleUndo() : handleRedo())}
+          />
+        </div>
       </div>
 
       <footer className="nq-pagebar">
@@ -1089,6 +1480,17 @@ async function changePageColor(color: string | null) {
         </span>
         <span className="nq-pager nq-pager--muted nq-save-status">{savedLabel}</span>
       </footer>
+
+      {slash && (
+        <InsertMenu
+          items={slashItems}
+          active={slash.active}
+          left={slash.left}
+          top={slash.top}
+          onPick={pickInsert}
+          onHover={(i) => setSlash({ ...slash, active: i })}
+        />
+      )}
 
       {toast && (
         <div className="nq-toast" role="status">

@@ -77,6 +77,10 @@ export function htmlToMarkdown(html: string): string {
       case "I":
       case "EM":
         return `*${inner}*`;
+      case "S":
+      case "STRIKE":
+      case "DEL":
+        return `~~${inner}~~`;
       case "A":
         return `[${inner}](${node.getAttribute("href") ?? ""})`;
       case "BR":
@@ -100,6 +104,12 @@ export function htmlToMarkdown(html: string): string {
         break;
       case "H2":
         blocks.push(`## ${text}`);
+        break;
+      case "H3":
+        blocks.push(`### ${text}`);
+        break;
+      case "HR":
+        blocks.push("---");
         break;
       case "UL":
         blocks.push(Array.from(node.children).map((li) => `- ${inline(li).trim()}`).join("\n"));
