@@ -1,0 +1,348 @@
+/* Impostazioni della stanza (docs/mockup-gruppi/gruppi/impostazioni-stanza.html). */
+
+.room-settings {
+  --room-row-radius: 12px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex-shrink: 0;
+  color: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .room-settings {
+  --room-row-radius: 18px;
+}
+
+:root[data-theme="quaderno"] .room-settings {
+  --room-row-radius: 6px;
+}
+
+:root[data-theme="fosforo"] .room-settings {
+  --room-row-radius: 8px;
+}
+
+.room-settings-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.room-settings-titles {
+  display: flex;
+  flex-direction: column;
+}
+
+.room-settings-titles h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: var(--heading-weight);
+  letter-spacing: -0.02em;
+}
+
+.room-settings-sub {
+  color: var(--text-secondary);
+}
+
+.room-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.room-settings-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---------- Card ---------- */
+.room-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+}
+
+.room-card h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--title-weight);
+}
+
+.room-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.room-card--state {
+  min-height: 320px;
+  max-width: 520px;
+  box-sizing: border-box;
+}
+
+.room-field {
+  height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.room-field.grp-field--area {
+  height: auto;
+  padding: 10px 12px;
+}
+
+:root[data-theme="quaderno"] .room-field {
+  border-radius: 6px;
+}
+
+:root[data-theme="fosforo"] .room-field {
+  border-radius: 8px;
+}
+
+.room-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.room-readonly-name {
+  font-weight: 500;
+}
+
+.room-readonly-text {
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
+/* ---------- Codice invito ---------- */
+.room-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+}
+
+.room-code-value {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: var(--display-weight);
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  user-select: all;
+}
+
+.room-copy {
+  height: 38px;
+  gap: 6px;
+  padding: 0 14px;
+}
+
+.room-code-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.room-code-note {
+  max-width: 300px;
+}
+
+.room-btn-sm {
+  height: 36px;
+  padding: 0 12px;
+}
+
+/* ---------- Cosa vedono gli altri ---------- */
+.room-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+}
+
+.room-switch-row.is-disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.room-switch-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.room-info {
+  padding: 12px 14px;
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.room-info strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ---------- Membri ---------- */
+.room-card--members {
+  gap: 6px;
+}
+
+.room-card--members h2 {
+  margin-bottom: 8px;
+}
+
+.room-members {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.room-member {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px;
+  border-radius: var(--room-row-radius);
+}
+
+.room-member.is-me {
+  background: var(--row-active-bg);
+}
+
+:root[data-theme="opaco"] .room-member.is-me {
+  background: var(--panel-bg);
+}
+
+:root[data-theme="quaderno"] .room-member.is-me {
+  background: var(--group-me-bg);
+}
+
+.room-avatar {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--btn-ghost-border);
+  border-radius: 50%;
+  background: var(--panel-bg);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.room-member-text {
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.room-member-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.room-chip {
+  flex: 0 0 auto;
+  padding: 2px 10px;
+  border-radius: var(--radius-item);
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+  font-size: 12px;
+}
+
+.room-remove {
+  min-width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.room-remove.is-armed {
+  background: var(--group-danger-soft);
+  color: var(--danger);
+}
+
+.room-remove-confirm {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.room-remove:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- Abbandona ---------- */
+.room-card--danger {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  border: var(--group-danger-border);
+  background: var(--group-danger-card);
+  box-shadow: none;
+}
+
+.room-leave-text {
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.room-leave-note {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.room-leave-note strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.room-btn-leave {
+  height: 40px;
+  padding: 0 16px;
+}
+
+.room-btn-leave.is-armed {
+  background: var(--danger);
+  color: var(--on-danger);
+}

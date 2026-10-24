@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Sidebar from "../features/sidebar/Sidebar";
+import RoomNavItem from "../social/room/RoomNavItem";
 import "./shell.css";
 
 /**
@@ -15,7 +16,7 @@ function AppShell({ children }: { children: ReactNode }) {
         <span className="app-deco-fill" />
         <span className="app-deco-ring" />
       </div>
-      <Sidebar />
+      <Sidebar extraNav={<RoomNavItem />} />
       <main className="main">{children}</main>
     </div>
   );

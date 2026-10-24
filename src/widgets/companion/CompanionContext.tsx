@@ -6,13 +6,14 @@ import { useLatestRef } from "../../core/hooks/useLatestRef";
 import { useThemeVariant } from "../../core/theme/variants";
 import { setNotificationDecorator } from "../../core/notify/notifier";
 import { CompanionBrain, type BrainConfig, type BrainInput } from "./engine/brain";
-import { FaceAnimator, type FaceFrame } from "./engine/animator";
+import { FaceAnimator, type FaceFrame } from "../../core/pixy/engine/animator";
 import { classifyApp, parseAppCategories, serializeAppCategories, type AppCategory, type ForegroundApp } from "../../core/system/appCategory";
 import { parseDisabled, serializeDisabled } from "./engine/animations";
-import type { PoseId } from "./engine/poses";
-import { PERSONALITIES } from "./engine/personalities";
+import type { PoseId } from "../../core/pixy/engine/poses";
+import { PERSONALITIES } from "../../core/pixy/engine/personalities";
 import { readSystemSnapshot } from "../../core/system/systemApi";
-import { FACE_STYLES } from "./render/styles";
+import { FACE_STYLES } from "../../core/pixy/render/styles";
+import { publishMyPixy } from "../../core/pixy/myPixy";
 import { pixyLook, pixyText } from "./notify/pixyNotifications";
 import { renderNotificationFace } from "./notify/renderNotificationFace";
 import { COMPANION_WIDGET_ID, CompanionContext, type CompanionContextValue, type SeenApp } from "./useCompanion";
@@ -96,7 +97,8 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   const appChoicesRef = useLatestRef(appChoices);
 
   const placed = layout.some((item) => item.i === COMPANION_WIDGET_ID);
-  const active = placed || retainCount > 0;
+  // Con le espressioni condivise nei Gruppi il cervello lavora anche se Pixy non è in dashboard.
+  const active = placed || retainCount > 0 || settings.groupsSharePixy;
 
   const settingsRef = useLatestRef(settings);
 
@@ -326,6 +328,12 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
 
   // `version` cambia solo quando cambia qualcosa di visibile: lo snapshot è già in cache nel cervello.
   const snapshot = useMemo(() => brain.snapshot(), [brain, version]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Il mio Pixy per chi lo disegna fuori dal widget (la Stanza comune dei Gruppi, core/pixy/myPixy.ts).
+  useEffect(() => {
+    publishMyPixy(active ? snapshot : null);
+  }, [active, snapshot]);
+  useEffect(() => () => publishMyPixy(null), []);
 
   const value = useMemo<CompanionContextValue>(
     () => ({

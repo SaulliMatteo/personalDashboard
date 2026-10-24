@@ -18,7 +18,7 @@ cd src-tauri && cargo check   # dopo modifiche a Rust o C
 ```
 
 Non esistono test automatici: si verifica con `npm run build` + `npm run lint` (+ `cargo check`).
-Le logiche "pure" (es. `widgets/companion/engine/`, `widgets/youtube/lib/watchTracker.ts`, `core/layout/compactor.ts`)
+Le logiche "pure" (es. `widgets/companion/engine/`, `core/pixy/engine/`, `widgets/youtube/lib/watchTracker.ts`, `core/layout/compactor.ts`)
 hanno orologio e random iniettati apposta per poter essere testate senza browser: uno script `.mts` lanciato con
 `node` (Node 24 toglie i tipi da solo) può importarle direttamente; se importano altri file senza estensione, prima
 si fa un bundle con `npx rolldown`.
@@ -29,10 +29,11 @@ stesso in dev e nell'app installata: se l'installata è aperta lo blocca, chiude
 
 **Albero di avvio** (`src/app/App.tsx`): `DatabaseGate` (esegue le migrazioni, non monta nulla prima) →
 `SettingsProvider` → `LayoutProvider` → `BootGate` (tiene la splash di `index.html` finché il layout non è pronto)
+→ `CloudProvider` (account dei Gruppi, inerte senza configurazione) → `SocialProviders` (gruppi e moduli social)
 → `WidgetProviders` (monta i `provider` di tutti i widget, sempre attivi anche se il widget non è in dashboard)
 → `NavProvider` → vista corrente. Non c'è un router: la vista (`AppView` in `core/nav/useNav.ts`) è
-`dashboard` | `catalog` | `settings` (pagina Impostazioni, `openSettings(sezione)`) | `widgetDetail`, e la pagina
-di dettaglio è il `detailComponent` del widget.
+`dashboard` | `catalog` | `settings` (pagina Impostazioni, `openSettings(sezione)`) | `widgetDetail` | `room`
+(Stanza comune dei Gruppi, `social/room/`), e la pagina di dettaglio è il `detailComponent` del widget.
 
 **Tutto è guidato dal registry.** `src/widgets/registry.ts` è l'unico elenco dei widget; ogni widget esporta una
 `WidgetDefinition` (`core/widgets/types.ts`: taglie, `defaultPlacement`, `detailComponent`, `provider`,
@@ -41,8 +42,11 @@ di dettaglio è il `detailComponent` del widget.
 (`mini`, `features/dashboard/HeaderSlots.tsx`) derivano da lì:
 aggiungere un widget = cartella `src/widgets/<nome>/` + una riga nel registry.
 
-**Regole di dipendenza**: `app → features, widgets, core`; `features → core, widgets/registry, ui`;
-`widgets/<nome> → core, ui` (mai un altro widget); `ui →` niente. I widget comunicano tramite
+**Regole di dipendenza**: `app → features, widgets, social, core`; `features → core, widgets/registry, ui`;
+`widgets/<nome> → core, ui` (mai un altro widget); `social → core, ui` (i Gruppi, `src/social/`: legge i widget solo dal
+bus e dal DB in sola lettura); `widgets/registry → social` solo per registrare il widget Gruppi; `ui →` niente.
+Le voci che `features` non può importare (es. "Stanza comune" nella barra laterale) gliele passa `app/`.
+Moduli dei Gruppi: `social/registry.ts` è il loro unico elenco (ricetta in `docs/ARCHITETTURA.md`). I widget comunicano tramite
 `core/activity/activityBus.ts`: **stato** (`publishActivity`, sovrascrivibile) ed **eventi** (`emitActivityEvent`,
 momentanei), solo in memoria. Il Companion ascolta il bus per reagire a ciò che fanno gli altri widget.
 Debito noto: `widgets/youtube/screens/WatchScreen.tsx` importa `study/data/studyRepository.ts` — non replicarlo.
@@ -67,15 +71,21 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
   dell'eseguibile via `windows-sys`; su macOS inattività da CoreGraphics e app via `NSWorkspace`, con il bundle `.app`
   come "processo" e titolo vuoto). Lato frontend la catena è `core/system/appCategory.ts` (classifica l'app; con
   `core/system/systemApi.ts` serve anche allo stop automatico dello Studio, `study/timer/autoStop.ts`) →
-  `engine/brain.ts` (sceglie la posa, puro) → `engine/poses.ts` (com'è fatta, con varianti per personalità) →
-  `engine/animator.ts` (fotogrammi) → `render/` (campo SDF della faccia + costumi; LED in Fosforo, pieno negli altri temi).
+  `engine/brain.ts` (sceglie la posa, puro) → `core/pixy/engine/poses.ts` (com'è fatta, con varianti per personalità) →
+  `core/pixy/engine/animator.ts` (fotogrammi) → `core/pixy/render/` (campo SDF della faccia + costumi; LED in Fosforo,
+  pieno negli altri temi), disegnati da `core/pixy/PixyFace.tsx`. Motore e disegno stanno in `core/pixy` perché li usano
+  anche i Gruppi (i Pixy dei compagni nella Stanza comune); il cervello resta nel widget.
 - Notifiche: tutte da `core/notify/notifier.ts` (`sendAppNotification` con un `kind`), mai dal plugin direttamente.
   Il Companion registra un decoratore che le firma Pixy (faccia nello stile del tema, emoji, frase della personalità,
   `widgets/companion/notify/`); su Windows il toast con l'immagine lo mostra il comando `notify_with_image`
   (`src/notify.rs`, `tauri-winrt-notification`), altrove si ripiega sul plugin senza immagine.
 - Lato frontend, ogni widget chiama `invoke()` da un solo file `data/*Api.ts` (i segnali di sistema condivisi da
   `core/system/systemApi.ts`, le notifiche con immagine da `core/notify/notifyApi.ts`); allo stesso modo l'unica chiamata
-  in rete (`fetch`) è `widgets/weather/data/weatherApi.ts`.
+  in rete (`fetch`) è `widgets/weather/data/weatherApi.ts`, e tutta la rete dei Gruppi (Supabase: HTTPS e WebSocket)
+  passa solo da `core/cloud/`, l'unico file che importa `@supabase/supabase-js`.
+- CSP in `tauri.conf.json` (`csp` per l'app installata, `devCsp` per `tauri dev`, che in più ammette Vite e lo stack
+  Supabase locale): un dominio nuovo va aggiunto in entrambe. `style-src` ha `'unsafe-inline'` per gli stili inline di
+  React, per questo Tauri non vi aggiunge nonce (`dangerousDisableAssetCspModification: ["style-src"]`).
 - Sui sistemi non supportati (oggi: oltre Windows e macOS, il Companion su Linux) l'app deve compilare e i widget
   mostrano un errore chiaro.
 - Release: `.github/workflows/release.yml` (tag `v*` o avvio manuale) compila `.dmg` universale + installer Windows
@@ -96,7 +106,11 @@ componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è 
 
 - Se non sei sicuro chiedi sempre conferme e chiarimenti, non cercare di indovinare a caso.
 - Nessuna risorsa caricata da internet a runtime (font compresi: pacchetti `@fontsource` locali).
-  Unica eccezione, opzionale: i dati del widget Meteo (Open-Meteo), solo se l'utente imposta la città e lo usa.
+  Eccezioni, entrambe opzionali:
+  - i dati del widget Meteo (Open-Meteo), solo se l'utente imposta la città e lo usa;
+  - i Gruppi (Supabase, regione UE), solo se la build ha `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` e l'utente
+    accede con Google. Senza, l'app resta solo locale ("Gruppi non configurati"); con il server irraggiungibile
+    funziona tutto il resto. Tutta questa rete passa da `core/cloud/`. Segreti mai nel repo: vedi `docs/GRUPPI.md`.
 
 ## Design
 
@@ -112,6 +126,8 @@ componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è 
 
 - Redesign dei temi (branch `feat/temi`): istruzioni complete in `temi-dashboard/docs/prompt-temi-claude-code.md`.
   Leggilo solo quando lavori su questo redesign.
+- Gruppi (branch `online-version`): richiesta originale in `docs/prompt-gruppi.md`, stato e decisioni in
+  `docs/GRUPPI.md` (vale questo se i due non concordano). Leggili solo quando lavori sui Gruppi.
 
 ## Convenzioni e insidie
 
@@ -127,7 +143,8 @@ componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è 
 - Valori "ultimi" in interval/listener di lunga durata → `core/hooks/useLatestRef.ts`.
 - Contesti: `XContext.tsx` esporta solo il provider; contesto, tipo e hook in `useX.ts` (es. `useSettings.ts`).
 - `tauri-plugin-notification` è pinnato `=2.4.0` (e `tauri-winrt-notification` `=0.8.1`, la versione che usa) perché la 2.5 richiede `tauri ^2.12` (il progetto usa `2.11.3`):
-  non aggiornarlo senza controllare il manifesto su crates.io. Idem `tauri-plugin-localhost` (`=2.3.1`, la 2.4 vuole `^2.12`).
+  non aggiornarlo senza controllare il manifesto su crates.io. Idem `tauri-plugin-localhost` (`=2.3.1`, la 2.4 vuole `^2.12`),
+  `tauri-plugin-deep-link` (`=2.4.10`, anche npm) e `tauri-plugin-single-instance` (`=2.4.5`); `tauri` stesso è `=2.11.3`.
 - Su macOS l'app installata serve il frontend da `http://localhost:14321` (`tauri-plugin-localhost`, `src/lib.rs`):
   da `tauri://localhost` YouTube rifiuta il player (errore 153, niente referrer). La porta è anche in
   `capabilities/default.json` (`remote.urls`, senza la pagina perde l'IPC): cambiarla in entrambi i posti.

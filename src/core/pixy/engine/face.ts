@@ -40,10 +40,12 @@ export interface FaceParams {
 }
 
 /** Movimento extra di tutta la faccia mentre l'emozione è attiva. */
-export type FaceMotion = "none" | "bounce" | "beat" | "shake" | "nod" | "sway" | "tremble" | "flicker" | "talk";
+export const FACE_MOTIONS = ["none", "bounce", "beat", "shake", "nod", "sway", "tremble", "flicker", "talk"] as const;
+export type FaceMotion = (typeof FACE_MOTIONS)[number];
 
 /** Piccolo simbolo che compare accanto alla faccia. */
-export type GlyphId = "z" | "heart" | "note" | "exclaim" | "question" | "sweat" | "star" | "dots" | "anger" | "spark";
+export const GLYPH_IDS = ["z", "heart", "note", "exclaim", "question", "sweat", "star", "dots", "anger", "spark"] as const;
+export type GlyphId = (typeof GLYPH_IDS)[number];
 
 export const EMOTION_IDS = [
   "neutral",

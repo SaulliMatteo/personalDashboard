@@ -26,7 +26,33 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'self' ipc: http://ipc.localhost",
+        "script-src": "'self' https://www.youtube.com",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob: https://i.ytimg.com",
+        "font-src": "'self' data:",
+        "connect-src": "'self' ipc: http://ipc.localhost http://localhost:14321 https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://geocoding-api.open-meteo.com https://www.youtube.com",
+        "frame-src": "https://www.youtube.com https://www.youtube-nocookie.com",
+        "media-src": "'self'",
+        "object-src": "'none'",
+        "base-uri": "'self'",
+        "form-action": "'none'"
+      },
+      "devCsp": {
+        "default-src": "'self' ipc: http://ipc.localhost",
+        "script-src": "'self' 'unsafe-inline' https://www.youtube.com",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob: https://i.ytimg.com",
+        "font-src": "'self' data:",
+        "connect-src": "'self' ipc: http://ipc.localhost ws://localhost:5173 http://127.0.0.1:54321 ws://127.0.0.1:54321 https://*.supabase.co wss://*.supabase.co https://api.open-meteo.com https://geocoding-api.open-meteo.com https://www.youtube.com",
+        "frame-src": "https://www.youtube.com https://www.youtube-nocookie.com",
+        "media-src": "'self'",
+        "object-src": "'none'",
+        "base-uri": "'self'",
+        "form-action": "'none'"
+      },
+      "dangerousDisableAssetCspModification": ["style-src"]
     }
   },
   "bundle": {
@@ -48,6 +74,15 @@
     },
     "android": {
       "debugApplicationIdSuffix": ".debug"
+    }
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": [
+          "personaldashboard"
+        ]
+      }
     }
   }
 }

@@ -1,7 +1,7 @@
 import type { AppNotification } from "../../../core/notify/notifier";
 import type { AppCategory } from "../../../core/system/appCategory";
-import type { EmotionId, GlyphId } from "../engine/face";
-import { PERSONALITIES, fillPhrase, type PersonalityId, type PhraseKey } from "../engine/personalities";
+import type { EmotionId, GlyphId } from "../../../core/pixy/engine/face";
+import { PERSONALITIES, fillPhrase, type PersonalityId, type PhraseKey } from "../../../core/pixy/engine/personalities";
 
 /**
  * Come Pixy "firma" una notifica dell'app: espressione della faccia, emoji nel
