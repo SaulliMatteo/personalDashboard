@@ -422,7 +422,7 @@ function TableTools({ paper, editorRef, onChange, onNotice }: TableToolsProps) {
               </strong>
             </button>
             <button type="button" role="menuitem" disabled={!hasWidths} onClick={() => commit(setWidths(model, null), active ? [active.row, active.col] : null)}>
-              <strong>Larghezze automatiche</strong>
+              <strong>Colonne di uguale larghezza</strong>
             </button>
             <button type="button" role="menuitem" className="nq-menu-danger" onClick={removeTable}>
               <strong>
