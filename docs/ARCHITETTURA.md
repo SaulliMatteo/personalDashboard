@@ -100,7 +100,12 @@ notes/
 │                            strumenti, barra delle pagine), ToolButton (tasto con legenda, Fosforo),
 │                            Crumbs, PageSurface (pagina di carta: contentEditable NON controllato da React;
 │                            testata col titolo sulla prima pagina), InkLayer (penna/evidenziatore/gomma)
+├─ collections/              pagina di una raccolta: CollectionPage (tabella/schede/bacheca, "Usata in"),
+│                            CollectionTable, CollectionCards, CollectionBoard, RowTile, RowCard (scheda
+│                            di una riga), FieldMenu (nome, tipo, scelte), ViewBar (ordina, filtri),
+│                            CellEditor (un editor per tipo di campo), ChoiceChip, FieldIcon
 ├─ data/notesRepository.ts   tutte le query SQL (note_folders, notes, note_pages)
+├─ data/collectionsRepository.ts  SQL delle raccolte (note_collections, _fields, _rows, _views)
 │                            FindBar (Ctrl+F), InsertMenu (menu "/"), ShortcutsPanel (Ctrl+/ o F1),
 │                            ImageBlock (immagine nella pagina, modifiche non distruttive), FileCard,
 │                            DropOverlay (file trascinati: "Inserisci nella pagina" / "Allega alla nota"),
@@ -119,7 +124,9 @@ notes/
                              insertFiles.ts (smista i file per tipo), blockExport.ts (blocchi statici
                              per PDF/PNG), editorApi.ts (scorciatoie e trascinamento tra pagina ed editor),
                              tables.ts (modello puro delle tabelle: griglia di celle, unisci/dividi,
-                             ordina, GFM), tableDom.ts (tabella ⇄ modello, cursore, larghezze)
+                             ordina, GFM), tableDom.ts (tabella ⇄ modello, cursore, larghezze),
+                             collections.ts (raccolte, puro: tipi di campo, valori, filtro, ordine,
+                             bacheca, CSV/JSON), collectionsStore.ts (cache condivisa + useCollections)
 ```
 
 La geometria del testo nella pagina (larghezza 58em, margini interni, corpo, dimensioni e margini dei titoli
@@ -147,6 +154,14 @@ riscrivono (`replaceTable`). Le larghezze si vedono grazie a un `<colgroup data-
 Aspetto scelto dall'utente: `data-border-color`, `data-border-width`, `data-border-style`, `data-head-color` sulla
 tabella e `data-bg` sulle celle (chiavi della palette o #rrggbb, validate in `lib/tables.ts`). I colori arrivano al
 CSS come variabili in linea (`--nq-tb-*`, `--nq-cell-*`) rifatte da `layoutTables` e tolte prima di salvare.
+
+Raccolte: tabelle di dati con colonne tipizzate (testo, numero, data, scelta, scelte multiple, casella, link,
+nota, file) che vivono fuori dalle note. Tutti i componenti leggono la cache di `lib/collectionsStore.ts`
+(`useCollections`), che passa dal repository a ogni modifica: così una modifica arriva subito a ogni vista
+aperta. La pagina di una raccolta usa la sua prima vista (`note_collection_views`). Righe e raccolte eliminate
+hanno `deleted_at` e si ripristinano. Con la copia su disco attiva ogni raccolta viva è scritta in
+`Notes/Raccolte/<nome>.json` e `.csv`; i file dei campi "File" stanno in `Notes/Raccolte/allegati/<id>/`. Si tolgono
+solo i .json scritti dall'app (campo `kind`).
 
 ### Il widget Companion (`widgets/companion/`)
 

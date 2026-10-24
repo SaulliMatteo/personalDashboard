@@ -1285,3 +1285,44 @@ button.nq-crumb:hover {
     flex-basis: 200px;
   }
 }
+
+/* ---------- Raccolte nella barra laterale e nel cestino ---------- */
+
+.nq-side-hint {
+  margin: 2px 10px 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.nq-trash-colls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+}
+
+.nq-trash-colls h3 {
+  margin: 0 0 4px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nq-trash-coll {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+}
+
+.nq-trash-coll > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

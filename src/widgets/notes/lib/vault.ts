@@ -349,3 +349,65 @@ export async function importVault(knownPaths: Set<string>, folders: Folder[]): P
   }
   return imported;
 }
+
+// ---------------------------------------------------------------------
+// Raccolte su disco: Notes/Raccolte/<nome>.json (+ .csv), file dei campi "File" in
+// Notes/Raccolte/allegati/<id raccolta>/. Si tolgono solo i .json scritti dall'app
+// (riconosciuti dal campo "kind"), mai file messi lì a mano.
+// ---------------------------------------------------------------------
+
+export const COLLECTIONS_DIR = `${VAULT_DIR}/Raccolte`;
+
+export interface CollectionFileSet {
+  /** Nome del file senza estensione (unico). */
+  base: string;
+  json: string;
+  csv: string;
+}
+
+/** Nome dei file di una raccolta: slug del nome, con l'id se due raccolte hanno lo stesso slug. */
+export function collectionFileBase(name: string, id: number, taken: Set<string>): string {
+  const slug = slugify(name, "raccolta");
+  return taken.has(slug) ? `${slug}--${id}` : slug;
+}
+
+/** Scrive le raccolte vive e toglie i file delle raccolte che non ci sono più. */
+export async function writeCollectionFiles(files: CollectionFileSet[], ownedKind: string): Promise<void> {
+  await mkdir(COLLECTIONS_DIR, { ...BASE, recursive: true });
+  const wanted = new Set(files.map((f) => f.base));
+  for (const f of files) {
+    await writeTextFile(`${COLLECTIONS_DIR}/${f.base}.json`, f.json, BASE);
+    await writeTextFile(`${COLLECTIONS_DIR}/${f.base}.csv`, f.csv, BASE);
+  }
+  for (const entry of await readDir(COLLECTIONS_DIR, BASE)) {
+    if (!entry.isFile || !entry.name.endsWith(".json")) continue;
+    const base = entry.name.slice(0, -5);
+    if (wanted.has(base)) continue;
+    try {
+      const parsed = JSON.parse(await readTextFile(`${COLLECTIONS_DIR}/${entry.name}`, BASE)) as { kind?: unknown };
+      if (parsed.kind !== ownedKind) continue;
+      await remove(`${COLLECTIONS_DIR}/${entry.name}`, BASE);
+      if (await exists(`${COLLECTIONS_DIR}/${base}.csv`, BASE)) await remove(`${COLLECTIONS_DIR}/${base}.csv`, BASE);
+    } catch (error) {
+      console.error("File di raccolta non controllato:", entry.name, error);
+    }
+  }
+}
+
+/** Copia un file per un campo "File" di una raccolta. Ritorna il nome finale. */
+export async function saveCollectionFile(collectionId: number, name: string, bytes: Uint8Array): Promise<string> {
+  const dir = `${COLLECTIONS_DIR}/allegati/${collectionId}`;
+  await mkdir(dir, { ...BASE, recursive: true });
+  const clean = safeFileName(name);
+  const dot = clean.lastIndexOf(".");
+  const stem = dot > 0 ? clean.slice(0, dot) : clean;
+  const ext = dot > 0 ? clean.slice(dot) : "";
+  let finalName = clean;
+  for (let n = 2; await exists(`${dir}/${finalName}`, BASE); n++) finalName = `${stem} (${n})${ext}`;
+  await writeFile(`${dir}/${finalName}`, bytes, BASE);
+  return finalName;
+}
+
+export async function collectionFilePath(collectionId: number, name: string): Promise<string> {
+  return join(await documentDir(), VAULT_DIR, "Raccolte", "allegati", String(collectionId), name);
+}

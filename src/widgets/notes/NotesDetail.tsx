@@ -13,6 +13,8 @@ import {
   MdOutlineVerticalSplit,
   MdSearch,
   MdAdd,
+  MdOutlineTableChart,
+  MdRestoreFromTrash,
 } from "react-icons/md";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
 import FolderPanel from "./components/FolderPanel";
@@ -22,6 +24,19 @@ import NoteCollection, { type LayoutMode, type SortKey } from "./components/Note
 import NoteEditor from "./components/NoteEditor";
 import Crumbs, { type Crumb } from "./components/Crumbs";
 import ShortcutsPanel from "./components/ShortcutsPanel";
+import CollectionPage from "./collections/CollectionPage";
+import { COLLECTION_FILE_KIND, collectionToCsv, collectionToJson } from "./lib/collections";
+import {
+  createCollection,
+  fieldsOf,
+  getCollectionsState,
+  loadCollections,
+  purgeCollection,
+  restoreCollection,
+  rowsOf,
+  subscribeCollections,
+  useCollections,
+} from "./lib/collectionsStore";
 import { fromFormField, matchShortcut, shortcutLabel } from "./lib/shortcuts";
 import type { EditorApi, ScreenPoint, StoredFile } from "./lib/editorApi";
 import { createFileBlock, createImageBlock } from "./lib/blocks";
@@ -54,6 +69,7 @@ import { markdownToHtml, parseFrontmatter, parseMetaString, parseMetaTags, plain
 import { buildFromTemplate } from "./lib/templates";
 import {
   VAULT_DIR,
+  collectionFileBase,
   ensureVaultDir,
   importVault,
   isVaultEnabled,
@@ -62,6 +78,7 @@ import {
   setVaultEnabled,
   syncPending,
   vaultAbsolutePath,
+  writeCollectionFiles,
 } from "./lib/vault";
 import "./NotesDetail.css";
 
@@ -71,7 +88,8 @@ type View =
   | { kind: "recent" }
   | { kind: "trash" }
   | { kind: "folder"; id: number }
-  | { kind: "tag"; tag: string };
+  | { kind: "tag"; tag: string }
+  | { kind: "collection"; id: number };
 
 const RECENT_LIMIT = 12;
 
@@ -120,6 +138,12 @@ function NotesDetail() {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  // Raccolte: cache condivisa (lib/collectionsStore.ts), caricata una volta.
+  const collectionsState = useCollections();
+  useEffect(() => {
+    void loadCollections();
+  }, []);
 
   // Il widget può chiedere di aprire subito una nota (lib/launch.ts). In
   // StrictMode l'effetto gira due volte: la prima lettura consuma la richiesta.
@@ -210,6 +234,8 @@ function NotesDetail() {
         return trashed;
       case "tag":
         return live.filter((n) => n.tags.includes(view.tag));
+      case "collection":
+        return [];
       case "folder": {
         const ids = new Set(subtreeIds(view.id));
         return live.filter((n) => n.folderId !== null && ids.has(n.folderId));
@@ -218,6 +244,45 @@ function NotesDetail() {
   }, [searching, q, view, live, trashed, searchIndex, subtreeIds]);
 
   const selectedFolder = view.kind === "folder" ? folderById.get(view.id) ?? null : null;
+  const liveCollections = collectionsState.collections.filter((c) => c.deletedAt === null);
+  const trashedCollections = collectionsState.collections.filter((c) => c.deletedAt !== null);
+  const [armedCollection, setArmedCollection] = useState<number | null>(null);
+  const noteRefs = useMemo(() => live.map((n) => ({ id: n.id, title: n.title })), [live]);
+
+
+  // Copia su disco delle raccolte (Notes/Raccolte/<nome>.json e .csv), poco dopo ogni modifica.
+  const titlesRef = useLatestRef(new Map(notes.map((n) => [n.id, n.title])));
+  useEffect(() => {
+    if (!vaultOn) return;
+    let timer: number | undefined;
+    const write = () => {
+      const s = getCollectionsState();
+      if (!s.loaded || s.error) return;
+      const ctx = { now: new Date(), noteTitle: (id: number) => titlesRef.current.get(id) ?? null };
+      const taken = new Set<string>();
+      const files = s.collections
+        .filter((c) => c.deletedAt === null)
+        .sort((a, b) => a.id - b.id)
+        .map((c) => {
+          const fields = fieldsOf(s, c.id);
+          const rows = rowsOf(s, c.id);
+          const base = collectionFileBase(c.name, c.id, taken);
+          taken.add(base);
+          return { base, json: collectionToJson(c, fields, rows), csv: collectionToCsv(fields, rows, ctx) };
+        });
+      writeCollectionFiles(files, COLLECTION_FILE_KIND).catch((error: unknown) => console.error("Copia su disco delle raccolte non riuscita:", error));
+    };
+    const schedule = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(write, 1500);
+    };
+    schedule();
+    const unsubscribe = subscribeCollections(schedule);
+    return () => {
+      unsubscribe();
+      window.clearTimeout(timer);
+    };
+  }, [vaultOn, titlesRef]);
   const openNote = openId !== null ? notes.find((n) => n.id === openId && n.deletedAt === null) ?? null : null;
   const splitNote =
     openNote && splitId !== null && splitId !== openId ? live.find((n) => n.id === splitId) ?? null : null;
@@ -318,6 +383,16 @@ function NotesDetail() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [newNoteRef, openIdRef, keysOpenRef, focusSearchRef]);
+
+  async function handleNewCollection() {
+    try {
+      const id = await createCollection();
+      goTo({ kind: "collection", id });
+    } catch (error) {
+      console.error("Errore nella creazione della raccolta:", error);
+      showNotice("Impossibile creare la raccolta (dettagli nella console).");
+    }
+  }
 
   function goTo(next: View) {
     setView(next);
@@ -531,6 +606,15 @@ function NotesDetail() {
   }
 
   // ---------------- Avvisi, copia su disco, file dal desktop ----------------
+
+  async function collectionAction(action: () => Promise<void>, failure: string) {
+    try {
+      await action();
+    } catch (error) {
+      console.error(failure, error);
+      showNotice(failure);
+    }
+  }
 
   function showNotice(text: string) {
     setNotice(text);
@@ -817,6 +901,10 @@ function NotesDetail() {
         return { title: "Cestino", subtitle: "Le note eliminate restano qui finché non le rimuovi per sempre.", icon: <MdDeleteOutline />, accent: null };
       case "tag":
         return { title: `# ${view.tag}`, subtitle: "Note con questo tag.", icon: <span>#</span>, accent: null };
+      case "collection": {
+        const c = collectionsState.collections.find((x) => x.id === view.id);
+        return { title: c?.name ?? "Raccolta", subtitle: "Raccolta", icon: <MdOutlineTableChart />, accent: null };
+      }
       case "folder": {
         const folder = selectedFolder;
         const Icon = folderIcon(folder?.icon ?? "folder");
@@ -951,6 +1039,26 @@ function NotesDetail() {
                 </div>
               </>
             )}
+
+            <h3 className="nq-section-head">
+              <span>Raccolte</span>
+              <button type="button" className="nq-icon-btn nq-icon-btn--small" onClick={() => void handleNewCollection()} aria-label="Nuova raccolta" title="Nuova raccolta">
+                <MdAdd />
+              </button>
+            </h3>
+            <nav className="nq-nav" aria-label="Raccolte">
+              {liveCollections.length === 0 && <p className="nq-side-hint">Tabelle di dati da usare in più note.</p>}
+              {liveCollections.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`nq-nav-item${!openNote && !searching && view.kind === "collection" && view.id === c.id ? " is-active" : ""}`}
+                  onClick={() => goTo({ kind: "collection", id: c.id })}
+                >
+                  <MdOutlineTableChart /> <span>{c.name}</span> <em>{rowsOf(collectionsState, c.id).filter((r) => r.deletedAt === null).length}</em>
+                </button>
+              ))}
+            </nav>
           </div>
 
           <div className="nq-side-foot">
@@ -999,7 +1107,45 @@ function NotesDetail() {
             ) : (
               renderEditor(openNote, false)
             )
+          ) : !searching && view.kind === "collection" ? (
+            <CollectionPage
+              key={view.id}
+              collectionId={view.id}
+              notes={noteRefs}
+              onOpenNote={(id) => setOpenId(id)}
+              onNotice={showNotice}
+              onTrashed={() => goTo({ kind: "all" })}
+            />
           ) : (
+            <>
+            {!searching && view.kind === "trash" && trashedCollections.length > 0 && (
+              <section className="nq-trash-colls" aria-label="Raccolte eliminate">
+                <h3>Raccolte eliminate</h3>
+                {trashedCollections.map((c) => (
+                  <div key={c.id} className="nq-trash-coll">
+                    <MdOutlineTableChart aria-hidden="true" />
+                    <span>{c.name}</span>
+                    <button type="button" className="nq-btn nq-btn--small" onClick={() => void collectionAction(() => restoreCollection(c.id), "Impossibile ripristinare la raccolta")}>
+                      <MdRestoreFromTrash aria-hidden="true" /> Ripristina
+                    </button>
+                    <button
+                      type="button"
+                      className={`nq-btn nq-btn--small nq-btn--danger${armedCollection === c.id ? " is-armed" : ""}`}
+                      onClick={() => {
+                        if (armedCollection !== c.id) {
+                          setArmedCollection(c.id);
+                          return;
+                        }
+                        setArmedCollection(null);
+                        void collectionAction(() => purgeCollection(c.id), "Impossibile eliminare la raccolta");
+                      }}
+                    >
+                      {armedCollection === c.id ? "Clicca ancora" : "Elimina per sempre"}
+                    </button>
+                  </div>
+                ))}
+              </section>
+            )}
             <NoteCollection
               title={header.title}
               subtitle={header.subtitle}
@@ -1023,6 +1169,7 @@ function NotesDetail() {
               onDragStart={startDrag}
               onCustomize={selectedFolder && !searching ? () => setCustomizeId(selectedFolder.id) : undefined}
             />
+            </>
           )}
         </div>
       </section>
