@@ -79,7 +79,7 @@ function buildStage(page: NotePage, number: number, meta: ExportMeta, light: boo
   paper.className = "nq-paper";
   paper.dataset.bg = page.background;
   // Prima le misure (cssText sostituisce tutto lo stile), poi il colore della pagina.
-  paper.style.cssText = `--nq-zoom:1;width:${PAPER_WIDTH}px;max-width:none;flex:none;border:none;border-radius:0;box-shadow:none;min-height:${minHeight}px;`;
+  paper.style.cssText = `--nq-zoom:1;--nq-paper-w:${PAPER_WIDTH}px;width:${PAPER_WIDTH}px;max-width:none;flex:none;border:none;border-radius:0;box-shadow:none;min-height:${minHeight}px;`;
   if (isPageColorKey(page.color)) {
     paper.dataset.pageColor = page.color;
   } else if (page.color) {

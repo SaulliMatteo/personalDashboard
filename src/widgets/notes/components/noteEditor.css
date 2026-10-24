@@ -602,6 +602,7 @@
 .nq-ink {
   --nq-ink-top: max(0px, calc(var(--nq-head-h, 2.82em) - 2.82em));
   position: absolute;
+  z-index: 2; /* sopra le immagini libere: si scrive anche su di loro */
   top: var(--nq-ink-top);
   left: 0;
   width: 100%;

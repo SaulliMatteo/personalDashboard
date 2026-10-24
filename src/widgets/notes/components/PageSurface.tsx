@@ -100,10 +100,15 @@ function PageSurface(props: PageSurfaceProps) {
     const head = headRef.current;
     const paper = head?.parentElement;
     if (!head || !paper) return;
-    const update = () => paper.style.setProperty("--nq-head-h", `${head.offsetHeight}px`);
+    // Anche la larghezza della pagina: le immagini libere sono posizionate in frazioni di essa.
+    const update = () => {
+      paper.style.setProperty("--nq-head-h", `${head.offsetHeight}px`);
+      paper.style.setProperty("--nq-paper-w", `${paper.clientWidth}px`);
+    };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(head);
+    observer.observe(paper);
     return () => observer.disconnect();
   }, []);
 
