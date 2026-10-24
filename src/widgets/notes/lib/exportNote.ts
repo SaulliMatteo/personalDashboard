@@ -5,6 +5,7 @@ import { htmlToMarkdown, monthYear, sanitizeHtml } from "./html";
 import { isPageColorKey, luminance, paperVars } from "./pageColor";
 import type { NoteFont } from "./textStyle";
 import { renderStaticBlocks } from "./blockExport";
+import { layoutTables } from "./tableDom";
 import { THEME_INK, drawStrokes } from "./ink"; // al posto del solo drawStrokes
 
 export interface ExportMeta {
@@ -100,7 +101,10 @@ function buildStage(page: NotePage, number: number, meta: ExportMeta, light: boo
   footRight.textContent = String(number).padStart(2, "0");
 
   const doc = paper.querySelector<HTMLElement>(".nq-doc");
-  if (doc) doc.innerHTML = sanitizeHtml(page.content);
+  if (doc) {
+    doc.innerHTML = sanitizeHtml(page.content);
+    layoutTables(doc); // larghezze delle colonne
+  }
 
   stage.appendChild(paper);
   document.body.appendChild(stage);

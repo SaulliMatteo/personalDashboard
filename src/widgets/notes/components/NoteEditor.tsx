@@ -36,6 +36,7 @@ import {
   MdOutlineGesture,
   MdOutlineLayers,
   MdOutlineStarBorder,
+  MdOutlineTableChart,
   MdOutlineVerticalSplit,
   MdOutlineViewSidebar,
   MdRedo,
@@ -100,6 +101,7 @@ import { formatWhen, monthYear, sanitizeHtml, wordCount } from "../lib/html";
 import { createHistory, type RecordMeta } from "../lib/history";
 import { getTextOffsets, setTextOffsets, type TextOffsets } from "../lib/selectionOffsets";
 import { duplicateBlock, moveBlock } from "../lib/blockActions";
+import { createTableElement, placeCaret } from "../lib/tableDom";
 import { shortcutLabel, type ShortcutAction } from "../lib/shortcuts";
 import { filterInsertItems, type InsertItem } from "../lib/insertItems";
 import { createFileBlock, createImageBlock, insertBlocks, caretAt, serializeEditor } from "../lib/blocks";
@@ -641,6 +643,19 @@ async function changePageColor(color: string | null) {
     else showToast("Niente da ripetere");
   }
 
+  /** Tabella 3×3 con intestazione dove sta il cursore (dopo il paragrafo, o al suo posto se è vuoto). */
+  function insertTable() {
+    const el = editorRef.current;
+    if (!el || mode !== "text") return;
+    const at = insertionPoint();
+    el.focus({ preventScroll: true });
+    const table = createTableElement(3, 3);
+    insertBlocks(el, at && el.contains(at.startContainer) ? at : null, [table]);
+    const first = table.querySelector<HTMLElement>("th, td");
+    if (first) placeCaret(first, false);
+    commitEditor();
+  }
+
   function handleInk(strokes: InkStroke[]) {
     if (!page) return;
     patchPage(page.id, { ink: strokes });
@@ -689,6 +704,10 @@ async function changePageColor(color: string | null) {
         return blockAction(toggleCurrentCheck);
       case "duplicate":
         return blockAction(duplicateBlock);
+      case "table":
+        if (mode !== "text") return false;
+        insertTable();
+        return true;
       case "moveUp":
         return blockAction((root) => moveBlock(root, -1));
       case "moveDown":
@@ -769,6 +788,7 @@ async function changePageColor(color: string | null) {
     { id: "bullets", label: "Elenco puntato", icon: <MdFormatListBulleted />, hint: shortcutLabel("bullets"), keywords: "lista elenco punti" },
     { id: "numbers", label: "Elenco numerato", icon: <MdFormatListNumbered />, hint: shortcutLabel("numbers"), keywords: "lista elenco numeri" },
     { id: "checklist", label: "Checklist", icon: <MdChecklist />, hint: shortcutLabel("checklist"), keywords: "cose da fare spunta todo" },
+    { id: "table", label: "Tabella", icon: <MdOutlineTableChart />, hint: shortcutLabel("table"), keywords: "tabella griglia righe colonne" },
     { id: "divider", label: "Divisore", icon: <MdHorizontalRule />, keywords: "linea separatore riga" },
     { id: "image", label: "Immagine", icon: <MdOutlineImage />, hint: "Ctrl V", keywords: "foto figura png jpg" },
     { id: "file", label: "File", icon: <MdOutlineAttachFile />, hint: "nella pagina", keywords: "allegato documento pdf scheda" },
@@ -838,6 +858,9 @@ async function changePageColor(color: string | null) {
         break;
       case "divider":
         exec("insertHorizontalRule");
+        break;
+      case "table":
+        insertTable();
         break;
       case "image":
         commitEditor();
@@ -1593,6 +1616,7 @@ async function changePageColor(color: string | null) {
           </span>
         )}
         <span className="nq-tsep" />
+        <ToolButton label="Inserisci tabella" shortcut="table" icon={<MdOutlineTableChart />} disabled={textOff} onClick={insertTable} />
         <ToolButton label="Inserisci immagine" legend="img" icon={<MdOutlineImage />} disabled={busy} onClick={() => void pickAndInsert("image")} />
         <ToolButton label="Allega file" legend="file" icon={<MdOutlineAttachFile />} onClick={() => void pickFiles()} />
         <span className="nq-tsep" />

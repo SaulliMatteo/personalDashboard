@@ -16,10 +16,12 @@ import { BLOCK_SELECTOR, hydrateBlocks, serializeEditor, type BlockKind } from "
 import { currentBlock } from "../lib/editorDom";
 import { sanitizeHtml } from "../lib/html";
 import { paperAttrs, paperStyle } from "../lib/pageColor";
+import { caretCell, layoutTables, moveToCell } from "../lib/tableDom";
 import type { NoteFont } from "../lib/textStyle";
 import FileCard from "./FileCard";
 import ImageBlock from "./ImageBlock";
 import InkLayer, { type InkTool } from "./InkLayer";
+import TableTools from "./TableTools";
 
 interface PageSurfaceProps {
   page: NotePage;
@@ -82,10 +84,13 @@ function caretAfter(el: HTMLElement) {
  * (React non deve mai riscrivere il contenuto mentre si digita).
  * I blocchi immagine/file sono nell'HTML; React li disegna con dei portal nei loro nodi di
  * servizio, che un MutationObserver ritrova anche dopo annulla, incolla o spostamenti.
+ * Le tabelle sono HTML normale modificabile; i loro comandi (TableTools) stanno sopra il testo.
  */
 function PageSurface(props: PageSurfaceProps) {
   const { page, editorRef, onContent, onBlockChange } = props;
   const headRef = useRef<HTMLDivElement | null>(null);
+  /** La pagina come stato (non ref): i comandi delle tabelle si posizionano dentro di lei. */
+  const [paper, setPaper] = useState<HTMLDivElement | null>(null);
   const [blocks, setBlocks] = useState<BlockEntry[]>([]);
   const [selectedState, setSelected] = useState<HTMLElement | null>(null);
   const ids = useRef(new WeakMap<HTMLElement, number>());
@@ -117,6 +122,8 @@ function PageSurface(props: PageSurfaceProps) {
     if (!el) return;
     // Prima l'osservatore, poi l'HTML: così anche i blocchi della pagina appena aperta vengono trovati.
     const scan = () => {
+      // Le larghezze delle colonne (colgroup) si rifanno da data-width: dopo annulla, incolla…
+      layoutTables(el);
       const found = hydrateBlocks(el).map((b) => {
         let id = ids.current.get(b.el);
         if (id === undefined) {
@@ -241,6 +248,20 @@ function PageSurface(props: PageSurfaceProps) {
       }
       return;
     }
+    // Tabelle: Tab / Shift+Tab tra le celle (Tab nell'ultima aggiunge una riga), Invio = a capo nella cella.
+    const cell = caretCell(editorRef.current);
+    if (cell && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        if (moveToCell(cell, e.shiftKey ? -1 : 1) === "riga") onBlockChange();
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.execCommand("insertLineBreak");
+        return;
+      }
+    }
     // Invio nella didascalia: la didascalia è una riga sola, si va al testo sotto l'immagine.
     const caption = target.closest?.("figcaption");
     if (caption && e.key === "Enter") {
@@ -261,6 +282,7 @@ function PageSurface(props: PageSurfaceProps) {
   return (
     <div className="nq-paper-wrap">
       <div
+        ref={setPaper}
         className="nq-paper"
         data-bg={props.background}
         data-note-font={props.noteFont ?? undefined}
@@ -303,6 +325,10 @@ function PageSurface(props: PageSurfaceProps) {
           size={props.size}
           onChange={props.onInk}
         />
+
+        {paper && props.mode === "text" && (
+          <TableTools paper={paper} editorRef={editorRef} onChange={onBlockChange} onNotice={(message) => props.onNotice?.(message)} />
+        )}
       </div>
 
       {blocks.map((b) =>

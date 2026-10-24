@@ -3,11 +3,16 @@ import { MdClose } from "react-icons/md";
 import { SHORTCUTS, shortcutKeys, type ShortcutAction, type ShortcutGroup } from "../lib/shortcuts";
 import "./ShortcutsPanel.css";
 
-const GROUPS: ShortcutGroup[] = ["Modifica", "Testo", "Navigazione", "Scrittura a mano"];
+const GROUPS: ShortcutGroup[] = ["Modifica", "Testo", "Tabelle", "Navigazione", "Scrittura a mano"];
 
 /** Voci che nel pannello stanno su una riga sola (come nel mockup). */
 const EXTRA_ROWS: Partial<Record<ShortcutGroup, { label: string; keys: string[] }[]>> = {
   Modifica: [{ label: "Menu inserisci", keys: ["/"] }],
+  Tabelle: [
+    { label: "Cella successiva", keys: ["Tab"] },
+    { label: "Cella precedente", keys: ["⇧", "Tab"] },
+    { label: "Riga nuova (dall'ultima cella)", keys: ["Tab"] },
+  ],
 };
 
 /** Pannello delle scorciatoie (Ctrl+/ o F1). Esc o un click fuori lo chiude. */

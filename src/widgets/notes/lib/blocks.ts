@@ -12,9 +12,11 @@ export type BlockKind = "image" | "file";
 
 /** HTML da salvare: senza i nodi di React e senza gli attributi messi solo per l'editor. */
 export function serializeEditor(root: HTMLElement): string {
-  if (!root.querySelector("[data-runtime], [data-block]")) return root.innerHTML;
+  if (!root.querySelector("[data-runtime], [data-block], [data-cur]")) return root.innerHTML;
   const clone = root.cloneNode(true) as HTMLElement;
   clone.querySelectorAll("[data-runtime]").forEach((n) => n.remove());
+  // La riga della tabella dove sta il cursore (lib/tableDom.ts): solo per l'editor.
+  clone.querySelectorAll("[data-cur]").forEach((n) => n.removeAttribute("data-cur"));
   clone.querySelectorAll<HTMLElement>("[data-block]").forEach((el) => {
     el.removeAttribute("contenteditable");
     el.removeAttribute("tabindex");
@@ -87,8 +89,8 @@ function isEmptyParagraph(el: Element | null): boolean {
 
 /**
  * Mette i blocchi nella pagina dove sta `at` (cursore o punto di rilascio): dopo il paragrafo
- * che lo contiene, o al suo posto se è vuoto; in fondo se `at` è fuori. Dopo l'ultimo blocco
- * resta sempre un paragrafo in cui scrivere, e il cursore va lì.
+ * (o la tabella) che lo contiene, o al suo posto se è vuoto; in fondo se `at` è fuori. Dopo
+ * l'ultimo blocco resta sempre un paragrafo in cui scrivere, e il cursore va lì.
  */
 export function insertBlocks(root: HTMLElement, at: Range | null, blocks: Node[]): void {
   if (blocks.length === 0) return;
@@ -101,7 +103,7 @@ export function insertBlocks(root: HTMLElement, at: Range | null, blocks: Node[]
   else root.appendChild(fragment);
 
   let next = (last as Element).nextElementSibling;
-  if (!next || next.matches(BLOCK_SELECTOR)) {
+  if (!next || next.matches(BLOCK_SELECTOR) || next.tagName === "TABLE") {
     const p = document.createElement("p");
     p.appendChild(document.createElement("br"));
     (last as Element).after(p);
