@@ -60,3 +60,29 @@ export function seatOrder(room: string[], meId: string | null, isStudying: (user
  * posti stanno davanti, al centro (come nel mockup).
  */
 export const SEAT_SLOTS = [6, 5, 4, 7, 2, 1, 0, 3] as const;
+
+/**
+ * Chi siede in quale posizione della scena (indice = posizione, null = posto libero). Chi ha scelto un posto
+ * valido e libero lo prende, con la precedenza a chi è entrato prima nel gruppo (`room` è nell'ordine di
+ * assignRooms): così i posti scelti sono uguali su tutti i computer. Gli altri, nell'ordine di `autoOrder`
+ * (seatOrder), riempiono i posti rimasti dal primo di SEAT_SLOTS (davanti, al centro).
+ */
+export function placeSeats(room: string[], chosenSeat: (userId: string) => number | null, autoOrder: string[]): (string | null)[] {
+  const places: (string | null)[] = SEAT_SLOTS.map(() => null);
+  const placed = new Set<string>();
+  for (const id of room) {
+    const seat = chosenSeat(id);
+    if (seat === null || !Number.isInteger(seat) || seat < 0 || seat >= places.length || places[seat] !== null) continue;
+    places[seat] = id;
+    placed.add(id);
+  }
+  const preferred = places.map((_, p) => p).sort((a, b) => SEAT_SLOTS[a] - SEAT_SLOTS[b]);
+  for (const id of autoOrder) {
+    if (placed.has(id) || !room.includes(id)) continue;
+    const free = preferred.find((p) => places[p] === null);
+    if (free === undefined) break;
+    places[free] = id;
+    placed.add(id);
+  }
+  return places;
+}

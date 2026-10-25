@@ -5,7 +5,7 @@
  *   node node_modules/.tmp/gruppi-room.test.mjs
  */
 import assert from "node:assert/strict";
-import { assignRooms, roomOf, SEAT_SLOTS, seatOrder, type SeatCandidate } from "../../src/social/room/seating";
+import { assignRooms, placeSeats, roomOf, SEAT_SLOTS, seatOrder, type SeatCandidate } from "../../src/social/room/seating";
 import { formatClock, lastSeenText, roomInfo, roomSubtitle } from "../../src/social/room/roomText";
 
 let passed = 0;
@@ -98,6 +98,35 @@ test("posizioni della scena: le 8 posizioni, i primi posti davanti al centro", (
   // la fila davanti sono le posizioni 4..7: il posto 0 (io) è al tavolo destro, a sinistra
   assert.equal(SEAT_SLOTS.indexOf(0), 6);
   assert.equal(SEAT_SLOTS.indexOf(1), 5);
+});
+
+test("posti scelti: chi li sceglie ci si siede, gli altri riempiono i rimasti davanti al centro", () => {
+  const room = ["a", "b", "c"];
+  const places = placeSeats(room, (id) => (id === "b" ? 0 : null), ["c", "a", "b"]);
+  assert.equal(places.length, 8);
+  assert.equal(places[0], "b");
+  // automatici nell'ordine di autoOrder, dal primo posto di SEAT_SLOTS (posizione 6, poi 5)
+  assert.equal(places[SEAT_SLOTS.indexOf(0)], "c");
+  assert.equal(places[SEAT_SLOTS.indexOf(1)], "a");
+  assert.equal(places.filter((p) => p !== null).length, 3);
+});
+
+test("posti scelti: stesso posto, vince chi è entrato prima nel gruppo", () => {
+  const places = placeSeats(["a", "b"], () => 3, ["b", "a"]);
+  assert.equal(places[3], "a");
+  assert.equal(places[SEAT_SLOTS.indexOf(0)], "b");
+});
+
+test("posti scelti: fuori intervallo o non interi valgono come automatici", () => {
+  const places = placeSeats(["a", "b", "c"], (id) => ({ a: 8, b: -1, c: 1.5 })[id] ?? null, ["a", "b", "c"]);
+  assert.deepEqual([6, 5, 4].map((p) => places[p]), ["a", "b", "c"]);
+});
+
+test("posti scelti: il posto scelto prende anche quello che sarebbe toccato in automatico", () => {
+  const places = placeSeats(["a", "b"], (id) => (id === "b" ? SEAT_SLOTS.indexOf(0) : null), ["a", "b"]);
+  assert.equal(places[SEAT_SLOTS.indexOf(0)], "b");
+  assert.equal(places[SEAT_SLOTS.indexOf(1)], "a");
+  assert.deepEqual(placeSeats([], () => null, []), Array(8).fill(null));
 });
 
 test("testi: timer, ultima volta, sottotitolo, posti", () => {

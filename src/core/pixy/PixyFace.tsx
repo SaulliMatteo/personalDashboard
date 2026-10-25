@@ -23,6 +23,8 @@ export interface PixyFaceProps {
   bubbleSize?: "small" | "normal" | "large";
   /** Grandezza massima di un punto della faccia, in pixel CSS: limita quanto crescono gli occhi. */
   maxPointSize?: number;
+  /** Grandezza minima di un punto LED (Fosforo), in pixel CSS: solo per facce minuscole, come nella Stanza comune. */
+  minPointSize?: number;
   /** Margine intorno alla faccia, in punti: più piccolo nei riquadri piccoli. */
   padding?: number;
   className?: string;
@@ -46,6 +48,7 @@ function PixyFace({
   bubble = null,
   bubbleSize = "normal",
   maxPointSize = MAX_POINT_SIZE,
+  minPointSize,
   padding,
   className = "",
   children,
@@ -67,7 +70,7 @@ function PixyFace({
     if (css) colorRef.current = css;
   }, [color, theme.accent, theme.id, theme.mode]);
 
-  const drawOpts = useLatestRef({ style, showMouth, maxPointSize, padding, sample });
+  const drawOpts = useLatestRef({ style, showMouth, maxPointSize, minPointSize, padding, sample });
 
   // Dimensioni reali del canvas = dimensioni CSS × densità dello schermo.
   useEffect(() => {
@@ -102,7 +105,14 @@ function PixyFace({
       const o = drawOpts.current;
       const frame = o.sample(t, canvas.getBoundingClientRect());
       const dpr = Math.min(2, window.devicePixelRatio || 1);
-      o.style.draw(canvas, frame, { color: colorRef.current, showMouth: o.showMouth, dpr, maxPointSize: o.maxPointSize, padding: o.padding });
+      o.style.draw(canvas, frame, {
+        color: colorRef.current,
+        showMouth: o.showMouth,
+        dpr,
+        maxPointSize: o.maxPointSize,
+        minPointSize: o.minPointSize,
+        padding: o.padding,
+      });
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCloud } from "../../core/cloud/useCloud";
+import { useElementSize } from "../../core/hooks/useElementSize";
 import { useNav } from "../../core/nav/useNav";
 import CreateGroupDialog from "../groups/components/CreateGroupDialog";
 import GroupsStatus from "../groups/components/GroupsStatus";
@@ -10,9 +11,9 @@ import { usePixyPresence } from "../modules/pixy/usePixyPresence";
 import { formatStudyTime, KIND_LABELS } from "../modules/study/leaderboard";
 import { MAX_ROOMS, phaseElapsedSeconds, ROOM_SEATS } from "../modules/study/presence/payload";
 import { useStudyPresence } from "../modules/study/presence/useStudyPresence";
-import RoomScene from "./RoomScene";
+import RoomScene, { STAGE_WIDTH } from "./RoomScene";
 import { formatClock, lastSeenText, roomInfo, roomSubtitle } from "./roomText";
-import { assignRooms, roomOf, seatOrder } from "./seating";
+import { assignRooms, placeSeats, roomOf, seatOrder } from "./seating";
 import { isInRoom, useRoomMembers, type RoomMember } from "./useRoomMembers";
 import "../groups/components/groupsUi.css";
 import "./RoomPage.css";
@@ -94,7 +95,7 @@ function RoomPage({ pigment }: { pigment: string }) {
   const { userId } = useCloud();
   const state = useGroupsState();
   const { groups, selectedGroup, selectGroup } = useGroups();
-  const { rooms: chosenRooms, setRoom } = useStudyPresence();
+  const { rooms: chosenRooms, seats: chosenSeats, setRoom, setSeat } = useStudyPresence();
   const { members: pixyMembers, offsetMs } = usePixyPresence();
   const group = state === "ok" ? selectedGroup : null;
   const { members, serverNow, localNow } = useRoomMembers(group?.id ?? null);
@@ -105,6 +106,10 @@ function RoomPage({ pigment }: { pigment: string }) {
     room: null,
     selected: null,
   });
+  // la sala si rimpicciolisce per stare tutta nella larghezza disponibile (mai più grande del mockup)
+  const [sceneBox, setSceneBox] = useState<HTMLDivElement | null>(null);
+  const { width: sceneWidth } = useElementSize(sceneBox);
+  const sceneScale = sceneWidth > 0 ? Math.min(1, sceneWidth / STAGE_WIDTH) : 1;
 
   const dialogs = (
     <>
@@ -139,9 +144,13 @@ function RoomPage({ pigment }: { pigment: string }) {
   const roomCount = Math.max(rooms.length, ownRoom + 1);
   const shown = Math.min(viewState.room ?? ownRoom, roomCount - 1);
   const inShown = rooms[shown] ?? [];
-  const seated = seatOrder(inShown, userId, (id) => byId.get(id)?.kind === "studying")
-    .map((id) => byId.get(id))
-    .filter((m): m is RoomMember => m !== undefined);
+  // il mio posto scelto lo leggo dalla mia scelta (subito), quello degli altri dalla loro presenza
+  const mySeat = myChoice === shown ? (chosenSeats[group.id] ?? null) : null;
+  const chosenSeat = (id: string) => (id === userId ? mySeat : (byId.get(id)?.presence?.seat ?? null));
+  const places = placeSeats(inShown, chosenSeat, seatOrder(inShown, userId, (id) => byId.get(id)?.kind === "studying"));
+  const seats = places.map((id) => (id === null ? null : (byId.get(id) ?? null)));
+  // scelto ma non seduto (timer fermo): il posto resta libero, segnato come mio
+  const reservedSeat = mySeat !== null && mySeatRoom !== shown && places[mySeat] === null ? mySeat : null;
   const studying = members.filter((m) => m.kind === "studying").length;
   const isMyRoom = mySeatRoom >= 0 ? shown === mySeatRoom : myChoice === shown;
   const roomFull = !isMyRoom && inShown.length >= ROOM_SEATS;
@@ -216,6 +225,11 @@ function RoomPage({ pigment }: { pigment: string }) {
               </button>
               <span className="roomp-bar-info">{roomInfo(inShown.length, ROOM_SEATS)}</span>
             </div>
+            {isMyRoom && chosenSeats[group.id] !== undefined && (
+              <button type="button" className="grp-btn grp-btn--ghost grp-btn--sm" onClick={() => setRoom(group.id, shown)}>
+                Posto automatico
+              </button>
+            )}
             {isMyRoom ? (
               <span className="roomp-here">Sei seduto qui</span>
             ) : roomFull ? (
@@ -226,9 +240,12 @@ function RoomPage({ pigment }: { pigment: string }) {
               </button>
             )}
           </div>
-          <div className="roomp-scroll" data-pigment={pigment}>
+          <div ref={setSceneBox} className="roomp-scroll" data-pigment={pigment}>
             <RoomScene
-              seated={seated}
+              scale={sceneScale}
+              seats={seats}
+              reservedSeat={reservedSeat}
+              onSit={(seat) => setSeat(group.id, shown, seat)}
               pixies={pixyMembers[group.id] ?? {}}
               offsetMs={offsetMs}
               serverNow={serverNow}

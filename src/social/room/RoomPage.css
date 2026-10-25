@@ -164,9 +164,11 @@
   font-size: 13px;
 }
 
+/* La scena si rimpicciolisce da sola (RoomScene, --rs-scale): qui non si scorre mai. */
 .roomp-scroll {
   flex: 1;
-  overflow-x: auto;
+  min-width: 0;
+  overflow: hidden;
   background: var(--scene-bg);
 }
 

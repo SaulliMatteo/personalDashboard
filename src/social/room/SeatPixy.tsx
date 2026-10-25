@@ -78,7 +78,9 @@ function SeatPixy({ kind, isMe, pixy, offsetMs, localNow }: SeatPixyProps) {
       bubble={bubble}
       bubbleSize="small"
       maxPointSize={2.6}
-      padding={2}
+      // la testa è di 54×40 px: in Fosforo i LED scendono sotto i 3 px perché la faccia ci stia tutta
+      minPointSize={1}
+      padding={1}
       className="room-seat-face"
     />
   );

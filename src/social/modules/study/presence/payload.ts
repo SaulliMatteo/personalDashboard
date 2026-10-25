@@ -37,6 +37,8 @@ export interface StudyPresence {
   subject?: string;
   /** Sala scelta nella stanza comune (0..MAX_ROOMS-1); assente = riempimento automatico. */
   room?: number;
+  /** Posto scelto in quella sala (0..ROOM_SEATS-1, posizione nella scena); solo insieme a room. */
+  seat?: number;
 }
 
 export interface BuildOptions {
@@ -47,6 +49,8 @@ export interface BuildOptions {
   /** Nome della materia, già filtrato dall'impostazione (null = non mostrarla). */
   subject: string | null;
   room: number | null;
+  /** Posto scelto nella sala (null o assente = posto automatico). */
+  seat?: number | null;
 }
 
 function cleanSubject(subject: string | null): string | undefined {
@@ -57,6 +61,10 @@ function cleanSubject(subject: string | null): string | undefined {
 
 function validRoom(room: unknown): room is number {
   return typeof room === "number" && Number.isInteger(room) && room >= 0 && room < MAX_ROOMS;
+}
+
+function validSeat(seat: unknown): seat is number {
+  return typeof seat === "number" && Number.isInteger(seat) && seat >= 0 && seat < ROOM_SEATS;
 }
 
 /** Il proprio stato da mandare, dal timer del bus (ora locale) convertito all'ora del server. */
@@ -84,7 +92,10 @@ export function buildPresence(timer: StudyTimerSnapshot | null, options: BuildOp
   // la materia ha senso solo mentre si studia
   const subject = timer?.phase === "work" ? cleanSubject(options.subject) : undefined;
   if (subject) base.subject = subject;
-  if (validRoom(options.room)) base.room = options.room;
+  if (validRoom(options.room)) {
+    base.room = options.room;
+    if (validSeat(options.seat)) base.seat = options.seat;
+  }
   return base;
 }
 
@@ -113,6 +124,7 @@ export function parsePresence(raw: unknown, serverNow: number): StudyPresence | 
   if (typeof p.changedAt !== "number" || !Number.isFinite(p.changedAt) || p.changedAt - serverNow > DAY_MS) return null;
   if (p.subject !== undefined && (typeof p.subject !== "string" || p.subject.length > SUBJECT_MAX_LENGTH)) return null;
   if (p.room !== undefined && !validRoom(p.room)) return null;
+  if (p.seat !== undefined && !validSeat(p.seat)) return null;
 
   const presence: StudyPresence = {
     v: 1,
@@ -125,7 +137,11 @@ export function parsePresence(raw: unknown, serverNow: number): StudyPresence | 
   };
   const subject = typeof p.subject === "string" ? p.subject.trim() : "";
   if (subject && p.phase === "work") presence.subject = subject;
-  if (validRoom(p.room)) presence.room = p.room;
+  if (validRoom(p.room)) {
+    presence.room = p.room;
+    // un posto senza sala non vuol dire niente: si scarta
+    if (validSeat(p.seat)) presence.seat = p.seat;
+  }
   return presence;
 }
 

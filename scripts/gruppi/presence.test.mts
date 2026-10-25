@@ -127,12 +127,26 @@ await test("parse: tipi e valori non ammessi scartati", () => {
     { room: 4 },
     { room: -1 },
     { room: "1" },
+    { room: 1, seat: 8 },
+    { room: 1, seat: -1 },
+    { room: 1, seat: 2.5 },
     { phase: "idle", runningSince: SERVER },
   ];
   for (const overrides of bad) assert.equal(parsePresence(valid(overrides), SERVER), null, JSON.stringify(overrides));
   assert.equal(parsePresence(null, SERVER), null);
   assert.equal(parsePresence("ciao", SERVER), null);
   assert.equal(parsePresence([], SERVER), null);
+});
+
+await test("posto scelto: solo insieme alla sala, validato in uscita e in entrata", () => {
+  assert.equal(buildPresence(working, { offsetMs: 0, now: NOW, subject: null, room: 2, seat: 7 }).seat, 7);
+  assert.equal("seat" in buildPresence(working, { offsetMs: 0, now: NOW, subject: null, room: null, seat: 3 }), false);
+  assert.equal("seat" in buildPresence(working, { offsetMs: 0, now: NOW, subject: null, room: 2, seat: 8 }), false);
+  assert.equal("seat" in buildPresence(working, { offsetMs: 0, now: NOW, subject: null, room: 2, seat: null }), false);
+  assert.equal(parsePresence(valid({ room: 1, seat: 4 }), SERVER)?.seat, 4);
+  const noRoom = parsePresence(valid({ seat: 4 }), SERVER);
+  assert.ok(noRoom, "un posto senza sala non rende non valido il resto");
+  assert.equal("seat" in (noRoom ?? {}), false);
 });
 
 await test("parse: campi in più tolti; la materia resta testo e solo mentre si studia", () => {
@@ -251,23 +265,23 @@ await test("manda lo stato appena entrato e solo quando cambia", async () => {
   const h = harness();
   h.hub.setOffset(OFFSET);
   h.hub.setGroups(["g1"]);
-  h.hub.setLocal({ timer: null, subject: null, rooms: {} });
+  h.hub.setLocal({ timer: null, subject: null, rooms: {}, seats: {} });
   assert.equal(h.channels[0].tracked.length, 0, "prima di entrare non manda");
   h.status("g1", "joined");
   await h.settle();
   assert.equal(h.channels[0].tracked.length, 1);
   assert.equal(h.channels[0].tracked[0].phase, "idle");
   h.tick(30_000);
-  h.hub.setLocal({ timer: null, subject: null, rooms: {} });
-  h.hub.setLocal({ timer: null, subject: "Fisica", rooms: {} });
+  h.hub.setLocal({ timer: null, subject: null, rooms: {}, seats: {} });
+  h.hub.setLocal({ timer: null, subject: "Fisica", rooms: {}, seats: {} });
   await h.settle();
   assert.equal(h.channels[0].tracked.length, 1, "timer fermo: niente da rimandare (né l'ora né la materia)");
-  h.hub.setLocal({ timer: working, subject: "Fisica", rooms: {} });
+  h.hub.setLocal({ timer: working, subject: "Fisica", rooms: {}, seats: {} });
   await h.settle();
   assert.equal(h.channels[0].tracked.length, 2);
   assert.equal(h.channels[0].tracked[1].subject, "Fisica");
   assert.equal(h.channels[0].tracked[1].runningSince, (working.runningSince as number) + OFFSET);
-  h.hub.setLocal({ timer: working, subject: "Fisica", rooms: {} });
+  h.hub.setLocal({ timer: working, subject: "Fisica", rooms: {}, seats: {} });
   await h.settle();
   assert.equal(h.channels[0].tracked.length, 2, "stesso stato: non rimanda");
   h.hub.stop();
@@ -278,10 +292,11 @@ await test("la sala è per gruppo", async () => {
   h.hub.setGroups(["g1", "g2"]);
   h.status("g1", "joined");
   h.status("g2", "joined");
-  h.hub.setLocal({ timer: working, subject: null, rooms: { g2: 3 } });
+  h.hub.setLocal({ timer: working, subject: null, rooms: { g2: 3 }, seats: { g2: 5 } });
   await h.settle();
   assert.equal("room" in (h.channels[0].tracked.at(-1) ?? {}), false);
   assert.equal(h.channels[1].tracked.at(-1)?.room, 3);
+  assert.equal(h.channels[1].tracked.at(-1)?.seat, 5);
   h.hub.stop();
 });
 
@@ -298,7 +313,7 @@ await test("ricezione: stato del canale validato, versioni sconosciute ignorate"
 await test("canale caduto: esce, rientra dopo 5 s, poi 10 s; rientrato rimanda lo stato", async () => {
   const h = harness();
   h.hub.setGroups(["g1"]);
-  h.hub.setLocal({ timer: working, subject: null, rooms: {} });
+  h.hub.setLocal({ timer: working, subject: null, rooms: {}, seats: {} });
   h.status("g1", "joined");
   await h.settle();
   h.open("g1")[0].listeners.sync({ anna: [valid()] });
@@ -342,7 +357,7 @@ await test("errori ripetuti dallo stesso canale non accumulano tentativi", async
 await test("rientro automatico di Realtime (SUBSCRIBED di nuovo sullo stesso canale): rimanda lo stato", async () => {
   const h = harness();
   h.hub.setGroups(["g1"]);
-  h.hub.setLocal({ timer: working, subject: null, rooms: {} });
+  h.hub.setLocal({ timer: working, subject: null, rooms: {}, seats: {} });
   h.status("g1", "joined");
   await h.settle();
   h.status("g1", "joined");
@@ -366,10 +381,10 @@ await test("invio fallito: si riprova al cambio successivo anche se lo stato tor
   h.hub.setGroups(["g1"]);
   h.status("g1", "joined");
   h.channels[0].failTrack = true;
-  h.hub.setLocal({ timer: working, subject: null, rooms: {} });
+  h.hub.setLocal({ timer: working, subject: null, rooms: {}, seats: {} });
   await h.settle();
   h.channels[0].failTrack = false;
-  h.hub.setLocal({ timer: working, subject: null, rooms: {} });
+  h.hub.setLocal({ timer: working, subject: null, rooms: {}, seats: {} });
   await h.settle();
   // il primo è lo stato "fermo" mandato appena entrati; poi quello rifiutato, rimandato
   assert.deepEqual(h.channels[0].tracked.map((p) => p.phase), ["idle", "work"]);

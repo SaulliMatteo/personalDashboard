@@ -18,6 +18,8 @@ export interface LedOptions {
   padding?: number;
   /** Passo massimo della griglia, in pixel reali: oltre, la faccia non cresce. */
   maxPitch?: number;
+  /** Passo minimo della griglia, in pixel reali (default 3): più piccolo solo dove la faccia è minuscola. */
+  minPitch?: number;
 }
 
 // ----------------------------------------------------------------- sprite
@@ -99,7 +101,7 @@ export function drawLedFace(canvas: HTMLCanvasElement, frame: FaceFrame, options
   if (W < 4 || H < 4) return;
 
   const pad = options.padding ?? 1.5;
-  const pitch = Math.max(3, Math.min(W / (FACE_W + pad * 2), H / (FACE_H + pad * 2), options.maxPitch ?? Infinity));
+  const pitch = Math.max(options.minPitch ?? 3, Math.min(W / (FACE_W + pad * 2), H / (FACE_H + pad * 2), options.maxPitch ?? Infinity));
   const cols = Math.floor(W / pitch);
   const rows = Math.floor(H / pitch);
   // Griglia centrata nella card.

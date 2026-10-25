@@ -1,7 +1,7 @@
+import type { CSSProperties } from "react";
 import type { PixyPresence } from "../modules/pixy/payload";
 import { phaseElapsedSeconds } from "../modules/study/presence/payload";
 import { formatClock } from "./roomText";
-import { SEAT_SLOTS } from "./seating";
 import SeatPixy from "./SeatPixy";
 import type { RoomMember } from "./useRoomMembers";
 import "./RoomScene.css";
@@ -13,9 +13,18 @@ import "./RoomScene.css";
  * Pixy veri (core/pixy), uno per posto.
  */
 
+/** Grandezza della scena nel mockup: si rimpicciolisce (scale) quando non ci sta. */
+export const STAGE_WIDTH = 720;
+const STAGE_HEIGHT = 470;
+
 interface RoomSceneProps {
-  /** I membri di questa sala, già nell'ordine dei posti (seatOrder). */
-  seated: RoomMember[];
+  /** 1 = grandezza del mockup; meno quando lo spazio non basta. */
+  scale: number;
+  /** Chi siede in ogni posizione della scena (placeSeats); null = posto libero. */
+  seats: (RoomMember | null)[];
+  /** Il posto che ho scelto ma in cui non siedo ancora (timer fermo); null = nessuno. */
+  reservedSeat: number | null;
+  onSit: (seat: number) => void;
   pixies: Record<string, PixyPresence>;
   offsetMs: number;
   serverNow: number;
@@ -78,14 +87,15 @@ function seatClock(member: RoomMember, serverNow: number): string {
 }
 
 function Seat({
-  member,
+  position,
   side,
   props,
 }: {
-  member: RoomMember | null;
+  position: number;
   side: "left" | "right";
   props: RoomSceneProps;
 }) {
+  const member = props.seats[position] ?? null;
   const look = seatLook(member);
   const selected = member !== null && member.userId === props.selectedId;
   return (
@@ -130,7 +140,15 @@ function Seat({
       </div>
 
       {member === null ? (
-        <span className="rs-free">posto libero</span>
+        <button
+          type="button"
+          className={`rs-free${position === props.reservedSeat ? " is-mine" : ""}`}
+          aria-label={position === props.reservedSeat ? "Il tuo posto, libero finché non studi" : "Posto libero, siediti qui"}
+          onClick={() => props.onSit(position)}
+        >
+          <span className="rs-free-idle">{position === props.reservedSeat ? "il tuo posto" : "posto libero"}</span>
+          <span className="rs-free-hover">siediti qui</span>
+        </button>
       ) : (
         <button
           type="button"
@@ -157,46 +175,48 @@ function Seat({
 }
 
 function RoomScene(props: RoomSceneProps) {
-  const at = (position: number) => props.seated[SEAT_SLOTS[position]] ?? null;
   const table = (first: number) => (
     <div className="rs-table" key={first}>
-      <Seat member={at(first)} side="left" props={props} />
-      <Seat member={at(first + 1)} side="right" props={props} />
+      <Seat position={first} side="left" props={props} />
+      <Seat position={first + 1} side="right" props={props} />
     </div>
   );
+  const fit = { width: STAGE_WIDTH * props.scale, height: STAGE_HEIGHT * props.scale, "--rs-scale": props.scale } as CSSProperties;
   return (
-    <div className="rs-stage">
-      <svg width="0" height="0" className="rs-defs" aria-hidden="true">
-        <defs>
-          <pattern id="room-fz-a" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
-            <circle className="rs-dot-a" cx="1.6" cy="1.6" r="1" />
-          </pattern>
-          <pattern id="room-fz-b" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
-            <circle className="rs-dot-b" cx="1.6" cy="1.6" r="0.9" />
-          </pattern>
-          <pattern id="room-fz-r" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
-            <circle className="rs-dot-r" cx="1.6" cy="1.6" r="1.1" />
-          </pattern>
-        </defs>
-      </svg>
+    <div className="rs-fit" style={fit}>
+      <div className="rs-stage">
+        <svg width="0" height="0" className="rs-defs" aria-hidden="true">
+          <defs>
+            <pattern id="room-fz-a" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
+              <circle className="rs-dot-a" cx="1.6" cy="1.6" r="1" />
+            </pattern>
+            <pattern id="room-fz-b" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
+              <circle className="rs-dot-b" cx="1.6" cy="1.6" r="0.9" />
+            </pattern>
+            <pattern id="room-fz-r" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
+              <circle className="rs-dot-r" cx="1.6" cy="1.6" r="1.1" />
+            </pattern>
+          </defs>
+        </svg>
 
-      <div className="rs-floor" aria-hidden="true" />
+        <div className="rs-floor" aria-hidden="true" />
 
-      <div className="rs-wall" aria-hidden="true">
-        <Shelf books={SHELF_LEFT} />
-        <Window stars={[[26, 72, 1.3], [44, 40, 1.1], [96, 118, 1.3], [30, 124, 1.1]]} />
-        <Window moon stars={[[28, 50, 1.3], [38, 116, 1.1], [88, 122, 1.3]]} />
-        <Window stars={[[92, 66, 1.3], [24, 110, 1.1], [80, 40, 1.1]]} />
-        <Shelf books={SHELF_RIGHT} />
-      </div>
+        <div className="rs-wall" aria-hidden="true">
+          <Shelf books={SHELF_LEFT} />
+          <Window stars={[[26, 72, 1.3], [44, 40, 1.1], [96, 118, 1.3], [30, 124, 1.1]]} />
+          <Window moon stars={[[28, 50, 1.3], [38, 116, 1.1], [88, 122, 1.3]]} />
+          <Window stars={[[92, 66, 1.3], [24, 110, 1.1], [80, 40, 1.1]]} />
+          <Shelf books={SHELF_RIGHT} />
+        </div>
 
-      <div className="rs-row rs-row--back">
-        {table(0)}
-        {table(2)}
-      </div>
-      <div className="rs-row rs-row--front">
-        {table(4)}
-        {table(6)}
+        <div className="rs-row rs-row--back">
+          {table(0)}
+          {table(2)}
+        </div>
+        <div className="rs-row rs-row--front">
+          {table(4)}
+          {table(6)}
+        </div>
       </div>
     </div>
   );

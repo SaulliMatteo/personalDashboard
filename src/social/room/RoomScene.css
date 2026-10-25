@@ -1,5 +1,11 @@
 /* La sala della Stanza comune (docs/mockup-gruppi/gruppi/stanza-comune.html). Colori e spessori: token --scene-*. */
 
+/* Il riquadro della scena già rimpicciolita (--rs-scale ≤ 1, dalla larghezza disponibile): niente scroll. */
+.rs-fit {
+  margin: 0 auto;
+  overflow: hidden;
+}
+
 .rs-stage {
   --rs-pill-size: 13px;
   --rs-pill-weight: 500;
@@ -7,8 +13,9 @@
   position: relative;
   width: 720px;
   height: 470px;
-  margin: 0 auto;
   background: var(--scene-wall);
+  transform: scale(var(--rs-scale, 1));
+  transform-origin: top left;
 }
 
 :root[data-theme="opaco"] .rs-stage {
@@ -205,14 +212,56 @@
   transform: scaleX(-1);
 }
 
+/* Un posto libero: tutto il posto è il pulsante per sedersi, la scritta sta sul davanti del tavolo. */
 .rs-free {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  color: var(--scene-free-fg);
+  cursor: pointer;
+}
+
+.rs-free-idle,
+.rs-free-hover {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 18px;
   text-align: center;
-  font-size: 12px;
-  color: var(--scene-free-fg);
+}
+
+.rs-free-hover {
+  visibility: hidden;
+}
+
+.rs-free:hover .rs-free-idle,
+.rs-free:focus-visible .rs-free-idle {
+  visibility: hidden;
+}
+
+.rs-free:hover .rs-free-hover,
+.rs-free:focus-visible .rs-free-hover {
+  visibility: visible;
+}
+
+.rs-free:hover,
+.rs-free:focus-visible,
+.rs-free.is-mine {
+  color: var(--text-primary);
+}
+
+.rs-free.is-mine .rs-free-idle {
+  font-weight: 600;
+}
+
+.rs-free:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .rs-seat-btn {

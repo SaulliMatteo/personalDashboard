@@ -12,7 +12,12 @@ export interface StudyPresenceValue {
   serverNow: () => number;
   /** Sala scelta nella stanza comune per gruppo (assente = riempimento automatico). La vedono anche i compagni. */
   rooms: Record<string, number>;
+  /** Posto scelto nella sala scelta, per gruppo (assente = posto automatico). */
+  seats: Record<string, number>;
+  /** Sceglie la sala (null = automatica) e torna al posto automatico. */
   setRoom: (groupId: string, room: number | null) => void;
+  /** Sceglie sala e posto insieme. */
+  setSeat: (groupId: string, room: number, seat: number) => void;
 }
 
 export const StudyPresenceContext = createContext<StudyPresenceValue | undefined>(undefined);
