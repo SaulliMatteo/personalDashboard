@@ -8,6 +8,7 @@ import { useGroups } from "../../../groups/useGroups";
 import { getSessionSpansBetween } from "../data/studyTotalsRepository";
 import { useStudyPresence } from "../presence/useStudyPresence";
 import { dayKey } from "../sync/plan";
+import { aggregateTotals, fetchFrom, type PeriodDays } from "./aggregate";
 import { StudyTotalsContext, type StudyTotalsValue } from "./useStudyTotals";
 
 /** Ogni quanto si rileggono i totali dei compagni. */
@@ -20,11 +21,23 @@ interface Loaded {
   userKey: string;
   today: Record<string, number>;
   week: Record<string, number>;
+  month: Record<string, number>;
+  firstDay: Record<string, string>;
+  monthStart: string;
   loadedAt: number;
 }
 
+/** I giorni locali che delimitano oggi, la settimana (da lunedì) e il mese. */
+function periodDays(now: Date): PeriodDays {
+  return {
+    today: dayKey(now),
+    weekStart: dayKey(new Date(periodRange("week", 0, now).start)),
+    monthStart: dayKey(new Date(periodRange("month", 0, now).start)),
+  };
+}
+
 /**
- * Totali di oggi e della settimana (da lunedì) di tutti i membri dei propri gruppi, per le classifiche.
+ * Totali di oggi, della settimana (da lunedì) e del mese di tutti i membri dei propri gruppi, per le classifiche.
  * Il giorno è quello locale di questo computer: tra amici nello stesso fuso coincide con il loro.
  */
 export function StudyTotalsProvider({ children }: { children: ReactNode }) {
@@ -35,7 +48,7 @@ export function StudyTotalsProvider({ children }: { children: ReactNode }) {
   const ready = status.kind === "ready";
   const [data, setData] = useState<Loaded | null>(null);
   const [failedKey, setFailedKey] = useState<string | null>(null);
-  const [myWeek, setMyWeek] = useState(0);
+  const [mine, setMine] = useState({ week: 0, month: 0 });
   const reloadRef = useRef<() => void>(() => {});
 
   const userKey = [...new Set(Object.values(members).flatMap((list) => list.map((m) => m.userId)))].sort().join(",");
@@ -48,19 +61,12 @@ export function StudyTotalsProvider({ children }: { children: ReactNode }) {
     let failures = 0;
     const load = () => {
       window.clearTimeout(timer);
-      const now = new Date();
-      const today = dayKey(now);
-      const monday = dayKey(new Date(periodRange("week", 0, now).start));
-      fetchStudyTotals(userIds, monday, today)
+      const days = periodDays(new Date());
+      fetchStudyTotals(userIds, fetchFrom(days), days.today)
         .then((rows) => {
           if (disposed) return;
           failures = 0;
-          const next: Loaded = { userKey, today: {}, week: {}, loadedAt: Date.now() };
-          for (const r of rows) {
-            next.week[r.userId] = (next.week[r.userId] ?? 0) + r.seconds;
-            if (r.day === today) next.today[r.userId] = (next.today[r.userId] ?? 0) + r.seconds;
-          }
-          setData(next);
+          setData({ userKey, ...aggregateTotals(rows, days), monthStart: days.monthStart, loadedAt: Date.now() });
           setFailedKey(null);
           timer = window.setTimeout(load, REFRESH_MS);
         })
@@ -100,13 +106,17 @@ export function StudyTotalsProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(t);
   }, [studyingKey]);
 
-  // La mia settimana dal database locale (sempre aggiornata, anche prima che l'invio vada a buon fine).
+  // La mia settimana e il mio mese dal database locale (sempre aggiornati, anche prima che l'invio vada a buon fine).
   useEffect(() => {
     let cancelled = false;
     const now = new Date();
-    getSessionSpansBetween(periodRange("week", 0, now).start, now.getTime() + 1)
+    const weekStart = periodRange("week", 0, now).start;
+    const monthStart = periodRange("month", 0, now).start;
+    getSessionSpansBetween(Math.min(weekStart, monthStart), now.getTime() + 1)
       .then((spans) => {
-        if (!cancelled) setMyWeek(spans.reduce((sum, s) => sum + s.durationSeconds, 0));
+        if (cancelled) return;
+        const sum = (from: number) => spans.filter((s) => s.endedAt >= from).reduce((total, s) => total + s.durationSeconds, 0);
+        setMine({ week: sum(weekStart), month: sum(monthStart) });
       })
       .catch(() => {});
     return () => {
@@ -118,12 +128,18 @@ export function StudyTotalsProvider({ children }: { children: ReactNode }) {
     const current = ready && data?.userKey === userKey ? data : null;
     const today = { ...(current?.today ?? {}) };
     const week = { ...(current?.week ?? {}) };
+    const month = { ...(current?.month ?? {}) };
+    const firstDay = { ...(current?.firstDay ?? {}) };
+    const monthStart = current?.monthStart ?? periodDays(new Date()).monthStart;
     if (userId) {
+      // i miei dati sono tutti sul computer: il mio mese è sempre completo
       today[userId] = studyTodaySeconds;
-      week[userId] = Math.max(myWeek, studyTodaySeconds);
+      week[userId] = Math.max(mine.week, studyTodaySeconds);
+      month[userId] = Math.max(mine.month, studyTodaySeconds);
+      firstDay[userId] = monthStart;
     }
-    return { today, week, stale: ready && failedKey === userKey, loadedAt: current?.loadedAt ?? null };
-  }, [data, ready, userKey, failedKey, userId, studyTodaySeconds, myWeek]);
+    return { today, week, month, firstDay, monthStart, stale: ready && failedKey === userKey, loadedAt: current?.loadedAt ?? null };
+  }, [data, ready, userKey, failedKey, userId, studyTodaySeconds, mine]);
 
   return <StudyTotalsContext.Provider value={value}>{children}</StudyTotalsContext.Provider>;
 }

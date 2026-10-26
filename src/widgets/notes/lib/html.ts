@@ -7,7 +7,9 @@ export function sanitizeHtml(html: string): string {
   if (!html) return "";
   const doc = new DOMParser().parseFromString(html, "text/html");
   doc
-    .querySelectorAll("script, style, iframe, object, embed, link, meta, form, img, video, audio, svg, input, button")
+    .querySelectorAll(
+      "script, style, iframe, frame, frameset, object, embed, applet, portal, link, meta, base, form, img, video, audio, svg, math, input, button, textarea, select, template, noscript, noembed, noframes, xmp, plaintext, title"
+    )
     .forEach((n) => n.remove());
   doc.body.querySelectorAll("*").forEach((el) => {
     for (const attr of Array.from(el.attributes)) {

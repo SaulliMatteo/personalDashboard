@@ -13,12 +13,12 @@ import "./RoomScene.css";
  * Pixy veri (core/pixy), uno per posto.
  */
 
-/** Grandezza della scena nel mockup: si rimpicciolisce (scale) quando non ci sta. */
+/** Grandezza della scena nel mockup: la pagina la scala (scale) per riempire lo spazio. */
 export const STAGE_WIDTH = 720;
-const STAGE_HEIGHT = 470;
+export const STAGE_HEIGHT = 470;
 
 interface RoomSceneProps {
-  /** 1 = grandezza del mockup; meno quando lo spazio non basta. */
+  /** 1 = grandezza del mockup; meno quando lo spazio non basta, di più nelle finestre grandi. */
   scale: number;
   /** Chi siede in ogni posizione della scena (placeSeats); null = posto libero. */
   seats: (RoomMember | null)[];
@@ -164,6 +164,7 @@ function Seat({
               pixy={props.pixies[member.userId]}
               offsetMs={props.offsetMs}
               localNow={props.localNow}
+              renderScale={props.scale}
             />
           </span>
           <span className={`rs-pill rs-pill--${look}`}>{seatClock(member, props.serverNow)}</span>

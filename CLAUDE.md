@@ -5,6 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Dashboard personale **local-first** per desktop: Tauri v2 + React 19 + Vite + TypeScript + Tailwind v4,
 dati in SQLite locale (`@tauri-apps/plugin-sql`, file `dashboard.db`). Codice, commenti e UI sono in **italiano**.
 Documentazione di dettaglio: `docs/ARCHITETTURA.md` (mappa, regole, ricette) e `docs/FILE_TRANSFER.md`.
+`docs/` (documentazione, mockup, prompt) è **solo locale**: è nel `.gitignore` e fuori dalla cronologia del repo
+pubblico, come `CLAUDE.local.md`. Il `README.md` è per chi scarica l'app (installazione, dati, privacy), non per chi
+sviluppa: le note per lo sviluppo stanno qui.
 
 ## Comandi
 
@@ -17,6 +20,7 @@ npm run lint           # oxlint (plugin react/typescript/oxc, vedi .oxlintrc.jso
 cd src-tauri && cargo check   # dopo modifiche a Rust o C
 ```
 
+Servono Node (LTS), Rust e i prerequisiti di Tauri v2 per il sistema.
 Non esistono test automatici: si verifica con `npm run build` + `npm run lint` (+ `cargo check`).
 Le logiche "pure" (es. `widgets/companion/engine/`, `core/pixy/engine/`, `widgets/youtube/lib/watchTracker.ts`, `core/layout/compactor.ts`)
 hanno orologio e random iniettati apposta per poter essere testate senza browser: uno script `.mts` lanciato con
@@ -67,6 +71,11 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
   differenze in `platform.h`), compilato da `build.rs` con `cc` (che imposta `cfg(ft_native)`), esposto con i comandi
   `ft_*` di `src/file_transfer.rs`; va fermato alla chiusura della finestra. Su macOS la 5000 è di AirPlay: il server
   prova le porte successive.
+  È esposto sulla rete locale senza autenticazione (la pagina dell'iPad non si può cambiare), quindi le difese stanno
+  tutte nel C (`http.c`) e non vanno tolte: niente header CORS e `Origin` uguale a `http://<Host>` (un sito aperto nel
+  browser non può caricare file), `Host` solo IPv4 o `localhost` (DNS rebinding), `X-File-Name` obbligatorio (niente
+  richieste "semplici" senza preflight), nomi di file sicuri (anche quelli riservati di Windows), mai sovrascrivere
+  (`"wbx"`, poi "nome (1).ext"), file a metà cancellati, al massimo 64 GB, 32 connessioni e 30 s di silenzio.
 - Companion (Pixy): `companion_snapshot` in `src/companion.rs` (inattività, app in primo piano e descrizione
   dell'eseguibile via `windows-sys`; su macOS inattività da CoreGraphics e app via `NSWorkspace`, con il bundle `.app`
   come "processo" e titolo vuoto). Lato frontend la catena è `core/system/appCategory.ts` (classifica l'app; con
@@ -79,6 +88,8 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
   Il Companion registra un decoratore che le firma Pixy (faccia nello stile del tema, emoji, frase della personalità,
   `widgets/companion/notify/`); su Windows il toast con l'immagine lo mostra il comando `notify_with_image`
   (`src/notify.rs`, `tauri-winrt-notification`), altrove si ripiega sul plugin senza immagine.
+- La finestra principale naviga solo dentro l'app (`on_navigation` + `is_app_url` in `src/lib.rs`): un link esterno
+  (es. in una nota) si apre nel browser di sistema, mai nella webview che ha accesso ai comandi.
 - Lato frontend, ogni widget chiama `invoke()` da un solo file `data/*Api.ts` (i segnali di sistema condivisi da
   `core/system/systemApi.ts`, le notifiche con immagine da `core/notify/notifyApi.ts`); allo stesso modo l'unica chiamata
   in rete (`fetch`) è `widgets/weather/data/weatherApi.ts`, e tutta la rete dei Gruppi (Supabase: HTTPS e WebSocket)
@@ -90,6 +101,10 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
   mostrano un errore chiaro.
 - Release: `.github/workflows/release.yml` (tag `v*` o avvio manuale) compila `.dmg` universale + installer Windows
   in una Release in bozza. macOS con firma ad-hoc (niente account Apple): istruzioni di sblocco nel README.
+  Per pubblicare: aggiorna `version` in `src-tauri/tauri.conf.json` (e `package.json`), poi
+  `git tag vX.Y.Z && git push --tags` (oppure Actions › Release › Run workflow); finito, pubblica la bozza.
+  Il build per macOS si fa solo su un Mac o in CI, non da Windows. I valori dei Gruppi la CI li legge dai Secrets
+  `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` (senza, la build esce in solo locale).
 
 **Temi e stile**: 4 temi (`core/theme/themes.ts`), scelti con `data-theme` su `<html>`; ogni tema ridefinisce i
 token di `src/styles/tokens.css` (colori, `--card-*`, `--panel-*`, `--radius-*`, `--font-display`, `--btn-*`…).
@@ -100,7 +115,8 @@ Quando un pezzo cambia *forma* per tema si usa `useThemeVariant(map)` (`core/the
 `if (theme === …)`; le varianti-componente si rendono con `createElement` (lint `static-components`). Le card per
 tema dei widget stanno in `card/cards.ts` e le pagine di dettaglio riusano la card M. In Opaco ogni widget ha un
 pigmento (`data-pigment` sulla cella e su `.detail-scope`) che ridefinisce i token. Un `.css` accanto a ogni
-componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è l'unico elemento che scrolla.
+componente, niente CSS globale fuori da `src/styles/`. `.main` in `AppShell` è l'unico elemento che scrolla, tranne
+nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestra e scorre solo la lista Membri.
 
 ## Regole
 

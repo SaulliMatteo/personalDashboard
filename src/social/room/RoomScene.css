@@ -1,8 +1,7 @@
 /* La sala della Stanza comune (docs/mockup-gruppi/gruppi/stanza-comune.html). Colori e spessori: token --scene-*. */
 
-/* Il riquadro della scena già rimpicciolita (--rs-scale ≤ 1, dalla larghezza disponibile): niente scroll. */
+/* Il riquadro della scena già scalata (--rs-scale, dallo spazio disponibile): lo posiziona la pagina. */
 .rs-fit {
-  margin: 0 auto;
   overflow: hidden;
 }
 

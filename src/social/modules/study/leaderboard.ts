@@ -5,7 +5,7 @@ import { presenceKind, unsavedStudySeconds, type PresenceKind, type StudyPresenc
  * server e dati arrivano da fuori (lo prova scripts/gruppi/leaderboard.test.mts).
  */
 
-export type LeaderboardPeriod = "today" | "week";
+export type LeaderboardPeriod = "today" | "week" | "month";
 
 /** Stato da mostrare accanto al nome: quello live, oppure "offline" se non è connesso. */
 export type MemberKind = PresenceKind | "offline";

@@ -131,6 +131,8 @@ export const DEFAULT_SETTINGS = {
   // ---- Gruppi ----
   /** Il nome della materia in corso arriva ai compagni di gruppo solo se attivo (spento di default). */
   groupsShowSubject: false,
+  /** Il tempo delle materie abbinate e confermate entra nei report dei gruppi (spento di default). Senza effetto fino al report per materie. */
+  groupsReportSubjects: false,
   /** Le pose vere di Pixy rivelano l'app in primo piano: ai compagni arrivano solo se attivo (spento di default). */
   groupsSharePixy: false,
   /** I fumetti di Pixy ai compagni (solo con le espressioni condivise). */
@@ -273,6 +275,10 @@ export const SETTING_DEFS: SettingDef[] = [
   {
     key: "groupsShowSubject", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Mostra la materia che sto studiando",
     description: "Spento: i compagni di gruppo vedono che stai studiando e da quanto, ma non cosa.",
+  },
+  {
+    key: "groupsReportSubjects", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Includi le mie materie nei report dei gruppi",
+    description: "Solo quelle che abbini nel report di ogni gruppo; spento, il tuo tempo conta in \"Altre materie\". Il report per materie è in arrivo: per ora non ha effetto.",
   },
   {
     key: "groupsSharePixy", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Condividi le espressioni di Pixy",

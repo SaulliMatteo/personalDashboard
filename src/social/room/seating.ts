@@ -86,3 +86,25 @@ export function placeSeats(room: string[], chosenSeat: (userId: string) => numbe
   }
   return places;
 }
+
+export interface MemberSection {
+  title: "In questa sala" | "Nelle altre sale" | "Fuori dalla stanza";
+  /** `room` = la sala in cui siede, solo per chi è in un'altra sala (null altrimenti). */
+  members: { userId: string; room: number | null }[];
+}
+
+/**
+ * La lista Membri della Stanza comune: chi è nella sala guardata (nell'ordine dei posti, `hereOrder`), chi è nelle
+ * altre sale (per sala, nell'ordine della sala) e chi è fuori (`away`, nell'ordine dato). Le sezioni vuote mancano.
+ */
+export function memberSections(rooms: string[][], shown: number, hereOrder: string[], away: string[]): MemberSection[] {
+  const sections: MemberSection[] = [
+    { title: "In questa sala", members: hereOrder.map((userId) => ({ userId, room: null })) },
+    {
+      title: "Nelle altre sale",
+      members: rooms.flatMap((room, i) => (i === shown ? [] : room.map((userId) => ({ userId, room: i })))),
+    },
+    { title: "Fuori dalla stanza", members: away.map((userId) => ({ userId, room: null })) },
+  ];
+  return sections.filter((s) => s.members.length > 0);
+}

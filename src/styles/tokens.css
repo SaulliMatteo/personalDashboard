@@ -183,6 +183,8 @@
   --group-work: var(--accent);
   --group-break: var(--study-break);
   --group-off: var(--tick-off-long);
+  --group-bar-track: var(--track);
+  --group-soon-border: var(--slot-border);
   --group-me-bg: var(--accent-soft);
   --group-rank-1: var(--accent-strong);
   --group-rank-2: var(--text-soft);
@@ -206,6 +208,10 @@
   --group-danger-card: var(--card-bg);
   --group-danger-border: 1px solid rgba(240, 138, 138, 0.45);
   --group-danger-soft: rgba(240, 138, 138, 0.16);
+  /* Pagina Gruppi (impostazioni-stanza.html): riga "Abbandona" e linea sotto le schede. */
+  --group-danger-line: 1px solid rgba(240, 138, 138, 0.28);
+  --group-danger-row: transparent;
+  --group-tabs-line: 1px solid #1F2740;
 
   /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
   --scene-bg: #0E1324;
@@ -376,6 +382,8 @@
   /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
   --group-work: var(--accent);
   --group-off: var(--dot-off);
+  --group-bar-track: var(--track);
+  --group-soon-border: 2px dashed #C9C5BB;
   --group-me-bg: var(--dot-off);
   --group-rank-1: var(--text-primary);
   --group-rank-2: var(--text-primary);
@@ -400,6 +408,10 @@
   --group-danger-card: #E6C9BF;
   --group-danger-border: 0;
   --group-danger-soft: rgba(138, 42, 30, 0.12);
+  /* Pagina Gruppi (impostazioni-stanza.html): riga "Abbandona" e linea sotto le schede. */
+  --group-danger-line: 0;
+  --group-danger-row: #E6C9BF;
+  --group-tabs-line: 2px solid #E2DED5;
 }
 
 /* Pigmenti: fondo / inchiostro / tono scuro / tono medio / chiaro (testo su inchiostro). */
@@ -465,6 +477,7 @@
   /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
   --group-work: var(--pg-ink);
   --group-off: var(--pg-dark);
+  --group-bar-track: var(--pg-dark);
   --group-me-bg: var(--pg-dark);
   --group-rank-1: var(--pg-ink);
   --group-rank-2: var(--pg-ink);
@@ -656,6 +669,8 @@
   --group-work: var(--accent);
   --group-break: var(--warn);
   --group-off: var(--dot-off);
+  --group-bar-track: #DCE6F5;
+  --group-soon-border: 1.5px dashed #B8C4D8;
   --group-rank-1: var(--accent);
   --group-rank-2: var(--accent);
   --group-rank-3: var(--accent);
@@ -679,6 +694,10 @@
   --group-danger-card: #FFFFFF;
   --group-danger-border: 1.5px solid #B3261E;
   --group-danger-soft: rgba(179, 38, 30, 0.08);
+  /* Pagina Gruppi (impostazioni-stanza.html): riga "Abbandona" e linea sotto le schede. */
+  --group-danger-line: 1.5px solid #B3261E;
+  --group-danger-row: transparent;
+  --group-tabs-line: 1px solid #DCE6F5;
 
   /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
   --scene-bg: linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, #FCFDFF;
@@ -865,6 +884,8 @@
   --group-work: var(--danger);
   --group-break: var(--text-secondary);
   --group-off: var(--dot-off);
+  --group-bar-track: var(--track);
+  --group-soon-border: 1px dashed rgba(255, 214, 206, 0.2);
   --group-me-bg: var(--surface-2);
   --group-rank-1: var(--danger);
   --group-rank-2: var(--text-soft);
@@ -888,6 +909,10 @@
   --group-danger-card: rgba(26, 13, 15, 0.9);
   --group-danger-border: 1px solid rgba(255, 74, 61, 0.4);
   --group-danger-soft: rgba(255, 74, 61, 0.12);
+  /* Pagina Gruppi (impostazioni-stanza.html): riga "Abbandona" e linea sotto le schede. */
+  --group-danger-line: 1px solid rgba(255, 74, 61, 0.3);
+  --group-danger-row: transparent;
+  --group-tabs-line: 1px solid rgba(255, 214, 206, 0.12);
 
   /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
   --scene-bg: radial-gradient(rgba(255,230,220,0.07) 1px, transparent 1.3px) 0 0 / 7px 7px, #0B0405;

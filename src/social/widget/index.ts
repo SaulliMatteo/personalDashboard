@@ -1,7 +1,7 @@
 import { SIZE_L, SIZE_M, SIZE_S } from "../../core/widgets/sizes";
 import type { WidgetDefinition } from "../../core/widgets/types";
 import GroupsWidget from "./GroupsWidget";
-import RoomSettingsPage from "./RoomSettingsPage";
+import GroupsPage from "./GroupsPage";
 
 /**
  * Il widget Gruppi: la parte dei Gruppi che sta in dashboard. Vive in social/ (non in widgets/) perché legge i
@@ -10,9 +10,9 @@ import RoomSettingsPage from "./RoomSettingsPage";
 export const groupsWidget: WidgetDefinition = {
   id: "groups",
   name: "Gruppi",
-  description: "Chi dei tuoi amici sta studiando adesso e la classifica di oggi e della settimana (serve un account).",
+  description: "Chi dei tuoi amici sta studiando adesso e la classifica di oggi, della settimana e del mese (serve un account).",
   component: GroupsWidget,
   sizes: [SIZE_M, SIZE_S, SIZE_L],
-  detailComponent: RoomSettingsPage,
+  detailComponent: GroupsPage,
   settingsGroup: "groups",
 };
