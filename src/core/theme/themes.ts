@@ -111,6 +111,7 @@ const PIGMENT_BY_WIDGET: Record<string, Pigment> = {
   clock: "senape",
   date: "salvia",
   weather: "blu",
+  whiteboard: "salvia",
 };
 
 /** Pigmento di un widget; `index` (posizione nel registry) serve solo per i widget nuovi. */

@@ -72,3 +72,6 @@ docs
 
 # Progetto Android generato da Tauri (tauri android init lo ricrea), con i suoi output di Gradle
 src-tauri/gen/
+
+# Font della Lavagna copiati da node_modules (scripts/copy-excalidraw-assets.mjs)
+public/excalidraw-assets/
