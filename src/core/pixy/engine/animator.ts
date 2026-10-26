@@ -1,4 +1,4 @@
-import type { BrainSnapshot } from "./brain";
+import type { BrainSnapshot } from "./snapshot";
 import { EMOTIONS, emotionFace, NEUTRAL_FACE, type EmotionId, type FaceMotion, type FaceParams, type GlyphId } from "./face";
 import { PERSONALITIES, type FaceTweak } from "./personalities";
 import { aimPos, kernelPos, planePos, type CostumeId, type GazeMode } from "./poses";

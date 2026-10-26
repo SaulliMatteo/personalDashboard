@@ -178,25 +178,84 @@
   --modal-border: 1px solid #1E2538;
   --shadow-pop: 0 18px 48px rgba(0, 0, 0, 0.5);
   --focus-ring: 2px solid var(--accent);
-  /* Notes (notes-redesign.html): la pagina, il margine del quaderno, il post-it e i tasti. */
-  --note-page-bg: #0B0F1C;
-  --note-page-ink: #E9ECF5;
-  --note-page-pattern: none;
-  --note-page-border: 1px solid #182036;
-  --note-page-shadow: inset 0 1px 0 rgba(200, 215, 255, 0.06);
-  --note-margin: transparent;
-  --note-postit-bg: #FFF1A8;
-  --note-postit-ink: #5C4E12;
-  --note-key-shadow: none;
-  /* Tinte pigmentate per blocchi, scelte delle colonne e chip (anche fuori da Opaco). */
-  --tint-salvia: #A9B59C;
-  --tint-salvia-ink: #1F2B1C;
-  --tint-blu: #9DB0C0;
-  --tint-blu-ink: #1B2A36;
-  --tint-senape: #D2B26A;
-  --tint-senape-ink: #3A2C0A;
-  --tint-malva: #B8A1B4;
-  --tint-malva-ink: #33213A;
+
+  /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
+  --group-work: var(--accent);
+  --group-break: var(--study-break);
+  --group-off: var(--tick-off-long);
+  --group-me-bg: var(--accent-soft);
+  --group-rank-1: var(--accent-strong);
+  --group-rank-2: var(--text-soft);
+  --group-rank-3: var(--warn);
+  --group-rank-n: var(--text-muted);
+  --group-seg-bg: var(--nav-active-bg);
+  --group-seg-fg: var(--nav-active-fg);
+  --group-seg-idle: var(--text-secondary);
+
+  /* Campi di testo e titolo delle finestre (docs/mockup-gruppi/gruppi/finestre.html). */
+  --field-bg: #0B0F1C;
+  --field-border: 1px solid #182036;
+  --field-focus: 1px solid rgba(142, 166, 255, 0.55);
+  --field-error: 1px solid rgba(240, 138, 138, 0.55);
+  --modal-title-weight: 400;
+
+  /* Avviso e azione distruttiva dei Gruppi (stati.html, impostazioni-stanza.html). */
+  --group-warn-fg: var(--warn);
+  --group-warn-bg: rgba(240, 180, 122, 0.12);
+  --group-warn-border: 1px solid rgba(240, 180, 122, 0.3);
+  --group-danger-card: var(--card-bg);
+  --group-danger-border: 1px solid rgba(240, 138, 138, 0.45);
+  --group-danger-soft: rgba(240, 138, 138, 0.16);
+
+  /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
+  --scene-bg: #0E1324;
+  --scene-wall: #0E1324;
+  --scene-floor: #0B0F1C;
+  --scene-floor-line: #182036;
+  --scene-win: #0A0F22;
+  --scene-win-frame: #1F2740;
+  --scene-win-sw: 4;
+  --scene-mullion: 3;
+  --scene-moon: #DCE3FF;
+  --scene-star: #9AA2BA;
+  --scene-shelf: #121831;
+  --scene-board: #232B44;
+  --scene-b1: #2A3350;
+  --scene-b2: #3A4566;
+  --scene-b3: #232B44;
+  --scene-chair: #1A2032;
+  --scene-top: #232B44;
+  --scene-top-hi: #2E3756;
+  --scene-front: #141A2C;
+  --scene-head: #0B0F1C;
+  --scene-head-stroke: #3A4566;
+  --scene-head-sw: 1.5;
+  --scene-body: #161C2E;
+  --scene-face: #DCE3FF;
+  --scene-page: #C9CFE0;
+  --scene-lamp: #2A3350;
+  --scene-lamp-on: #3A4566;
+  --scene-lamp-off: #232B44;
+  --scene-bulb-on: #DCE3FF;
+  --scene-bulb-brk: #F5A35C;
+  --scene-cone: rgba(142,166,255,0.14);
+  --scene-cone-op: 1;
+  --scene-pool: rgba(142,166,255,0.32);
+  --scene-warm: rgba(245,163,92,0.10);
+  --scene-mug: #2A3350;
+  --scene-steam: #8890A8;
+  --scene-line: none;
+  --scene-sw: 0;
+  --scene-plate-bg: #0B0F1C;
+  --scene-free-fg: #7A83A0;
+  --scene-dot-a: #000;
+  --scene-dot-b: #000;
+  --scene-dot-r: #000;
+  --scene-plate-border: #2A3350;
+  --scene-pill-work-bg: rgba(142,166,255,0.14);
+  --scene-pill-work-fg: #B7C6FF;
+  --scene-pill-break-bg: rgba(245,163,92,0.14);
+  --scene-pill-break-fg: #F5A35C;
 }
 
 /* ==========================================================================
@@ -313,25 +372,34 @@
   --modal-border: 0;
   --shadow-pop: 0 18px 48px rgba(34, 37, 31, 0.18);
   --focus-ring: 2px solid var(--text-primary);
-  /* Notes (notes-redesign.html): la pagina, il margine del quaderno, il post-it e i tasti. */
-  --note-page-bg: #EFECE5;
-  --note-page-ink: #22251F;
-  --note-page-pattern: none;
-  --note-page-border: 0;
-  --note-page-shadow: none;
-  --note-margin: transparent;
-  --note-postit-bg: #FFF1A8;
-  --note-postit-ink: #5C4E12;
-  --note-key-shadow: none;
-  /* Tinte pigmentate per blocchi, scelte delle colonne e chip (anche fuori da Opaco). */
-  --tint-salvia: #A9B59C;
-  --tint-salvia-ink: #1F2B1C;
-  --tint-blu: #9DB0C0;
-  --tint-blu-ink: #1B2A36;
-  --tint-senape: #D2B26A;
-  --tint-senape-ink: #3A2C0A;
-  --tint-malva: #B8A1B4;
-  --tint-malva-ink: #33213A;
+
+  /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
+  --group-work: var(--accent);
+  --group-off: var(--dot-off);
+  --group-me-bg: var(--dot-off);
+  --group-rank-1: var(--text-primary);
+  --group-rank-2: var(--text-primary);
+  --group-rank-3: var(--text-primary);
+  --group-rank-n: var(--text-muted);
+  --group-seg-bg: var(--row-active-bg);
+  --group-seg-fg: var(--on-accent);
+  --group-seg-idle: var(--text-secondary);
+  --group-break: #7A6230;
+
+  /* Campi di testo e titolo delle finestre (docs/mockup-gruppi/gruppi/finestre.html). */
+  --field-bg: #E2DED5;
+  --field-border: 0;
+  --field-focus: 2px solid #22251F;
+  --field-error: 2px solid #8A2A1E;
+  --modal-title-weight: 800;
+
+  /* Avviso e azione distruttiva dei Gruppi (stati.html, impostazioni-stanza.html). */
+  --group-warn-fg: #3A2C0A;
+  --group-warn-bg: #D2B26A;
+  --group-warn-border: 0;
+  --group-danger-card: #E6C9BF;
+  --group-danger-border: 0;
+  --group-danger-soft: rgba(138, 42, 30, 0.12);
 }
 
 /* Pigmenti: fondo / inchiostro / tono scuro / tono medio / chiaro (testo su inchiostro). */
@@ -393,6 +461,68 @@
   --success: var(--pg-ink);
   --success-text: var(--pg-ink);
   --focus-ring: 2px solid var(--pg-ink);
+
+  /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
+  --group-work: var(--pg-ink);
+  --group-off: var(--pg-dark);
+  --group-me-bg: var(--pg-dark);
+  --group-rank-1: var(--pg-ink);
+  --group-rank-2: var(--pg-ink);
+  --group-rank-3: var(--pg-ink);
+  --group-rank-n: var(--text-muted);
+  --group-seg-bg: var(--pg-ink);
+  --group-seg-fg: var(--pg-light);
+  --group-seg-idle: var(--pg-ink);
+
+  /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
+  --scene-bg: var(--pg-bg);
+  --scene-wall: var(--pg-bg);
+  --scene-floor: var(--pg-dark);
+  --scene-floor-line: var(--pg-dark);
+  --scene-win: var(--pg-light);
+  --scene-win-frame: var(--pg-bg);
+  --scene-win-sw: 6;
+  --scene-mullion: 6;
+  --scene-moon: #D2B26A;
+  --scene-star: var(--pg-light);
+  --scene-shelf: var(--pg-half);
+  --scene-board: var(--pg-ink);
+  --scene-b1: #D2B26A;
+  --scene-b2: #B8A1B4;
+  --scene-b3: #A9B59C;
+  --scene-chair: var(--pg-half);
+  --scene-top: var(--pg-ink);
+  --scene-top-hi: var(--pg-ink);
+  --scene-front: var(--pg-mid);
+  --scene-head: var(--pg-light);
+  --scene-head-stroke: var(--pg-light);
+  --scene-head-sw: 0;
+  --scene-body: var(--pg-half);
+  --scene-face: var(--pg-ink);
+  --scene-page: var(--pg-light);
+  --scene-lamp: var(--pg-ink);
+  --scene-lamp-on: var(--pg-ink);
+  --scene-lamp-off: var(--pg-half);
+  --scene-bulb-on: var(--pg-light);
+  --scene-bulb-brk: #D2B26A;
+  --scene-cone: color-mix(in srgb, var(--pg-light) 35%, transparent);
+  --scene-cone-op: 1;
+  --scene-pool: color-mix(in srgb, var(--pg-light) 75%, transparent);
+  --scene-warm: rgba(210,178,106,0.45);
+  --scene-mug: #D2B26A;
+  --scene-steam: var(--pg-ink);
+  --scene-line: none;
+  --scene-sw: 0;
+  --scene-plate-bg: var(--pg-light);
+  --scene-free-fg: var(--pg-ink);
+  --scene-dot-a: #000;
+  --scene-dot-b: #000;
+  --scene-dot-r: #000;
+  --scene-plate-border: var(--pg-light);
+  --scene-pill-work-bg: color-mix(in srgb, var(--pg-ink) 10%, transparent);
+  --scene-pill-work-fg: var(--pg-ink);
+  --scene-pill-break-bg: rgba(122,78,18,0.14);
+  --scene-pill-break-fg: #7A4E12;
 }
 /* Nel pigmento "carta" il testo secondario resta grigio pietra. */
 :root[data-theme="opaco"] [data-pigment="carta"] {
@@ -526,25 +656,84 @@
   --modal-border: 1px solid #C9D3E3;
   --shadow-pop: 0 4px 0 #DCE4F0;
   --focus-ring: 2px solid var(--accent);
-  /* Notes (notes-redesign.html): la pagina, il margine del quaderno, il post-it e i tasti. */
-  --note-page-bg: #FFFFFF;
-  --note-page-ink: #1B2433;
-  --note-page-pattern: linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 22px 22px, linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 22px 22px;
-  --note-page-border: 1px solid #C9D3E3;
-  --note-page-shadow: 0 3px 0 #C9D3E3;
-  --note-margin: #E8A0A0;
-  --note-postit-bg: #FFF1A8;
-  --note-postit-ink: #5C4E12;
-  --note-key-shadow: none;
-  /* Tinte pigmentate per blocchi, scelte delle colonne e chip (anche fuori da Opaco). */
-  --tint-salvia: #A9B59C;
-  --tint-salvia-ink: #1F2B1C;
-  --tint-blu: #9DB0C0;
-  --tint-blu-ink: #1B2A36;
-  --tint-senape: #D2B26A;
-  --tint-senape-ink: #3A2C0A;
-  --tint-malva: #B8A1B4;
-  --tint-malva-ink: #33213A;
+
+  /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
+  --group-work: var(--accent);
+  --group-break: var(--warn);
+  --group-off: var(--dot-off);
+  --group-rank-1: var(--accent);
+  --group-rank-2: var(--accent);
+  --group-rank-3: var(--accent);
+  --group-rank-n: var(--text-muted);
+  --group-seg-bg: var(--accent);
+  --group-seg-fg: var(--on-accent);
+  --group-seg-idle: var(--accent);
+  --group-me-bg: #FFF1A8;
+
+  /* Campi di testo e titolo delle finestre (docs/mockup-gruppi/gruppi/finestre.html). */
+  --field-bg: #FFFFFF;
+  --field-border: 1.5px solid #C9D3E3;
+  --field-focus: 1.5px solid #2340A0;
+  --field-error: 1.5px solid #B3261E;
+  --modal-title-weight: 600;
+
+  /* Avviso e azione distruttiva dei Gruppi (stati.html, impostazioni-stanza.html). */
+  --group-warn-fg: #5C3A08;
+  --group-warn-bg: #FFF1A8;
+  --group-warn-border: 0;
+  --group-danger-card: #FFFFFF;
+  --group-danger-border: 1.5px solid #B3261E;
+  --group-danger-soft: rgba(179, 38, 30, 0.08);
+
+  /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
+  --scene-bg: linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, #FCFDFF;
+  --scene-wall: transparent;
+  --scene-floor: transparent;
+  --scene-floor-line: #2340A0;
+  --scene-win: #FFFFFF;
+  --scene-win-frame: #2340A0;
+  --scene-win-sw: 2;
+  --scene-mullion: 1.6;
+  --scene-moon: #FFF1A8;
+  --scene-star: #2340A0;
+  --scene-shelf: #FFFFFF;
+  --scene-board: #2340A0;
+  --scene-b1: #FFFFFF;
+  --scene-b2: #EEF2FB;
+  --scene-b3: #FFF1A8;
+  --scene-chair: #FFFFFF;
+  --scene-top: #FFFFFF;
+  --scene-top-hi: #2340A0;
+  --scene-front: #FFFFFF;
+  --scene-head: #FFFFFF;
+  --scene-head-stroke: #2340A0;
+  --scene-head-sw: 1.6;
+  --scene-body: #FFFFFF;
+  --scene-face: #1B2433;
+  --scene-page: #FFFFFF;
+  --scene-lamp: #2340A0;
+  --scene-lamp-on: #FFFFFF;
+  --scene-lamp-off: #FFFFFF;
+  --scene-bulb-on: #FFD83D;
+  --scene-bulb-brk: #9A5B12;
+  --scene-cone: rgba(255,228,92,0.45);
+  --scene-cone-op: 1;
+  --scene-pool: rgba(255,228,92,0.8);
+  --scene-warm: rgba(154,91,18,0.10);
+  --scene-mug: #FFFFFF;
+  --scene-steam: #556178;
+  --scene-line: #2340A0;
+  --scene-sw: 1.6;
+  --scene-plate-bg: #FFFFFF;
+  --scene-free-fg: #556178;
+  --scene-dot-a: #000;
+  --scene-dot-b: #000;
+  --scene-dot-r: #000;
+  --scene-plate-border: #2340A0;
+  --scene-pill-work-bg: rgba(35,64,160,0.08);
+  --scene-pill-work-fg: #2340A0;
+  --scene-pill-break-bg: #FFF1A8;
+  --scene-pill-break-fg: #7A4A10;
 }
 
 /* Card "post-it" (il Companion in Quaderno): con il foglio della 1×1 del File transfer,
@@ -677,59 +866,82 @@
   --modal-border: 1px solid rgba(255, 214, 206, 0.12);
   --shadow-pop: 0 18px 48px rgba(0, 0, 0, 0.55);
   --focus-ring: 1px solid #F4E9E4;
-  /* Notes (notes-redesign.html): la pagina, il margine del quaderno, il post-it e i tasti. */
-  --note-page-bg: #0B0405;
-  --note-page-ink: #F2E6E1;
-  --note-page-pattern: radial-gradient(rgba(255, 230, 220, 0.07) 1px, transparent 1.3px) 0 0 / 7px 7px;
-  --note-page-border: 1px solid rgba(255, 214, 206, 0.1);
-  --note-page-shadow: none;
-  --note-margin: transparent;
-  --note-postit-bg: #FFF1A8;
-  --note-postit-ink: #5C4E12;
-  --note-key-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.28);
-  /* Tinte pigmentate per blocchi, scelte delle colonne e chip (anche fuori da Opaco). */
-  --tint-salvia: #2A3324;
-  --tint-salvia-ink: #CFE0C2;
-  --tint-blu: #22303D;
-  --tint-blu-ink: #CFE0EE;
-  --tint-senape: #3D2F12;
-  --tint-senape-ink: #F0D9A0;
-  --tint-malva: #36263A;
-  --tint-malva-ink: #EBD7E8;
-}
 
-/* ==========================================================================
-   NOTES: palette di pagine, testo ed evidenziatore — variante GIORNO
-   (la notte è in tokens-varianti.css). Dipendono solo dalla variante, non dal
-   tema: una pagina crema resta leggibile in ogni tema. .nq-export-light forza
-   i valori del giorno nell'esportazione con "sfondo chiaro".
-   ========================================================================== */
-:root[data-mode="giorno"],
-.nq-export-light {
-  --nq-page-crema-bg: #FBF3DC;
-  --nq-page-crema-ink: #3A3220;
-  --nq-page-salvia-bg: #E4EBDC;
-  --nq-page-salvia-ink: #24301F;
-  --nq-page-cielo-bg: #DFE9F6;
-  --nq-page-cielo-ink: #1B2A3A;
-  --nq-page-rosa-bg: #F7E4E8;
-  --nq-page-rosa-ink: #3A2026;
-  --nq-page-grafite-bg: #2B2E33;
-  --nq-page-grafite-ink: #ECEDEF;
+  /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
+  --group-work: var(--danger);
+  --group-break: var(--text-secondary);
+  --group-off: var(--dot-off);
+  --group-me-bg: var(--surface-2);
+  --group-rank-1: var(--danger);
+  --group-rank-2: var(--text-soft);
+  --group-rank-3: var(--text-soft);
+  --group-rank-n: var(--text-muted);
+  --group-seg-bg: var(--nav-active-bg);
+  --group-seg-fg: var(--nav-active-fg);
+  --group-seg-idle: var(--text-secondary);
 
-  --nq-ink-rosso: #C0392B;
-  --nq-ink-arancio: #B35C0A;
-  --nq-ink-verde: #2E7D4F;
-  --nq-ink-blu: #2456B8;
-  --nq-ink-viola: #7B3FB0;
-  --nq-ink-grigio: #5F6670;
+  /* Campi di testo e titolo delle finestre (docs/mockup-gruppi/gruppi/finestre.html). */
+  --field-bg: #0B0405;
+  --field-border: 1px solid rgba(255, 214, 206, 0.12);
+  --field-focus: 1px solid rgba(255, 214, 206, 0.5);
+  --field-error: 1px solid #FF4A3D;
+  --modal-title-weight: 400;
 
-  /* Evidenziatore: colore pieno, mescolato al fondo della pagina in proporzione --nq-mark-strength. */
-  --nq-mark-giallo: #FFD600;
-  --nq-mark-verde: #3FBF6F;
-  --nq-mark-azzurro: #4D9CFF;
-  --nq-mark-rosa: #FF6FA5;
-  --nq-mark-arancio: #FF9A2E;
-  --nq-mark-viola: #A77BFF;
-  --nq-mark-strength: 48%;
+  /* Avviso e azione distruttiva dei Gruppi (stati.html, impostazioni-stanza.html). */
+  --group-warn-fg: #F4E9E4;
+  --group-warn-bg: rgba(255, 74, 61, 0.10);
+  --group-warn-border: 1px solid rgba(255, 74, 61, 0.4);
+  --group-danger-card: rgba(26, 13, 15, 0.9);
+  --group-danger-border: 1px solid rgba(255, 74, 61, 0.4);
+  --group-danger-soft: rgba(255, 74, 61, 0.12);
+
+  /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
+  --scene-bg: radial-gradient(rgba(255,230,220,0.07) 1px, transparent 1.3px) 0 0 / 7px 7px, #0B0405;
+  --scene-wall: transparent;
+  --scene-floor: transparent;
+  --scene-floor-line: rgba(255,214,206,0.2);
+  --scene-win: url(#room-fz-b);
+  --scene-win-frame: none;
+  --scene-win-sw: 0;
+  --scene-mullion: 0;
+  --scene-moon: url(#room-fz-a);
+  --scene-star: #F4E9E4;
+  --scene-shelf: transparent;
+  --scene-board: url(#room-fz-b);
+  --scene-b1: url(#room-fz-a);
+  --scene-b2: url(#room-fz-b);
+  --scene-b3: url(#room-fz-b);
+  --scene-chair: url(#room-fz-b);
+  --scene-top: url(#room-fz-a);
+  --scene-top-hi: url(#room-fz-a);
+  --scene-front: url(#room-fz-b);
+  --scene-head: #0B0405;
+  --scene-head-stroke: rgba(255,214,206,0.35);
+  --scene-head-sw: 1;
+  --scene-body: url(#room-fz-b);
+  --scene-face: #F4E9E4;
+  --scene-page: url(#room-fz-a);
+  --scene-lamp: rgba(255,214,206,0.4);
+  --scene-lamp-on: url(#room-fz-a);
+  --scene-lamp-off: url(#room-fz-b);
+  --scene-bulb-on: #FF4A3D;
+  --scene-bulb-brk: #B39C97;
+  --scene-cone: url(#room-fz-r);
+  --scene-cone-op: 0.55;
+  --scene-pool: url(#room-fz-r);
+  --scene-warm: rgba(255,214,206,0.06);
+  --scene-mug: url(#room-fz-a);
+  --scene-steam: #B39C97;
+  --scene-line: none;
+  --scene-sw: 0;
+  --scene-plate-bg: #0B0405;
+  --scene-free-fg: #8E7A76;
+  --scene-dot-a: rgba(244,233,228,0.75);
+  --scene-dot-b: rgba(255,214,206,0.26);
+  --scene-dot-r: #FF4A3D;
+  --scene-plate-border: rgba(255,214,206,0.2);
+  --scene-pill-work-bg: rgba(255,74,61,0.12);
+  --scene-pill-work-fg: #FF6B60;
+  --scene-pill-break-bg: rgba(255,214,206,0.07);
+  --scene-pill-break-fg: #B39C97;
 }

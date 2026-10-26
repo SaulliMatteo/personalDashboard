@@ -1,4 +1,4 @@
-# Dipendenze e build
+Dipendenze e build
 node_modules
 dist
 dist-ssr
@@ -6,50 +6,70 @@ dist-ssr
 *.tsbuildinfo
 .vite
 
-# Rust / Tauri (la cartella target pesa gigabyte)
+Rust / Tauri (la cartella target pesa gigabyte)
 src-tauri/target
 src-tauri/gen/schemas
 
-# Log
+Log
 logs
-*.log
-npm-debug.log*
+.log
+npm-debug.log
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Segreti e configurazioni locali
+Segreti e configurazioni locali
 .env
 .env.*
-!.env.example
 
-# Database locali (non vanno mai nel repo)
+
+Supabase CLI (stato locale, link al progetto, credenziali)
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+supabase/.env.*
+supabase/*/.local.*
+
+Credenziali e dump (mai nel repo)
+*.pem
+.key
+credentials.json
+service-account.json
+client_secret.json
+*.dump
+.sql.gz
+dump.sql
+
+Database locali (non vanno mai nel repo)
 *.db
 *.db-journal
 *.db-wal
 *.db-shm
 *.sqlite
-*.sqlite3
+.sqlite3
 
-# Editor
-.vscode/*
+Editor
+.vscode/
 !.vscode/extensions.json
 .idea
 *.suo
-*.ntvs*
+.ntvs
 *.njsproj
 *.sln
 *.sw?
 
-# Sistema operativo
+Sistema operativo
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Istruzioni locali per Claude
+Istruzioni locali per Claude
 CLAUDE.local.md
-# Build Android (output di Gradle, si rigenera)
-src-tauri/gen/android/app/build/
-src-tauri/gen/android/build/
-src-tauri/gen/android/.gradle/
+
+Documentazione, mockup e prompt: solo in locale (vedi CLAUDE.md)
+docs
+
+Progetto Android generato da Tauri (tauri android init lo ricrea), con i suoi output di Gradle
+src-tauri/gen/
+\

@@ -18,6 +18,23 @@ export interface StudySpan {
   end: number;
 }
 
+/**
+ * Il timer di Studio così com'è adesso, per chi deve ricostruirlo altrove (i Gruppi lo mandano ai compagni).
+ * Tempi in ms dell'orologio LOCALE. Cambia oggetto solo quando cambia lo stato, mai a ogni secondo.
+ */
+export interface StudyTimerSnapshot {
+  phase: "work" | "break";
+  mode: "pomodoro" | "stopwatch";
+  /** Da quando la fase scorre; null = in pausa. */
+  runningSince: number | null;
+  /** Durata nominale della fase (0 nel cronometro). */
+  phaseTotalSeconds: number;
+  /** Secondi già fatti nella fase prima di runningSince. */
+  accumulatedSeconds: number;
+  /** Quando è cambiato l'ultima volta lo stato (avvio, pausa, ripresa, nuova fase). */
+  changedAt: number;
+}
+
 export interface ActivityStatus {
   /** Timer di Studio in fase di lavoro E in corsa. */
   studying: boolean;
@@ -41,6 +58,8 @@ export interface ActivityStatus {
   studyTodaySeconds: number;
   /** Sessioni di studio concluse oggi, in ordine di tempo (linea "La tua giornata"). */
   studyTodaySpans: readonly StudySpan[];
+  /** Timer di Studio avviato (anche in pausa); null = fermo. */
+  studyTimer: StudyTimerSnapshot | null;
 }
 
 export type ActivityEvent =
@@ -64,6 +83,7 @@ const IDLE: ActivityStatus = {
   weatherTemperature: null,
   studyTodaySeconds: 0,
   studyTodaySpans: [],
+  studyTimer: null,
 };
 
 let status: ActivityStatus = IDLE;

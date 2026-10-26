@@ -1,4 +1,4 @@
-import type { ThemeVariants } from "../../../core/theme/variants";
+import type { ThemeVariants } from "../../theme/variants";
 import type { FaceFrame } from "../engine/animator";
 import { drawLedFace } from "./ledRenderer";
 import { drawSolidFace } from "./solidRenderer";

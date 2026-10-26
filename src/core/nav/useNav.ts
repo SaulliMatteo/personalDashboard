@@ -11,6 +11,8 @@ import { createContext, useContext } from "react";
 export type AppView =
   | { type: "dashboard" }
   | { type: "catalog" }
+  /** Stanza comune dei Gruppi (src/social/room/). */
+  | { type: "room" }
   | { type: "settings"; section: string }
   | { type: "widgetDetail"; widgetId: string };
 
@@ -18,6 +20,7 @@ export interface NavContextValue {
   view: AppView;
   goToDashboard: () => void;
   goToCatalog: () => void;
+  openRoom: () => void;
   /** Apre la pagina Impostazioni su una sezione (default "appearance"; per un widget "widget:<id>"). */
   openSettings: (section?: string) => void;
   openWidgetDetail: (widgetId: string) => void;

@@ -47,6 +47,10 @@ jobs:
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Gruppi (opzionale, vedi docs/GRUPPI.md): valori pubblici per progetto, letti dai Secrets del repo e mai
+          # scritti nel repo. Se mancano, la build esce in solo locale ("Gruppi non configurati").
+          VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         with:
           tagName: ${{ github.ref_type == 'tag' && github.ref_name || 'app-v__VERSION__' }}
           releaseName: "personalDashboard v__VERSION__"

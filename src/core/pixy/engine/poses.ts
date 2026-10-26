@@ -12,52 +12,55 @@ import type { PersonalityId, PhraseKey } from "./personalities";
  */
 
 /** Disegni che si aggiungono alla faccia (o la sostituiscono, come la fiamma). */
-export type CostumeId =
-  | "flame"
-  | "snow"
-  | "nightcap"
-  | "blanket"
-  | "book"
-  | "book_math"
-  | "book_science"
-  | "book_lang"
-  | "book_history"
-  | "book_art"
-  | "book_code"
-  | "headphones"
-  | "headset"
-  | "chat"
-  | "glasses"
-  | "beret"
-  | "gamepad"
-  | "sword"
-  | "scroll"
-  | "opera"
-  | "pickaxe"
-  | "crosshair"
-  | "popcorn"
-  | "play"
-  | "live"
-  | "webcam"
-  | "plane"
-  | "sheet"
-  | "slides"
-  | "cube"
-  | "equalizer"
-  | "ai"
-  | "folder"
-  | "scared"
-  | "tears"
-  | "glasses3d"
-  | "progress"
-  | "pause"
-  | "confetti";
+export const COSTUME_IDS = [
+  "flame",
+  "snow",
+  "nightcap",
+  "blanket",
+  "book",
+  "book_math",
+  "book_science",
+  "book_lang",
+  "book_history",
+  "book_art",
+  "book_code",
+  "headphones",
+  "headset",
+  "chat",
+  "glasses",
+  "beret",
+  "gamepad",
+  "sword",
+  "scroll",
+  "opera",
+  "pickaxe",
+  "crosshair",
+  "popcorn",
+  "play",
+  "live",
+  "webcam",
+  "plane",
+  "sheet",
+  "slides",
+  "cube",
+  "equalizer",
+  "ai",
+  "folder",
+  "scared",
+  "tears",
+  "glasses3d",
+  "progress",
+  "pause",
+  "confetti",
+] as const;
+export type CostumeId = (typeof COSTUME_IDS)[number];
 
 /**
  * Dove guarda: "face" = lo sguardo dell'espressione; "upRight" = verso un
  * oggetto in alto a destra; "kernel", "aim", "plane" seguono il costume.
  */
-export type GazeMode = "wander" | "read" | "screen" | "down" | "sleep" | "fixed" | "face" | "upRight" | "scan" | "kernel" | "aim" | "plane" | "away";
+export const GAZE_MODES = ["wander", "read", "screen", "down", "sleep", "fixed", "face", "upRight", "scan", "kernel", "aim", "plane", "away"] as const;
+export type GazeMode = (typeof GAZE_MODES)[number];
 
 export interface PoseSpec {
   /** Stato mostrato sotto il nome (card, mini, pagina). */

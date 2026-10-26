@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #define LINE_MAX_LEN   4096
 #define CHUNK          65536
@@ -187,6 +188,38 @@ static void serve_static_file(SOCKET s, const char *web_dir, const char *req_pat
 
 // ---------- upload ----------
 
+#define MAX_NAME_TRIES 10000
+
+// Crea il file senza mai sovrascriverne uno esistente: le foto scattate dalla
+// fotocamera dell'iPad arrivano tutte con lo stesso nome (es. "image.jpg"), quindi
+// se il nome è già preso si prova "image (1).jpg", "image (2).jpg"... La modalità
+// "wbx" fallisce se il file esiste già, così anche due upload contemporanei con lo
+// stesso nome finiscono in due file diversi. In `file_name` resta il nome usato.
+static FILE *create_unique_file(const char *upload_dir, char *file_name, size_t name_size,
+                                char *full_path, size_t path_size) {
+    char base[HTTP_MAX_NAME];
+    strncpy(base, file_name, sizeof(base) - 1);
+    base[sizeof(base) - 1] = '\0';
+
+    // Estensione dall'ultimo punto, ma non per i nomi che iniziano col punto (".bashrc").
+    const char *dot = strrchr(base, '.');
+    const char *ext = (dot && dot != base) ? dot : "";
+    int stem_len = (int)(strlen(base) - strlen(ext));
+
+    for (int i = 0; i < MAX_NAME_TRIES; i++) {
+        if (i == 0)
+            snprintf(file_name, name_size, "%s", base);
+        else
+            snprintf(file_name, name_size, "%.*s (%d)%s", stem_len, base, i, ext);
+        snprintf(full_path, path_size, "%s/%s", upload_dir, file_name);
+
+        FILE *f = fopen(full_path, "wbx");
+        if (f) return f;
+        if (errno != EEXIST) return NULL;
+    }
+    return NULL;
+}
+
 static void handle_upload(SOCKET s, const http_request *req, const char *upload_dir) {
     if (req->content_length < 0) {
         send_text_response(s, 400, "Bad Request", "text/plain", "Content-Length mancante");
@@ -203,9 +236,7 @@ static void handle_upload(SOCKET s, const http_request *req, const char *upload_
 
     make_dir(upload_dir);
     char full_path[1024];
-    snprintf(full_path, sizeof(full_path), "%s/%s", upload_dir, file_name);
-
-    FILE *f = fopen(full_path, "wb");
+    FILE *f = create_unique_file(upload_dir, file_name, sizeof(file_name), full_path, sizeof(full_path));
     if (!f) {
         send_text_response(s, 500, "Internal Server Error", "text/plain", "impossibile creare il file");
         return;
@@ -226,6 +257,7 @@ static void handle_upload(SOCKET s, const http_request *req, const char *upload_
     fclose(f);
 
     if (!ok) {
+        remove(full_path); // niente file a metà nella cartella
         send_text_response(s, 500, "Internal Server Error", "text/plain", "trasferimento interrotto");
         return;
     }
