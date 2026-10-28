@@ -364,6 +364,7 @@
 }
 
 :root[data-theme="opaco"] .ft-file-row.is-selected,
+:root[data-theme="opaco"] .ft-file-row.is-selected .ft-file-name,
 :root[data-theme="opaco"] .ft-file-row.is-selected .ft-file-meta {
   color: var(--on-accent);
 }
@@ -445,7 +446,7 @@
   overflow: auto;
   margin: 0 0 8px;
   padding: 12px 14px;
-  border-radius: var(--radius-item);
+  border-radius: min(var(--radius-item), 12px);
   background: var(--surface-1);
   color: var(--text-primary);
   font-family: ui-monospace, Menlo, Consolas, monospace;
@@ -463,16 +464,18 @@
   justify-content: center;
   max-height: 380px;
   padding: 10px;
-  border-radius: var(--radius-item);
+  /* In Opaco e Fosforo --radius-item è a pillola (999px): sulla cornice taglierebbe la foto. */
+  border-radius: min(var(--radius-item), 12px);
   background: var(--surface-1);
   overflow: hidden;
 }
 
+/* La foto si vede sempre intera: niente angoli arrotondati che ne tolgano un pezzo. */
 .ft-image-frame img {
   max-width: 100%;
   max-height: 360px;
   object-fit: contain;
-  border-radius: 6px;
+  border-radius: 0;
 }
 
 /* Numero grande nella misura delle card File di ogni tema. */
