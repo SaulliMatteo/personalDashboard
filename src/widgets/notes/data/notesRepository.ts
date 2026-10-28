@@ -1,5 +1,6 @@
 import { getDatabase } from "../../../core/db";
-
+import { asPageColor } from "../lib/pageColor";
+import { isNoteFont, type NoteFont } from "../lib/textStyle";
 // ---------------------------------------------------------------------
 // Tipi
 // ---------------------------------------------------------------------
@@ -44,6 +45,8 @@ export interface NoteSummary {
   diskPath: string | null;
   /** Quando la copia su disco è stata aggiornata l'ultima volta (null = da riscrivere). */
   syncedAt: number | null;
+  /** Font predefinito della nota (null = quello del tema). */
+  font: NoteFont | null;
 }
 
 interface NoteRow {
@@ -59,6 +62,7 @@ interface NoteRow {
   page_count: number;
   disk_path: string | null;
   synced_at: number | null;
+  font: string | null;
 }
 
 /** Un tratto di scrittura a mano. Coordinate normalizzate sulla LARGHEZZA della pagina (0..1). */
@@ -77,6 +81,7 @@ export interface NotePage {
   content: string;
   ink: InkStroke[];
   background: PageBackground;
+  color: string | null;
 }
 
 export interface Attachment {
@@ -185,7 +190,7 @@ export async function deleteFolders(ids: number[]): Promise<void> {
 export async function listNotes(): Promise<NoteSummary[]> {
   const db = await getDatabase();
   const rows = await db.select<NoteRow[]>(
-    `SELECT n.id, n.folder_id, n.title, n.tags, n.starred, n.created_at, n.updated_at, n.deleted_at, n.disk_path, n.synced_at,
+    `SELECT n.id, n.folder_id, n.title, n.tags, n.starred, n.created_at, n.updated_at, n.deleted_at, n.disk_path, n.synced_at, n.font,
             (SELECT substr(p.content, 1, 4000) FROM note_pages p WHERE p.note_id = n.id ORDER BY p.position LIMIT 1) AS first_content,
             (SELECT COUNT(*) FROM note_pages p WHERE p.note_id = n.id) AS page_count
      FROM notes n
@@ -204,6 +209,7 @@ export async function listNotes(): Promise<NoteSummary[]> {
     pageCount: r.page_count,
     diskPath: r.disk_path,
     syncedAt: r.synced_at,
+    font: isNoteFont(r.font) && r.font !== "punti" ? r.font : null,
   }));
 }
 
@@ -211,6 +217,7 @@ export interface NewPageInput {
   content: string;
   ink: InkStroke[];
   background: PageBackground;
+  color?: string | null;
 }
 
 export interface NewNoteInput {
@@ -245,6 +252,7 @@ export async function createNote(folderId: number | null, input: NewNoteInput = 
 }
 
 export interface ImportedNote extends NewNoteInput {
+  font?: NoteFont | null;
   folderId: number | null;
   starred: boolean;
   createdAt: number;
@@ -257,8 +265,8 @@ export interface ImportedNote extends NewNoteInput {
 export async function insertImportedNote(input: ImportedNote): Promise<number> {
   const db = await getDatabase();
   const result = await db.execute(
-    `INSERT INTO notes (folder_id, title, tags, starred, created_at, updated_at, deleted_at, disk_path, synced_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO notes (folder_id, title, tags, starred, created_at, updated_at, deleted_at, disk_path, synced_at, font)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       input.folderId,
       input.title,
@@ -269,6 +277,7 @@ export async function insertImportedNote(input: ImportedNote): Promise<number> {
       input.deletedAt,
       input.diskPath,
       Date.now(),
+      input.font ?? null,
     ]
   );
   const id = result.lastInsertId;
@@ -276,8 +285,8 @@ export async function insertImportedNote(input: ImportedNote): Promise<number> {
   for (let i = 0; i < input.pages.length; i++) {
     const p = input.pages[i];
     await db.execute(
-      `INSERT INTO note_pages (note_id, position, content, ink, background) VALUES (?, ?, ?, ?, ?)`,
-      [id, i, p.content, JSON.stringify(p.ink), p.background]
+      `INSERT INTO note_pages (note_id, position, content, ink, background, color) VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, i, p.content, JSON.stringify(p.ink), p.background, p.color ?? null]
     );
   }
   return id;
@@ -288,6 +297,7 @@ export interface NotePatch {
   tags?: string[];
   starred?: boolean;
   folderId?: number | null;
+  font?: NoteFont | null;
 }
 
 /** `touch` = aggiorna anche "ultima modifica" (non serve per preferiti/spostamenti). */
@@ -309,6 +319,10 @@ export async function updateNote(id: number, patch: NotePatch, touch = true): Pr
   if (patch.folderId !== undefined) {
     sets.push("folder_id = ?");
     values.push(patch.folderId);
+  }
+  if (patch.font !== undefined) {
+    sets.push("font = ?");
+    values.push(patch.font);
   }
   if (sets.length === 0) return;
   if (touch) {
@@ -348,13 +362,12 @@ export async function emptyTrash(ids: number[]): Promise<void> {
 // ---------------------------------------------------------------------
 // Pagine
 // ---------------------------------------------------------------------
-
 export async function getPages(noteId: number): Promise<NotePage[]> {
   const db = await getDatabase();
   const rows = await db.select<
-    { id: number; note_id: number; position: number; content: string; ink: string; background: string | null }[]
+    { id: number; note_id: number; position: number; content: string; ink: string; background: string | null; color: string | null }[]
   >(
-    `SELECT id, note_id, position, content, ink, background FROM note_pages WHERE note_id = ? ORDER BY position, id`,
+    `SELECT id, note_id, position, content, ink, background, color FROM note_pages WHERE note_id = ? ORDER BY position, id`,
     [noteId]
   );
   return rows.map((r) => ({
@@ -364,10 +377,11 @@ export async function getPages(noteId: number): Promise<NotePage[]> {
     content: r.content,
     ink: parseInk(r.ink),
     background: parseBackground(r.background),
+    color: asPageColor(r.color),
   }));
 }
 
-export async function addPage(noteId: number, background: PageBackground = "none"): Promise<NotePage> {
+export async function addPage(noteId: number, background: PageBackground = "none", color: string | null = null): Promise<NotePage> {
   const db = await getDatabase();
   const rows = await db.select<{ next: number | null }[]>(
     `SELECT MAX(position) + 1 AS next FROM note_pages WHERE note_id = ?`,
@@ -375,11 +389,11 @@ export async function addPage(noteId: number, background: PageBackground = "none
   );
   const position = rows[0]?.next ?? 0;
   const result = await db.execute(
-    `INSERT INTO note_pages (note_id, position, content, ink, background) VALUES (?, ?, '<p><br></p>', '[]', ?)`,
-    [noteId, position, background]
+    `INSERT INTO note_pages (note_id, position, content, ink, background, color) VALUES (?, ?, '<p><br></p>', '[]', ?, ?)`,
+    [noteId, position, background, color]
   );
   if (result.lastInsertId == null) throw new Error("Pagina non creata");
-  return { id: result.lastInsertId, noteId, position, content: "<p><br></p>", ink: [], background };
+  return { id: result.lastInsertId, noteId, position, content: "<p><br></p>", ink: [], background, color };
 }
 
 export async function savePage(pageId: number, noteId: number, content: string, ink: InkStroke[]): Promise<void> {
@@ -444,4 +458,17 @@ export async function addAttachment(noteId: number, name: string, size: number):
 export async function deleteAttachment(id: number): Promise<void> {
   const db = await getDatabase();
   await db.execute(`DELETE FROM note_attachments WHERE id = ?`, [id]);
+}
+
+/** Lo stesso colore su tutte le pagine della nota ("Applica a tutte le pagine"). */
+export async function setPagesColor(noteId: number, color: string | null): Promise<void> {
+  const db = await getDatabase();
+  await db.execute(`UPDATE note_pages SET color = ? WHERE note_id = ?`, [color, noteId]);
+  await db.execute(`UPDATE notes SET updated_at = ? WHERE id = ?`, [Date.now(), noteId]);
+}
+
+export async function setPageColor(pageId: number, noteId: number, color: string | null): Promise<void> {
+  const db = await getDatabase();
+  await db.execute(`UPDATE note_pages SET color = ? WHERE id = ?`, [color, pageId]);
+  await db.execute(`UPDATE notes SET updated_at = ? WHERE id = ?`, [Date.now(), noteId]);
 }

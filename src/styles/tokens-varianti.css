@@ -462,6 +462,11 @@
   --main-bg: linear-gradient(#1C2330 1px, transparent 1px) 0 0 / 24px 24px,
     linear-gradient(90deg, #1C2330 1px, transparent 1px) 0 0 / 24px 24px, #121620;
   --paper-margin: #8A3F45;
+  /* Foglio a righe (cella 1×1 del File transfer). */
+  --sheet-bg: #222A3A;
+  --sheet-rule: #2C3446;
+  --sheet-edge: #3A4459;
+  --sheet-shadow: #0B0E15;
   --bg-sidebar: #1A1F2B;
   --sidebar-border: 1px solid #262D3B;
   --sidebar-width: 216px;
@@ -895,4 +900,37 @@
   --preview-fosforo-giorno-b: #FDFAF8;
   --preview-fosforo-giorno-border: 1px solid rgba(70, 24, 28, 0.2);
   --preview-fosforo-giorno-radius: 4px;
+}
+
+/* ==========================================================================
+   NOTES: palette di pagine, testo ed evidenziatore — variante NOTTE
+   (il giorno è in tokens.css).
+   ========================================================================== */
+:root[data-mode="notte"] {
+  --nq-page-crema-bg: #2B261A;
+  --nq-page-crema-ink: #F1E6C8;
+  --nq-page-salvia-bg: #1F2A1D;
+  --nq-page-salvia-ink: #DCE8D2;
+  --nq-page-cielo-bg: #18222F;
+  --nq-page-cielo-ink: #D8E5F4;
+  --nq-page-rosa-bg: #2C1D22;
+  --nq-page-rosa-ink: #F3DCE2;
+  --nq-page-grafite-bg: #3A3D44;
+  --nq-page-grafite-ink: #EEF0F3;
+
+  --nq-ink-rosso: #FF8A80;
+  --nq-ink-arancio: #FFB366;
+  --nq-ink-verde: #7DD3A0;
+  --nq-ink-blu: #8EB4FF;
+  --nq-ink-viola: #C9A2FF;
+  --nq-ink-grigio: #A9AFBA;
+
+  /* Evidenziatore: colore pieno, mescolato al fondo della pagina in proporzione --nq-mark-strength. */
+  --nq-mark-giallo: #FFD600;
+  --nq-mark-verde: #3FBF6F;
+  --nq-mark-azzurro: #4D9CFF;
+  --nq-mark-rosa: #FF6FA5;
+  --nq-mark-arancio: #FF9A2E;
+  --nq-mark-viola: #A77BFF;
+  --nq-mark-strength: 34%;
 }

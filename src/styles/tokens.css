@@ -576,6 +576,11 @@
   --main-bg: linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 24px 24px,
     linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, #FCFDFF;
   --paper-margin: #F2A9A9;
+  /* Foglio a righe (cella 1×1 del File transfer). */
+  --sheet-bg: #FFFFFF;
+  --sheet-rule: #DCE6F5;
+  --sheet-edge: #C9D3E3;
+  --sheet-shadow: #DCE4F0;
   --bg-sidebar: #FFFFFF;
   --sidebar-border: 1px solid #D6DEEA;
   --sidebar-width: 216px;
@@ -768,7 +773,8 @@
   --scene-pill-break-fg: #7A4A10;
 }
 
-/* Card "post-it" (il Companion in Quaderno): l'unico elemento ruotato. */
+/* Card "post-it" (il Companion in Quaderno): con il foglio della 1×1 del File transfer,
+   l'unico elemento ruotato. */
 :root[data-theme="quaderno"] .card-postit {
   --card-bg: var(--postit-bg);
   --card-border: 0;

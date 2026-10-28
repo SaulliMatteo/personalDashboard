@@ -1,0 +1,205 @@
+/* Lavagna in dashboard (mockup docs/design/temi/lavagna.html, sezione 1; 1×1 come widget-1x1.html). */
+
+.widget.wb-cell {
+  position: relative;
+  color: var(--text-primary);
+}
+
+.wb-cell .wb-glyph {
+  height: auto;
+}
+
+/* ---------- 1×1: solo il tratto, didascalia sotto (in Opaco niente didascalia) ---------- */
+
+.widget.wbw-S {
+  padding: 0;
+}
+
+.wbw-S-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 0 0 10px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.wbw-S-btn .wb-glyph {
+  width: 62%;
+}
+
+.wbw-S-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -4px;
+}
+
+.wbw-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+:root[data-theme="opaco"] .wbw-S-btn {
+  padding: 0;
+}
+
+:root[data-theme="opaco"] .wbw-S-btn .wb-glyph {
+  width: 66%;
+}
+
+:root[data-theme="opaco"] .wbw-cap {
+  display: none;
+}
+
+/* Fosforo: la cella è un display a puntini, come Studio 1×1. */
+:root[data-theme="fosforo"] .wbw-S-btn {
+  background: var(--display-texture), var(--display-bg);
+}
+
+/* ---------- 2×1: tratto + nome + "uscendo si cancella" ---------- */
+
+.widget.wbw-W {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  padding: 14px;
+}
+
+.wbw-W-art {
+  flex: 0 0 auto;
+  aspect-ratio: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--display-border);
+  border-radius: var(--radius-display);
+  background: var(--display-texture), var(--display-bg);
+}
+
+.wbw-W-art .wb-glyph {
+  width: 70%;
+}
+
+.wbw-W-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.wbw-W h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.wbw-W p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+/* Opaco: niente riquadro, titolo pesante, tratto grande sul pigmento. */
+:root[data-theme="opaco"] .widget.wbw-W {
+  flex-direction: row-reverse;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 18px 12px 18px 22px;
+}
+
+:root[data-theme="opaco"] .wbw-W-art {
+  border: 0;
+  background: none;
+}
+
+:root[data-theme="opaco"] .wbw-W-art .wb-glyph {
+  width: 82%;
+}
+
+:root[data-theme="opaco"] .wbw-W-text {
+  justify-content: space-between;
+}
+
+:root[data-theme="opaco"] .wbw-W h2 {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+:root[data-theme="opaco"] .wbw-W p {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Quaderno: titolo a mano sottolineato (come Notes), tratto direttamente sul foglio. */
+.widget.wbw-W--sheet {
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 18px 14px 20px;
+}
+
+.wbw-W-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 2px;
+  border-bottom: 2px solid var(--accent);
+}
+
+.wbw-W-head h2 {
+  font-family: var(--font-title);
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.wbw-W-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wbw-W--sheet .wbw-W-art {
+  border: 0;
+  background: none;
+}
+
+.wbw-W--sheet .wbw-W-art .wb-glyph {
+  width: 92%;
+}
+
+.wbw-W--sheet p {
+  font-size: 13px;
+}
+
+/* Fosforo: display a puntini a sinistra, testo mono a destra. */
+:root[data-theme="fosforo"] .widget.wbw-W {
+  padding: 12px;
+}
+
+:root[data-theme="fosforo"] .wbw-W h2 {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+:root[data-theme="fosforo"] .wbw-W p {
+  font-size: 12px;
+}

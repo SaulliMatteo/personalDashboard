@@ -6,6 +6,7 @@
   "remote": { "urls": ["http://localhost:14321"] },
   "permissions": [
     "core:default",
+    "core:window:allow-set-fullscreen",
     "sql:default",
     "sql:allow-execute",
     "notification:default",

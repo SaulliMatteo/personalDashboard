@@ -3,7 +3,7 @@ import type { SubjectLink, SubjectSessionSpan } from "../subjects/subjectPlan";
 
 /*
  * Report per materie, lato locale: le materie e le sessioni del widget Studio (solo lettura, come
- * studyTotalsRepository) e gli abbinamenti dei Gruppi (tabella group_subject_links, migrazione 11). Tutto qui resta
+ * studyTotalsRepository) e gli abbinamenti dei Gruppi (tabella group_subject_links, migrazione 14). Tutto qui resta
  * sul computer: al server vanno solo i secondi per materia del gruppo.
  */
 
@@ -31,7 +31,7 @@ export async function getSubjectSessionsBetween(startMs: number, endMs: number):
   return rows.map((r) => ({ endedAt: r.ended_at, durationSeconds: r.duration_seconds, subjectId: r.subject_id }));
 }
 
-/** Gli abbinamenti dell'account; quelli di materie locali che non esistono più si tolgono (niente FK, vedi la v11). */
+/** Gli abbinamenti dell'account; quelli di materie locali che non esistono più si tolgono (niente FK, vedi la v14). */
 export async function loadSubjectLinks(userId: string): Promise<SubjectLink[]> {
   const db = await getDatabase();
   await db.execute(

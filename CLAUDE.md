@@ -130,12 +130,12 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
 
 ## Design
 
-- I mockup approvati sono in `docs/design/temi/` e sono la fonte di verità per la grafica:
+- I mockup approvati sono in `temi-dashboard/docs/design/temi/` e sono la fonte di verità per la grafica:
   l'app deve risultare identica. Se codice e mockup non concordano, vale il mockup.
 - Ogni colore viene dai token del tema: niente esadecimali nei componenti (eccezione: colori scelti dall'utente,
   come materie e cartelle).
 - Ogni nuovo widget deve funzionare in tutti e 4 i temi (Notte, Opaco, Quaderno, Fosforo), giorno e notte, e avere una taglia 1×1
-  ultra minimal (vedi `docs/design/temi/widget-1x1.html`).
+  ultra minimal (vedi `temi-dashboard/docs/design/temi/widget-1x1.html`).
 - Anche le pagine di dettaglio dei widget usano il linguaggio completo del tema (parti per tema, non solo colori).
 
 ## Lavori in corso
@@ -161,6 +161,10 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
 - `tauri-plugin-notification` è pinnato `=2.4.0` (e `tauri-winrt-notification` `=0.8.1`, la versione che usa) perché la 2.5 richiede `tauri ^2.12` (il progetto usa `2.11.3`):
   non aggiornarlo senza controllare il manifesto su crates.io. Idem `tauri-plugin-localhost` (`=2.3.1`, la 2.4 vuole `^2.12`),
   `tauri-plugin-deep-link` (`=2.4.10`, anche npm) e `tauri-plugin-single-instance` (`=2.4.5`); `tauri` stesso è `=2.11.3`.
+- `@excalidraw/excalidraw` (Lavagna) è pinnato `0.18.1`: i font si servono offline da `public/excalidraw-assets/fonts/`
+  (copiati da `scripts/copy-excalidraw-assets.mjs` in `predev`/`prebuild`, `EXCALIDRAW_ASSET_PATH` in
+  `widgets/whiteboard/lib/excalidrawAssets.ts`) e cartelle/nomi dei font cambiano tra versioni; se manca un file
+  Excalidraw ripiega su esm.sh. Aggiornandolo, ricontrollare che nessuna richiesta esca in rete.
 - Su macOS l'app installata serve il frontend da `http://localhost:14321` (`tauri-plugin-localhost`, `src/lib.rs`):
   da `tauri://localhost` YouTube rifiuta il player (errore 153, niente referrer). La porta è anche in
   `capabilities/default.json` (`remote.urls`, senza la pagina perde l'IPC): cambiarla in entrambi i posti.

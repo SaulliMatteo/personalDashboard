@@ -273,6 +273,70 @@ export const MIGRATIONS: Migration[] = [
   },
   {
     version: 11,
+    description: "Notes: colore della pagina scelto dall'utente",
+    statements: [
+      // NULL = colore del tema; altrimenti #rrggbb.
+      `ALTER TABLE note_pages ADD COLUMN color TEXT`,
+    ],
+  },
+  {
+    version: 12,
+    description: "Notes: font predefinito della nota",
+    statements: [
+      // NULL = font del tema; altrimenti una chiave di widgets/notes/lib/textStyle.ts (sans, serif…).
+      `ALTER TABLE notes ADD COLUMN font TEXT`,
+    ],
+  },
+  {
+    version: 13,
+    description: "Notes: raccolte (tabelle di dati condivise tra le note)",
+    statements: [
+      // Una raccolta; deleted_at = nel cestino (le viste nelle note mostrano "Ripristina").
+      `CREATE TABLE IF NOT EXISTS note_collections (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         name TEXT NOT NULL,
+         icon TEXT NOT NULL DEFAULT 'table',
+         color TEXT,
+         created_at INTEGER NOT NULL,
+         deleted_at INTEGER
+       )`,
+      // Colonne tipizzate (widgets/notes/lib/collections.ts); options = JSON con le scelte di select/multi.
+      `CREATE TABLE IF NOT EXISTS note_collection_fields (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         collection_id INTEGER NOT NULL REFERENCES note_collections(id) ON DELETE CASCADE,
+         name TEXT NOT NULL,
+         type TEXT NOT NULL,
+         options TEXT NOT NULL DEFAULT '{}',
+         position INTEGER NOT NULL DEFAULT 0
+       )`,
+      // data = JSON con i valori per id di campo; deleted_at = riga eliminata (si può ripristinare).
+      `CREATE TABLE IF NOT EXISTS note_collection_rows (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         collection_id INTEGER NOT NULL REFERENCES note_collections(id) ON DELETE CASCADE,
+         data TEXT NOT NULL DEFAULT '{}',
+         position INTEGER NOT NULL DEFAULT 0,
+         created_at INTEGER NOT NULL,
+         updated_at INTEGER NOT NULL,
+         deleted_at INTEGER
+       )`,
+      // Modi di guardarla: layout tabella | schede | bacheca; filtro, ordinamento e campi nascosti in JSON.
+      `CREATE TABLE IF NOT EXISTS note_collection_views (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         collection_id INTEGER NOT NULL REFERENCES note_collections(id) ON DELETE CASCADE,
+         name TEXT NOT NULL DEFAULT '',
+         layout TEXT NOT NULL DEFAULT 'tabella',
+         filter TEXT NOT NULL DEFAULT '[]',
+         sort TEXT,
+         fields TEXT NOT NULL DEFAULT '[]',
+         group_field INTEGER
+       )`,
+      `CREATE INDEX IF NOT EXISTS idx_note_collection_fields_coll ON note_collection_fields(collection_id, position)`,
+      `CREATE INDEX IF NOT EXISTS idx_note_collection_rows_coll ON note_collection_rows(collection_id, position)`,
+      `CREATE INDEX IF NOT EXISTS idx_note_collection_views_coll ON note_collection_views(collection_id)`,
+    ],
+  },
+  {
+    version: 14,
     description: "Gruppi: abbinamenti materia locale → materia del gruppo (restano su questo computer)",
     statements: [
       // group_subject_id NULL = "Non condividere" scelto apposta. Niente FK (come le tabelle dalla v8): un
@@ -288,7 +352,7 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
-    version: 12,
+    version: 15,
     description: "Gruppi: il foglietto Da fare della sessione (resta su questo computer; si condivide solo dal vivo)",
     statements: [
       // done_at NULL = da fare; le fatte si tolgono da sole il giorno dopo (todoRepository.purgeDoneBefore)
@@ -298,6 +362,15 @@ export const MIGRATIONS: Migration[] = [
          done_at INTEGER,
          created_at INTEGER NOT NULL
        )`,
+    ],
+  },
+  {
+    version: 16,
+    description: "Riparazione: colonne delle Note per i DB passati dalla prova dei Gruppi (dove la 11 e la 12 erano loro)",
+    statements: [
+      // Rieseguite: su un DB che le ha già non fanno nulla (duplicate column ignorato in core/db/index.ts).
+      `ALTER TABLE note_pages ADD COLUMN color TEXT`,
+      `ALTER TABLE notes ADD COLUMN font TEXT`,
     ],
   },
 ];

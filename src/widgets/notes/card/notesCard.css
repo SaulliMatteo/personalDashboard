@@ -1,0 +1,619 @@
+/* Card del widget Notes per tema (docs/design/temi/notes-redesign.html, sezione "In dashboard").
+   .nc--<tema> sulla card: le differenze di forma stanno qui sotto, i colori nei token. */
+
+.widget.nc {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px 18px;
+  color: var(--text-primary);
+}
+
+/* Contenitore per le query sull'altezza della cella (la card stessa non può interrogarsi). */
+.nc-m,
+.nc-strip,
+.nc-ring-wrap {
+  container-type: size;
+}
+
+.nc button {
+  font: inherit;
+  color: inherit;
+}
+
+.nc-big {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+.nc-led {
+  display: inline-block;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--led);
+  box-shadow: 0 0 8px var(--led);
+}
+
+:root[data-mode="giorno"] .nc-led {
+  box-shadow: none;
+}
+
+/* ---------- Righe delle note (3×1 e 2×2) ---------- */
+
+.nc-row {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 5px 0;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.nc-row:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.nc-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--nc-dot, var(--text-muted));
+}
+
+.nc-row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nc-row time {
+  flex: none;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.nc-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.nc .nc-error,
+.nc--error .nc-big,
+.nc--error .nc-ttl-count {
+  color: var(--danger);
+}
+
+.nc-btn {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nc-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.nc-btn svg {
+  font-size: 16px;
+}
+
+/* ---------- 2×2 ---------- */
+
+.nc-m {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nc-ttl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-title);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.nc-ttl svg {
+  font-size: 18px;
+}
+
+.nc-ttl-count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.nc-quick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: text;
+}
+
+.nc-quick svg {
+  flex: none;
+  font-size: 18px;
+}
+
+.nc-quick input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.nc-quick input::placeholder {
+  color: var(--text-secondary);
+}
+
+.nc-quick:focus-within {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.nc-quick.is-saved input::placeholder {
+  color: var(--success-text);
+}
+
+.nc-quick.is-failed input::placeholder {
+  color: var(--danger);
+}
+
+.nc-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nc-list .nc-row {
+  flex: none;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* ---------- 3×1 ---------- */
+
+.widget.nc--STRIP {
+  padding: 14px 16px;
+}
+
+.nc-strip {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.nc-strip-main {
+  all: unset;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+  border: var(--panel-border);
+  cursor: pointer;
+}
+
+.nc-strip-main--empty {
+  cursor: default;
+}
+
+.nc-strip-main:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.nc-strip-main b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.nc-strip-main p {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.nc-strip-side {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.nc-strip-side .nc-row {
+  flex: none;
+  padding: 3px 0;
+}
+
+.nc-strip-side .nc-btn {
+  margin-top: 4px;
+  padding: 5px 11px;
+  font-size: 12px;
+}
+
+/* Cella bassa: anteprima su una riga, una sola nota recente; ancora più bassa, solo titoli. */
+@container (max-height: 104px) {
+  .nc-strip-main p {
+    -webkit-line-clamp: 1;
+  }
+
+  .nc-strip-side .nc-row + .nc-row {
+    display: none;
+  }
+}
+
+@container (max-height: 76px) {
+  .nc-strip-main p {
+    display: none;
+  }
+
+  .nc-strip-side .nc-btn {
+    margin-top: 0;
+  }
+}
+
+/* ---------- 1×1 ---------- */
+
+.widget.nc--S {
+  padding: 18px;
+}
+
+/* Notte: ghiera a tacche, quadrata e grande quanto il lato più corto della cella. */
+.nc-ring-wrap {
+  position: absolute;
+  inset: 10px;
+  display: grid;
+  place-items: center;
+}
+
+.nc-ring {
+  grid-area: 1 / 1;
+  width: min(100cqw, 100cqh);
+  height: min(100cqw, 100cqh);
+}
+
+.nc-ring line {
+  stroke: var(--tick-off);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.nc-ring line.is-on {
+  stroke: var(--accent);
+}
+
+.nc-ring-num {
+  grid-area: 1 / 1;
+  text-align: center;
+}
+
+.nc-ring-num .nc-big {
+  font-size: min(44px, 34cqmin);
+}
+
+.nc-ring-num small {
+  display: block;
+  margin-top: 3px;
+  font-size: min(11px, 9cqmin);
+  color: var(--text-secondary);
+}
+
+/* Opaco: numero gigante */
+.nc-s-opaco {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.nc-s-opaco small {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nc-s-opaco .nc-big {
+  font-size: 76px;
+}
+
+/* Quaderno: post-it (la cornice diventa post-it con .card-postit) */
+.nc-s-quaderno {
+  all: unset;
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--note-postit-ink);
+  cursor: pointer;
+}
+
+div.nc-s-quaderno {
+  cursor: default;
+}
+
+.nc-s-quaderno b {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-family: var(--font-title);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 0.95;
+}
+
+.nc-s-quaderno small {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.nc-s-quaderno:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Fosforo: display a punti */
+.nc-s-fosforo {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.nc-led-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.nc-disp {
+  padding: 10px 10px 6px;
+  border-radius: 8px;
+  background: var(--display-texture), var(--display-bg);
+}
+
+.nc-disp .nc-big {
+  font-size: 48px;
+}
+
+/* ==========================================================================
+   Forme per tema
+   ========================================================================== */
+
+/* ---------- Opaco: blocchi pieni, niente righe ---------- */
+.nc--opaco .nc-strip-main {
+  background: var(--tint-senape);
+  color: var(--tint-senape-ink);
+}
+
+.nc--opaco .nc-list .nc-row {
+  border: 0;
+}
+
+.nc--opaco .nc-ttl {
+  color: var(--text-primary);
+}
+
+/* ---------- Quaderno: inchiostro, Caveat, post-it ---------- */
+.nc--quaderno .nc-ttl {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+}
+
+.nc--quaderno .nc-ttl-count {
+  font-family: var(--font-family);
+}
+
+.nc--quaderno .nc-quick {
+  padding: 9px 2px;
+  border-radius: 0;
+  background: transparent;
+  border-bottom: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-title);
+  font-size: 20px;
+}
+
+.nc--quaderno .nc-quick input::placeholder {
+  color: var(--accent);
+}
+
+.nc--quaderno .nc-quick:focus-within {
+  box-shadow: none;
+  border-bottom-width: 2.5px;
+}
+
+.nc--quaderno .nc-strip-main {
+  border: 0;
+  border-radius: 3px;
+  background: var(--note-postit-bg);
+  color: var(--note-postit-ink);
+  transform: rotate(-0.8deg);
+}
+
+.nc--quaderno .nc-strip-main b {
+  font-family: var(--font-title);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.nc--quaderno .nc-btn {
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+}
+
+/* ---------- Fosforo: display a punti, prompt ">" ---------- */
+.nc--fosforo .nc-strip-main {
+  background: var(--display-texture), var(--display-bg);
+}
+
+.nc--fosforo .nc-strip-main b {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.nc--fosforo .nc-quick {
+  background: transparent;
+  border: var(--panel-border);
+}
+
+.nc--fosforo .nc-quick::before {
+  content: ">";
+  color: var(--led);
+}
+
+.nc--fosforo .nc-list .nc-row {
+  border-bottom-style: dotted;
+}
+
+.nc--fosforo .nc-btn {
+  background: transparent;
+  border: var(--btn-ghost-border);
+  box-shadow: var(--note-key-shadow);
+}
+
+/* Notte, 2×2: le righe si dividono l'altezza rimasta (al massimo 46px l'una). */
+.nc--notte .nc-list .nc-row {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 46px;
+}
+
+/* ---------- 2×2: la prossima voce di una raccolta (mockup: .next) ---------- */
+
+.nc-next {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+  font-size: 12px;
+}
+
+.nc-next-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nc-next b {
+  font-weight: 650;
+}
+
+.nc-next-ico {
+  flex: none;
+  color: var(--accent);
+  font-size: 15px;
+}
+
+.nc-next-led {
+  display: none;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--led);
+}
+
+.nc--opaco .nc-next {
+  border: 0;
+  border-radius: 18px;
+  background: var(--tint-salvia);
+  color: var(--tint-salvia-ink);
+}
+
+.nc--opaco .nc-next-ico {
+  color: inherit;
+}
+
+.nc--quaderno .nc-next {
+  border: 1.5px dashed var(--accent);
+}
+
+.nc--fosforo .nc-next-led {
+  display: inline-block;
+}
+
+.nc--fosforo .nc-next-ico {
+  display: none;
+}
+
+/* Se la cella è bassa la riga sparisce: le note hanno la precedenza. */
+@container (max-height: 230px) {
+  .nc-next {
+    display: none;
+  }
+}

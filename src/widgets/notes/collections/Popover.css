@@ -1,0 +1,18 @@
+/* Sopra tutto, anche sopra la scheda di una riga (80). */
+.nq-pop-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 89;
+}
+
+.nq-pop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 90;
+  box-sizing: border-box;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  visibility: hidden; /* finché non è posizionato */
+  font-family: var(--font-family);
+}

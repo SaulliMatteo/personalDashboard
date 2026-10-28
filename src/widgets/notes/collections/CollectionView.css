@@ -1,0 +1,258 @@
+/* Vista collegata nella nota (mockup: .dbv). Il blocco ha misure in px: non cresce con lo zoom
+   della pagina, come i menu (è un'interfaccia, non testo della nota). */
+
+.nq-doc [data-block="collection-view"] {
+  margin: 14px 0 6px;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.nq-doc [data-block="collection-view"]:focus-visible .nq-dbv {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.nq-dbv {
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--note-page-ink) 18%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card-bg) 80%, var(--note-page-bg));
+  color: var(--note-page-ink);
+  font-family: var(--font-family);
+  font-size: 13px;
+  line-height: 1.4;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: default;
+}
+
+.nq-dbv-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--note-page-ink) 14%, transparent);
+}
+
+.nq-dbv-head b {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.nq-dbv-linked {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.nq-dbv-led {
+  display: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--led);
+}
+
+.nq-dbv-meta {
+  color: color-mix(in srgb, var(--note-page-ink) 60%, transparent);
+  font-size: 12px;
+}
+
+.nq-dbv-sp {
+  flex: 1;
+}
+
+.nq-dbv-tabs {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.nq-dbv-tabs button,
+.nq-dbv-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--note-page-ink) 65%, transparent);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.nq-dbv-tabs button[aria-selected="true"] {
+  background: color-mix(in srgb, var(--note-page-ink) 10%, transparent);
+  color: var(--note-page-ink);
+}
+
+.nq-dbv-tabs button:hover,
+.nq-dbv-tabs button:focus-visible,
+.nq-dbv-btn:hover,
+.nq-dbv-btn:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+
+.nq-dbv-body {
+  padding: 10px 14px 6px;
+}
+
+.nq-dbv .nq-vbar {
+  margin-bottom: 8px;
+}
+
+.nq-dbv-msg,
+.nq-dbv-gone {
+  margin: 0;
+  padding: 14px;
+  color: color-mix(in srgb, var(--note-page-ink) 70%, transparent);
+}
+
+.nq-dbv-gone {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Testo della vista: colori della pagina, non del pannello */
+.nq-dbv .nq-ctable th {
+  color: color-mix(in srgb, var(--note-page-ink) 55%, transparent);
+  font-size: 11.5px;
+}
+
+.nq-dbv .nq-ctable th,
+.nq-dbv .nq-ctable td {
+  border-color: color-mix(in srgb, var(--note-page-ink) 12%, transparent);
+}
+
+/* ---------- Per tema ---------- */
+
+:root[data-theme="opaco"] .nq-dbv {
+  border: 0;
+  border-radius: 22px;
+  background: var(--tint-senape);
+  color: var(--tint-senape-ink);
+  --note-page-ink: var(--tint-senape-ink);
+}
+
+:root[data-theme="opaco"] .nq-dbv-head {
+  border-color: color-mix(in srgb, var(--tint-senape-ink) 18%, transparent);
+}
+
+:root[data-theme="opaco"] .nq-dbv-linked {
+  background: var(--tint-senape-ink);
+  color: var(--tint-senape);
+}
+
+:root[data-theme="opaco"] .nq-dbv .nq-ctable tbody tr:not(.nq-ctable-addrow):nth-child(odd) td {
+  background: color-mix(in srgb, var(--tint-senape-ink) 8%, transparent);
+}
+
+:root[data-theme="quaderno"] [data-block="collection-view"] {
+  margin-top: 28px;
+}
+
+:root[data-theme="quaderno"] .nq-dbv {
+  overflow: visible;
+  border: 1.5px solid var(--note-page-ink);
+  border-radius: 3px;
+  background: var(--note-page-bg);
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--note-page-ink) 18%, transparent);
+}
+
+:root[data-theme="quaderno"] .nq-dbv-head {
+  position: relative;
+  padding-top: 16px;
+}
+
+:root[data-theme="quaderno"] .nq-dbv-head b {
+  position: absolute;
+  top: -18px;
+  left: 12px;
+  padding: 0 12px;
+  background: var(--note-postit-bg);
+  color: var(--note-postit-ink);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--note-postit-ink) 12%, transparent);
+  font-family: var(--font-title);
+  font-size: 22px;
+  transform: rotate(-2deg);
+}
+
+:root[data-theme="quaderno"] .nq-dbv-linked {
+  border: 1.5px solid var(--accent);
+  background: transparent;
+}
+
+:root[data-theme="fosforo"] .nq-dbv {
+  border-radius: 10px;
+  background: var(--card-bg);
+}
+
+:root[data-theme="fosforo"] .nq-dbv-linked {
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: inherit;
+  font-weight: 500;
+}
+
+:root[data-theme="fosforo"] .nq-dbv-led {
+  display: inline-block;
+}
+
+:root[data-theme="fosforo"] .nq-dbv-link-ico {
+  display: none;
+}
+
+/* Miniature delle pagine: solo un segnaposto */
+.nq-thumb-paper [data-block="collection-view"] {
+  min-height: 6em;
+  margin: 0.8em 0;
+  border: 1px dashed color-mix(in srgb, var(--note-page-ink) 30%, transparent);
+  border-radius: 0.5em;
+}
+
+/* ---------- Riferimento a una riga (@) nel testo ---------- */
+
+.nq-doc [data-ref-row] {
+  display: inline-block;
+  padding: 0 0.45em;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  line-height: 1.35;
+  cursor: pointer;
+  user-select: all;
+}
+
+.nq-doc [data-ref-row]::before {
+  content: "@";
+  margin-right: 0.1em;
+  opacity: 0.6;
+}
+
+.nq-doc [data-ref-row][data-missing] {
+  background: color-mix(in srgb, var(--note-page-ink) 8%, transparent);
+  color: color-mix(in srgb, var(--note-page-ink) 55%, transparent);
+  text-decoration: line-through;
+}
+
+:root[data-theme="quaderno"] .nq-doc [data-ref-row] {
+  border-radius: 3px;
+}
+
+:root[data-theme="fosforo"] .nq-doc [data-ref-row] {
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: inherit;
+}

@@ -2,7 +2,7 @@ import { getDatabase } from "../../../../core/db";
 import { TODO_TEXT_MAX, type TodoItem } from "../payload";
 
 /*
- * Il foglietto Da fare della sessione (tabella group_todos, migrazione 12): uno solo, su questo computer. Ai gruppi
+ * Il foglietto Da fare della sessione (tabella group_todos, migrazione 15): uno solo, su questo computer. Ai gruppi
  * arriva solo dal vivo e solo se condiviso (TodoProvider).
  */
 

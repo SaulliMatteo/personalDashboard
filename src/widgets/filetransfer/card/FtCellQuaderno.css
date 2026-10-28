@@ -1,0 +1,101 @@
+/* File transfer 1×1, Quaderno: "Foglio". Il foglio è ruotato come nel mockup approvato
+   (eccezione voluta alla regola del post-it, vedi tokens.css). */
+
+.ftc-q-sheet {
+  position: absolute;
+  inset: min(18px, 10cqh) 18px min(18px, 10cqh) 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: 6px 10px 6px 30px;
+  border: 1px solid var(--sheet-edge);
+  border-radius: 3px;
+  background:
+    linear-gradient(90deg, transparent 20px, var(--paper-margin) 20px 21.5px, transparent 21.5px),
+    repeating-linear-gradient(transparent 0 19px, var(--sheet-rule) 19px 20px),
+    var(--sheet-bg);
+  box-shadow: 0 2px 0 var(--sheet-shadow);
+  transform: rotate(-1.5deg);
+}
+
+/* Angolo piegato in alto a destra. */
+.ftc-q-sheet::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(225deg, var(--card-bg) 50%, var(--sheet-edge) 50%);
+}
+
+.ftc-q .ftc-title {
+  font-family: var(--font-family);
+  color: var(--text-secondary);
+}
+
+.ftc-q .ftc-num {
+  font-size: min(60px, 30cqh, 34cqw);
+  line-height: 0.9;
+  color: var(--accent);
+}
+
+.ftc-q-word {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-title);
+  font-size: min(21px, 12cqh);
+  font-weight: 600;
+  line-height: 1.05;
+  color: var(--text-primary);
+}
+
+.ftc-q:not(.is-online) .ftc-q-word {
+  color: var(--text-secondary);
+}
+
+.ftc-q-clip {
+  position: absolute;
+  top: min(4px, 2cqh);
+  left: 42px;
+  width: 16px;
+  height: min(34px, 19cqh);
+  color: var(--text-secondary);
+  transform: rotate(6deg);
+}
+
+/* Stato nel margine alto della cella, sopra il foglio. */
+.ftc-q-st {
+  position: absolute;
+  top: min(5px, 2.5cqh);
+  right: 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.ftc-q.is-online .ftc-q-st {
+  color: var(--success-text);
+}
+
+@container (max-height: 150px) {
+  .ftc-q .ftc-title {
+    display: none;
+  }
+}
+
+@container (max-height: 120px) {
+  .ftc-q-word,
+  .ftc-q-st-label {
+    display: none;
+  }
+}
+
+@container (max-height: 95px) {
+  .ftc-q-clip {
+    display: none;
+  }
+}
