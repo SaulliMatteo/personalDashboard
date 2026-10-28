@@ -3,11 +3,15 @@
 .rsp {
   --rsp-row-radius: 12px;
 
-  flex: 0 0 300px;
+  flex: 0 0 316px;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  overflow: hidden;
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
 }
 
 :root[data-theme="opaco"] .rsp {
@@ -22,24 +26,71 @@
   --rsp-row-radius: 8px;
 }
 
-/* ---------- Membri: la lista scorre dentro il riquadro, mai la pagina ---------- */
-.rsp-members {
+/* ---------- Schede: Membri | Messaggi | Da fare ---------- */
+.rsp-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 2px;
+  padding: 8px 8px 0;
+  border-bottom: var(--group-tabs-line);
+}
+
+.rsp-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 6px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rsp-tab.is-active {
+  border-bottom-color: var(--accent);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.rsp-tab:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.rsp-badge {
+  min-width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: var(--panel-bg);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.rsp-badge--chat {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* il contenuto della scheda scorre dentro il riquadro, mai la pagina */
+.rsp-panel {
   flex: 1 1 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  border: var(--card-border);
-  border-radius: var(--radius-card);
-  background: var(--card-bg);
-  box-shadow: var(--card-shadow);
-}
-
-.rsp-members h2 {
-  margin: 0;
-  padding: 16px 18px 8px;
-  font-size: 15px;
-  font-weight: var(--title-weight);
 }
 
 .rsp-list {
@@ -47,7 +98,7 @@
   flex: 1 1 0;
   min-height: 0;
   overflow-y: auto;
-  padding: 0 8px 10px;
+  padding: 10px 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -188,29 +239,68 @@
   white-space: nowrap;
 }
 
-/* ---------- Messaggi e Da fare: segnaposto ---------- */
-.rsp-soon {
-  flex: 0 0 auto;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.rsp-soon section {
-  box-sizing: border-box;
+/* Il foglietto Da fare del membro, in sola lettura */
+.rsp-sheet {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 14px;
-  border: var(--group-soon-border);
-  border-radius: var(--radius-panel);
-  color: var(--text-secondary);
-  font-size: 12px;
+  padding-top: 8px;
+  border-top: var(--group-soon-border);
 }
 
-.rsp-soon h2 {
+.rsp-sheet-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.rsp-sheet-head span:last-child {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rsp-sheet ul {
   margin: 0;
-  font-size: 14px;
-  font-weight: var(--title-weight);
-  color: var(--text-primary);
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rsp-sheet li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.rsp-sheet li svg {
+  flex: 0 0 auto;
+  margin-top: 3px;
+}
+
+.rsp-sheet li.is-done {
+  color: var(--text-muted);
+}
+
+.rsp-sheet-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rsp-sheet li.is-done .rsp-sheet-text {
+  text-decoration: line-through;
+}
+
+.rsp-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }

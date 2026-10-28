@@ -139,6 +139,10 @@ export const DEFAULT_SETTINGS = {
   groupsSharePixyBubbles: false,
   /** Chi guarda può non vedere i fumetti degli altri anche se li mandano. */
   groupsShowOthersBubbles: true,
+  /** Il foglietto Da fare ai compagni, solo dal vivo (spento di default). */
+  groupsShareTodo: false,
+  /** Notifica di sistema per i messaggi nuovi dei gruppi. */
+  groupsNotifyMessages: true,
 };
 
 export type AppSettings = typeof DEFAULT_SETTINGS;
@@ -278,7 +282,7 @@ export const SETTING_DEFS: SettingDef[] = [
   },
   {
     key: "groupsReportSubjects", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Includi le mie materie nei report dei gruppi",
-    description: "Solo quelle che abbini nel report di ogni gruppo; spento, il tuo tempo conta in \"Altre materie\". Il report per materie è in arrivo: per ora non ha effetto.",
+    description: "Solo quelle che abbini nel report di ogni gruppo; spento, il tuo tempo conta in \"Altre materie\". Vale per il tuo account, su tutti i dispositivi.",
   },
   {
     key: "groupsSharePixy", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Condividi le espressioni di Pixy",
@@ -288,6 +292,14 @@ export const SETTING_DEFS: SettingDef[] = [
   {
     key: "groupsSharePixyBubbles", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", dependsOn: "groupsSharePixy", label: "Condividi anche i fumetti",
     description: "Le frasi di Pixy arrivano ai compagni. Possono contenere il tuo nome (Impostazioni › Generale) e il nome delle app.",
+  },
+  {
+    key: "groupsShareTodo", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Mostra la mia lista Da fare",
+    description: "Ai compagni connessi, in sola lettura, nei dettagli della tua riga in Membri. Non viene salvata sul server.",
+  },
+  {
+    key: "groupsNotifyMessages", group: "groups", section: "Stanza comune", type: "boolean", label: "Notifica i messaggi nuovi",
+    description: "Quando l'app non è in primo piano o la scheda Messaggi è chiusa.",
   },
   {
     key: "groupsShowOthersBubbles", group: "groups", section: "Stanza comune", type: "boolean", label: "Mostra i fumetti degli altri",

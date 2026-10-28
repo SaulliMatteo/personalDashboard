@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useCloud } from "../../core/cloud/useCloud";
 import type { CloudGroup } from "../../core/cloud/groupsApi";
 import { useNav } from "../../core/nav/useNav";
@@ -10,8 +10,10 @@ import { useGroupsState } from "../groups/groupsState";
 import { useGroups } from "../groups/useGroups";
 import GroupInfoTab from "./GroupInfoTab";
 import GroupRankingTab from "./GroupRankingTab";
+import GroupReportTab from "./GroupReportTab";
 import GroupsSharing from "./GroupsSharing";
 import "../groups/components/groupsUi.css";
+import { clearGroupsSharingRequest, wantsGroupsSharing } from "./groupsPageIntent";
 import "./GroupsPage.css";
 
 type Tab = "group" | "ranking" | "report";
@@ -71,7 +73,17 @@ function GroupTabs({ tab, onChange }: { tab: Tab; onChange: (tab: Tab) => void }
 }
 
 /** Il gruppo scelto: nome, ruolo e le tre schede. */
-function GroupCard({ group, tab, onTab }: { group: CloudGroup; tab: Tab; onTab: (tab: Tab) => void }) {
+function GroupCard({
+  group,
+  tab,
+  onTab,
+  onOpenSharing,
+}: {
+  group: CloudGroup;
+  tab: Tab;
+  onTab: (tab: Tab) => void;
+  onOpenSharing: () => void;
+}) {
   const { userId } = useCloud();
   const { members } = useGroups();
   const list = members[group.id] ?? [];
@@ -89,14 +101,7 @@ function GroupCard({ group, tab, onTab }: { group: CloudGroup; tab: Tab; onTab: 
         {/* key: il codice torna nascosto e i campi ripartono da capo a ogni cambio di gruppo */}
         {tab === "group" && <GroupInfoTab key={group.id} group={group} members={list} meId={userId} isOwner={isOwner} />}
         {tab === "ranking" && <GroupRankingTab groupId={group.id} />}
-        {tab === "report" && (
-          <div className="gp-soon">
-            <span className="gp-soon-title">Report per materie</span>
-            <span className="grp-muted">
-              Il tempo del gruppo per giorno e per materia, con le tue materie abbinate a quelle del gruppo. In arrivo.
-            </span>
-          </div>
-        )}
+        {tab === "report" && <GroupReportTab key={group.id} group={group} isOwner={isOwner} onOpenSharing={onOpenSharing} />}
       </div>
     </section>
   );
@@ -111,7 +116,8 @@ function GroupsPage() {
   const { userId } = useCloud();
   const state = useGroupsState();
   const { groups, members, selectedGroup, selectGroup } = useGroups();
-  const [general, setGeneral] = useState(false);
+  const [general, setGeneral] = useState(wantsGroupsSharing);
+  useEffect(clearGroupsSharingRequest, []);
   const [tab, setTab] = useState<Tab>("group");
   const [dialog, setDialog] = useState<"create" | "join" | null>(null);
 
@@ -185,7 +191,7 @@ function GroupsPage() {
             </div>
           </nav>
 
-          <div className="gp-content">{general ? <GroupsSharing /> : <GroupCard group={group} tab={tab} onTab={setTab} />}</div>
+          <div className="gp-content">{general ? <GroupsSharing /> : <GroupCard group={group} tab={tab} onTab={setTab} onOpenSharing={() => setGeneral(true)} />}</div>
         </div>
       )}
 

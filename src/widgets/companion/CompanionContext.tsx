@@ -213,6 +213,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       const cfg = settingsRef.current;
       const personality = PERSONALITIES[cfg.companionPersonality];
       const look = pixyLook(n);
+      if (!look) return { title: n.title, lines: [n.body] };
       const text = pixyText(n, look, {
         companionName: cfg.companionName,
         personality: personality.id,

@@ -17,8 +17,11 @@ export interface PixyLook {
 
 const APP_EMOJI: Partial<Record<AppCategory, string>> = { game: "🎮", video: "📺", chat: "💬" };
 
-export function pixyLook(n: AppNotification): PixyLook {
+/** null: la notifica resta semplice (un messaggio di un compagno non va firmato da Pixy). */
+export function pixyLook(n: AppNotification): PixyLook | null {
   switch (n.kind) {
+    case "groupMessage":
+      return null;
     case "pomodoroDone":
       return { emotion: "proud", glyph: "star", emoji: "🍅", phrase: "pomodoro_done" };
     case "breakOver":

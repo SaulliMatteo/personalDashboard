@@ -241,16 +241,3 @@
   padding: 18px 22px 22px;
 }
 
-/* Report per materie: arriva con la fase C. */
-.gp-soon {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 14px 16px;
-  border: var(--group-soon-border);
-  border-radius: var(--radius-panel);
-}
-
-.gp-soon-title {
-  font-weight: var(--title-weight);
-}

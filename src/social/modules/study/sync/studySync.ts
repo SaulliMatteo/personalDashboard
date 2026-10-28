@@ -1,6 +1,6 @@
 import { retryDelayMs } from "../../../../core/cloud/backoff";
 import type { StudyDayTotal } from "../../../../core/cloud/studyTotalsApi";
-import { dailyTotals, syncDays, type SessionSpan } from "./plan";
+import { dailyTotals, syncDays, type LocalDay, type SessionSpan } from "./plan";
 
 /** Ogni quanto si rimanda comunque (copre il cambio di giorno e le sessioni registrate da altri widget). */
 export const PERIODIC_SYNC_MS = 15 * 60_000;
@@ -26,6 +26,8 @@ export interface StudySyncDeps {
   /** Registra il dispositivo sul server (una volta per istanza, prima del primo invio). */
   registerDevice: () => Promise<void>;
   upload: (totals: StudyDayTotal[]) => Promise<void>;
+  /** Dopo i totali, sugli stessi giorni: il report per materie (subjects/subjectSync.ts). Un errore fa ritentare. */
+  afterUpload?: (days: LocalDay[]) => Promise<void>;
   classifyError: (error: unknown) => SyncFailure;
   /** Sessione non più valida: ci pensa l'account (esce e si ferma tutto). */
   onAuthError: () => void;
@@ -105,6 +107,7 @@ export class StudySync {
         this.deviceReady = true;
       }
       await this.deps.upload(dailyTotals(days, sessions));
+      await this.deps.afterUpload?.(days);
       // l'inizio del tentativo: ciò che si è registrato durante l'invio rientra nel prossimo
       await this.deps.saveLastSync(startedAt);
       this.failures = 0;

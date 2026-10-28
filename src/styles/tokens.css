@@ -212,6 +212,12 @@
   --group-danger-line: 1px solid rgba(240, 138, 138, 0.28);
   --group-danger-row: transparent;
   --group-tabs-line: 1px solid #1F2740;
+  /* materie del gruppo nel report (palette che si ripete) e "Altre materie" */
+  --group-subject-0: #8EA6FF;
+  --group-subject-1: #7DD3B0;
+  --group-subject-2: #F0B47A;
+  --group-subject-3: #C9A0F0;
+  --group-subject-other: #3A4566;
 
   /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
   --scene-bg: #0E1324;
@@ -412,6 +418,12 @@
   --group-danger-line: 0;
   --group-danger-row: #E6C9BF;
   --group-tabs-line: 2px solid #E2DED5;
+  /* materie del gruppo nel report (palette che si ripete) e "Altre materie" */
+  --group-subject-0: #4E6273;
+  --group-subject-1: #5E6E55;
+  --group-subject-2: #B89A55;
+  --group-subject-3: #8F7690;
+  --group-subject-other: #C9C5BB;
 }
 
 /* Pigmenti: fondo / inchiostro / tono scuro / tono medio / chiaro (testo su inchiostro). */
@@ -698,6 +710,12 @@
   --group-danger-line: 1.5px solid #B3261E;
   --group-danger-row: transparent;
   --group-tabs-line: 1px solid #DCE6F5;
+  /* materie del gruppo nel report (palette che si ripete) e "Altre materie" */
+  --group-subject-0: #2340A0;
+  --group-subject-1: #2F9E6B;
+  --group-subject-2: #E0A030;
+  --group-subject-3: #C2416A;
+  --group-subject-other: #B8C4D8;
 
   /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
   --scene-bg: linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, #FCFDFF;
@@ -913,6 +931,12 @@
   --group-danger-line: 1px solid rgba(255, 74, 61, 0.3);
   --group-danger-row: transparent;
   --group-tabs-line: 1px solid rgba(255, 214, 206, 0.12);
+  /* materie del gruppo nel report (palette che si ripete) e "Altre materie" */
+  --group-subject-0: #FF4A3D;
+  --group-subject-1: #F4E9E4;
+  --group-subject-2: #B39C97;
+  --group-subject-3: #7A5753;
+  --group-subject-other: #3A2326;
 
   /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
   --scene-bg: radial-gradient(rgba(255,230,220,0.07) 1px, transparent 1.3px) 0 0 / 7px 7px, #0B0405;

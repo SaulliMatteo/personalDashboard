@@ -9,7 +9,8 @@ import { showNotificationWithImage } from "./notifyApi";
  * che `core` o il widget che notifica lo conoscano. Senza decoratore, o se
  * fallisce, parte la notifica semplice.
  */
-export type AppNotificationKind = "pomodoroDone" | "breakOver" | "autoStopWarning" | "autoStopped";
+/** groupMessage: un messaggio dei Gruppi (il testo è di un compagno, nessun decoratore lo veste). */
+export type AppNotificationKind = "pomodoroDone" | "breakOver" | "autoStopWarning" | "autoStopped" | "groupMessage";
 
 export interface AppNotification {
   kind: AppNotificationKind;

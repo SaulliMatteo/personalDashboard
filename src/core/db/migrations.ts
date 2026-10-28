@@ -271,4 +271,33 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_video_watch_sessions_video ON video_watch_sessions(video_id)`,
     ],
   },
+  {
+    version: 11,
+    description: "Gruppi: abbinamenti materia locale → materia del gruppo (restano su questo computer)",
+    statements: [
+      // group_subject_id NULL = "Non condividere" scelto apposta. Niente FK (come le tabelle dalla v8): un
+      // abbinamento a una materia locale eliminata si ignora e si toglie alla prima lettura.
+      `CREATE TABLE IF NOT EXISTS group_subject_links (
+         user_id TEXT NOT NULL,
+         group_id TEXT NOT NULL,
+         local_subject_id INTEGER NOT NULL,
+         group_subject_id TEXT,
+         confirmed_at INTEGER NOT NULL,
+         PRIMARY KEY (user_id, group_id, local_subject_id)
+       )`,
+    ],
+  },
+  {
+    version: 12,
+    description: "Gruppi: il foglietto Da fare della sessione (resta su questo computer; si condivide solo dal vivo)",
+    statements: [
+      // done_at NULL = da fare; le fatte si tolgono da sole il giorno dopo (todoRepository.purgeDoneBefore)
+      `CREATE TABLE IF NOT EXISTS group_todos (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         text TEXT NOT NULL,
+         done_at INTEGER,
+         created_at INTEGER NOT NULL
+       )`,
+    ],
+  },
 ];

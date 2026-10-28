@@ -19,6 +19,16 @@
   font-weight: var(--title-weight);
 }
 
+.gs-head--sub {
+  padding-top: 4px;
+}
+
+.gs-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--title-weight);
+}
+
 .gs-sub {
   color: var(--text-secondary);
 }

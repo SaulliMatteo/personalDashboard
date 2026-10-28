@@ -1,0 +1,218 @@
+/* Scheda "Report" della pagina Gruppi (impostazioni-stanza.html). I raggi --gp-* vengono da GroupsPage.css. */
+
+.grr {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.grr-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* stesso selettore della Classifica */
+.grr-periods {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: var(--panel-border);
+  border-radius: var(--radius-item);
+  background: var(--panel-bg);
+}
+
+.grr-periods button {
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--nav-fg);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.grr-periods button.is-on {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-fg);
+}
+
+.grr-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grr-range {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.grr-arrow {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: var(--btn-ghost-border);
+  border-radius: var(--radius-item);
+  background: var(--btn-ghost-bg, transparent);
+  color: var(--btn-ghost-fg);
+  cursor: pointer;
+}
+
+.grr-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.grr-periods button:focus-visible,
+.grr-arrow:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.grr-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 18px;
+}
+
+.grr-chart {
+  flex: 3 1 340px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 14px 10px;
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+}
+
+.grr-chart-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.grr-bars {
+  height: 170px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.grr-bars--year {
+  gap: 6px;
+}
+
+.grr-col {
+  height: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* lo spazio sopra l'etichetta: l'altezza della pila è in % di questo */
+.grr-track {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.grr-stack {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+  min-height: 0;
+}
+
+.grr-seg {
+  display: block;
+  flex-basis: 0;
+  min-height: 2px;
+  border-radius: 3px;
+}
+
+.grr-label {
+  overflow: hidden;
+  text-align: center;
+  font-size: 11px;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.grr-label.is-current {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.grr-legend {
+  flex: 2 1 220px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grr-legend-row {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border: var(--panel-border);
+  border-radius: var(--gp-row-radius);
+  background: var(--panel-bg);
+}
+
+.grr-swatch {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.grr-legend-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.grr-legend-name,
+.grr-legend-who {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grr-legend-who {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.grr-legend-time {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: var(--display-weight);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

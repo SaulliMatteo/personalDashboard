@@ -9,6 +9,7 @@ import { usePixyPresence } from "../modules/pixy/usePixyPresence";
 import { MAX_ROOMS, ROOM_SEATS } from "../modules/study/presence/payload";
 import { useStudyPresence } from "../modules/study/presence/useStudyPresence";
 import RoomScene, { STAGE_HEIGHT, STAGE_WIDTH } from "./RoomScene";
+import { requestGroupsSharing } from "../widget/groupsPageIntent";
 import RoomSidePanel from "./RoomSidePanel";
 import { roomInfo } from "./roomText";
 import { assignRooms, memberSections, placeSeats, roomOf, seatOrder } from "./seating";
@@ -204,7 +205,20 @@ function RoomPage({ pigment }: { pigment: string }) {
           </div>
         </section>
 
-        <RoomSidePanel sections={sections} members={byId} selectedId={selectedId} onToggle={toggle} serverNow={serverNow} />
+        <RoomSidePanel
+          key={group.id}
+          groupId={group.id}
+          meId={userId}
+          sections={sections}
+          members={byId}
+          selectedId={selectedId}
+          onToggle={toggle}
+          serverNow={serverNow}
+          onOpenSharing={() => {
+            requestGroupsSharing();
+            openWidgetDetail(GROUPS_WIDGET_ID);
+          }}
+        />
       </div>
     </div>
   );
