@@ -268,6 +268,26 @@
   --scene-pill-work-fg: #B7C6FF;
   --scene-pill-break-bg: rgba(245,163,92,0.14);
   --scene-pill-break-fg: #F5A35C;
+
+  /* Notes (notes-redesign.html): la pagina, il margine del quaderno, il post-it e i tasti. */
+  --note-page-bg: #0B0F1C;
+  --note-page-ink: #E9ECF5;
+  --note-page-pattern: none;
+  --note-page-border: 1px solid #182036;
+  --note-page-shadow: inset 0 1px 0 rgba(200, 215, 255, 0.06);
+  --note-margin: transparent;
+  --note-postit-bg: #FFF1A8;
+  --note-postit-ink: #5C4E12;
+  --note-key-shadow: none;
+  /* Tinte pigmentate per blocchi, scelte delle colonne e chip (anche fuori da Opaco). */
+  --tint-salvia: #A9B59C;
+  --tint-salvia-ink: #1F2B1C;
+  --tint-blu: #9DB0C0;
+  --tint-blu-ink: #1B2A36;
+  --tint-senape: #D2B26A;
+  --tint-senape-ink: #3A2C0A;
+  --tint-malva: #B8A1B4;
+  --tint-malva-ink: #33213A;
 }
 
 /* ==========================================================================
@@ -424,6 +444,26 @@
   --group-subject-2: #B89A55;
   --group-subject-3: #8F7690;
   --group-subject-other: #C9C5BB;
+
+  /* Notes (notes-redesign.html): la pagina, il margine del quaderno, il post-it e i tasti. */
+  --note-page-bg: #EFECE5;
+  --note-page-ink: #22251F;
+  --note-page-pattern: none;
+  --note-page-border: 0;
+  --note-page-shadow: none;
+  --note-margin: transparent;
+  --note-postit-bg: #FFF1A8;
+  --note-postit-ink: #5C4E12;
+  --note-key-shadow: none;
+  /* Tinte pigmentate per blocchi, scelte delle colonne e chip (anche fuori da Opaco). */
+  --tint-salvia: #A9B59C;
+  --tint-salvia-ink: #1F2B1C;
+  --tint-blu: #9DB0C0;
+  --tint-blu-ink: #1B2A36;
+  --tint-senape: #D2B26A;
+  --tint-senape-ink: #3A2C0A;
+  --tint-malva: #B8A1B4;
+  --tint-malva-ink: #33213A;
 }
 
 /* Pigmenti: fondo / inchiostro / tono scuro / tono medio / chiaro (testo su inchiostro). */
@@ -771,6 +811,26 @@
   --scene-pill-work-fg: #2340A0;
   --scene-pill-break-bg: #FFF1A8;
   --scene-pill-break-fg: #7A4A10;
+
+  /* Notes (notes-redesign.html): la pagina, il margine del quaderno, il post-it e i tasti. */
+  --note-page-bg: #FFFFFF;
+  --note-page-ink: #1B2433;
+  --note-page-pattern: linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 22px 22px, linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 22px 22px;
+  --note-page-border: 1px solid #C9D3E3;
+  --note-page-shadow: 0 3px 0 #C9D3E3;
+  --note-margin: #E8A0A0;
+  --note-postit-bg: #FFF1A8;
+  --note-postit-ink: #5C4E12;
+  --note-key-shadow: none;
+  /* Tinte pigmentate per blocchi, scelte delle colonne e chip (anche fuori da Opaco). */
+  --tint-salvia: #A9B59C;
+  --tint-salvia-ink: #1F2B1C;
+  --tint-blu: #9DB0C0;
+  --tint-blu-ink: #1B2A36;
+  --tint-senape: #D2B26A;
+  --tint-senape-ink: #3A2C0A;
+  --tint-malva: #B8A1B4;
+  --tint-malva-ink: #33213A;
 }
 
 /* Card "post-it" (il Companion in Quaderno): con il foglio della 1×1 del File transfer,
@@ -993,4 +1053,60 @@
   --scene-pill-work-fg: #FF6B60;
   --scene-pill-break-bg: rgba(255,214,206,0.07);
   --scene-pill-break-fg: #B39C97;
+
+  /* Notes (notes-redesign.html): la pagina, il margine del quaderno, il post-it e i tasti. */
+  --note-page-bg: #0B0405;
+  --note-page-ink: #F2E6E1;
+  --note-page-pattern: radial-gradient(rgba(255, 230, 220, 0.07) 1px, transparent 1.3px) 0 0 / 7px 7px;
+  --note-page-border: 1px solid rgba(255, 214, 206, 0.1);
+  --note-page-shadow: none;
+  --note-margin: transparent;
+  --note-postit-bg: #FFF1A8;
+  --note-postit-ink: #5C4E12;
+  --note-key-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.28);
+  /* Tinte pigmentate per blocchi, scelte delle colonne e chip (anche fuori da Opaco). */
+  --tint-salvia: #2A3324;
+  --tint-salvia-ink: #CFE0C2;
+  --tint-blu: #22303D;
+  --tint-blu-ink: #CFE0EE;
+  --tint-senape: #3D2F12;
+  --tint-senape-ink: #F0D9A0;
+  --tint-malva: #36263A;
+  --tint-malva-ink: #EBD7E8;
+}
+
+/* ==========================================================================
+   NOTES: palette di pagine, testo ed evidenziatore — variante GIORNO
+   (la notte è in tokens-varianti.css). Dipendono solo dalla variante, non dal
+   tema: una pagina crema resta leggibile in ogni tema. .nq-export-light forza
+   i valori del giorno nell'esportazione con "sfondo chiaro".
+   ========================================================================== */
+:root[data-mode="giorno"],
+.nq-export-light {
+  --nq-page-crema-bg: #FBF3DC;
+  --nq-page-crema-ink: #3A3220;
+  --nq-page-salvia-bg: #E4EBDC;
+  --nq-page-salvia-ink: #24301F;
+  --nq-page-cielo-bg: #DFE9F6;
+  --nq-page-cielo-ink: #1B2A3A;
+  --nq-page-rosa-bg: #F7E4E8;
+  --nq-page-rosa-ink: #3A2026;
+  --nq-page-grafite-bg: #2B2E33;
+  --nq-page-grafite-ink: #ECEDEF;
+
+  --nq-ink-rosso: #C0392B;
+  --nq-ink-arancio: #B35C0A;
+  --nq-ink-verde: #2E7D4F;
+  --nq-ink-blu: #2456B8;
+  --nq-ink-viola: #7B3FB0;
+  --nq-ink-grigio: #5F6670;
+
+  /* Evidenziatore: colore pieno, mescolato al fondo della pagina in proporzione --nq-mark-strength. */
+  --nq-mark-giallo: #FFD600;
+  --nq-mark-verde: #3FBF6F;
+  --nq-mark-azzurro: #4D9CFF;
+  --nq-mark-rosa: #FF6FA5;
+  --nq-mark-arancio: #FF9A2E;
+  --nq-mark-viola: #A77BFF;
+  --nq-mark-strength: 48%;
 }
