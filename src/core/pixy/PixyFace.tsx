@@ -23,8 +23,12 @@ export interface PixyFaceProps {
   bubbleSize?: "small" | "normal" | "large";
   /** Grandezza massima di un punto della faccia, in pixel CSS: limita quanto crescono gli occhi. */
   maxPointSize?: number;
+  /** Grandezza minima di un punto LED (Fosforo), in pixel CSS: solo per facce minuscole, come nella Stanza comune. */
+  minPointSize?: number;
   /** Margine intorno alla faccia, in punti: più piccolo nei riquadri piccoli. */
   padding?: number;
+  /** Ingrandimento CSS applicato da fuori (es. `transform: scale` della Stanza comune): il canvas si disegna a quella risoluzione. */
+  renderScale?: number;
   className?: string;
   children?: ReactNode;
 }
@@ -34,6 +38,11 @@ const MAX_POINT_SIZE = 7;
 
 /** ~30 fotogrammi al secondo bastano e costano la metà. */
 const FRAME_MS = 1000 / 30;
+
+/** Pixel reali per pixel CSS: densità dello schermo (al massimo 2) per l'ingrandimento esterno. */
+function pixelRatio(renderScale: number): number {
+  return Math.min(2, window.devicePixelRatio || 1) * renderScale;
+}
 
 /**
  * Canvas che disegna un Pixy nello stile del tema: il proprio (Companion) o quello di un compagno di gruppo.
@@ -46,7 +55,9 @@ function PixyFace({
   bubble = null,
   bubbleSize = "normal",
   maxPointSize = MAX_POINT_SIZE,
+  minPointSize,
   padding,
+  renderScale = 1,
   className = "",
   children,
 }: PixyFaceProps) {
@@ -67,15 +78,15 @@ function PixyFace({
     if (css) colorRef.current = css;
   }, [color, theme.accent, theme.id, theme.mode]);
 
-  const drawOpts = useLatestRef({ style, showMouth, maxPointSize, padding, sample });
+  const drawOpts = useLatestRef({ style, showMouth, maxPointSize, minPointSize, padding, renderScale, sample });
 
-  // Dimensioni reali del canvas = dimensioni CSS × densità dello schermo.
+  // Dimensioni reali del canvas = dimensioni CSS × densità dello schermo (× ingrandimento esterno).
   useEffect(() => {
     const wrap = wrapRef.current;
     const canvas = canvasRef.current;
     if (!wrap || !canvas) return;
     const resize = () => {
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const dpr = pixelRatio(renderScale);
       const w = Math.max(1, Math.round(wrap.clientWidth * dpr));
       const h = Math.max(1, Math.round(wrap.clientHeight * dpr));
       if (canvas.width !== w || canvas.height !== h) {
@@ -87,7 +98,7 @@ function PixyFace({
     const observer = new ResizeObserver(resize);
     observer.observe(wrap);
     return () => observer.disconnect();
-  }, []);
+  }, [renderScale]);
 
   // Ciclo di disegno. requestAnimationFrame si ferma da solo a finestra nascosta.
   useEffect(() => {
@@ -101,8 +112,15 @@ function PixyFace({
       if (!canvas) return;
       const o = drawOpts.current;
       const frame = o.sample(t, canvas.getBoundingClientRect());
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      o.style.draw(canvas, frame, { color: colorRef.current, showMouth: o.showMouth, dpr, maxPointSize: o.maxPointSize, padding: o.padding });
+      const dpr = pixelRatio(o.renderScale);
+      o.style.draw(canvas, frame, {
+        color: colorRef.current,
+        showMouth: o.showMouth,
+        dpr,
+        maxPointSize: o.maxPointSize,
+        minPointSize: o.minPointSize,
+        padding: o.padding,
+      });
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);

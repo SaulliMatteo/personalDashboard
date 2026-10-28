@@ -46,3 +46,18 @@ export async function fetchStudyTotals(userIds: string[], fromDay: string, toDay
     seconds: r.seconds as number,
   }));
 }
+
+/**
+ * I giorni dal `fromDay` in poi per cui questo computer ha già un totale sul server: lo storico per materia si può
+ * mandare solo lì (il server controlla che la somma per materia non superi il totale del giorno).
+ */
+export async function fetchDeviceStudyDays(userId: string, deviceId: string, fromDay: string): Promise<string[]> {
+  const result = await requireCloudClient()
+    .from("study_daily_totals")
+    .select("day")
+    .eq("user_id", userId)
+    .eq("device_id", deviceId)
+    .gte("day", fromDay);
+  throwIfFailed(result);
+  return (result.data ?? []).map((r) => r.day as string);
+}

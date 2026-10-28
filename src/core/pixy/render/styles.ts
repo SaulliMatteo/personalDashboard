@@ -16,6 +16,8 @@ export interface StyleDrawOptions {
   dpr: number;
   /** Grandezza massima di un punto della faccia, in pixel CSS. */
   maxPointSize: number;
+  /** Grandezza minima di un punto LED, in pixel CSS (assente = quella di sempre). */
+  minPointSize?: number;
   /** Margine intorno alla faccia, in punti (default FACE_PADDING). */
   padding?: number;
 }
@@ -48,7 +50,14 @@ export const COMPANION_STYLES = {
     id: "led",
     label: "Matrice LED",
     draw: (canvas, frame, o) =>
-      drawLedFace(canvas, frame, { color: o.color, offAlpha: 0, showMouth: o.showMouth, padding: o.padding ?? FACE_PADDING, maxPitch: o.maxPointSize * o.dpr }),
+      drawLedFace(canvas, frame, {
+        color: o.color,
+        offAlpha: 0,
+        showMouth: o.showMouth,
+        padding: o.padding ?? FACE_PADDING,
+        maxPitch: o.maxPointSize * o.dpr,
+        minPitch: o.minPointSize === undefined ? undefined : o.minPointSize * o.dpr,
+      }),
   },
 } satisfies Record<string, CompanionStyle>;
 

@@ -1,0 +1,104 @@
+/* "Le tue materie in questo gruppo" nella scheda Report (impostazioni-stanza.html): riquadro tratteggiato. */
+
+.gsl {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: var(--group-soon-border);
+  border-radius: var(--radius-panel);
+}
+
+.gsl-head {
+  display: flex;
+  flex-direction: column;
+}
+
+.gsl-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--title-weight);
+}
+
+.gsl-off {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-item);
+  background: var(--accent-soft);
+  font-size: 13px;
+}
+
+.gsl-off > span {
+  flex: 1 1 240px;
+}
+
+.gsl-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-muted);
+}
+
+.gsl-mine {
+  flex: 0 0 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.gsl-select-wrap {
+  flex: 1 1 160px;
+  display: flex;
+}
+
+.gsl-select,
+.gsl-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 36px;
+  padding: 0 10px;
+  font-size: 14px;
+}
+
+.gsl-create {
+  flex: 1 1 260px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.gsl-create .gsl-input {
+  flex: 1 1 160px;
+}
+
+.gsl-row .grp-btn--sm {
+  height: 36px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+
+.gsl-done {
+  font-size: 12px;
+}
+
+.gsl-select:focus-visible,
+.gsl-input:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.gsl-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

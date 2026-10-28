@@ -1,24 +1,27 @@
 import { useState } from "react";
 import { useCloud } from "../../core/cloud/useCloud";
+import { useElementSize } from "../../core/hooks/useElementSize";
 import { useNav } from "../../core/nav/useNav";
-import CreateGroupDialog from "../groups/components/CreateGroupDialog";
 import GroupsStatus from "../groups/components/GroupsStatus";
-import JoinGroupDialog from "../groups/components/JoinGroupDialog";
 import { useGroupsState } from "../groups/groupsState";
 import { useGroups } from "../groups/useGroups";
 import { usePixyPresence } from "../modules/pixy/usePixyPresence";
-import { formatStudyTime, KIND_LABELS } from "../modules/study/leaderboard";
-import { MAX_ROOMS, phaseElapsedSeconds, ROOM_SEATS } from "../modules/study/presence/payload";
+import { MAX_ROOMS, ROOM_SEATS } from "../modules/study/presence/payload";
 import { useStudyPresence } from "../modules/study/presence/useStudyPresence";
-import RoomScene from "./RoomScene";
-import { formatClock, lastSeenText, roomInfo, roomSubtitle } from "./roomText";
-import { assignRooms, roomOf, seatOrder } from "./seating";
-import { isInRoom, useRoomMembers, type RoomMember } from "./useRoomMembers";
+import RoomScene, { STAGE_HEIGHT, STAGE_WIDTH } from "./RoomScene";
+import { requestGroupsSharing } from "../widget/groupsPageIntent";
+import RoomSidePanel from "./RoomSidePanel";
+import { roomInfo } from "./roomText";
+import { assignRooms, memberSections, placeSeats, roomOf, seatOrder } from "./seating";
+import { isInRoom, useRoomMembers } from "./useRoomMembers";
 import "../groups/components/groupsUi.css";
 import "./RoomPage.css";
 
-/** Id del widget Gruppi: la sua pagina di dettaglio è "Impostazioni della stanza". */
+/** Id del widget Gruppi: la sua pagina di dettaglio è la pagina Gruppi (impostazioni, classifica, report). */
 const GROUPS_WIDGET_ID = "groups";
+
+/** Quanto può ingrandirsi la sala rispetto al mockup (720×470) nelle finestre grandi. */
+const MAX_SCENE_SCALE = 2;
 
 function SettingsIcon() {
   return (
@@ -39,54 +42,12 @@ function Arrow({ dir }: { dir: "prev" | "next" }) {
   );
 }
 
-/** Il pannello a destra: chi è selezionato, il suo timer, oggi e settimana. */
-function Details({ member, serverNow }: { member: RoomMember; serverNow: number }) {
-  const p = member.presence;
-  const inRoom = isInRoom(member.kind);
-  const studying = member.kind === "studying";
-  let clockLabel = "Ultima volta";
-  let clock = "—";
-  if (p && studying) {
-    clockLabel = "Sessione in corso";
-    clock = formatClock(phaseElapsedSeconds(p, serverNow));
-  } else if (p && inRoom) {
-    clockLabel = "In pausa da";
-    clock = formatClock(member.kind === "break" ? phaseElapsedSeconds(p, serverNow) : (serverNow - p.changedAt) / 1000);
-  } else if (member.kind === "online") {
-    clockLabel = "Connesso";
-    clock = "ora";
-  }
-  return (
-    <aside className="roomp-details" aria-label="Dettagli">
-      <div className="roomp-details-head">
-        <span className="roomp-details-name">{member.isMe ? `${member.username} (tu)` : member.username}</span>
-        <span className="roomp-details-status">
-          <span className={`grp-dot grp-dot--${member.kind}`} aria-hidden="true" />
-          {inRoom ? KIND_LABELS[member.kind] : "Fuori dalla stanza"}
-        </span>
-      </div>
-      <div className="roomp-clock">
-        <span className="roomp-clock-label">{clockLabel}</span>
-        <span className={`roomp-clock-value roomp-clock-value--${studying ? "work" : inRoom ? "break" : "off"}`}>{clock}</span>
-        <span className="roomp-clock-subject">{studying ? (p?.subject ?? "Materia non condivisa") : " "}</span>
-      </div>
-      <dl className="roomp-totals">
-        <div>
-          <dt>Oggi</dt>
-          <dd>{formatStudyTime(member.today)}</dd>
-        </div>
-        <div>
-          <dt>Settimana</dt>
-          <dd>{formatStudyTime(member.week)}</dd>
-        </div>
-      </dl>
-    </aside>
-  );
-}
-
 /**
  * La Stanza comune (voce della barra laterale, docs/mockup-gruppi/gruppi/stanza-comune.html): chi studia siede ai
  * tavoli col suo Pixy, a gruppi di 8 per sala; chi è connesso col timer fermo o offline sta "fuori dalla stanza".
+ * La pagina sta tutta nella finestra (.main qui non scorre): la sala si adatta allo spazio e scorre solo la lista
+ * Membri. Posto e riga della lista condividono la selezione. Creare un gruppo o entrarci si fa dalla pagina Gruppi
+ * (dettaglio del widget) o dagli stati senza gruppi, non da qui.
  * `pigment`: in Opaco la sala usa il pigmento del widget Gruppi (lo decide il registry, in app/App.tsx).
  */
 function RoomPage({ pigment }: { pigment: string }) {
@@ -94,24 +55,22 @@ function RoomPage({ pigment }: { pigment: string }) {
   const { userId } = useCloud();
   const state = useGroupsState();
   const { groups, selectedGroup, selectGroup } = useGroups();
-  const { rooms: chosenRooms, setRoom } = useStudyPresence();
+  const { rooms: chosenRooms, seats: chosenSeats, setRoom, setSeat } = useStudyPresence();
   const { members: pixyMembers, offsetMs } = usePixyPresence();
   const group = state === "ok" ? selectedGroup : null;
   const { members, serverNow, localNow } = useRoomMembers(group?.id ?? null);
-  const [dialog, setDialog] = useState<"create" | "join" | null>(null);
-  // la sala guardata e il posto selezionato valgono per un gruppo: cambiando gruppo si riparte
-  const [view, setView] = useState<{ groupId: string | null; room: number | null; selected: string | null }>({
+  // la sala guardata e la riga aperta valgono per un gruppo: cambiando gruppo si riparte.
+  // selected: undefined = la mia riga (all'apertura, come nel mockup), null = nessuna aperta
+  const [view, setView] = useState<{ groupId: string | null; room: number | null; selected: string | null | undefined }>({
     groupId: null,
     room: null,
-    selected: null,
+    selected: undefined,
   });
-
-  const dialogs = (
-    <>
-      {dialog === "create" && <CreateGroupDialog onClose={() => setDialog(null)} />}
-      {dialog === "join" && <JoinGroupDialog onClose={() => setDialog(null)} />}
-    </>
-  );
+  // la sala si adatta al riquadro (scala uniforme, fino al doppio del mockup)
+  const [sceneBox, setSceneBox] = useState<HTMLDivElement | null>(null);
+  const { width: sceneWidth, height: sceneHeight } = useElementSize(sceneBox);
+  const sceneScale =
+    sceneWidth > 0 && sceneHeight > 0 ? Math.min(sceneWidth / STAGE_WIDTH, sceneHeight / STAGE_HEIGHT, MAX_SCENE_SCALE) : 1;
 
   if (!group) {
     return (
@@ -119,7 +78,6 @@ function RoomPage({ pigment }: { pigment: string }) {
         <section className="roomp-card roomp-card--state">
           <GroupsStatus state={state === "ok" ? "loading" : state} />
         </section>
-        {dialogs}
       </div>
     );
   }
@@ -135,28 +93,74 @@ function RoomPage({ pigment }: { pigment: string }) {
   const mySeatRoom = userId ? roomOf(rooms, userId) : -1;
   // da aprire: quella scelta, se no quella in cui siedo, se no la prima
   const ownRoom = mySeatRoom >= 0 ? mySeatRoom : (myChoice ?? 0);
-  const viewState = view.groupId === group.id ? view : { groupId: group.id, room: null, selected: null };
+  const viewState = view.groupId === group.id ? view : { groupId: group.id, room: null, selected: undefined };
   const roomCount = Math.max(rooms.length, ownRoom + 1);
   const shown = Math.min(viewState.room ?? ownRoom, roomCount - 1);
   const inShown = rooms[shown] ?? [];
-  const seated = seatOrder(inShown, userId, (id) => byId.get(id)?.kind === "studying")
-    .map((id) => byId.get(id))
-    .filter((m): m is RoomMember => m !== undefined);
-  const studying = members.filter((m) => m.kind === "studying").length;
+  // il mio posto scelto lo leggo dalla mia scelta (subito), quello degli altri dalla loro presenza
+  const mySeat = myChoice === shown ? (chosenSeats[group.id] ?? null) : null;
+  const chosenSeat = (id: string) => (id === userId ? mySeat : (byId.get(id)?.presence?.seat ?? null));
+  const order = seatOrder(inShown, userId, (id) => byId.get(id)?.kind === "studying");
+  const places = placeSeats(inShown, chosenSeat, order);
+  const seats = places.map((id) => (id === null ? null : (byId.get(id) ?? null)));
+  // scelto ma non seduto (timer fermo): il posto resta libero, segnato come mio
+  const reservedSeat = mySeat !== null && mySeatRoom !== shown && places[mySeat] === null ? mySeat : null;
   const isMyRoom = mySeatRoom >= 0 ? shown === mySeatRoom : myChoice === shown;
   const roomFull = !isMyRoom && inShown.length >= ROOM_SEATS;
-  const selected = byId.get(viewState.selected ?? userId ?? "") ?? members.find((m) => m.isMe) ?? members[0];
+  const selectedId = viewState.selected === undefined ? userId : viewState.selected;
+  const sections = memberSections(
+    rooms,
+    shown,
+    order,
+    away.map((m) => m.userId)
+  );
 
   const update = (patch: Partial<typeof viewState>) => setView({ ...viewState, ...patch });
+  // un clic apre la riga (o il posto), un secondo clic sullo stesso la chiude
+  const toggle = (id: string) => update({ selected: id === selectedId ? null : id });
 
   return (
     <div className="roomp">
       <header className="roomp-header">
-        <div className="roomp-titles">
-          <h1>{group.name}</h1>
-          <span className="roomp-sub">{roomSubtitle(present.length, roomCount, studying, members.length)}</span>
-        </div>
+        <h1>{group.name}</h1>
         <div className="roomp-actions">
+          <div className="roomp-rooms" role="group" aria-label={`Sala ${shown + 1} di ${roomCount}, ${roomInfo(inShown.length, ROOM_SEATS)}`}>
+            <button
+              type="button"
+              className="grp-btn grp-btn--ghost roomp-arrow"
+              aria-label="Sala precedente"
+              disabled={shown === 0}
+              onClick={() => update({ room: Math.max(0, shown - 1) })}
+            >
+              <Arrow dir="prev" />
+            </button>
+            <span className="roomp-rooms-label">
+              Sala {shown + 1} di {roomCount}
+            </span>
+            <button
+              type="button"
+              className="grp-btn grp-btn--ghost roomp-arrow"
+              aria-label="Sala successiva"
+              disabled={shown >= roomCount - 1}
+              onClick={() => update({ room: Math.min(roomCount - 1, shown + 1) })}
+            >
+              <Arrow dir="next" />
+            </button>
+          </div>
+          {isMyRoom ? (
+            <span className="roomp-here">Sei seduto qui</span>
+          ) : roomFull ? (
+            <span className="roomp-full">Sala piena</span>
+          ) : (
+            <button type="button" className="grp-btn roomp-fill" onClick={() => setRoom(group.id, shown)}>
+              Siediti in questa sala
+            </button>
+          )}
+          {isMyRoom && chosenSeats[group.id] !== undefined && (
+            <button type="button" className="grp-btn grp-btn--ghost" onClick={() => setRoom(group.id, shown)}>
+              Posto automatico
+            </button>
+          )}
           {groups.length > 0 && (
             <div className="roomp-groups" role="group" aria-label="I miei gruppi">
               {groups.map((g) => (
@@ -172,16 +176,10 @@ function RoomPage({ pigment }: { pigment: string }) {
               ))}
             </div>
           )}
-          <button type="button" className="grp-btn grp-btn--ghost" onClick={() => setDialog("join")}>
-            Entra con codice
-          </button>
-          <button type="button" className="grp-btn" onClick={() => setDialog("create")}>
-            Crea gruppo
-          </button>
           <button
             type="button"
             className="grp-btn grp-btn--ghost roomp-icon-btn"
-            aria-label="Impostazioni della stanza"
+            aria-label="Impostazioni dei gruppi"
             onClick={() => openWidgetDetail(GROUPS_WIDGET_ID)}
           >
             <SettingsIcon />
@@ -191,78 +189,37 @@ function RoomPage({ pigment }: { pigment: string }) {
 
       <div className="roomp-main">
         <section className="roomp-room" aria-label="La stanza">
-          <div className="roomp-bar">
-            <div className="roomp-bar-nav">
-              <button
-                type="button"
-                className="grp-btn grp-btn--ghost roomp-arrow"
-                aria-label="Sala precedente"
-                disabled={shown === 0}
-                onClick={() => update({ room: Math.max(0, shown - 1) })}
-              >
-                <Arrow dir="prev" />
-              </button>
-              <span className="roomp-bar-label">
-                Sala {shown + 1} di {roomCount}
-              </span>
-              <button
-                type="button"
-                className="grp-btn grp-btn--ghost roomp-arrow"
-                aria-label="Sala successiva"
-                disabled={shown >= roomCount - 1}
-                onClick={() => update({ room: Math.min(roomCount - 1, shown + 1) })}
-              >
-                <Arrow dir="next" />
-              </button>
-              <span className="roomp-bar-info">{roomInfo(inShown.length, ROOM_SEATS)}</span>
-            </div>
-            {isMyRoom ? (
-              <span className="roomp-here">Sei seduto qui</span>
-            ) : roomFull ? (
-              <span className="roomp-bar-info">Sala piena</span>
-            ) : (
-              <button type="button" className="grp-btn grp-btn--sm" onClick={() => setRoom(group.id, shown)}>
-                Siediti in questa sala
-              </button>
-            )}
-          </div>
-          <div className="roomp-scroll" data-pigment={pigment}>
+          <div ref={setSceneBox} className="roomp-scene" data-pigment={pigment}>
             <RoomScene
-              seated={seated}
+              scale={sceneScale}
+              seats={seats}
+              reservedSeat={reservedSeat}
+              onSit={(seat) => setSeat(group.id, shown, seat)}
               pixies={pixyMembers[group.id] ?? {}}
               offsetMs={offsetMs}
               serverNow={serverNow}
               localNow={localNow}
-              selectedId={selected?.userId ?? null}
-              onSelect={(id) => update({ selected: id })}
+              selectedId={selectedId}
+              onSelect={toggle}
             />
           </div>
         </section>
 
-        {selected && <Details member={selected} serverNow={serverNow} />}
+        <RoomSidePanel
+          key={group.id}
+          groupId={group.id}
+          meId={userId}
+          sections={sections}
+          members={byId}
+          selectedId={selectedId}
+          onToggle={toggle}
+          serverNow={serverNow}
+          onOpenSharing={() => {
+            requestGroupsSharing();
+            openWidgetDetail(GROUPS_WIDGET_ID);
+          }}
+        />
       </div>
-
-      {away.length > 0 && (
-        <section className="roomp-away" aria-labelledby="roomp-away-title">
-          <h2 id="roomp-away-title">Fuori dalla stanza</h2>
-          {away.map((m) => (
-            <button
-              key={m.userId}
-              type="button"
-              className={`roomp-away-chip${selected?.userId === m.userId ? " is-selected" : ""}`}
-              aria-pressed={selected?.userId === m.userId}
-              onClick={() => update({ selected: m.userId })}
-            >
-              <span className={`grp-dot grp-dot--${m.kind}`} aria-hidden="true" />
-              <span className="roomp-away-name">{m.isMe ? `${m.username} (tu)` : m.username}</span>
-              <span className="roomp-away-note">
-                {m.kind === "online" ? "online" : lastSeenText(m.lastSeen, serverNow)}, oggi {formatStudyTime(m.today)}
-              </span>
-            </button>
-          ))}
-        </section>
-      )}
-      {dialogs}
     </div>
   );
 }

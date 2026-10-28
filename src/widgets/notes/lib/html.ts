@@ -99,7 +99,9 @@ export function sanitizeHtml(html: string, options: SanitizeOptions = {}): strin
   const external = options.source === "esterno";
   const doc = new DOMParser().parseFromString(html, "text/html");
   doc
-    .querySelectorAll("script, style, iframe, object, embed, link, meta, form, img, video, audio, svg, input, button, colgroup, col, [data-runtime]")
+    .querySelectorAll(
+      "script, style, iframe, frame, frameset, object, embed, applet, portal, link, meta, base, form, img, video, audio, svg, math, input, button, textarea, select, template, noscript, noembed, noframes, xmp, plaintext, title, colgroup, col, [data-runtime]"
+    )
     .forEach((n) => n.remove());
   // Niente tabelle dentro le celle: quella interna diventa testo.
   doc.body.querySelectorAll("td table, th table").forEach((t) => t.replaceWith(doc.createTextNode(t.textContent ?? "")));

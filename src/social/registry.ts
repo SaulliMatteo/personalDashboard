@@ -1,6 +1,8 @@
 import type { SocialModule } from "./types";
+import { chatModule } from "./modules/chat";
 import { pixyModule } from "./modules/pixy";
 import { studyModule } from "./modules/study";
+import { todoModule } from "./modules/todo";
 
 /**
  * L'UNICO elenco dei moduli dei Gruppi. Per aggiungerne uno:
@@ -8,4 +10,4 @@ import { studyModule } from "./modules/study";
  *  2. aggiungilo qui sotto (e la sua feature_key lato server, vedi docs/GRUPPI.md).
  * Provider (e, dalla Fase 5, le sezioni della pagina del gruppo) si aggiornano da soli.
  */
-export const SOCIAL_MODULES: SocialModule[] = [studyModule, pixyModule];
+export const SOCIAL_MODULES: SocialModule[] = [studyModule, pixyModule, todoModule, chatModule];

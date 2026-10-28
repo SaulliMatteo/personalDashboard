@@ -41,7 +41,8 @@ function CurrentView() {
     );
   }
 
-  return <AppShell>{content}</AppShell>;
+  // la Stanza comune sta tutta nella finestra: lì .main non scorre
+  return <AppShell scroll={view.type !== "room"}>{content}</AppShell>;
 }
 
 function App() {

@@ -19,8 +19,8 @@ select ok(not has_function_privilege('authenticated', 'private.enable_pixy_featu
 
 select pg_temp.entra('bruno');
 select ok(private.can_access_channel(pg_temp.leggi('topic')), 'un membro entra nel canale pixy');
-select is((select count(*)::int from public.group_features where group_id = pg_temp.gid('g')), 2,
-  'il membro vede i due moduli del gruppo');
+select is((select count(*)::int from public.group_features where group_id = pg_temp.gid('g') and feature_key in ('study', 'pixy')), 2,
+  'il membro vede i moduli study e pixy del gruppo');
 select throws_ok(format($$insert into public.group_features values (%L, 'cinema', true)$$, pg_temp.gid('g')),
   '42501', null, 'un membro non accende moduli');
 select throws_ok(format($$update public.group_features set enabled = false where group_id = %L$$, pg_temp.gid('g')),

@@ -17,6 +17,11 @@ export type CloudErrorCode =
   | "not_owner"
   | "not_member"
   | "invalid_group"
+  | "invalid_subject_name"
+  | "subject_exists"
+  | "subject_limit"
+  | "rate_limited"
+  | "invalid_subject"
   | "unknown";
 
 const MESSAGES: Record<CloudErrorCode, string> = {
@@ -31,6 +36,11 @@ const MESSAGES: Record<CloudErrorCode, string> = {
   not_owner: "Solo il proprietario del gruppo può farlo.",
   not_member: "Non fai più parte di questo gruppo.",
   invalid_group: "Nome (da 1 a 40 caratteri) o descrizione (al massimo 200) non validi.",
+  invalid_subject_name: "Nome della materia non valido (da 1 a 40 caratteri, con almeno una lettera o una cifra).",
+  subject_exists: "Nel gruppo c'è già una materia con questo nome.",
+  subject_limit: "Il gruppo ha già 50 materie: il proprietario può unirle o eliminarne qualcuna.",
+  rate_limited: "Troppe materie create di seguito. Riprova tra un po'.",
+  invalid_subject: "Questa materia del gruppo non esiste più.",
   unknown: "Qualcosa è andato storto. Riprova.",
 };
 
@@ -53,11 +63,20 @@ const SERVER_CODES: Partial<Record<string, CloudErrorCode>> = {
   not_owner: "not_owner",
   not_member: "not_member",
   cannot_remove_self: "not_owner",
+  subject_exists: "subject_exists",
+  subject_limit: "subject_limit",
+  rate_limited: "rate_limited",
+  invalid_subject: "invalid_subject",
 };
 
 /** Vincoli della tabella groups violati (nome o descrizione fuori misura). */
 function isGroupConstraint(message: string): boolean {
   return /groups_name_length|groups_description_length/.test(message);
+}
+
+/** Vincoli della tabella group_subjects violati (nome fuori misura o senza lettere né cifre). */
+function isSubjectNameConstraint(message: string): boolean {
+  return /group_subjects_name_length|group_subjects_name_key/.test(message);
 }
 
 function isNetworkMessage(message: string): boolean {
@@ -81,6 +100,7 @@ export function throwIfFailed(result: QueryResult): void {
   }
   if (result.status === 401) throw new CloudError("auth");
   if (isGroupConstraint(message)) throw new CloudError("invalid_group");
+  if (isSubjectNameConstraint(message)) throw new CloudError("invalid_subject_name");
   throw new CloudError(SERVER_CODES[message] ?? "unknown");
 }
 

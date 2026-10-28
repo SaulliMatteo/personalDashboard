@@ -23,6 +23,8 @@ export interface LocalStudyState {
   subject: string | null;
   /** Sala scelta per gruppo (assente = riempimento automatico). */
   rooms: Record<string, number>;
+  /** Posto scelto nella sala scelta, per gruppo (assente = posto automatico). */
+  seats: Record<string, number>;
 }
 
 interface StudyLocal extends LocalStudyState {
@@ -45,10 +47,11 @@ export class StudyPresenceHub {
             now: local.idleSince,
             subject: local.subject,
             room: local.rooms[groupId] ?? null,
+            seat: local.seats[groupId] ?? null,
           }),
         parse: parseChannelState,
       },
-      { timer: null, subject: null, rooms: {}, idleSince: deps.now() }
+      { timer: null, subject: null, rooms: {}, seats: {}, idleSince: deps.now() }
     );
   }
 

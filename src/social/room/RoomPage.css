@@ -1,44 +1,38 @@
-/* Stanza comune (docs/mockup-gruppi/gruppi/stanza-comune.html). La sala sta in RoomScene.css. */
+/*
+ * Stanza comune (docs/mockup-gruppi/gruppi/stanza-comune.html). La sala sta in RoomScene.css, la colonna destra in
+ * RoomSidePanel.css. La pagina occupa tutta l'altezza di .main, che qui non scorre (AppShell scroll={false}).
+ */
 
 .roomp {
-  --roomp-name-weight: var(--title-weight);
-
+  flex: 1 1 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  flex-shrink: 0;
   color: var(--text-primary);
 }
 
-:root[data-theme="fosforo"] .roomp {
-  --roomp-name-weight: 400;
-}
-
+/* Intestazione compatta, tutta in alto a sinistra: il nome del gruppo e subito dopo i comandi. */
 .roomp-header {
+  flex: 0 0 auto;
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
+  align-items: center;
+  gap: 12px 20px;
 }
 
-.roomp-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+/* Il nome non si accorcia per stare accanto ai comandi: se non c'è spazio vanno a capo loro (i puntini solo se il
+   nome da solo non sta nella riga). */
+.roomp-header h1 {
+  flex: 0 1 auto;
   min-width: 0;
-}
-
-.roomp-titles h1 {
   margin: 0;
   font-size: 30px;
   font-weight: var(--heading-weight);
   letter-spacing: -0.02em;
-  overflow-wrap: anywhere;
-}
-
-.roomp-sub {
-  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .roomp-actions {
@@ -52,8 +46,8 @@
   height: 42px;
 }
 
-/* Dal mockup: "Crea gruppo" è pieno d'accento in tutti i temi (in Fosforo il primario sarebbe solo bordato). */
-.roomp-actions .grp-btn:not(.grp-btn--ghost):not(.roomp-icon-btn) {
+/* Dal mockup: "Siediti in questa sala" è pieno d'accento in tutti i temi (in Fosforo il primario sarebbe solo bordato). */
+.roomp-actions .roomp-fill {
   background: var(--accent);
   color: var(--on-accent);
 }
@@ -61,6 +55,45 @@
 .roomp-icon-btn {
   width: 42px;
   padding: 0;
+}
+
+/* Cambio sala */
+.roomp-rooms {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roomp-actions .roomp-arrow {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.roomp-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.roomp-rooms-label {
+  min-width: 92px;
+  text-align: center;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.roomp-here {
+  padding: 4px 12px;
+  border-radius: var(--radius-item);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.roomp-full {
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 /* I miei gruppi: come le voci della barra laterale. */
@@ -91,225 +124,43 @@
   color: var(--nav-active-fg);
 }
 
-.roomp-groups button:focus-visible,
-.roomp-away-chip:focus-visible {
+.roomp-groups button:focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
 }
 
+/* La sala e la colonna destra, alte quanto lo spazio che resta. */
 .roomp-main {
+  flex: 1 1 0;
+  min-height: 0;
   display: flex;
-  flex-wrap: wrap;
   gap: 14px;
-  align-items: stretch;
 }
 
-/* ---------- La stanza ---------- */
 .roomp-room {
-  flex: 999 1 620px;
+  flex: 1 1 0;
   min-width: 0;
   display: flex;
-  flex-direction: column;
   overflow: hidden;
   border: var(--card-border);
   border-radius: var(--radius-card);
   box-shadow: var(--card-shadow);
 }
 
-.roomp-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  border-bottom: var(--panel-border);
-  background: var(--panel-bg);
-}
-
-.roomp-bar-nav {
+/* Il riquadro misurato per la scala della sala (RoomPage): la scena, già scalata, sta al centro. */
+.roomp-scene {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.roomp-arrow {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-}
-
-.roomp-arrow:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-
-.roomp-bar-label {
-  min-width: 92px;
-  text-align: center;
-  font-weight: 500;
-}
-
-.roomp-bar-info {
-  margin-left: 6px;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.roomp-here {
-  padding: 4px 12px;
-  border-radius: var(--radius-item);
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-  font-size: 13px;
-}
-
-.roomp-scroll {
-  flex: 1;
-  overflow-x: auto;
+  justify-content: center;
+  overflow: hidden;
   background: var(--scene-bg);
 }
 
-/* ---------- Dettagli ---------- */
-.roomp-details {
-  flex: 1 1 250px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 22px;
-  border: var(--card-border);
-  border-radius: var(--radius-card);
-  background: var(--card-bg);
-  box-shadow: var(--card-shadow);
-}
-
-.roomp-details-head {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.roomp-details-name {
-  font-size: 18px;
-  font-weight: var(--roomp-name-weight);
-  overflow-wrap: anywhere;
-}
-
-.roomp-details-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-soft);
-}
-
-.roomp-clock {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 16px;
-  border: var(--panel-border);
-  border-radius: var(--radius-panel);
-  background: var(--panel-bg);
-}
-
-.roomp-clock-label {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.roomp-clock-value {
-  font-family: var(--font-display);
-  font-size: 44px;
-  font-weight: var(--display-weight);
-  letter-spacing: var(--display-tracking);
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-}
-
-.roomp-clock-value--break {
-  color: var(--group-break);
-}
-
-.roomp-clock-value--off {
-  color: var(--text-muted);
-}
-
-.roomp-clock-subject {
-  font-size: 13px;
-  color: var(--text-secondary);
-  white-space: pre;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.roomp-totals {
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.roomp-totals div {
-  display: flex;
-  flex-direction: column;
-}
-
-.roomp-totals dt {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.roomp-totals dd {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: var(--display-weight);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-/* ---------- Fuori dalla stanza ---------- */
-.roomp-away {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.roomp-away h2 {
-  margin: 0 8px 0 0;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.roomp-away-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 34px;
-  padding: 0 12px;
-  border: var(--panel-border);
-  border-radius: var(--radius-item);
-  background: var(--panel-bg);
-  color: inherit;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.roomp-away-chip.is-selected {
-  outline: 1.5px solid var(--accent);
-  outline-offset: -1.5px;
-}
-
-.roomp-away-name {
-  color: var(--text-soft);
-}
-
-.roomp-away-note {
-  color: var(--text-muted);
+.roomp-scene .rs-fit {
+  flex: none;
 }
 
 /* ---------- Senza account o senza gruppi ---------- */
@@ -323,6 +174,9 @@
   box-shadow: var(--card-shadow);
 }
 
+/* Gli stati (accesso, nessun gruppo…) riempiono la pagina e, se non ci stanno, scorrono dentro il riquadro. */
 .roomp-card--state {
-  min-height: 360px;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
 }

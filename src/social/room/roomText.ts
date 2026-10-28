@@ -26,15 +26,6 @@ export function lastSeenText(seenAt: number | null, serverNow: number): string {
   return days === 1 ? "ultima volta ieri" : `ultima volta ${days} giorni fa`;
 }
 
-/** Il sottotitolo della stanza: "9 presenti in 2 sale, 7 stanno studiando. 13 membri in tutto." */
-export function roomSubtitle(present: number, rooms: number, studying: number, members: number): string {
-  const where = rooms > 1 ? `${rooms} sale` : "una sala";
-  const who = present === 1 ? "1 presente" : `${present} presenti`;
-  const study = studying === 1 ? "1 sta studiando" : `${studying} stanno studiando`;
-  const all = members === 1 ? "1 membro in tutto" : `${members} membri in tutto`;
-  return `${who} in ${where}, ${study}. ${all[0].toUpperCase()}${all.slice(1)}.`;
-}
-
 /** "3 al tavolo, 5 posti liberi". */
 export function roomInfo(seated: number, seats: number): string {
   const free = Math.max(0, seats - seated);

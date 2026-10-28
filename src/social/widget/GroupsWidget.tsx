@@ -4,7 +4,6 @@ import type { WidgetProps } from "../../core/widgets/types";
 import WidgetFrame from "../../core/widgets/WidgetFrame";
 import GroupsStatus from "../groups/components/GroupsStatus";
 import { useGroupsState } from "../groups/groupsState";
-import { MessageIcon } from "../groups/components/icons";
 import { useGroups } from "../groups/useGroups";
 import {
   formatStudyTime,
@@ -25,9 +24,11 @@ function rankClass(rank: number): string {
   return rank <= 3 ? `groupsw-rank groupsw-rank--${rank}` : "groupsw-rank";
 }
 
-function Leaderboard({ rows }: { rows: LeaderboardRow[] }) {
+/** `bars`: nella taglia L ogni riga ha la barra del suo tempo, rispetto al primo (decorativa: il tempo è scritto). */
+function Leaderboard({ rows, bars = false }: { rows: LeaderboardRow[]; bars?: boolean }) {
+  const max = Math.max(1, ...rows.map((r) => r.seconds));
   return (
-    <ol className="groupsw-rows">
+    <ol className={`groupsw-rows${bars ? " groupsw-rows--bars" : ""}`}>
       {rows.map((r) => (
         <li
           key={r.userId}
@@ -41,6 +42,11 @@ function Leaderboard({ rows }: { rows: LeaderboardRow[] }) {
           <span className="groupsw-name" aria-hidden="true">
             {r.isMe ? `${r.username} (tu)` : r.username}
           </span>
+          {bars && (
+            <span className="groupsw-bar" aria-hidden="true">
+              <span style={{ width: `${(r.seconds / max) * 100}%` }} />
+            </span>
+          )}
           <span className="groupsw-time" aria-hidden="true">
             {formatStudyTime(r.seconds)}
           </span>
@@ -73,8 +79,8 @@ function PeriodSwitch({ period, onChange }: { period: LeaderboardPeriod; onChang
 }
 
 /**
- * Widget Gruppi: 1×1 quanti studiano ora; M la classifica di oggi o della settimana; L la classifica con lo spazio
- * dei messaggi (fuori dalla v1). Senza account, senza gruppi o senza rete mostra lo stato al posto dei dati.
+ * Widget Gruppi: 1×1 quanti studiano ora; M la classifica di oggi o della settimana; L la stessa classifica con le
+ * barre. Senza account, senza gruppi o senza rete mostra lo stato al posto dei dati.
  */
 function GroupsWidget({ w, h }: WidgetProps) {
   const size = sizeKey(w, h);
@@ -121,23 +127,16 @@ function GroupsWidget({ w, h }: WidgetProps) {
     return (
       <WidgetFrame>
         <article className="widget groupsw groupsw--L" aria-label={`Gruppi: classifica di ${selectedGroup.name}`}>
-          <div className="groupsw-main">
-            <header className="groupsw-head">
-              <div className="groupsw-titles">
-                <h2>Classifica di {period === "today" ? "oggi" : "settimana"}</h2>
-                <span className="groupsw-sub">
-                  {selectedGroup.name}, {studying} studiano ora
-                </span>
-              </div>
-              <PeriodSwitch period={period} onChange={setPeriod} />
-            </header>
-            <Leaderboard rows={shown} />
-          </div>
-          <div className="groupsw-messages">
-            <MessageIcon />
-            <span className="groupsw-messages-title">Messaggi</span>
-            <span className="groupsw-messages-note">Dopo la v1</span>
-          </div>
+          <header className="groupsw-head">
+            <div className="groupsw-titles">
+              <h2>Classifica di {period === "today" ? "oggi" : "settimana"}</h2>
+              <span className="groupsw-sub">
+                {selectedGroup.name}, {studying} studiano ora
+              </span>
+            </div>
+            <PeriodSwitch period={period} onChange={setPeriod} />
+          </header>
+          <Leaderboard rows={shown} bars />
         </article>
       </WidgetFrame>
     );

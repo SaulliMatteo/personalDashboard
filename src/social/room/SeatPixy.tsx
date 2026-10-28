@@ -29,13 +29,15 @@ interface SeatPixyProps {
   offsetMs: number;
   /** Ora locale, aggiornata ogni secondo dalla pagina: toglie reazioni e fumetti finiti. */
   localNow: number;
+  /** Scala della sala: il canvas si disegna a quella risoluzione, così resta nitido anche ingrandito. */
+  renderScale: number;
 }
 
 /**
  * Il Pixy di un posto della Stanza comune, con il suo animatore. Il mio è quello del Companion, come lo vedo
  * nel widget; quello di un compagno segue ciò che condivide (le espressioni solo se le condivide).
  */
-function SeatPixy({ kind, isMe, pixy, offsetMs, localNow }: SeatPixyProps) {
+function SeatPixy({ kind, isMe, pixy, offsetMs, localNow, renderScale }: SeatPixyProps) {
   const { settings } = useSettings();
   const [animator] = useState(() => new FaceAnimator());
   const mine = useSyncExternalStore(subscribeMyPixy, getMyPixy);
@@ -78,7 +80,10 @@ function SeatPixy({ kind, isMe, pixy, offsetMs, localNow }: SeatPixyProps) {
       bubble={bubble}
       bubbleSize="small"
       maxPointSize={2.6}
-      padding={2}
+      // la testa è di 54×40 px: in Fosforo i LED scendono sotto i 3 px perché la faccia ci stia tutta
+      minPointSize={1}
+      padding={1}
+      renderScale={renderScale}
       className="room-seat-face"
     />
   );

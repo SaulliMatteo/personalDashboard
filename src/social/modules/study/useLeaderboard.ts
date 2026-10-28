@@ -35,7 +35,7 @@ export function useLeaderboard(groupId: string | null, period: LeaderboardPeriod
     return buildLeaderboard({
       members: (members[groupId] ?? []).map((m) => ({ userId: m.userId, username: m.username })),
       meId: userId,
-      saved: period === "today" ? totals.today : totals.week,
+      saved: totals[period],
       live: groupLive,
       serverNow: server,
     });

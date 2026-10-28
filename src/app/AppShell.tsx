@@ -7,8 +7,9 @@ import "./shell.css";
  * Guscio comune a tutte le viste: la sidebar (con il modale Settings)
  * resta sempre montata, cambia solo il contenuto di .main.
  * Tema, accent e animazioni sono gestiti su <html> da SettingsProvider.
+ * `scroll={false}`: .main non scorre (la vista sta tutta nella finestra, es. la Stanza comune).
  */
-function AppShell({ children }: { children: ReactNode }) {
+function AppShell({ children, scroll = true }: { children: ReactNode; scroll?: boolean }) {
   return (
     <div className="app">
       {/* Decorazione di sfondo del tema (oggi solo Fosforo: due cerchi). */}
@@ -17,7 +18,7 @@ function AppShell({ children }: { children: ReactNode }) {
         <span className="app-deco-ring" />
       </div>
       <Sidebar extraNav={<RoomNavItem />} />
-      <main className="main">{children}</main>
+      <main className={scroll ? "main" : "main main--fixed"}>{children}</main>
     </div>
   );
 }

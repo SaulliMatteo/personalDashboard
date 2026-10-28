@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { createElement, useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { openPath } from "@tauri-apps/plugin-opener";
@@ -921,7 +921,7 @@ function NotesDetail() {
         return {
           title: folder?.name ?? "Cartella",
           subtitle: parent ? `Dentro ${parent.name}` : "Cartella principale",
-          icon: <Icon />,
+          icon: createElement(Icon),
           accent: folder?.color ?? null,
         };
       }

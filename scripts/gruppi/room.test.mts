@@ -5,8 +5,8 @@
  *   node node_modules/.tmp/gruppi-room.test.mjs
  */
 import assert from "node:assert/strict";
-import { assignRooms, roomOf, SEAT_SLOTS, seatOrder, type SeatCandidate } from "../../src/social/room/seating";
-import { formatClock, lastSeenText, roomInfo, roomSubtitle } from "../../src/social/room/roomText";
+import { assignRooms, memberSections, placeSeats, roomOf, SEAT_SLOTS, seatOrder, type SeatCandidate } from "../../src/social/room/seating";
+import { formatClock, lastSeenText, roomInfo } from "../../src/social/room/roomText";
 
 let passed = 0;
 function test(name: string, fn: () => void) {
@@ -100,7 +100,58 @@ test("posizioni della scena: le 8 posizioni, i primi posti davanti al centro", (
   assert.equal(SEAT_SLOTS.indexOf(1), 5);
 });
 
-test("testi: timer, ultima volta, sottotitolo, posti", () => {
+test("posti scelti: chi li sceglie ci si siede, gli altri riempiono i rimasti davanti al centro", () => {
+  const room = ["a", "b", "c"];
+  const places = placeSeats(room, (id) => (id === "b" ? 0 : null), ["c", "a", "b"]);
+  assert.equal(places.length, 8);
+  assert.equal(places[0], "b");
+  // automatici nell'ordine di autoOrder, dal primo posto di SEAT_SLOTS (posizione 6, poi 5)
+  assert.equal(places[SEAT_SLOTS.indexOf(0)], "c");
+  assert.equal(places[SEAT_SLOTS.indexOf(1)], "a");
+  assert.equal(places.filter((p) => p !== null).length, 3);
+});
+
+test("posti scelti: stesso posto, vince chi è entrato prima nel gruppo", () => {
+  const places = placeSeats(["a", "b"], () => 3, ["b", "a"]);
+  assert.equal(places[3], "a");
+  assert.equal(places[SEAT_SLOTS.indexOf(0)], "b");
+});
+
+test("posti scelti: fuori intervallo o non interi valgono come automatici", () => {
+  const places = placeSeats(["a", "b", "c"], (id) => ({ a: 8, b: -1, c: 1.5 })[id] ?? null, ["a", "b", "c"]);
+  assert.deepEqual([6, 5, 4].map((p) => places[p]), ["a", "b", "c"]);
+});
+
+test("posti scelti: il posto scelto prende anche quello che sarebbe toccato in automatico", () => {
+  const places = placeSeats(["a", "b"], (id) => (id === "b" ? SEAT_SLOTS.indexOf(0) : null), ["a", "b"]);
+  assert.equal(places[SEAT_SLOTS.indexOf(0)], "b");
+  assert.equal(places[SEAT_SLOTS.indexOf(1)], "a");
+  assert.deepEqual(placeSeats([], () => null, []), Array(8).fill(null));
+});
+
+test("lista Membri: questa sala nell'ordine dei posti, le altre sale per sala, poi chi è fuori", () => {
+  const rooms = [["a", "b"], ["c", "d"], ["e"]];
+  assert.deepEqual(memberSections(rooms, 1, ["d", "c"], ["x", "y"]), [
+    { title: "In questa sala", members: [{ userId: "d", room: null }, { userId: "c", room: null }] },
+    {
+      title: "Nelle altre sale",
+      members: [
+        { userId: "a", room: 0 },
+        { userId: "b", room: 0 },
+        { userId: "e", room: 2 },
+      ],
+    },
+    { title: "Fuori dalla stanza", members: [{ userId: "x", room: null }, { userId: "y", room: null }] },
+  ]);
+});
+
+test("lista Membri: le sezioni vuote mancano", () => {
+  assert.deepEqual(memberSections([[]], 0, [], ["x"]), [{ title: "Fuori dalla stanza", members: [{ userId: "x", room: null }] }]);
+  assert.deepEqual(memberSections([["a"]], 0, ["a"], []), [{ title: "In questa sala", members: [{ userId: "a", room: null }] }]);
+  assert.deepEqual(memberSections([[]], 0, [], []), []);
+});
+
+test("testi: timer, ultima volta, posti", () => {
   assert.equal(formatClock(0), "00:00");
   assert.equal(formatClock(1512), "25:12");
   assert.equal(formatClock(3725), "1:02:05");
@@ -112,8 +163,6 @@ test("testi: timer, ultima volta, sottotitolo, posti", () => {
   assert.equal(lastSeenText(now - 2 * 3_600_000, now), "ultima volta 2 h fa");
   assert.equal(lastSeenText(now - 30 * 3_600_000, now), "ultima volta ieri");
   assert.equal(lastSeenText(now - 3 * 86_400_000, now), "ultima volta 3 giorni fa");
-  assert.equal(roomSubtitle(9, 2, 7, 13), "9 presenti in 2 sale, 7 stanno studiando. 13 membri in tutto.");
-  assert.equal(roomSubtitle(1, 1, 1, 1), "1 presente in una sala, 1 sta studiando. 1 membro in tutto.");
   assert.equal(roomInfo(3, 8), "3 al tavolo, 5 posti liberi");
   assert.equal(roomInfo(7, 8), "7 al tavolo, 1 posto libero");
 });

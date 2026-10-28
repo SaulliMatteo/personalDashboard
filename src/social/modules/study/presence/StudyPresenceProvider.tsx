@@ -13,6 +13,9 @@ import { StudyPresenceContext, type StudyPresenceValue } from "./useStudyPresenc
 
 const EMPTY: PresenceSnapshot = { members: {}, channels: {} };
 
+type RoomChoices = Pick<LocalStudyState, "rooms" | "seats">;
+const NO_CHOICES: RoomChoices = { rooms: {}, seats: {} };
+
 /**
  * Presenza live dello Studio nei canali dei propri gruppi: manda il proprio timer (dal bus) e raccoglie quello
  * dei compagni. Attiva solo con l'account pronto; senza, tutti risultano offline. L'elenco dei gruppi viene
@@ -24,7 +27,9 @@ export function StudyPresenceProvider({ children }: { children: ReactNode }) {
   const { groups } = useGroups();
   const activeUser = status.kind === "ready" ? userId : null;
   const [snapshot, setSnapshot] = useState<PresenceSnapshot>(EMPTY);
-  const [rooms, setRooms] = useState<Record<string, number>>({});
+  // sala e posto scelti, per gruppo: valgono finché l'app è aperta
+  const [choices, setChoices] = useState<RoomChoices>(NO_CHOICES);
+  const { rooms, seats } = choices;
   const hubRef = useRef<StudyPresenceHub | null>(null);
   const showSubject = settings.groupsShowSubject;
   // gruppi con lo Studio attivo, come stringa: l'effetto dei canali riparte solo se l'elenco cambia davvero
@@ -37,8 +42,8 @@ export function StudyPresenceProvider({ children }: { children: ReactNode }) {
   // Lo stato da mandare: timer e materia dal bus, più le scelte dell'utente.
   const readLocal = useCallback((): LocalStudyState => {
     const activity = getActivity();
-    return { timer: activity.studyTimer, subject: showSubject ? activity.studySubjectName : null, rooms };
-  }, [showSubject, rooms]);
+    return { timer: activity.studyTimer, subject: showSubject ? activity.studySubjectName : null, rooms, seats };
+  }, [showSubject, rooms, seats]);
   const readLocalRef = useLatestRef(readLocal);
 
   useEffect(() => {
@@ -85,19 +90,28 @@ export function StudyPresenceProvider({ children }: { children: ReactNode }) {
   }, [groupKey]);
 
   const setRoom = useCallback((groupId: string, room: number | null) => {
-    setRooms((current) => {
-      const next = { ...current };
-      if (room === null) delete next[groupId];
-      else next[groupId] = room;
-      return next;
+    setChoices((current) => {
+      const nextRooms = { ...current.rooms };
+      const nextSeats = { ...current.seats };
+      if (room === null) delete nextRooms[groupId];
+      else nextRooms[groupId] = room;
+      delete nextSeats[groupId];
+      return { rooms: nextRooms, seats: nextSeats };
     });
+  }, []);
+
+  const setSeat = useCallback((groupId: string, room: number, seat: number) => {
+    setChoices((current) => ({
+      rooms: { ...current.rooms, [groupId]: room },
+      seats: { ...current.seats, [groupId]: seat },
+    }));
   }, []);
 
   const serverNow = useCallback(() => hubRef.current?.serverNow() ?? Date.now(), []);
 
   const value = useMemo<StudyPresenceValue>(
-    () => ({ members: snapshot.members, channels: snapshot.channels, serverNow, rooms, setRoom }),
-    [snapshot, serverNow, rooms, setRoom]
+    () => ({ members: snapshot.members, channels: snapshot.channels, serverNow, rooms, seats, setRoom, setSeat }),
+    [snapshot, serverNow, rooms, seats, setRoom, setSeat]
   );
 
   return <StudyPresenceContext.Provider value={value}>{children}</StudyPresenceContext.Provider>;

@@ -1,0 +1,309 @@
+/* Scheda Messaggi della Stanza comune (docs/mockup-gruppi/gruppi/stanza-comune.html). */
+
+.rch {
+  --rch-bubble-radius: 14px;
+
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+:root[data-theme="opaco"] .rch {
+  --rch-bubble-radius: 18px;
+}
+
+:root[data-theme="quaderno"] .rch {
+  --rch-bubble-radius: 6px;
+}
+
+:root[data-theme="fosforo"] .rch {
+  --rch-bubble-radius: 10px;
+}
+
+/* il più nuovo è il primo nel DOM: column-reverse lo mette in fondo e la lista parte dal basso */
+.rch-list {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 10px 12px;
+  list-style: none;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-accent) transparent;
+}
+
+.rch-live {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.rch-state {
+  margin: auto 0;
+  align-self: center;
+  max-width: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.rch-state svg {
+  color: var(--text-muted);
+}
+
+.rch-state strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ---------- Messaggi di sistema ---------- */
+.rch-sys {
+  margin-top: 4px;
+  align-self: center;
+  max-width: 92%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.rch-sys-icon {
+  display: flex;
+  color: var(--text-muted);
+}
+
+.rch-sys-icon--studied {
+  color: var(--group-break);
+}
+
+.rch-time {
+  color: var(--text-muted);
+}
+
+/* ---------- Messaggi ---------- */
+.rch-msg {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.rch-msg.is-mine {
+  align-items: flex-end;
+}
+
+.rch-msg.is-cont {
+  margin-top: 0;
+}
+
+.rch-who {
+  padding: 0 4px 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.rch-who strong {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.rch-row {
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.is-mine .rch-row {
+  flex-direction: row-reverse;
+}
+
+.rch-bubble {
+  max-width: 228px;
+  box-sizing: border-box;
+  padding: 7px 11px;
+  border: var(--panel-border);
+  border-radius: 4px var(--rch-bubble-radius) var(--rch-bubble-radius) var(--rch-bubble-radius);
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.is-cont .rch-bubble {
+  border-top-left-radius: var(--rch-bubble-radius);
+}
+
+.is-mine .rch-bubble {
+  border: 0;
+  border-radius: var(--rch-bubble-radius) 4px var(--rch-bubble-radius) var(--rch-bubble-radius);
+  background: var(--accent-soft);
+}
+
+.is-mine.is-cont .rch-bubble {
+  border-top-right-radius: var(--rch-bubble-radius);
+}
+
+.rch-bubble.is-deleted {
+  border: var(--group-soon-border);
+  background: transparent;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.rch-del {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.rch-reactions {
+  display: flex;
+  gap: 4px;
+  padding-top: 3px;
+}
+
+.rch-react {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+  border: var(--panel-border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* in Opaco i pannelli non hanno bordo: la pillola ne prende uno dal binario */
+:root[data-theme="opaco"] .rch-react:not(.is-on) {
+  border: 1px solid var(--track);
+}
+
+.rch-react.is-on {
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.rch-react:disabled {
+  cursor: default;
+}
+
+/* reazione a zero ed elimina: si vedono passando sopra il messaggio o col fuoco */
+.rch-hover {
+  opacity: 0;
+}
+
+.rch-msg:hover .rch-hover,
+.rch-msg:focus-within .rch-hover,
+.rch-hover:focus-visible {
+  opacity: 1;
+}
+
+/* ---------- Scrivere ---------- */
+.rch-form {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px 12px;
+  border-top: var(--group-tabs-line);
+}
+
+.rch-compose {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.rch-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+}
+
+.rch-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.rch-input:disabled {
+  opacity: 0.7;
+}
+
+.rch-send {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+}
+
+.rch-send[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.rch-count,
+.rch-error {
+  align-self: flex-end;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.rch-error {
+  color: var(--danger);
+}
+
+.rch-del:focus-visible,
+.rch-react:focus-visible,
+.rch-send:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.rch-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

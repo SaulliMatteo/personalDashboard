@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createElement, useEffect, useState } from "react";
 import { MdCheck, MdClose, MdOutlineCreateNewFolder } from "react-icons/md";
 import ConfirmButton from "../../../ui/ConfirmButton";
 import type { Folder } from "../data/notesRepository";
@@ -116,7 +116,7 @@ function FolderPanel({ folder, parentName, noteCount, onSave, onAddSubfolder, on
           <span className="nq-panel-label nq-panel-label--muted">Anteprima</span>
           <div className="nq-preview">
             <span className="nq-preview-icon" style={{ color: tint, background: `color-mix(in srgb, ${tint} 16%, transparent)` }}>
-              <Icon />
+              {createElement(Icon)}
             </span>
             <div>
               <strong>{name.trim() || "Senza nome"}</strong>

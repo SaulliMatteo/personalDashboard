@@ -127,6 +127,8 @@
   --group-work: var(--accent);
   --group-break: var(--warn);
   --group-off: #C3CBDC;
+  --group-bar-track: var(--track);
+  --group-soon-border: var(--slot-border);
   --group-me-bg: color-mix(in srgb, var(--accent) 10%, transparent);
   --group-rank-1: #3049B8;
   --group-rank-2: #2A3350;
@@ -150,6 +152,16 @@
   --group-danger-card: #FFFFFF;
   --group-danger-border: 1px solid rgba(194, 65, 58, 0.4);
   --group-danger-soft: rgba(194, 65, 58, 0.10);
+  /* Pagina Gruppi (impostazioni-stanza.html): riga "Abbandona" e linea sotto le schede. */
+  --group-danger-line: 1px solid rgba(194, 65, 58, 0.3);
+  --group-danger-row: transparent;
+  --group-tabs-line: 1px solid #E1E6F0;
+  /* materie del gruppo nel report (palette che si ripete) e "Altre materie" */
+  --group-subject-0: #3B57D6;
+  --group-subject-1: #187A56;
+  --group-subject-2: #C27628;
+  --group-subject-3: #8A4FC2;
+  --group-subject-other: #C3CBDC;
 
   /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
   --scene-bg: #E4E9F3;
@@ -318,6 +330,8 @@
   /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
   --group-work: var(--accent);
   --group-off: var(--dot-off);
+  --group-bar-track: var(--track);
+  --group-soon-border: 2px dashed #3F403A;
   --group-me-bg: var(--dot-off);
   --group-rank-1: var(--text-primary);
   --group-rank-2: var(--text-primary);
@@ -342,6 +356,16 @@
   --group-danger-card: #4A2E28;
   --group-danger-border: 0;
   --group-danger-soft: rgba(227, 139, 124, 0.14);
+  /* Pagina Gruppi (impostazioni-stanza.html): riga "Abbandona" e linea sotto le schede. */
+  --group-danger-line: 0;
+  --group-danger-row: #4A2E28;
+  --group-tabs-line: 2px solid #34352F;
+  /* materie del gruppo nel report (palette che si ripete) e "Altre materie" */
+  --group-subject-0: #9DB0C0;
+  --group-subject-1: #A9B59C;
+  --group-subject-2: #D2B26A;
+  --group-subject-3: #B8A1B4;
+  --group-subject-other: #4A4B44;
 }
 
 /* Pigmenti in versione notte: fondo / inchiostro / tono scuro / tono medio / chiaro (testo su inchiostro) / metà. */
@@ -548,6 +572,8 @@
   --group-work: var(--accent);
   --group-break: var(--warn);
   --group-off: var(--dot-off);
+  --group-bar-track: #262E3D;
+  --group-soon-border: 1.5px dashed #3A4459;
   --group-rank-1: var(--accent);
   --group-rank-2: var(--accent);
   --group-rank-3: var(--accent);
@@ -571,6 +597,16 @@
   --group-danger-card: #1A1F2B;
   --group-danger-border: 1.5px solid #F08A80;
   --group-danger-soft: rgba(240, 138, 128, 0.12);
+  /* Pagina Gruppi (impostazioni-stanza.html): riga "Abbandona" e linea sotto le schede. */
+  --group-danger-line: 1.5px solid #F08A80;
+  --group-danger-row: transparent;
+  --group-tabs-line: 1px solid #262E3D;
+  /* materie del gruppo nel report (palette che si ripete) e "Altre materie" */
+  --group-subject-0: #9FB6FF;
+  --group-subject-1: #4CC38A;
+  --group-subject-2: #E0A25A;
+  --group-subject-3: #F08A80;
+  --group-subject-other: #3A4459;
 
   /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
   --scene-bg: linear-gradient(#1C2330 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #1C2330 1px, transparent 1px) 0 0 / 24px 24px, #121620;
@@ -755,6 +791,8 @@
   --group-work: var(--danger);
   --group-break: var(--text-secondary);
   --group-off: var(--dot-off);
+  --group-bar-track: var(--track);
+  --group-soon-border: 1px dashed rgba(70, 24, 28, 0.25);
   --group-me-bg: var(--surface-2);
   --group-rank-1: var(--danger);
   --group-rank-2: var(--text-soft);
@@ -778,6 +816,16 @@
   --group-danger-card: rgba(253, 250, 248, 0.92);
   --group-danger-border: 1px solid rgba(224, 53, 43, 0.4);
   --group-danger-soft: rgba(224, 53, 43, 0.10);
+  /* Pagina Gruppi (impostazioni-stanza.html): riga "Abbandona" e linea sotto le schede. */
+  --group-danger-line: 1px solid rgba(224, 53, 43, 0.3);
+  --group-danger-row: transparent;
+  --group-tabs-line: 1px solid rgba(70, 24, 28, 0.12);
+  /* materie del gruppo nel report (palette che si ripete) e "Altre materie" */
+  --group-subject-0: #E0352B;
+  --group-subject-1: #2A1215;
+  --group-subject-2: #77605D;
+  --group-subject-3: #B8A6A1;
+  --group-subject-other: #D6C9C4;
 
   /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
   --scene-bg: radial-gradient(rgba(70,24,28,0.07) 1px, transparent 1.3px) 0 0 / 7px 7px, #E5DDD7;

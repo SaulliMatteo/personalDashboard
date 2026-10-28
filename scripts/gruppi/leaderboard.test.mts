@@ -1,5 +1,5 @@
 /*
- * Prove della classifica di studio dei Gruppi e del codice invito (funzioni pure, nessun server).
+ * Prove della classifica di studio dei Gruppi, dei totali per periodo e del codice invito (funzioni pure, nessun server).
  * Lancio (da questa cartella del repo):
  *   npx rolldown scripts/gruppi/leaderboard.test.mts --file node_modules/.tmp/gruppi-leaderboard.test.mjs --platform node
  *   node node_modules/.tmp/gruppi-leaderboard.test.mjs
@@ -14,6 +14,7 @@ import {
   type LeaderboardInput,
 } from "../../src/social/modules/study/leaderboard";
 import type { StudyPresence } from "../../src/social/modules/study/presence/payload";
+import { aggregateTotals, fetchFrom, monthCoverage } from "../../src/social/modules/study/totals/aggregate";
 
 let passed = 0;
 function test(name: string, fn: () => void) {
@@ -149,6 +150,41 @@ test("codice invito: completo solo con 8 caratteri dell'alfabeto", () => {
   assert.equal(isInviteCodeComplete("K7QM-3XR"), false);
   assert.equal(isInviteCodeComplete("K7QM-3XR0"), false, "lo 0 non c'è");
   assert.equal(isInviteCodeComplete("K7QM-3XRI"), false, "la I non c'è");
+});
+
+// ---- Totali per periodo (oggi, settimana, mese) ----
+const DAYS = { today: "2026-10-25", weekStart: "2026-10-19", monthStart: "2026-10-01" };
+const row = (userId: string, day: string, seconds: number) => ({ userId, day, seconds });
+
+test("totali: da dove leggere è il più vecchio tra lunedì e il primo del mese", () => {
+  assert.equal(fetchFrom(DAYS), "2026-10-01");
+  assert.equal(fetchFrom({ today: "2026-11-02", weekStart: "2026-10-26", monthStart: "2026-11-01" }), "2026-10-26");
+});
+
+test("totali: oggi, settimana e mese sommati per utente", () => {
+  const t = aggregateTotals(
+    [row("a", "2026-10-01", 100), row("a", "2026-10-19", 50), row("a", "2026-10-25", 10), row("b", "2026-10-20", 7), row("a", "2026-10-26", 999)],
+    DAYS
+  );
+  assert.deepEqual(t.today, { a: 10 });
+  assert.deepEqual(t.week, { a: 60, b: 7 });
+  assert.deepEqual(t.month, { a: 160, b: 7 });
+  assert.deepEqual(t.firstDay, { a: "2026-10-01", b: "2026-10-20" });
+});
+
+test("totali: con lunedì nel mese prima, la settimana conta anche quei giorni ma il mese no", () => {
+  const days = { today: "2026-11-02", weekStart: "2026-10-26", monthStart: "2026-11-01" };
+  const t = aggregateTotals([row("a", "2026-10-27", 30), row("a", "2026-11-01", 20)], days);
+  assert.deepEqual(t.week, { a: 50 });
+  assert.deepEqual(t.month, { a: 20 });
+  assert.equal(monthCoverage(t.firstDay.a, days.monthStart).kind, "full");
+});
+
+test("mese: completo, parziale (dal primo giorno con dati) o senza dati, mai uno zero finto", () => {
+  assert.deepEqual(monthCoverage("2026-10-01", "2026-10-01"), { kind: "full" });
+  assert.deepEqual(monthCoverage("2026-09-28", "2026-10-01"), { kind: "full" });
+  assert.deepEqual(monthCoverage("2026-10-12", "2026-10-01"), { kind: "partial", from: "2026-10-12" });
+  assert.deepEqual(monthCoverage(undefined, "2026-10-01"), { kind: "none" });
 });
 
 console.log(`OK: ${passed} prove superate`);
