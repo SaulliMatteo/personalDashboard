@@ -1,0 +1,1264 @@
+<title>Notes nei quattro temi</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Caveat:wght@400..700&family=Doto:wght@400..900&family=Figtree:wght@300..800&family=JetBrains+Mono:wght@300..700&family=Literata:opsz,wght@7..72,300..700&family=Manrope:wght@200..800&display=swap">
+<style>
+/* Layout: una sola scena (dashboard → pagina Notes → raccolta → scorciatoie → prompt) che cambia FORMA con il tema scelto,
+   come farà l'app. I token replicano src/styles/tokens.css e tokens-varianti.css. */
+:root {
+  --bg: #090C15; --main-bg: #090C15; --card-bg: linear-gradient(180deg,#151B2E,#10152A); --card-solid: #121831;
+  --card-border: 1px solid #1F2740; --card-shadow: inset 0 1px 0 rgba(200,215,255,.07);
+  --border: #1F2740; --text: #E9ECF5; --text2: #9AA2BA; --accent: #8EA6FF; --on-accent: #090C15;
+  --panel-bg: #0B0F1C; --panel-border: 1px solid #182036; --surf2: #161C2E; --surf3: #1A2032;
+  --radius-card: 22px; --radius-panel: 16px; --radius-item: 12px;
+  --font: "Manrope", system-ui, sans-serif; --font-title: "Manrope", system-ui, sans-serif;
+  --font-display: "Manrope", system-ui, sans-serif; --display-weight: 200; --display-track: -0.04em; --heading-weight: 300;
+  --page-bg: #0B0F1C; --page-ink: #E9ECF5; --page-pattern: none; --page-border: 1px solid #182036;
+  --led: #7DD3B0; --danger: #F08A8A; --postit: #FFF1A8; --postit-ink: #5C4E12; --margin: #E8A0A0;
+  --c-salvia: #A9B59C; --c-salvia-ink: #1F2B1C; --c-blu: #9DB0C0; --c-blu-ink: #1B2A36;
+  --c-senape: #D2B26A; --c-senape-ink: #3A2C0A; --c-malva: #B8A1B4; --c-malva-ink: #33213A;
+  --overlay: rgba(5,7,12,.72); --shadow-pop: 0 18px 48px rgba(0,0,0,.5); --modal-bg: #121726;
+  --accent-soft: color-mix(in srgb, var(--accent) 16%, transparent);
+  color-scheme: dark;
+}
+/* ---------- NOTTE ---------- */
+body[data-t="notte"][data-m="giorno"] {
+  --bg:#EEF1F7; --main-bg:#EEF1F7; --card-bg:linear-gradient(180deg,#FFFFFF,#F8FAFD); --card-solid:#FFFFFF;
+  --card-border:1px solid #DCE2EE; --card-shadow:0 1px 0 rgba(20,26,46,.04); --border:#DCE2EE;
+  --text:#141A2E; --text2:#5B6480; --accent:#3B57D6; --on-accent:#FFFFFF; --panel-bg:#F4F6FB; --panel-border:1px solid #DCE2EE;
+  --surf2:#E4E9F6; --surf3:#DCE2EE; --page-bg:#FFFFFF; --page-ink:#141A2E; --page-border:1px solid #DCE2EE;
+  --led:#187A56; --danger:#C2413A; --overlay:rgba(20,26,46,.35); --shadow-pop:0 18px 48px rgba(20,26,46,.16); --modal-bg:#FFFFFF;
+  color-scheme: light;
+}
+/* ---------- OPACO ---------- */
+body[data-t="opaco"] {
+  --font:"Bricolage Grotesque", system-ui, sans-serif; --font-title:var(--font); --font-display:var(--font);
+  --display-weight:800; --display-track:-0.05em; --heading-weight:800;
+  --radius-card:28px; --radius-panel:18px; --radius-item:999px; --card-border:0; --card-shadow:none; --panel-border:0; --page-border:0;
+}
+body[data-t="opaco"][data-m="giorno"] {
+  --bg:#D8D5CD; --main-bg:#D8D5CD; --card-bg:#EFECE5; --card-solid:#EFECE5; --border:#C9C5BB;
+  --text:#22251F; --text2:#4D5047; --accent:#22251F; --on-accent:#ECE9E2; --panel-bg:#E2DED5; --surf2:#E2DED5; --surf3:#C9C5BB;
+  --page-bg:#EFECE5; --page-ink:#22251F; --led:#3F6B3A; --danger:#8A2A1E; --overlay:rgba(34,37,31,.45);
+  --shadow-pop:0 18px 48px rgba(34,37,31,.12); --modal-bg:#EFECE5; color-scheme: light;
+}
+body[data-t="opaco"][data-m="notte"] {
+  --bg:#1B1C18; --main-bg:#1B1C18; --card-bg:#2A2B26; --card-solid:#2A2B26; --border:#3F403A;
+  --text:#ECE9E2; --text2:#A9A79E; --accent:#ECE9E2; --on-accent:#1B1C18; --panel-bg:#34352F; --surf2:#34352F; --surf3:#3F403A;
+  --page-bg:#2A2B26; --page-ink:#ECE9E2; --led:#ECE9E2; --danger:#E38B7C; --overlay:rgba(0,0,0,.55); --modal-bg:#2A2B26;
+  --c-salvia:#3C4935; --c-salvia-ink:#DCE6D0; --c-blu:#34475A; --c-blu-ink:#E1EAF2;
+  --c-senape:#6B5523; --c-senape-ink:#F3E3BA; --c-malva:#4E3C52; --c-malva-ink:#F1E3EE;
+}
+/* ---------- QUADERNO ---------- */
+body[data-t="quaderno"] {
+  --font:"Figtree", system-ui, sans-serif; --font-title:"Caveat", cursive; --font-display:"Caveat", cursive;
+  --display-weight:700; --display-track:0; --heading-weight:700;
+  --radius-card:8px; --radius-panel:6px; --radius-item:8px;
+}
+body[data-t="quaderno"][data-m="giorno"] {
+  --bg:#FCFDFF; --main-bg:linear-gradient(#E4EBF5 1px,transparent 1px) 0 0/24px 24px, linear-gradient(90deg,#E4EBF5 1px,transparent 1px) 0 0/24px 24px, #FCFDFF;
+  --card-bg:#FFFFFF; --card-solid:#FFFFFF; --card-border:1px solid #C9D3E3; --card-shadow:0 3px 0 #DCE4F0; --border:#C9D3E3;
+  --text:#1B2433; --text2:#556178; --accent:#2340A0; --on-accent:#FFFFFF; --panel-bg:#FFFFFF; --panel-border:1px solid #DCE6F5;
+  --surf2:#EEF3FB; --surf3:#DCE6F5; --page-bg:#FFFFFF; --page-ink:#1B2433; --page-border:1px solid #C9D3E3;
+  --page-pattern:linear-gradient(#E4EBF5 1px,transparent 1px) 0 0/22px 22px, linear-gradient(90deg,#E4EBF5 1px,transparent 1px) 0 0/22px 22px;
+  --postit:#FFF1A8; --postit-ink:#5C4E12; --margin:#E8A0A0; --led:#2E8B57; --danger:#C0392B;
+  --overlay:rgba(27,36,51,.3); --shadow-pop:0 4px 0 #DCE4F0; --modal-bg:#FFFFFF; color-scheme: light;
+}
+body[data-t="quaderno"][data-m="notte"] {
+  --bg:#121620; --main-bg:linear-gradient(#1C2330 1px,transparent 1px) 0 0/24px 24px, linear-gradient(90deg,#1C2330 1px,transparent 1px) 0 0/24px 24px, #121620;
+  --card-bg:#1A1F2B; --card-solid:#1A1F2B; --card-border:1px solid #262E3D; --card-shadow:0 3px 0 #0C0F16; --border:#2E3747;
+  --text:#E6EAF2; --text2:#98A3B8; --accent:#9FB6FF; --on-accent:#121620; --panel-bg:#1A1F2B; --panel-border:1px solid #262E3D;
+  --surf2:#222A3B; --surf3:#262E3D; --page-bg:#1A1F2B; --page-ink:#E6EAF2; --page-border:1px solid #2E3747;
+  --page-pattern:linear-gradient(#232B3A 1px,transparent 1px) 0 0/22px 22px, linear-gradient(90deg,#232B3A 1px,transparent 1px) 0 0/22px 22px;
+  --postit:#E3D58C; --postit-ink:#1B2433; --margin:#7A3B44; --led:#4CC38A; --danger:#F08A80;
+  --overlay:rgba(0,0,0,.5); --shadow-pop:0 4px 0 #0C0F16; --modal-bg:#1A1F2B; color-scheme: dark;
+  --c-salvia:#3C4935; --c-salvia-ink:#DCE6D0; --c-blu:#34475A; --c-blu-ink:#E1EAF2;
+  --c-senape:#6B5523; --c-senape-ink:#F3E3BA; --c-malva:#4E3C52; --c-malva-ink:#F1E3EE;
+}
+/* ---------- FOSFORO ---------- */
+body[data-t="fosforo"] {
+  --font:"JetBrains Mono", ui-monospace, monospace; --font-title:var(--font); --font-display:"Doto", monospace;
+  --display-weight:900; --display-track:0; --heading-weight:500;
+  --radius-card:14px; --radius-panel:8px; --radius-item:999px;
+}
+body[data-t="fosforo"][data-m="notte"] {
+  --bg:#110709; --main-bg:radial-gradient(120% 80% at 50% 0%, #1E0B0E 0%, #110709 60%);
+  --card-bg:rgba(26,13,15,.9); --card-solid:#1A0D0F; --card-border:1px solid rgba(255,214,206,.12); --card-shadow:none; --border:rgba(255,214,206,.14);
+  --text:#F2E6E1; --text2:#B39C97; --accent:#F4E9E4; --on-accent:#110709; --panel-bg:transparent; --panel-border:1px solid rgba(255,214,206,.12);
+  --surf2:rgba(255,214,206,.07); --surf3:rgba(255,214,206,.12); --page-bg:#0B0405; --page-ink:#F2E6E1; --page-border:1px solid rgba(255,214,206,.1);
+  --page-pattern:radial-gradient(rgba(255,230,220,.07) 1px, transparent 1.3px) 0 0/7px 7px;
+  --led:#FF4A3D; --danger:#FF4A3D; --overlay:rgba(5,2,3,.7); --modal-bg:#1A0D0F; color-scheme: dark;
+  --c-salvia:#2A3324; --c-salvia-ink:#CFE0C2; --c-blu:#22303D; --c-blu-ink:#CFE0EE;
+  --c-senape:#3D2F12; --c-senape-ink:#F0D9A0; --c-malva:#36263A; --c-malva-ink:#EBD7E8;
+}
+body[data-t="fosforo"][data-m="giorno"] {
+  --bg:#EFE9E5; --main-bg:#EFE9E5; --card-bg:rgba(253,250,248,.92); --card-solid:#FDFAF8;
+  --card-border:1px solid rgba(70,24,28,.12); --card-shadow:none; --border:rgba(70,24,28,.14);
+  --text:#2A1517; --text2:#77605D; --accent:#2A1215; --on-accent:#FDFAF8; --panel-bg:transparent; --panel-border:1px solid rgba(70,24,28,.12);
+  --surf2:rgba(70,24,28,.07); --surf3:rgba(70,24,28,.12); --page-bg:#E5DDD7; --page-ink:#2A1517; --page-border:1px solid rgba(70,24,28,.1);
+  --page-pattern:radial-gradient(rgba(70,24,28,.08) 1px, transparent 1.3px) 0 0/7px 7px;
+  --led:#E0352B; --danger:#E0352B; --overlay:rgba(42,21,23,.3); --shadow-pop:0 18px 48px rgba(42,21,23,.14); --modal-bg:#FDFAF8; color-scheme: light;
+}
+
+/* ========== Base ========== */
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--bg); }
+body { margin: 0; background: var(--main-bg); background-color: var(--bg); color: var(--text); font-family: var(--font);
+  font-size: 14px; line-height: 1.5; transition: background-color .25s, color .25s; }
+body[data-t="fosforo"] { font-size: 13px; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.v { display: none !important; }
+body[data-t="notte"] .v-notte, body[data-t="opaco"] .v-opaco, body[data-t="quaderno"] .v-quaderno, body[data-t="fosforo"] .v-fosforo { display: revert !important; }
+body[data-t="notte"] .v-notte.flex, body[data-t="opaco"] .v-opaco.flex, body[data-t="quaderno"] .v-quaderno.flex, body[data-t="fosforo"] .v-fosforo.flex { display: flex !important; }
+
+/* ========== Intestazione ========== */
+.top { display: grid; grid-template-columns: 1fr auto; gap: 18px 32px; align-items: end; margin-bottom: 14px; }
+.top h1 { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-track);
+  font-size: clamp(48px, 8vw, 88px); line-height: .95; }
+body[data-t="quaderno"] .top h1 { color: var(--accent); }
+.top p { margin: 10px 0 0; color: var(--text2); max-width: 58ch; }
+.switches { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: calc(var(--radius-item) + 4px); background: var(--surf2); border: var(--panel-border); }
+.seg button { border: 0; background: transparent; padding: 7px 14px; border-radius: var(--radius-item); color: var(--text2); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+body[data-t="quaderno"] .seg { background: var(--card-solid); border: 1.5px solid var(--accent); }
+body[data-t="fosforo"] .seg button[aria-pressed="true"] { box-shadow: inset 0 -2px 0 rgba(0,0,0,.25); }
+.theme-note { margin: 0 0 40px; padding: 14px 18px; border-radius: var(--radius-panel); background: var(--surf2); color: var(--text); max-width: 80ch; }
+body[data-t="quaderno"] .theme-note { background: var(--postit); color: var(--postit-ink); border-radius: 3px; transform: rotate(-.6deg); box-shadow: 0 3px 0 rgba(0,0,0,.08); max-width: 70ch; }
+body[data-t="fosforo"] .theme-note { background: transparent; border: var(--panel-border); }
+.theme-note b { font-weight: 650; }
+
+section { margin-top: 56px; }
+section > h2 { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-track);
+  font-size: clamp(30px, 4.4vw, 44px); line-height: 1.05; margin: 0 0 6px; text-wrap: balance; }
+body[data-t="notte"] section > h2 { font-weight: 300; }
+body[data-t="quaderno"] section > h2 { color: var(--accent); }
+section > .lead { margin: 0 0 20px; color: var(--text2); max-width: 70ch; }
+
+/* ========== Widget in dashboard ========== */
+.dash-scroll { overflow-x: auto; padding-bottom: 6px; }
+.dash { display: grid; grid-template-columns: repeat(5, 148px); grid-template-rows: 148px 148px; gap: 14px; width: max-content; }
+.cell { background: var(--card-bg); border: var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--radius-card);
+  padding: 18px; position: relative; overflow: hidden; display: flex; flex-direction: column; min-width: 0; }
+body[data-t="opaco"] .cell { background: var(--c-carta, var(--card-bg)); }
+.cell.s1 { grid-column: 1; grid-row: 1; }
+.cell.strip { grid-column: 2 / span 3; grid-row: 1; }
+.cell.m { grid-column: 4 / span 2; grid-row: 1 / span 2; }
+.cell.strip { grid-column: 1 / span 3; grid-row: 2; }
+.cell.s1 { grid-column: 1; grid-row: 1; }
+.cell.s1b { grid-column: 2 / span 2; grid-row: 1; border-style: dashed; background: transparent; box-shadow: none; color: var(--text2);
+  align-items: center; justify-content: center; font-size: 13px; text-align: center; border: 1.5px dashed var(--border); }
+.cell .ttl { font-family: var(--font-title); font-weight: 600; font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 8px; }
+body[data-t="quaderno"] .cell .ttl { font-size: 22px; color: var(--accent); font-weight: 700; line-height: 1; }
+.big { font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-track); line-height: .9; }
+/* 1x1 per tema */
+.s1 .ring { position: absolute; inset: 12px; }
+.s1 .ring-num { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+.s1 .ring-num .big { font-size: 44px; }
+.s1 .ring-num small { display: block; color: var(--text2); font-size: 11px; margin-top: 4px; }
+.s1-opaco { height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+.s1-opaco .big { font-size: 76px; }
+.s1-opaco small { font-weight: 600; font-size: 13px; }
+body[data-t="quaderno"] .cell.s1 { background: var(--postit); border: 0; box-shadow: 0 3px 0 rgba(0,0,0,.1); border-radius: 3px; transform: rotate(-1.4deg); color: var(--postit-ink); }
+.s1-quaderno { height: 100%; flex-direction: column; justify-content: space-between; }
+.s1-quaderno b { font-family: "Caveat", cursive; font-size: 30px; line-height: .95; font-weight: 700; }
+.s1-quaderno small { font-size: 11px; opacity: .8; }
+.s1-fosforo { height: 100%; flex-direction: column; justify-content: space-between; }
+.s1-fosforo .disp { background: var(--page-bg); background-image: var(--page-pattern); border-radius: 8px; padding: 10px 10px 6px; }
+.s1-fosforo .big { font-size: 48px; }
+.led { width: 7px; height: 7px; border-radius: 50%; background: var(--led); box-shadow: 0 0 8px var(--led); display: inline-block; flex: none; }
+body[data-m="giorno"] .led { box-shadow: none; }
+.s1-fosforo .row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text2); }
+/* 3x1 */
+.strip-in { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; height: 100%; min-width: 0; }
+.strip-main { min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: var(--radius-panel); background: var(--panel-bg); border: var(--panel-border); }
+body[data-t="quaderno"] .strip-main { background: var(--postit); color: var(--postit-ink); border: 0; border-radius: 3px; transform: rotate(-.8deg); }
+body[data-t="fosforo"] .strip-main { background: var(--page-bg); background-image: var(--page-pattern); }
+body[data-t="opaco"] .strip-main { background: var(--c-senape); color: var(--c-senape-ink); }
+.strip-main b { font-weight: 650; font-size: 15px; }
+body[data-t="quaderno"] .strip-main b { font-family: "Caveat", cursive; font-size: 24px; line-height: 1; }
+body[data-t="fosforo"] .strip-main b { font-family: "Doto", monospace; font-weight: 900; font-size: 20px; }
+.strip-main p { margin: 0; font-size: 12px; opacity: .8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.strip-side { display: flex; flex-direction: column; gap: 4px; min-width: 0; justify-content: center; }
+.mini-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13px; min-width: 0; }
+.mini-row span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-row time { color: var(--text2); font-size: 11px; font-variant-numeric: tabular-nums; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.btn { display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 8px 14px; border-radius: var(--radius-item);
+  background: var(--accent); color: var(--on-accent); font-size: 13px; font-weight: 600; }
+.btn.ghost { background: var(--surf2); color: var(--text); }
+body[data-t="quaderno"] .btn.ghost { background: transparent; border: 1.5px solid var(--accent); color: var(--accent); }
+body[data-t="fosforo"] .btn { border: 1px solid var(--border); box-shadow: inset 0 -2px 0 rgba(0,0,0,.2); }
+body[data-t="fosforo"] .btn.ghost { background: transparent; }
+/* 2x2 */
+.m-in { display: flex; flex-direction: column; gap: 12px; height: 100%; }
+.quick { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: var(--radius-item); background: var(--surf2); color: var(--text2); font-size: 13px; }
+body[data-t="quaderno"] .quick { background: transparent; border-bottom: 1.5px solid var(--accent); border-radius: 0; padding-inline: 2px; color: var(--accent); font-family: "Caveat", cursive; font-size: 20px; }
+body[data-t="fosforo"] .quick { background: transparent; border: var(--panel-border); }
+body[data-t="fosforo"] .quick::before { content: ">"; color: var(--led); }
+.m-list { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.m-list .mini-row { border-bottom: 1px solid var(--border); padding: 7px 0; }
+body[data-t="opaco"] .m-list .mini-row { border: 0; }
+body[data-t="fosforo"] .m-list .mini-row { border-bottom-style: dotted; }
+.next { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-panel); background: var(--panel-bg); border: var(--panel-border); font-size: 12px; }
+body[data-t="opaco"] .next { background: var(--c-salvia); color: var(--c-salvia-ink); border-radius: 18px; }
+body[data-t="quaderno"] .next { border: 1.5px dashed var(--accent); }
+.next b { font-weight: 650; }
+
+/* ========== App Notes ========== */
+.demo-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.demo-controls .btn[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.app { display: grid; grid-template-columns: 232px minmax(0,1fr); border-radius: calc(var(--radius-card) + 4px); overflow: hidden;
+  background: var(--bg); border: var(--card-border); min-height: 820px; }
+body[data-t="quaderno"] .app { background: var(--main-bg); background-color: var(--bg); box-shadow: var(--card-shadow); }
+body[data-t="fosforo"] .app { background: var(--main-bg); background-color: var(--bg); }
+.side { padding: 18px 14px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid var(--border); background: var(--bg); min-width: 0; }
+body[data-t="opaco"] .side { border: 0; }
+body[data-t="quaderno"] .side { background: var(--card-solid); }
+body[data-t="fosforo"] .side { background: transparent; }
+.search { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border-radius: var(--radius-item); background: var(--surf2); color: var(--text2); font-size: 13px; margin-bottom: 10px; }
+body[data-t="quaderno"] .search { background: transparent; border: 1.5px solid var(--border); }
+body[data-t="fosforo"] .search { background: transparent; border: var(--panel-border); }
+.search kbd { margin-left: auto; }
+.side h3 { font-size: 12px; font-weight: 600; color: var(--text2); margin: 14px 8px 4px; display: flex; justify-content: space-between; align-items: center; }
+body[data-t="quaderno"] .side h3 { font-family: "Caveat", cursive; font-size: 20px; color: var(--accent); font-weight: 700; margin-top: 12px; }
+body[data-t="fosforo"] .side h3 span:first-child::before { content: "[ "; } body[data-t="fosforo"] .side h3 span:first-child::after { content: " ]"; }
+.nav { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: var(--radius-item); color: var(--text); font-size: 13px; min-width: 0; }
+.nav span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav em { font-style: normal; font-size: 11px; color: var(--text2); font-variant-numeric: tabular-nums; }
+.nav.sub { padding-left: 28px; }
+.nav.on { background: var(--surf2); }
+body[data-t="opaco"] .nav.on { background: var(--accent); color: var(--on-accent); }
+body[data-t="opaco"] .nav.on em { color: inherit; opacity: .7; }
+body[data-t="quaderno"] .nav.on { background: transparent; box-shadow: inset 0 -2px 0 var(--accent); border-radius: 0; color: var(--accent); font-weight: 600; }
+body[data-t="fosforo"] .nav.on { background: var(--accent); color: var(--on-accent); }
+body[data-t="fosforo"] .nav.on em { color: inherit; }
+.nav .db-ico { color: var(--text2); }
+.nav.new { color: var(--text2); }
+
+.editor { display: flex; flex-direction: column; min-width: 0; position: relative; }
+.ed-head { display: flex; align-items: center; gap: 12px; padding: 14px 22px 10px; flex-wrap: wrap; }
+.crumbs { display: flex; gap: 6px; color: var(--text2); font-size: 13px; flex: 1; min-width: 0; flex-wrap: wrap; }
+.crumbs b { color: var(--text); font-weight: 600; }
+.chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 999px; font-size: 12px; background: var(--surf2); color: var(--text); white-space: nowrap; }
+body[data-t="quaderno"] .chip { border-radius: 4px; }
+.icon-btn { border: 0; background: transparent; width: 32px; height: 32px; border-radius: var(--radius-item); display: inline-grid; place-items: center; color: var(--text2); }
+.icon-btn:hover { background: var(--surf2); color: var(--text); }
+
+/* ---- Barra strumenti per tema ---- */
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin: 0 22px 14px; }
+.tb { border: 0; background: transparent; color: var(--text); min-width: 32px; height: 32px; padding: 0 7px; border-radius: 9px;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; position: relative; }
+.tb:hover { background: var(--surf2); }
+.tb[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.tb .kc { display: none; font-size: 8.5px; line-height: 1; color: var(--text2); letter-spacing: .02em; }
+.tsep { width: 1px; height: 20px; background: var(--border); margin: 0 6px; }
+.tsel { height: 32px; border: 0; border-radius: 9px; background: var(--surf2); padding: 0 8px; font-size: 13px; max-width: 150px; }
+.swatches { display: inline-flex; gap: 5px; align-items: center; padding: 0 4px; }
+.sw { width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--border); padding: 0; position: relative; }
+.sw[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw.theme { background: conic-gradient(var(--page-bg-default, var(--page-bg)) 0 50%, var(--accent) 0); }
+.tlabel { font-size: 11px; color: var(--text2); padding: 0 4px 0 2px; }
+/* Notte: capsula unica */
+body[data-t="notte"] .toolbar { background: var(--card-bg); border: var(--card-border); box-shadow: var(--card-shadow); border-radius: 16px; padding: 6px; }
+/* Opaco: pillole separate, attivo pieno */
+body[data-t="opaco"] .toolbar { gap: 6px; }
+body[data-t="opaco"] .tb { background: var(--surf3); border-radius: 999px; min-width: 36px; height: 36px; }
+body[data-t="opaco"] .tb[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+body[data-t="opaco"] .tsep { display: none; }
+body[data-t="opaco"] .tsel { background: var(--surf3); border-radius: 999px; height: 36px; padding: 0 14px; }
+body[data-t="opaco"] .swatches { background: var(--surf3); border-radius: 999px; height: 36px; padding: 0 10px; }
+/* Quaderno: contorno inchiostro, squadrati */
+body[data-t="quaderno"] .toolbar { gap: 4px; background: var(--card-solid); border: 1px solid var(--border); box-shadow: var(--card-shadow); border-radius: 8px; padding: 6px; }
+body[data-t="quaderno"] .tb { border: 1.5px solid transparent; border-radius: 6px; color: var(--accent); }
+body[data-t="quaderno"] .tb:hover, body[data-t="quaderno"] .tb[aria-pressed="true"] { border-color: var(--accent); background: transparent; }
+body[data-t="quaderno"] .tsel { background: transparent; border: 1.5px solid var(--border); border-radius: 6px; color: var(--accent); }
+body[data-t="quaderno"] .tsep { background: transparent; border-left: 1.5px dashed var(--border); }
+/* Fosforo: tasti hardware con legenda */
+body[data-t="fosforo"] .toolbar { gap: 5px; padding: 8px; border: var(--card-border); border-radius: 12px; background: var(--card-bg); }
+body[data-t="fosforo"] .tb { height: 42px; min-width: 40px; border: 1px solid var(--border); border-radius: 7px; background: var(--surf2);
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,.28); padding-bottom: 3px; }
+body[data-m="giorno"][data-t="fosforo"] .tb { box-shadow: inset 0 -3px 0 rgba(70,24,28,.12); }
+body[data-t="fosforo"] .tb .kc { display: block; }
+body[data-t="fosforo"] .tb[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+body[data-t="fosforo"] .tb[aria-pressed="true"] .kc { color: inherit; opacity: .7; }
+body[data-t="fosforo"] .tb[aria-pressed="true"]::after { content: ""; position: absolute; top: 4px; right: 4px; width: 4px; height: 4px; border-radius: 50%; background: var(--led); }
+body[data-t="fosforo"] .tsep { display: none; }
+body[data-t="fosforo"] .tsel { height: 42px; background: transparent; border: 1px solid var(--border); border-radius: 7px; }
+body[data-t="fosforo"] .swatches { border: 1px solid var(--border); border-radius: 7px; height: 42px; padding: 0 8px; }
+body[data-t="fosforo"] .sw { border-radius: 3px; }
+
+/* ---- Pagina ---- */
+.page-area { flex: 1; padding: 6px 22px 22px; position: relative; min-width: 0; }
+.page { --pb: var(--page-bg); --pi: var(--page-ink);
+  background: var(--page-pattern), var(--pb); color: var(--pi); border: var(--page-border); border-radius: var(--radius-panel);
+  padding: 42px 52px 52px; max-width: 760px; margin: 0 auto; position: relative; font-family: var(--user-font, var(--font));
+  font-size: 15px; line-height: 1.65; transition: background-color .2s; }
+.page.custom { background: var(--page-pattern), var(--pb); }
+body[data-t="notte"] .page { box-shadow: inset 0 1px 0 rgba(200,215,255,.06); border-radius: 18px; }
+body[data-t="opaco"] .page { border-radius: 28px; padding: 44px 56px 56px; }
+body[data-t="quaderno"] .page { border-radius: 4px; box-shadow: 0 3px 0 var(--border); padding-left: 78px; }
+body[data-t="quaderno"] .page::before { content: ""; position: absolute; top: 0; bottom: 0; left: 56px; width: 1.5px; background: var(--margin); }
+body[data-t="fosforo"] .page { border-radius: 10px; font-size: 13.5px; line-height: 1.7; }
+.page h1 { margin: 0 0 4px; font-size: 40px; line-height: 1.05; letter-spacing: -0.02em; font-weight: 300; font-family: var(--font); }
+body[data-t="opaco"] .page h1 { font-weight: 800; letter-spacing: -0.04em; font-size: 44px; }
+body[data-t="quaderno"] .page h1 { font-family: "Caveat", cursive; font-weight: 700; font-size: 52px; color: var(--accent); letter-spacing: 0; }
+body[data-t="fosforo"] .page h1 { font-family: "Doto", monospace; font-weight: 900; font-size: 40px; letter-spacing: 0; }
+.page h2 { margin: 30px 0 10px; font-size: 20px; font-weight: 500; font-family: var(--font); }
+body[data-t="opaco"] .page h2 { font-weight: 800; letter-spacing: -0.02em; font-size: 22px; }
+body[data-t="quaderno"] .page h2 { font-family: "Caveat", cursive; font-weight: 700; font-size: 30px; color: var(--accent); margin-top: 24px; }
+body[data-t="fosforo"] .page h2 { font-family: "Doto", monospace; font-weight: 800; font-size: 22px; }
+.page .body-text { font-family: var(--user-font, inherit); }
+.page p { margin: 0 0 10px; max-width: 64ch; }
+.props { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 22px; font-size: 12px; color: var(--text2); align-items: center; }
+.page .props { color: color-mix(in srgb, var(--pi) 65%, transparent); }
+.ref { display: inline-flex; align-items: center; gap: 4px; padding: 0 8px 0 6px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font-size: .9em; font-weight: 600; white-space: nowrap; }
+body[data-t="opaco"] .ref { background: var(--c-salvia); color: var(--c-salvia-ink); border-radius: 999px; }
+body[data-t="quaderno"] .ref { background: transparent; border-bottom: 2px solid var(--postit); border-radius: 0; box-shadow: inset 0 -.55em 0 var(--postit); color: var(--postit-ink); }
+body[data-t="fosforo"] .ref { background: transparent; border: 1px solid var(--border); border-radius: 999px; color: inherit; }
+.ref svg.i { width: 13px; height: 13px; }
+mark { background: color-mix(in srgb, var(--c-senape) 55%, transparent); color: inherit; padding: 0 2px; border-radius: 2px; }
+
+/* ---- Immagine modificabile ---- */
+figure.img { margin: 70px 0 10px; position: relative; width: 82%; }
+figure.img .imgbox { position: relative; border-radius: 12px; overflow: visible; }
+figure.img svg.photo { display: block; width: 100%; height: auto; border-radius: 12px; transition: filter .2s, transform .25s; }
+figure.img.flip svg.photo { transform: scaleX(-1); }
+figure.img.light svg.photo { filter: brightness(1.12) contrast(1.15) saturate(1.1); }
+figure.img figcaption { font-size: 12px; margin-top: 8px; color: color-mix(in srgb, var(--pi) 65%, transparent); }
+.handle { position: absolute; width: 11px; height: 11px; background: var(--card-solid); border: 2px solid var(--accent); border-radius: 50%; }
+.h-tl { top: -6px; left: -6px; } .h-tr { top: -6px; right: -6px; } .h-bl { bottom: -6px; left: -6px; } .h-br { bottom: -6px; right: -6px; cursor: nwse-resize; }
+.h-r { top: 50%; right: -6px; margin-top: -6px; border-radius: 3px; width: 8px; height: 22px; margin-top: -11px; right: -5px; }
+body[data-t="notte"] figure.img .imgbox { box-shadow: 0 0 0 2px var(--accent), 0 0 24px color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 12px; }
+body[data-t="opaco"] figure.img .imgbox { outline: 3px solid var(--accent); outline-offset: 5px; border-radius: 22px; }
+body[data-t="opaco"] figure.img svg.photo { border-radius: 22px; }
+body[data-t="opaco"] .handle { background: var(--accent); border-color: var(--accent); }
+body[data-t="quaderno"] figure.img { transform: rotate(-1deg); }
+body[data-t="quaderno"] figure.img svg.photo { border-radius: 2px; box-shadow: 0 2px 0 rgba(0,0,0,.08); outline: 1.5px dashed var(--accent); outline-offset: 4px; }
+body[data-t="quaderno"] figure.img .imgbox::before, body[data-t="quaderno"] figure.img .imgbox::after { content: ""; position: absolute; width: 74px; height: 22px;
+  background: color-mix(in srgb, var(--postit) 80%, transparent); z-index: 2; }
+body[data-t="quaderno"] figure.img .imgbox::before { top: -10px; left: -22px; transform: rotate(-35deg); }
+body[data-t="quaderno"] figure.img .imgbox::after { bottom: -10px; right: -22px; transform: rotate(-35deg); }
+body[data-t="quaderno"] .handle { border-radius: 2px; border-width: 1.5px; }
+body[data-t="quaderno"] figure.img figcaption { font-family: "Caveat", cursive; font-size: 19px; color: var(--accent); }
+body[data-t="fosforo"] figure.img svg.photo { border-radius: 4px; }
+body[data-t="fosforo"] .handle { width: 14px; height: 14px; background: transparent; border: 0; border-radius: 0; }
+body[data-t="fosforo"] .h-tl { border-top: 2px solid var(--led); border-left: 2px solid var(--led); }
+body[data-t="fosforo"] .h-tr { border-top: 2px solid var(--led); border-right: 2px solid var(--led); }
+body[data-t="fosforo"] .h-bl { border-bottom: 2px solid var(--led); border-left: 2px solid var(--led); }
+body[data-t="fosforo"] .h-br { border-bottom: 2px solid var(--led); border-right: 2px solid var(--led); }
+body[data-t="fosforo"] .h-r { display: none; }
+.measure { display: none; position: absolute; right: 0; bottom: -22px; font-size: 10.5px; color: var(--led); font-variant-numeric: tabular-nums; }
+body[data-t="fosforo"] .measure { display: block; }
+.imgbar { position: absolute; top: -50px; left: 50%; transform: translateX(-50%); display: flex; gap: 2px; padding: 4px; white-space: nowrap;
+  background: var(--modal-bg); border: var(--card-border); border-radius: 12px; box-shadow: var(--shadow-pop); z-index: 5; color: var(--text); font-family: var(--font); }
+body[data-t="opaco"] .imgbar { background: var(--accent); color: var(--on-accent); border-radius: 999px; padding: 5px 8px; }
+body[data-t="quaderno"] .imgbar { border: 1.5px solid var(--accent); border-radius: 6px; transform: translateX(-50%) rotate(1deg); }
+.imgbar .tb { color: inherit; height: 30px; min-width: 30px; }
+body[data-t="fosforo"] .imgbar .tb { height: 30px; box-shadow: none; padding-bottom: 0; }
+body[data-t="fosforo"] .imgbar .tb .kc { display: none; }
+body[data-t="opaco"] .imgbar .tb { background: transparent; }
+body[data-t="opaco"] .imgbar .tb:hover { background: color-mix(in srgb, var(--on-accent) 18%, transparent); }
+.imgbar .tsep { height: 18px; }
+
+/* ---- Tabella ---- */
+.tbl-wrap { position: relative; margin: 6px 0 4px; overflow-x: auto; padding: 0 22px 18px 0; }
+table.t { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.t th { text-align: left; font-weight: 600; }
+table.t th, table.t td { padding: 8px 12px; white-space: nowrap; }
+body[data-t="notte"] table.t th { color: color-mix(in srgb, var(--pi) 60%, transparent); font-weight: 500; border-bottom: 1px solid var(--border); }
+body[data-t="notte"] table.t td { border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
+body[data-t="notte"] table.t tr.sel td { background: var(--accent-soft); }
+body[data-t="opaco"] table.t th { background: var(--accent); color: var(--on-accent); }
+body[data-t="opaco"] table.t th:first-child { border-radius: 999px 0 0 999px; } body[data-t="opaco"] table.t th:last-child { border-radius: 0 999px 999px 0; }
+body[data-t="opaco"] table.t tbody tr:nth-child(odd) td { background: var(--surf2); }
+body[data-t="opaco"] table.t tr.sel td { background: var(--c-senape) !important; color: var(--c-senape-ink); }
+body[data-t="quaderno"] table.t th, body[data-t="quaderno"] table.t td { border: 1.5px solid var(--text); }
+body[data-t="quaderno"] table.t th { font-family: "Caveat", cursive; font-size: 20px; color: var(--accent); padding: 4px 12px; }
+body[data-t="quaderno"] table.t tr.sel td { background: color-mix(in srgb, var(--postit) 70%, transparent); }
+body[data-t="fosforo"] table.t th { color: color-mix(in srgb, var(--pi) 55%, transparent); font-weight: 500; border-bottom: 1px dashed var(--border); }
+body[data-t="fosforo"] table.t td { border-bottom: 1px dotted var(--border); }
+body[data-t="fosforo"] table.t tr.sel td:first-child { box-shadow: inset 2px 0 0 var(--led); }
+.add-col, .add-row { position: absolute; display: grid; place-items: center; border: 1.5px dashed var(--border); color: var(--text2); border-radius: 6px; background: transparent; font-size: 14px; }
+.add-col { top: 0; right: 0; width: 18px; bottom: 18px; }
+.add-row { left: 0; right: 22px; bottom: 0; height: 16px; }
+.cell-tip { font-size: 11.5px; color: color-mix(in srgb, var(--pi) 60%, transparent); margin: 2px 0 0; }
+.cell-tip kbd { font-size: 10.5px; }
+
+/* ---- Vista collegata di una raccolta ---- */
+.dbv { margin: 14px 0 6px; border-radius: var(--radius-panel); border: 1px solid var(--border); overflow: hidden; font-family: var(--font); background: color-mix(in srgb, var(--pb) 70%, var(--card-solid)); }
+.dbv-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; flex-wrap: wrap; border-bottom: 1px solid var(--border); font-size: 13px; }
+.dbv-head b { font-weight: 650; font-size: 14px; }
+.dbv-head .meta { color: color-mix(in srgb, var(--pi) 60%, transparent); font-size: 12px; }
+.dbv-head .sp { flex: 1; }
+.linked { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.dbv table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dbv th { text-align: left; font-weight: 500; font-size: 11.5px; color: color-mix(in srgb, var(--pi) 55%, transparent); padding: 8px 14px 6px; }
+.dbv td { padding: 7px 14px; border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent); white-space: nowrap; }
+.dbv .addrow td { color: color-mix(in srgb, var(--pi) 50%, transparent); }
+.ft { display: inline-flex; align-items: center; gap: 4px; }
+.ft svg.i { width: 12px; height: 12px; }
+.sel-chip { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.sc-salvia { background: var(--c-salvia); color: var(--c-salvia-ink); } .sc-blu { background: var(--c-blu); color: var(--c-blu-ink); }
+.sc-senape { background: var(--c-senape); color: var(--c-senape-ink); } .sc-malva { background: var(--c-malva); color: var(--c-malva-ink); }
+body[data-t="quaderno"] .sel-chip { border-radius: 3px; }
+body[data-t="fosforo"] .sel-chip { background: transparent !important; color: inherit !important; border: 1px solid var(--border); font-weight: 500; }
+body[data-t="fosforo"] .sel-chip::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; background: var(--chipc, var(--text2)); vertical-align: 1px; }
+body[data-t="fosforo"] .sc-senape { --chipc: var(--led); } body[data-t="fosforo"] .sc-salvia { --chipc: #7DD3B0; } body[data-t="fosforo"] .sc-blu { --chipc: #8EB4E8; } body[data-t="fosforo"] .sc-malva { --chipc: #D2A6CF; }
+/* forme per tema */
+body[data-t="notte"] .dbv { background: color-mix(in srgb, var(--card-solid) 80%, var(--pb)); border-radius: 14px; }
+body[data-t="opaco"] .dbv { background: var(--c-senape); color: var(--c-senape-ink); border: 0; border-radius: 22px; --pi: var(--c-senape-ink); }
+body[data-t="opaco"] .dbv-head, body[data-t="opaco"] .dbv td { border-color: color-mix(in srgb, var(--c-senape-ink) 18%, transparent); }
+body[data-t="opaco"] .linked { background: var(--c-senape-ink); color: var(--c-senape); }
+body[data-t="quaderno"] .dbv { background: var(--card-solid); border: 1.5px solid var(--text); border-radius: 3px; box-shadow: 4px 4px 0 var(--surf3); overflow: visible; margin-top: 28px; }
+body[data-t="quaderno"] .dbv-head { position: relative; padding-top: 16px; }
+body[data-t="quaderno"] .dbv-head b { position: absolute; top: -18px; left: 12px; background: var(--postit); color: var(--postit-ink); font-family: "Caveat", cursive; font-size: 22px; padding: 0 12px; transform: rotate(-2deg); box-shadow: 0 2px 0 rgba(0,0,0,.08); }
+body[data-t="quaderno"] .linked { background: transparent; border: 1.5px solid var(--accent); }
+body[data-t="quaderno"] .dbv td { border-top: 1px solid var(--surf3); }
+body[data-t="fosforo"] .dbv { background: var(--card-solid); border-radius: 10px; }
+body[data-t="fosforo"] .linked { background: transparent; border: 1px solid var(--border); color: inherit; font-weight: 500; }
+body[data-t="fosforo"] .linked .led { width: 6px; height: 6px; }
+
+/* ---- Scheda file ---- */
+.filecard { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin: 18px 0 8px; border-radius: var(--radius-panel); border: 1px solid var(--border); max-width: 440px; font-family: var(--font); background: color-mix(in srgb, var(--pb) 60%, var(--card-solid)); }
+.filecard .fi { width: 38px; height: 46px; border-radius: 6px; background: var(--danger); color: var(--card-solid); display: grid; place-items: end center; padding-bottom: 6px; font-size: 10px; font-weight: 700; flex: none; }
+.filecard div { flex: 1; min-width: 0; }
+.filecard b { display: block; font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.filecard small { color: color-mix(in srgb, var(--pi) 60%, transparent); font-size: 12px; }
+body[data-t="opaco"] .filecard { background: var(--c-malva); color: var(--c-malva-ink); border: 0; border-radius: 999px; padding-right: 8px; --pi: var(--c-malva-ink); }
+body[data-t="quaderno"] .filecard { border: 1.5px dashed var(--accent); border-radius: 4px; background: transparent; }
+body[data-t="fosforo"] .filecard .fi { background: transparent; border: 1px solid var(--led); color: var(--led); }
+
+/* ---- Menu / ---- */
+.slash-line { position: relative; color: color-mix(in srgb, var(--pi) 70%, transparent); }
+.caret { display: inline-block; width: 1.5px; height: 1.1em; background: var(--accent); vertical-align: -3px; margin-left: 1px; animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.slash { position: absolute; top: 28px; left: 0; width: 290px; padding: 6px; background: var(--modal-bg); color: var(--text); border: var(--card-border);
+  border-radius: 14px; box-shadow: var(--shadow-pop); z-index: 6; font-family: var(--font); font-size: 13px; }
+body[data-t="quaderno"] .slash { border: 1.5px solid var(--accent); border-radius: 6px; }
+body[data-t="opaco"] .slash { border-radius: 22px; padding: 8px; }
+.slash .opt { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 9px; }
+body[data-t="opaco"] .slash .opt { border-radius: 999px; }
+.slash .opt.on { background: var(--surf2); }
+body[data-t="opaco"] .slash .opt.on, body[data-t="fosforo"] .slash .opt.on { background: var(--accent); color: var(--on-accent); }
+.slash .opt span { flex: 1; }
+.slash .opt small { color: var(--text2); font-size: 11px; }
+.slash .opt.on small { color: inherit; opacity: .7; }
+
+/* ---- Pannello di trascinamento ---- */
+.drop { position: absolute; inset: 0; z-index: 8; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 28px; background: var(--overlay); backdrop-filter: blur(2px); }
+.dz { border: 2px dashed var(--accent); border-radius: var(--radius-card); background: var(--modal-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 10px; padding: 24px; }
+.dz.hot { background: color-mix(in srgb, var(--accent) 14%, var(--modal-bg)); border-style: solid; }
+.dz svg.i { width: 34px; height: 34px; color: var(--accent); stroke-width: 1.4; }
+.dz b { font-size: 18px; font-weight: 650; font-family: var(--font-title); }
+body[data-t="quaderno"] .dz b { font-size: 30px; color: var(--accent); }
+body[data-t="fosforo"] .dz b { font-family: "Doto", monospace; font-weight: 900; font-size: 22px; }
+.dz p { margin: 0; color: var(--text2); font-size: 13px; max-width: 30ch; }
+body[data-t="opaco"] .dz { border: 0; background: var(--c-blu); color: var(--c-blu-ink); }
+body[data-t="opaco"] .dz.hot { background: var(--c-salvia); color: var(--c-salvia-ink); }
+body[data-t="opaco"] .dz p, body[data-t="opaco"] .dz svg.i { color: inherit; }
+body[data-t="quaderno"] .dz { transform: rotate(-.6deg); border-radius: 4px; }
+body[data-t="fosforo"] .dz { background: var(--page-bg); background-image: var(--page-pattern); }
+.dragghost { position: absolute; right: 23%; top: 42%; z-index: 9; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px;
+  background: var(--card-solid); border: var(--card-border); box-shadow: var(--shadow-pop); font-size: 12px; transform: rotate(4deg); pointer-events: none; }
+.dragghost i { width: 26px; height: 20px; border-radius: 3px; background: linear-gradient(135deg, var(--c-blu), var(--c-salvia)); display: block; }
+
+.pagebar { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 22px 18px; color: var(--text2); font-size: 12px; font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+.pagebar .pg { display: inline-flex; gap: 4px; align-items: center; }
+.pdots { display: inline-flex; gap: 5px; }
+.pdots i { width: 22px; height: 28px; border-radius: 3px; border: 1px solid var(--border); display: block; background: var(--surf2); }
+.pdots i.on { border: 2px solid var(--accent); }
+
+/* ========== Raccolta ========== */
+.coll { background: var(--card-bg); border: var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--radius-card); padding: 22px; display: grid; grid-template-columns: minmax(0,1fr) 250px; gap: 22px; }
+body[data-t="opaco"] .coll { background: var(--card-bg); }
+.coll-h { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.coll-h h3 { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); letter-spacing: var(--display-track); font-size: 34px; line-height: 1; }
+body[data-t="notte"] .coll-h h3 { font-weight: 300; }
+body[data-t="quaderno"] .coll-h h3 { color: var(--accent); font-size: 44px; }
+.coll-h .sp { flex: 1; }
+.tabs { display: inline-flex; gap: 4px; }
+.tabs button { border: 0; background: transparent; padding: 6px 12px; border-radius: var(--radius-item); color: var(--text2); display: inline-flex; gap: 6px; align-items: center; font-size: 13px; }
+.tabs button[aria-selected="true"] { background: var(--surf2); color: var(--text); }
+body[data-t="opaco"] .tabs button[aria-selected="true"], body[data-t="fosforo"] .tabs button[aria-selected="true"] { background: var(--accent); color: var(--on-accent); }
+body[data-t="quaderno"] .tabs button[aria-selected="true"] { background: transparent; box-shadow: inset 0 -2px 0 var(--accent); border-radius: 0; color: var(--accent); }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.cview { overflow-x: auto; }
+.ctable { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.ctable th { text-align: left; font-weight: 500; color: var(--text2); font-size: 12px; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.ctable td { padding: 9px 10px; border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent); white-space: nowrap; }
+body[data-t="opaco"] .ctable th { border: 0; } body[data-t="opaco"] .ctable td { border: 0; } body[data-t="opaco"] .ctable tbody tr:nth-child(odd) td { background: var(--surf2); }
+body[data-t="opaco"] .ctable tbody tr td:first-child { border-radius: 999px 0 0 999px; } body[data-t="opaco"] .ctable tbody tr td:last-child { border-radius: 0 999px 999px 0; }
+body[data-t="quaderno"] .ctable th { font-family: "Caveat", cursive; font-size: 19px; color: var(--accent); border-bottom: 1.5px solid var(--text); }
+body[data-t="fosforo"] .ctable td { border-bottom-style: dotted; }
+.ctable td.num { text-align: right; } .ctable th.num { text-align: right; }
+.uses { font-size: 11px; color: var(--text2); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.ccard { border-radius: var(--radius-panel); padding: 14px; background: var(--panel-bg); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.ccard b { font-weight: 650; }
+.ccard small { color: var(--text2); }
+body[data-t="opaco"] .ccard { border: 0; background: var(--c-blu); color: var(--c-blu-ink); border-radius: 22px; }
+body[data-t="opaco"] .ccard:nth-child(3n+2) { background: var(--c-salvia); color: var(--c-salvia-ink); }
+body[data-t="opaco"] .ccard:nth-child(3n) { background: var(--c-malva); color: var(--c-malva-ink); }
+body[data-t="opaco"] .ccard small { color: inherit; opacity: .75; }
+body[data-t="quaderno"] .ccard { background: var(--postit); color: var(--postit-ink); border: 0; border-radius: 3px; box-shadow: 0 3px 0 rgba(0,0,0,.08); }
+body[data-t="quaderno"] .ccard:nth-child(odd) { transform: rotate(-1deg); } body[data-t="quaderno"] .ccard:nth-child(even) { transform: rotate(.8deg); }
+body[data-t="quaderno"] .ccard b { font-family: "Caveat", cursive; font-size: 24px; line-height: 1; }
+body[data-t="quaderno"] .ccard small { color: inherit; opacity: .75; }
+body[data-t="fosforo"] .ccard { background: var(--page-bg); background-image: var(--page-pattern); }
+.board { display: grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap: 12px; }
+.bcol { background: var(--surf2); border-radius: var(--radius-panel); padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+body[data-t="quaderno"] .bcol { background: transparent; border: 1.5px dashed var(--border); }
+body[data-t="fosforo"] .bcol { background: transparent; border: var(--panel-border); }
+.bcol h4 { margin: 2px 4px 4px; font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+.bcol .ccard { padding: 10px 12px; }
+.usedin h4 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--text2); }
+body[data-t="quaderno"] .usedin h4 { font-family: "Caveat", cursive; font-size: 22px; color: var(--accent); }
+.usedin a { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border-radius: var(--radius-panel); color: inherit; text-decoration: none; margin-bottom: 6px; background: var(--panel-bg); border: 1px solid var(--border); }
+body[data-t="opaco"] .usedin a { background: var(--surf2); border: 0; }
+.usedin a small { display: block; color: var(--text2); font-size: 11.5px; }
+.usedin a b { font-weight: 600; font-size: 13px; }
+.usedin .hint { font-size: 12px; color: var(--text2); margin-top: 14px; }
+
+/* ========== Scorciatoie ========== */
+kbd { font-family: var(--font); font-size: 11.5px; padding: 2px 7px; border-radius: 6px; background: var(--surf2); border: 1px solid var(--border); color: var(--text); white-space: nowrap; display: inline-block; line-height: 1.4; }
+body[data-t="opaco"] kbd { background: var(--accent); color: var(--on-accent); border: 0; border-radius: 999px; padding: 2px 9px; }
+body[data-t="quaderno"] kbd { background: var(--card-solid); border: 1.5px solid var(--accent); color: var(--accent); border-radius: 4px; }
+body[data-t="fosforo"] kbd { border-radius: 5px; border-bottom-width: 3px; background: var(--surf2); }
+.keys { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+.kgroup { background: var(--card-bg); border: var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--radius-card); padding: 18px; }
+body[data-t="quaderno"] .kgroup:nth-child(odd) { transform: rotate(-.4deg); }
+.kgroup h3 { margin: 0 0 10px; font-size: 14px; font-weight: 650; font-family: var(--font-title); }
+body[data-t="quaderno"] .kgroup h3 { font-size: 24px; color: var(--accent); }
+body[data-t="fosforo"] .kgroup h3 { font-family: "Doto", monospace; font-weight: 900; font-size: 18px; }
+.krow { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 6px 0; font-size: 13px; border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }
+body[data-t="opaco"] .krow { border: 0; }
+.krow:first-of-type { border-top: 0; }
+.krow span:last-child { display: inline-flex; gap: 4px; flex: none; }
+.modal-bg { position: fixed; inset: 0; background: var(--overlay); z-index: 50; display: grid; place-items: center; padding: 24px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px)); }
+.modal { width: min(820px, 100%); max-height: 85vh; overflow: auto; background: var(--modal-bg); border: var(--card-border); border-radius: var(--radius-card); box-shadow: var(--shadow-pop); padding: 22px; }
+.modal .keys { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.modal .kgroup { box-shadow: none; padding: 12px 14px; }
+.modal-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.modal-h h3 { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); font-size: 28px; letter-spacing: var(--display-track); }
+body[data-t="quaderno"] .modal-h h3 { color: var(--accent); font-size: 36px; }
+
+/* ========== Prompt ========== */
+.prompt { background: var(--card-bg); border: var(--card-border); box-shadow: var(--card-shadow); border-radius: var(--radius-card); overflow: hidden; }
+.prompt-h { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.prompt-h span { flex: 1; color: var(--text2); font-size: 13px; min-width: 200px; }
+.prompt pre { margin: 0; padding: 20px 22px; max-height: 560px; overflow: auto; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; color: var(--text); }
+
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px); opacity: 0; transition: .2s; background: var(--accent); color: var(--on-accent);
+  padding: 9px 16px; border-radius: var(--radius-item); font-size: 13px; z-index: 60; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+@media (max-width: 860px) {
+  .top { grid-template-columns: 1fr; } .switches { align-items: flex-start; }
+  .app { grid-template-columns: 1fr; } .side { border-right: 0; border-bottom: 1px solid var(--border); }
+  .side .collapse-sm { display: none; }
+  .coll { grid-template-columns: 1fr; }
+  .page { padding: 28px 22px 34px; } body[data-t="quaderno"] .page { padding-left: 44px; } body[data-t="quaderno"] .page::before { left: 30px; }
+  figure.img { width: 100%; } .imgbar { top: -46px; max-width: 100%; overflow-x: auto; }
+  .drop { grid-template-columns: 1fr; }
+  .page-area, .ed-head { padding-left: 12px; padding-right: 12px; } .toolbar { margin-left: 12px; margin-right: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></symbol>
+    <symbol id="i-bold" viewBox="0 0 24 24"><path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/></symbol>
+    <symbol id="i-italic" viewBox="0 0 24 24"><path d="M14 5h-4M14 19h-4M14 5l-4 14"/></symbol>
+    <symbol id="i-under" viewBox="0 0 24 24"><path d="M7 4v6a5 5 0 0 0 10 0V4M5 20h14"/></symbol>
+    <symbol id="i-strike" viewBox="0 0 24 24"><path d="M5 12h14M16 7a4 3 0 0 0-8 0c0 4 8 3 8 7a4 3 0 0 1-8 1"/></symbol>
+    <symbol id="i-color" viewBox="0 0 24 24"><path d="m6 16 6-12 6 12M8 12h8"/><path d="M4 20h16" stroke-width="3"/></symbol>
+    <symbol id="i-hl" viewBox="0 0 24 24"><path d="m9 11 6-6 4 4-6 6M9 11l-3 3 4 4 3-3M6 14l-2 4h4"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="6" rx="1"/><path d="m4.5 7 1 1 2-2M12 7h8M3 15h6v6H3zM12 18h8"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1"/></symbol>
+    <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="m14 7 3 3"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
+    <symbol id="i-crop" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14M2 6h14a2 2 0 0 1 2 2v14"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="i-flip" viewBox="0 0 24 24"><path d="M12 3v18M8 7 3 12l5 5V7zM16 7l5 5-5 5V7z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-al" viewBox="0 0 24 24"><rect x="3" y="6" width="10" height="8" rx="1"/><path d="M16 7h5M16 11h5M3 18h18"/></symbol>
+    <symbol id="i-ac" viewBox="0 0 24 24"><rect x="7" y="5" width="10" height="9" rx="1"/><path d="M3 18h18"/></symbol>
+    <symbol id="i-ar" viewBox="0 0 24 24"><rect x="11" y="6" width="10" height="8" rx="1"/><path d="M3 7h5M3 11h5M3 18h18"/></symbol>
+    <symbol id="i-cap" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="11" rx="1"/><path d="M6 19h12"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 4v6h6"/><path d="M5 15a8 8 0 1 0 1-8L4 10"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></symbol>
+    <symbol id="i-notes" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M9 11h7M9 15h7M9 7h3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-split" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 15v4h14v-4"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></symbol>
+    <symbol id="i-board" viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="17" y="4" width="4" height="13" rx="1"/></symbol>
+    <symbol id="i-t-text" viewBox="0 0 24 24"><path d="M5 6h14M12 6v13"/></symbol>
+    <symbol id="i-t-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-t-sel" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m8 11 4 4 4-4"/></symbol>
+    <symbol id="i-t-num" viewBox="0 0 24 24"><path d="M9 4 7 20M17 4l-2 16M4 9h16M3 15h16"/></symbol>
+    <symbol id="i-bg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18" opacity=".55"/></symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Notes</h1>
+      <p>Proposta di redesign per il Personal Dashboard. Scegli tema e variante: tutto quello che vedi sotto cambia forma, non solo colore, come farà l'app. Gli esempi sono interattivi: colore pagina, font, immagine e annulla con Ctrl+Z funzionano.</p>
+    </div>
+    <div class="switches">
+      <div class="seg" role="group" aria-label="Tema" id="themeSeg">
+        <button type="button" data-theme-btn="notte" aria-pressed="true">Notte</button>
+        <button type="button" data-theme-btn="opaco" aria-pressed="false">Opaco</button>
+        <button type="button" data-theme-btn="quaderno" aria-pressed="false">Quaderno</button>
+        <button type="button" data-theme-btn="fosforo" aria-pressed="false">Fosforo</button>
+      </div>
+      <div class="seg" role="group" aria-label="Variante" id="modeSeg">
+        <button type="button" data-mode-btn="giorno" aria-pressed="false">Giorno</button>
+        <button type="button" data-mode-btn="notte" aria-pressed="true">Notte</button>
+      </div>
+    </div>
+  </header>
+  <p class="theme-note" id="themeNote"></p>
+
+  <!-- ================= DASHBOARD ================= -->
+  <section id="dashboard">
+    <h2>In dashboard</h2>
+    <p class="lead">Le tre taglie di oggi. La 1×1 resta ultra minimal e cambia oggetto con il tema; la 2×2 aggiunge la scrittura veloce e la prossima voce di una raccolta.</p>
+    <div class="dash-scroll">
+      <div class="dash">
+        <!-- 1x1 -->
+        <div class="cell s1" data-pigment="carta">
+          <div class="v v-notte">
+            <svg class="ring" viewBox="0 0 120 120" aria-hidden="true" id="ticks"></svg>
+            <div class="ring-num"><div><div class="big">42</div><small>note</small></div></div>
+          </div>
+          <div class="v v-opaco flex s1-opaco"><small>Notes</small><div class="big">42</div></div>
+          <div class="v v-quaderno flex s1-quaderno"><b>Subnetting /26</b><small>modificata 2 min fa</small></div>
+          <div class="v v-fosforo flex s1-fosforo"><div class="row"><span class="led"></span>notes</div><div class="disp"><div class="big">042</div></div></div>
+        </div>
+        <div class="cell s1b">Le 1×1 sono pensate per stare accanto a Orario e Giorno.</div>
+        <!-- 2x2 -->
+        <div class="cell m">
+          <div class="m-in">
+            <div class="ttl"><svg class="i"><use href="#i-notes"/></svg>Notes</div>
+            <div class="quick"><svg class="i v v-notte v-opaco v-quaderno"><use href="#i-plus"/></svg>Scrivi una nota veloce</div>
+            <div class="m-list">
+              <div class="mini-row"><span class="dot" style="background:#7FA36B"></span><span>Subnetting /26</span><time>10:42</time></div>
+              <div class="mini-row"><span class="dot" style="background:#6F8FB8"></span><span>Socket TCP: server e client</span><time>ieri</time></div>
+              <div class="mini-row"><span class="dot" style="background:#B07FA8"></span><span>3FN con esempi</span><time>mar</time></div>
+              <div class="mini-row"><span class="dot" style="background:#C9A34F"></span><span>Piano di studio novembre</span><time>lun</time></div>
+            </div>
+            <div class="next"><span class="led v v-fosforo"></span><svg class="i v v-notte v-opaco v-quaderno"><use href="#i-db"/></svg><span>Prossima verifica: <b>Subnetting e VLSM</b>, 12 nov</span></div>
+          </div>
+        </div>
+        <!-- 3x1 -->
+        <div class="cell strip">
+          <div class="strip-in">
+            <div class="strip-main"><b>Subnetting /26</b><p>Con /26 restano 6 bit per gli host: 64 indirizzi per sottorete, 62 utilizzabili.</p></div>
+            <div class="strip-side">
+              <div class="mini-row"><span class="dot" style="background:#6F8FB8"></span><span>Socket TCP</span><time>ieri</time></div>
+              <div class="mini-row"><span class="dot" style="background:#B07FA8"></span><span>3FN con esempi</span><time>mar</time></div>
+              <div><button type="button" class="btn ghost"><svg class="i"><use href="#i-plus"/></svg>Nuova nota</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PAGINA NOTES ================= -->
+  <section id="pagina">
+    <h2>La pagina Notes</h2>
+    <p class="lead">Cartelle, tag, preferiti e cestino restano dove sono; si aggiungono le Raccolte. Nella nota: font e colore pagina, un'immagine selezionata con la sua barra, una tabella, una vista collegata, un PDF trascinato e il menu che si apre con <kbd>/</kbd>.</p>
+    <div class="demo-controls">
+      <button type="button" class="btn ghost" id="toggleDrop" aria-pressed="false"><svg class="i"><use href="#i-file"/></svg>Simula un file trascinato</button>
+      <button type="button" class="btn ghost" id="toggleSlash" aria-pressed="false">Mostra il menu /</button>
+      <button type="button" class="btn ghost" id="openKeys"><svg class="i"><use href="#i-key"/></svg>Scorciatoie (Ctrl+/)</button>
+    </div>
+    <div class="app">
+      <aside class="side">
+        <div class="search"><svg class="i"><use href="#i-search"/></svg>Cerca<kbd>Ctrl ⇧ F</kbd></div>
+        <div class="nav"><svg class="i"><use href="#i-notes"/></svg><span>Tutte le note</span><em>42</em></div>
+        <div class="nav"><svg class="i"><use href="#i-star"/></svg><span>Preferiti</span><em>6</em></div>
+        <h3><span>Cartelle</span><svg class="i" style="width:15px;height:15px"><use href="#i-plus"/></svg></h3>
+        <div class="nav"><svg class="i" style="color:#C9A34F"><use href="#i-folder"/></svg><span>Scuola</span><em>28</em></div>
+        <div class="nav sub on"><svg class="i" style="color:#7FA36B"><use href="#i-folder"/></svg><span>Sistemi e reti</span><em>11</em></div>
+        <div class="nav sub"><svg class="i" style="color:#6F8FB8"><use href="#i-folder"/></svg><span>TPSIT</span><em>9</em></div>
+        <div class="nav sub collapse-sm"><svg class="i" style="color:#B07FA8"><use href="#i-folder"/></svg><span>Informatica</span><em>8</em></div>
+        <div class="nav collapse-sm"><svg class="i" style="color:#8A8F98"><use href="#i-folder"/></svg><span>Progetti</span><em>9</em></div>
+        <h3><span>Raccolte</span><svg class="i" style="width:15px;height:15px"><use href="#i-plus"/></svg></h3>
+        <div class="nav"><svg class="i db-ico"><use href="#i-db"/></svg><span>Verifiche</span><em>5</em></div>
+        <div class="nav collapse-sm"><svg class="i db-ico"><use href="#i-db"/></svg><span>Comandi Cisco</span><em>34</em></div>
+        <div class="nav collapse-sm"><svg class="i db-ico"><use href="#i-db"/></svg><span>Libri da leggere</span><em>7</em></div>
+        <h3 class="collapse-sm"><span>Tag</span></h3>
+        <div class="nav collapse-sm" style="gap:6px;flex-wrap:wrap"><span class="chip">#subnet</span><span class="chip">#verifica</span><span class="chip">#c</span></div>
+        <div style="flex:1"></div>
+        <div class="nav"><svg class="i"><use href="#i-trash"/></svg><span>Cestino</span><em>3</em></div>
+      </aside>
+
+      <div class="editor">
+        <div class="ed-head">
+          <nav class="crumbs" aria-label="Percorso"><span>Scuola</span><span>/</span><span>Sistemi e reti</span><span>/</span><b>Subnetting /26</b></nav>
+          <span class="chip">#subnet</span><span class="chip">#verifica</span>
+          <button type="button" class="icon-btn" aria-label="Aggiungi ai preferiti" title="Preferiti"><svg class="i"><use href="#i-star"/></svg></button>
+          <button type="button" class="icon-btn" aria-label="Schermo diviso" title="Schermo diviso"><svg class="i"><use href="#i-split"/></svg></button>
+          <button type="button" class="icon-btn" aria-label="Esporta" title="Esporta (PDF, Markdown, PNG, JPG)"><svg class="i"><use href="#i-export"/></svg></button>
+        </div>
+
+        <div class="toolbar" role="toolbar" aria-label="Strumenti di scrittura">
+          <button type="button" class="tb" id="undoBtn" title="Annulla (Ctrl+Z)" aria-label="Annulla"><svg class="i"><use href="#i-undo"/></svg><span class="kc">Ctrl Z</span></button>
+          <button type="button" class="tb" id="redoBtn" title="Ripeti (Ctrl+Shift+Z)" aria-label="Ripeti"><svg class="i"><use href="#i-redo"/></svg><span class="kc">⇧ Z</span></button>
+          <span class="tsep"></span>
+          <select class="tsel" id="fontSel" aria-label="Font" title="Font della selezione">
+            <option value="">Font del tema</option>
+            <option value='"Manrope", sans-serif'>Manrope</option>
+            <option value='"Bricolage Grotesque", sans-serif'>Bricolage</option>
+            <option value='"Figtree", sans-serif'>Figtree</option>
+            <option value='"Literata", Georgia, serif'>Literata (serif)</option>
+            <option value='"Caveat", cursive'>Caveat (a mano)</option>
+            <option value='"JetBrains Mono", monospace'>JetBrains Mono</option>
+          </select>
+          <select class="tsel" aria-label="Dimensione" title="Dimensione del testo" style="width:66px"><option>15</option><option>12</option><option>18</option><option>24</option><option>32</option></select>
+          <span class="tsep"></span>
+          <button type="button" class="tb" aria-pressed="true" title="Grassetto (Ctrl+B)" aria-label="Grassetto"><svg class="i"><use href="#i-bold"/></svg><span class="kc">Ctrl B</span></button>
+          <button type="button" class="tb" title="Corsivo (Ctrl+I)" aria-label="Corsivo"><svg class="i"><use href="#i-italic"/></svg><span class="kc">Ctrl I</span></button>
+          <button type="button" class="tb" title="Sottolineato (Ctrl+U)" aria-label="Sottolineato"><svg class="i"><use href="#i-under"/></svg><span class="kc">Ctrl U</span></button>
+          <button type="button" class="tb" title="Barrato (Ctrl+Shift+X)" aria-label="Barrato"><svg class="i"><use href="#i-strike"/></svg><span class="kc">⇧ X</span></button>
+          <button type="button" class="tb" title="Colore del testo" aria-label="Colore del testo"><svg class="i"><use href="#i-color"/></svg><span class="kc">colore</span></button>
+          <button type="button" class="tb" title="Evidenzia" aria-label="Evidenzia"><svg class="i"><use href="#i-hl"/></svg><span class="kc">evid.</span></button>
+          <span class="tsep"></span>
+          <button type="button" class="tb" title="Elenco puntato (Ctrl+Shift+8)" aria-label="Elenco puntato"><svg class="i"><use href="#i-list"/></svg><span class="kc">⇧ 8</span></button>
+          <button type="button" class="tb" title="Checklist (Ctrl+Shift+9)" aria-label="Checklist"><svg class="i"><use href="#i-check"/></svg><span class="kc">⇧ 9</span></button>
+          <button type="button" class="tb" title="Link (Ctrl+K)" aria-label="Link"><svg class="i"><use href="#i-link"/></svg><span class="kc">Ctrl K</span></button>
+          <span class="tsep"></span>
+          <button type="button" class="tb" title="Inserisci tabella (Ctrl+Alt+T)" aria-label="Inserisci tabella"><svg class="i"><use href="#i-table"/></svg><span class="kc">Alt T</span></button>
+          <button type="button" class="tb" title="Inserisci immagine" aria-label="Inserisci immagine"><svg class="i"><use href="#i-image"/></svg><span class="kc">img</span></button>
+          <button type="button" class="tb" title="Allega file" aria-label="Allega file"><svg class="i"><use href="#i-file"/></svg><span class="kc">file</span></button>
+          <button type="button" class="tb" title="Vista di una raccolta" aria-label="Inserisci vista di una raccolta"><svg class="i"><use href="#i-db"/></svg><span class="kc">racc.</span></button>
+          <span class="tsep"></span>
+          <span class="swatches" id="swatches" aria-label="Colore della pagina"></span>
+          <button type="button" class="tb" title="Sfondo: puntini, quadretti, righe" aria-label="Sfondo della pagina"><svg class="i"><use href="#i-bg"/></svg><span class="kc">sfondo</span></button>
+          <span class="tsep"></span>
+          <button type="button" class="tb" title="Scrittura a mano (P penna, H evidenziatore, E gomma)" aria-label="Scrittura a mano"><svg class="i"><use href="#i-pen"/></svg><span class="kc">P</span></button>
+          <button type="button" class="tb" id="keysBtn" title="Scorciatoie (Ctrl+/)" aria-label="Scorciatoie"><svg class="i"><use href="#i-key"/></svg><span class="kc">Ctrl /</span></button>
+        </div>
+
+        <div class="page-area">
+          <article class="page" id="page">
+            <h1>Subnetting /26</h1>
+            <div class="props">
+              <span class="chip"><svg class="i" style="width:13px;height:13px"><use href="#i-t-cal"/></svg>Creata 20 ott</span>
+              <span class="ref"><svg class="i"><use href="#i-db"/></svg>Subnetting e VLSM</span>
+              <span>3 pagine</span>
+            </div>
+            <div class="body-text">
+              <p>Rete di partenza <b>192.168.10.0/24</b>, da dividere in 4 sottoreti uguali. Prendo in prestito 2 bit dalla parte host: la maschera diventa <b>255.255.255.192</b>.</p>
+              <p>Con /26 restano 6 bit per gli host: <mark>64 indirizzi per sottorete, 62 utilizzabili</mark> (si tolgono rete e broadcast). Da ripassare prima di <span class="ref"><svg class="i"><use href="#i-db"/></svg>Subnetting e VLSM</span>.</p>
+            </div>
+
+            <figure class="img" id="fig">
+              <div class="imgbar" role="toolbar" aria-label="Modifica immagine">
+                <button type="button" class="tb" title="Ritaglia" aria-label="Ritaglia"><svg class="i"><use href="#i-crop"/></svg></button>
+                <button type="button" class="tb" title="Ruota di 90°" aria-label="Ruota"><svg class="i"><use href="#i-rotate"/></svg></button>
+                <button type="button" class="tb" id="flipBtn" title="Specchia" aria-label="Specchia"><svg class="i"><use href="#i-flip"/></svg></button>
+                <button type="button" class="tb" id="lightBtn" title="Luminosità e contrasto" aria-label="Luminosità e contrasto"><svg class="i"><use href="#i-sun"/></svg></button>
+                <button type="button" class="tb" title="Disegna sopra" aria-label="Disegna sopra"><svg class="i"><use href="#i-pen"/></svg></button>
+                <span class="tsep"></span>
+                <button type="button" class="tb" title="Allinea a sinistra" aria-label="Allinea a sinistra"><svg class="i"><use href="#i-al"/></svg></button>
+                <button type="button" class="tb" aria-pressed="true" title="Al centro" aria-label="Al centro"><svg class="i"><use href="#i-ac"/></svg></button>
+                <button type="button" class="tb" title="Allinea a destra" aria-label="Allinea a destra"><svg class="i"><use href="#i-ar"/></svg></button>
+                <span class="tsep"></span>
+                <button type="button" class="tb" title="Didascalia" aria-label="Didascalia"><svg class="i"><use href="#i-cap"/></svg></button>
+                <button type="button" class="tb" id="resetImg" title="Ripristina originale" aria-label="Ripristina originale"><svg class="i"><use href="#i-reset"/></svg></button>
+              </div>
+              <div class="imgbox">
+                <svg class="photo" viewBox="0 0 560 300" role="img" aria-label="Foto della lavagna con lo schema della rete">
+                  <rect width="560" height="300" fill="#ECEEEA"/>
+                  <rect x="0" y="0" width="560" height="300" fill="url(#smudge)" opacity=".5"/>
+                  <defs><radialGradient id="smudge" cx="30%" cy="30%" r="80%"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#D5D8D2"/></radialGradient></defs>
+                  <g fill="none" stroke="#2546A8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <ellipse cx="280" cy="56" rx="46" ry="22"/><path d="M280 78v38"/>
+                    <rect x="236" y="116" width="88" height="34" rx="6"/>
+                    <path d="M250 150 120 220M280 150v70M310 150l130 70M300 150l60 70"/>
+                    <rect x="84" y="220" width="72" height="44" rx="4"/><rect x="244" y="220" width="72" height="44" rx="4"/>
+                    <rect x="324" y="220" width="72" height="44" rx="4"/><rect x="404" y="220" width="72" height="44" rx="4"/>
+                  </g>
+                  <g fill="#2546A8" font-family="Caveat, cursive" font-size="22" font-weight="700" text-anchor="middle">
+                    <text x="280" y="63">R1</text><text x="280" y="140">SW</text>
+                    <text x="120" y="248">.0/26</text><text x="280" y="248">.64/26</text><text x="360" y="248">.128/26</text><text x="440" y="248">.192/26</text>
+                  </g>
+                  <g fill="#B4372B" font-family="Caveat, cursive" font-size="24" font-weight="700"><text x="370" y="60">192.168.10.0/24</text><text x="40" y="60">4 sottoreti</text></g>
+                  <path d="M360 66c20 6 30 18 30 36" fill="none" stroke="#B4372B" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+                <span class="handle h-tl"></span><span class="handle h-tr"></span><span class="handle h-bl"></span><span class="handle h-br"></span><span class="handle h-r"></span>
+                <span class="measure">560 × 300 px, 82%</span>
+              </div>
+              <figcaption>Lavagna del 20 ottobre: le 4 sottoreti /26</figcaption>
+            </figure>
+
+            <h2>Tabella delle sottoreti</h2>
+            <div class="tbl-wrap">
+              <table class="t">
+                <thead><tr><th>Sottorete</th><th>Indirizzo di rete</th><th>Host utilizzabili</th><th>Broadcast</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>192.168.10.0</td><td>.1 – .62</td><td>.63</td></tr>
+                  <tr class="sel"><td>2</td><td>192.168.10.64</td><td>.65 – .126</td><td>.127</td></tr>
+                  <tr><td>3</td><td>192.168.10.128</td><td>.129 – .190</td><td>.191</td></tr>
+                  <tr><td>4</td><td>192.168.10.192</td><td>.193 – .254</td><td>.255</td></tr>
+                </tbody>
+              </table>
+              <button type="button" class="add-col" aria-label="Aggiungi colonna">+</button>
+              <button type="button" class="add-row" aria-label="Aggiungi riga">+</button>
+            </div>
+            <p class="cell-tip"><kbd>Tab</kbd> cella successiva, <kbd>Tab</kbd> nell'ultima cella aggiunge una riga. Dal menu della tabella: Trasforma in raccolta.</p>
+
+            <h2>Verifiche di Sistemi e reti</h2>
+            <div class="dbv">
+              <div class="dbv-head">
+                <b>Verifiche</b>
+                <span class="linked"><span class="led v v-fosforo"></span><svg class="i v v-notte v-opaco v-quaderno" style="width:12px;height:12px"><use href="#i-link"/></svg>Vista collegata</span>
+                <span class="meta">Materia è Sistemi e reti, usata in 3 note</span>
+                <span class="sp"></span>
+                <span class="meta">Modifichi qui, cambia ovunque</span>
+              </div>
+              <div style="overflow-x:auto">
+                <table>
+                  <thead><tr><th><span class="ft"><svg class="i"><use href="#i-t-text"/></svg>Titolo</span></th><th><span class="ft"><svg class="i"><use href="#i-t-cal"/></svg>Data</span></th><th><span class="ft"><svg class="i"><use href="#i-t-sel"/></svg>Stato</span></th></tr></thead>
+                  <tbody>
+                    <tr><td>Subnetting e VLSM</td><td>12 nov</td><td><span class="sel-chip sc-senape">Da ripassare</span></td></tr>
+                    <tr><td>Routing statico</td><td>3 dic</td><td><span class="sel-chip sc-blu">In corso</span></td></tr>
+                    <tr class="addrow"><td colspan="3">+ Nuova riga</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="filecard">
+              <span class="fi">PDF</span>
+              <div><b>esercizi-subnetting.pdf</b><small>284 KB, aggiunto ora</small></div>
+              <button type="button" class="btn ghost">Apri</button>
+            </div>
+
+            <p class="slash-line" id="slashLine">/tab<span class="caret"></span>
+              <span class="slash" id="slash" hidden>
+                <span class="opt on"><svg class="i"><use href="#i-table"/></svg><span>Tabella</span><small>Ctrl Alt T</small></span>
+                <span class="opt"><svg class="i"><use href="#i-db"/></svg><span>Tabella da una raccolta</span><small>vista</small></span>
+                <span class="opt"><svg class="i"><use href="#i-image"/></svg><span>Immagine</span><small>Ctrl V</small></span>
+                <span class="opt"><svg class="i"><use href="#i-file"/></svg><span>File</span><small></small></span>
+                <span class="opt"><svg class="i"><use href="#i-link"/></svg><span>Riferimento a una riga</span><small>@</small></span>
+              </span>
+            </p>
+          </article>
+
+          <div class="drop" id="drop" hidden>
+            <div class="dz hot"><svg class="i"><use href="#i-image"/></svg><b>Inserisci nella pagina</b><p>Rilascia dove vuoi che compaia. Le immagini restano modificabili.</p></div>
+            <div class="dz"><svg class="i"><use href="#i-file"/></svg><b>Allega alla nota</b><p>Il file va nella cartella della nota e compare negli allegati.</p></div>
+            <div class="dragghost"><i></i>lavagna-27-ott.jpg</div>
+          </div>
+        </div>
+
+        <div class="pagebar">
+          <span class="pdots"><i></i><i class="on"></i><i></i></span>
+          <span>Pagina 2 di 3</span>
+          <span class="pg"><kbd>Ctrl PagGiù</kbd></span>
+          <span>Zoom 100%</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RACCOLTA ================= -->
+  <section id="raccolta">
+    <h2>Una raccolta, più note</h2>
+    <p class="lead">I dati stanno nella raccolta, non nelle note. Ogni nota può mostrarne una vista con il suo filtro; cambiare una riga da una nota la cambia in tutte. Tre modi di guardarla: tabella, schede, bacheca.</p>
+    <div class="coll">
+      <div style="min-width:0">
+        <div class="coll-h">
+          <h3>Verifiche</h3>
+          <span class="sp"></span>
+          <div class="tabs" role="tablist" aria-label="Vista della raccolta">
+            <button type="button" role="tab" aria-selected="true" data-view="tabella"><svg class="i"><use href="#i-table"/></svg>Tabella</button>
+            <button type="button" role="tab" aria-selected="false" data-view="schede"><svg class="i"><use href="#i-grid"/></svg>Schede</button>
+            <button type="button" role="tab" aria-selected="false" data-view="bacheca"><svg class="i"><use href="#i-board"/></svg>Bacheca</button>
+          </div>
+        </div>
+        <div class="filters"><span class="chip">Ordina per Data</span><span class="chip">Tutte le materie</span><span class="chip">+ Filtro</span></div>
+        <div class="cview" id="cview"></div>
+      </div>
+      <aside class="usedin">
+        <h4>Usata in</h4>
+        <a href="#pagina"><svg class="i" style="color:#7FA36B"><use href="#i-notes"/></svg><span><b>Subnetting /26</b><small>Sistemi e reti, filtro per materia</small></span></a>
+        <a href="#pagina"><svg class="i" style="color:#C9A34F"><use href="#i-notes"/></svg><span><b>Piano di studio novembre</b><small>Progetti, vista bacheca</small></span></a>
+        <a href="#pagina"><svg class="i" style="color:#6F8FB8"><use href="#i-notes"/></svg><span><b>Socket TCP: server e client</b><small>TPSIT, riferimento a una riga</small></span></a>
+        <p class="hint">Eliminando la raccolta, queste viste mostrano "Raccolta eliminata" con il pulsante Ripristina.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= SCORCIATOIE ================= -->
+  <section id="scorciatoie">
+    <h2>Scorciatoie</h2>
+    <p class="lead">Ctrl+Z annulla tutto, non solo il testo: tratti a mano, immagini, tabelle, colore pagina. Su macOS Ctrl diventa Cmd. Lo stesso elenco si apre con <kbd>Ctrl /</kbd>.</p>
+    <div class="keys" id="keysInline"></div>
+  </section>
+
+  <!-- ================= PROMPT ================= -->
+  <section id="prompt">
+    <h2>Prompt per Claude Code</h2>
+    <p class="lead">Salva questa pagina come <kbd>docs/design/temi/notes-redesign.html</kbd> nel repository, poi incolla il prompt. Chiede un piano e le risposte alle domande aperte prima di scrivere codice.</p>
+    <div class="prompt">
+      <div class="prompt-h"><span>Diviso in 6 fasi, una per commit su dev.</span><button type="button" class="btn" id="copyPrompt">Copia il prompt</button></div>
+      <pre id="promptText"># Redesign del widget Notes nei 4 temi
+
+Lavoriamo sul widget Notes (`src/widgets/notes/`) del Personal Dashboard. L&#x27;obiettivo è un redesign completo,
+tema per tema, più sei funzioni nuove. Il mockup di riferimento è `docs/design/temi/notes-redesign.html`
+(aprilo nel browser: in alto scegli tema e variante giorno/notte). Per la grafica vale il mockup; per tutto il resto
+valgono `CLAUDE.md` e `docs/ARCHITETTURA.md`, che vanno letti prima di iniziare.
+
+## Prima di scrivere codice
+
+1. Leggi `CLAUDE.md`, `docs/ARCHITETTURA.md`, il mockup, e tutto `src/widgets/notes/` (in particolare
+   `NoteEditor.tsx`, `PageSurface.tsx`, `InkLayer.tsx`, `lib/html.ts`, `lib/vault.ts`, `data/notesRepository.ts`).
+2. Guarda come sono fatte le card per tema di Studio e Companion (`widgets/*/card/cards.ts`) e `useThemeVariant`.
+3. Rispondimi con: un piano diviso nelle fasi qui sotto, i file che toccherai per ogni fase, e le domande aperte
+   (in fondo ne trovi già alcune). **Non iniziare finché non confermo il piano.**
+
+## Cosa deve restare
+
+Tutto quello che Notes fa oggi deve continuare a funzionare, con la nuova grafica: cartelle annidate con colore e
+icona, tag, preferiti, cestino con ripristino, ricerca, ordinamento, vista griglia/elenco, editor a pagine
+(aggiungi, sposta, elimina pagina), scrittura a mano (penna, evidenziatore, gomma, colori, spessore), sfondi pagina
+(liscio, puntini, quadretti, righe), modelli, allegati, link, checklist, zoom 60–160%, schermo diviso, esportazione
+(PDF, Markdown, PNG, JPG), copia su disco nella cartella Notes, trascinamento di note e cartelle. Prima di
+cambiare l&#x27;editor fai un elenco di queste funzioni e alla fine di ogni fase verifica che nessuna si sia rotta.
+
+## Fase 1 — Grafica per tema
+
+Ogni tema cambia **forma**, non solo colore (lo mostra il mockup). Varianti con `useThemeVariant`, mai
+`if (theme === …)`; colori solo dai token; ogni token nuovo in `tokens.css` **e** `tokens-varianti.css`.
+
+| Parte | Notte | Opaco | Quaderno | Fosforo |
+|---|---|---|---|---|
+| Pagina | lavagna scura arrotondata, riflesso in alto | blocco di pigmento &quot;carta&quot;, niente bordi | foglio a quadretti con margine rosso e ombra piatta | display a punti (`--display-texture`), testo mono |
+| Barra strumenti | capsula unica con separatori | pillole separate, attivo = pieno scuro | pulsanti a contorno inchiostro, squadrati | tasti hardware con la scorciatoia scritta sotto |
+| Titoli nella nota | Manrope leggero | Bricolage 800 stretto | Caveat inchiostro | Doto a punti |
+| Immagine selezionata | anello accent | contorno spesso staccato | nastro adesivo agli angoli, leggera rotazione | mirino agli angoli + misure in px |
+| Tabella | righe morbide | intestazione piena, righe a fasce | griglia a inchiostro 1.5px | separatori a punti, numeri allineati |
+| Vista di una raccolta | pannello con chip &quot;collegata&quot; | blocco senape | scheda d&#x27;archivio con etichetta post-it | modulo con LED di sincronizzazione |
+
+Widget in dashboard: card per tema in `widgets/notes/card/cards.ts` (`NOTES_CARDS`), con le tre taglie attuali
+(1×1, 3×1, 2×2). La 1×1 è ultra minimal come in `widget-1x1.html`: Notte = ghiera a tacche + numero; Opaco =
+numero gigante su pigmento; Quaderno = post-it con il titolo dell&#x27;ultima nota; Fosforo = numero Doto + LED.
+La 2×2 ha le ultime note e un campo &quot;Scrivi una nota veloce&quot; (Invio = nuova nota in &quot;Senza cartella&quot;).
+La pagina di dettaglio riusa le stesse parti per tema.
+
+## Fase 2 — Annulla/Ripeti e scorciatoie
+
+Oggi l&#x27;annulla usa `execCommand(&quot;undo&quot;)`, che non copre inchiostro, immagini, tabelle, colore pagina.
+- Nuovo `widgets/notes/lib/history.ts`: cronologia per nota, logica pura (orologio iniettato, testabile con uno
+  script `.mts`). Ogni voce è uno snapshot della pagina toccata (`html`, `ink`, `color`, `background`) + posizione
+  del cursore. La digitazione continua si unisce in una voce sola (pausa &gt; 800 ms o cambio di blocco = voce nuova).
+  Massimo 200 voci, svuotata quando si cambia nota.
+- `PageSurface` resta non controllato da React: lo snapshot legge e riscrive `innerHTML` e ripristina la selezione
+  da offset di testo.
+- Scorciatoie in un solo file `widgets/notes/lib/shortcuts.ts` (mappa azione → tasti), con `Cmd` al posto di
+  `Ctrl` su macOS. Attive solo con la pagina Notes aperta; dentro input e select non scattano.
+
+| Tasti | Azione |
+|---|---|
+| Ctrl+Z / Ctrl+Shift+Z, Ctrl+Y | Annulla / Ripeti |
+| Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Shift+X | Grassetto, corsivo, sottolineato, barrato |
+| Ctrl+K | Link |
+| Ctrl+Alt+1/2/3, Ctrl+Alt+0 | Titolo 1/2/3, testo normale |
+| Ctrl+Shift+8 / Ctrl+Shift+7 / Ctrl+Shift+9 | Elenco puntato / numerato / checklist |
+| Ctrl+Invio | Spunta la riga della checklist |
+| / a inizio riga | Menu inserisci (titolo, tabella, immagine, file, vista raccolta, riferimento, divisore) |
+| Ctrl+D | Duplica il blocco (tabella, immagine, vista) |
+| Alt+↑ / Alt+↓ | Sposta il blocco |
+| Tab / Shift+Tab | Cella successiva/precedente in tabella (Tab nell&#x27;ultima cella = nuova riga) |
+| Ctrl+F / Ctrl+Shift+F | Cerca nella nota / in tutte le note |
+| Ctrl+N | Nuova nota nella cartella aperta |
+| Ctrl+PagSu / Ctrl+PagGiù | Pagina precedente / successiva |
+| Ctrl+= / Ctrl+- / Ctrl+0 | Zoom avanti / indietro / 100% |
+| P, H, E, T (solo in modalità disegno) | Penna, evidenziatore, gomma, torna al testo |
+| Ctrl+/ | Pannello delle scorciatoie (stile per tema, come nel mockup) |
+| Esc | Chiude menu, pannelli, deseleziona |
+
+Il tooltip di ogni pulsante della barra mostra la sua scorciatoia (in Fosforo è scritta sul tasto).
+
+## Fase 3 — Testo: font, dimensione, colore; colore della pagina
+
+- Selettore font nella barra, applicato alla selezione (span con `data-font`, non `style` libero, così
+  `sanitizeHtml` può validarlo). Valori: `tema` (default, segue il tema), `sans` (Manrope), `grottesco`
+  (Bricolage), `figtree`, `mano` (Caveat), `mono` (JetBrains Mono), `punti` (Doto, solo titoli), `serif`.
+  Per `serif` serve un pacchetto nuovo `@fontsource-variable/literata`: **chiedimi conferma prima di aggiungerlo**.
+  Nessun font da internet.
+- Dimensione (12–40 px, `data-size`), colore del testo ed evidenziatore con una palette di 6 colori + tema.
+- Font predefinito della nota nelle proprietà della nota (colonna nuova, vedi Fase 6).
+- Colore della pagina: colonna `color` su `note_pages` (chiave della palette o esadecimale scelto dall&#x27;utente).
+  Palette: tema, crema, salvia, cielo, rosa, grafite, + selettore libero. Ogni chiave ha un valore giorno e uno
+  notte (stesso concetto dei token), così una pagina crema resta leggibile con la variante notte; per un colore
+  libero il colore del testo si calcola dal contrasto. Pulsante &quot;Applica a tutte le pagine&quot;. Il colore si combina
+  con gli sfondi esistenti (puntini, quadretti, righe) e finisce anche nell&#x27;esportazione.
+
+## Fase 4 — Trascinare file, foto e altro
+
+- Trascinando sopra la pagina compare il pannello del mockup con due zone: &quot;Inserisci nella pagina&quot; (dove si
+  rilascia) e &quot;Allega alla nota&quot;. Sulla barra laterale: rilasciare su una cartella crea una nota con il file.
+- Immagini (png, jpg, webp, gif, anche incollate con Ctrl+V) → blocco immagine; PDF e altri file → scheda file
+  (icona, nome, dimensione, Apri, Mostra nella cartella); `.md` e `.txt` → testo importato; testo/HTML da altre
+  app → passa da `sanitizeHtml`.
+- I file vanno nella cartella della nota su disco (come gli allegati di oggi, `lib/vault.ts`), mai base64 nel DB.
+- Blocco immagine: `&lt;figure data-block=&quot;image&quot; data-attachment=&quot;…&quot; data-edit=&#x27;{…}&#x27; data-align=&quot;…&quot;&gt;` +
+  `figcaption`. Modifiche **non distruttive** salvate in `data-edit`: ritaglio, rotazione 90°, specchio,
+  luminosità, contrasto, larghezza (maniglie), allineamento (sinistra, centro, destra, tutta pagina), didascalia,
+  e &quot;Disegna sopra&quot; che riusa `InkLayer` dentro la figura (tratti in `data-ink`). &quot;Ripristina originale&quot; toglie
+  tutto. Barra dell&#x27;immagine come nel mockup. Ogni modifica entra nella cronologia della Fase 2.
+
+## Fase 5 — Tabelle
+
+- Inserisci tabella da barra, menu `/` o Ctrl+Alt+T: griglia 3×3 con prima riga intestazione.
+- `&lt;table&gt;` nell&#x27;HTML della pagina; aggiorna `sanitizeHtml` per `table/thead/tbody/tr/th/td`, `colspan`,
+  `rowspan`, `data-align`, `data-width`.
+- Al passaggio del mouse: + colonna a destra, + riga sotto, menu della riga/colonna (inserisci prima/dopo,
+  elimina, allinea, intestazione sì/no, ordina A→Z), larghezza colonne trascinabile, unisci celle.
+- &quot;Trasforma in raccolta&quot;: crea una raccolta (Fase 6) con quelle colonne e righe e sostituisce la tabella con una
+  vista collegata.
+- Le tabelle devono finire correttamente nell&#x27;esportazione Markdown e PDF.
+
+## Fase 6 — Raccolte (dati condivisi tra note)
+
+Una raccolta è una piccola tabella di dati con colonne tipizzate, che vive fuori dalle note e si mostra in
+quante note si vuole: modificare una riga in una nota la cambia ovunque.
+
+Migrazioni nuove in fondo a `core/db/migrations.ts` (version = ultima + 1, idempotenti):
+- `note_collections(id, name, icon, color, created_at, deleted_at)`
+- `note_collection_fields(id, collection_id, name, type, options, position)` — tipi: `text`, `number`, `date`,
+  `select`, `multi`, `check`, `url`, `note` (collegamento a una nota), `file`; `options` JSON (scelte e colori)
+- `note_collection_rows(id, collection_id, data, position, created_at, updated_at)` — `data` JSON per id di campo
+- `note_collection_views(id, collection_id, name, layout, filter, sort, fields, group_field)` — layout
+  `tabella` | `schede` | `bacheca`
+- `ALTER TABLE note_pages ADD COLUMN color TEXT` e `ALTER TABLE notes ADD COLUMN font TEXT`
+
+Tutto l&#x27;SQL in un nuovo `widgets/notes/data/collectionsRepository.ts`. Logica di filtro/ordinamento pura in
+`widgets/notes/lib/collections.ts`.
+
+Nella nota:
+- Vista collegata: `&lt;div data-block=&quot;collection-view&quot; data-view=&quot;ID&quot; contenteditable=&quot;false&quot;&gt;`, disegnata da
+  React con un portal dentro `PageSurface`. Mostra &quot;Vista collegata · Verifiche · usata in N note&quot; e il filtro.
+  Si modifica nella nota stessa (celle, nuove righe); il cambiamento arriva alle altre viste aperte, anche nello
+  schermo diviso.
+- Riferimento a una riga: `&lt;span data-ref-row=&quot;ID&quot; contenteditable=&quot;false&quot;&gt;` come chip inline (digitando `@`).
+  Clic = scheda della riga.
+- Se la raccolta o la riga viene eliminata, la vista mostra &quot;Raccolta eliminata · Ripristina&quot; invece di sparire.
+
+Nella barra laterale una sezione &quot;Raccolte&quot; (sopra il cestino) apre la pagina della raccolta: tabella / schede /
+bacheca, modifica dei campi, e a destra &quot;Usata in&quot; con l&#x27;elenco delle note che la mostrano (cliccabili).
+Esportazione: in Markdown e PDF le viste collegate diventano tabelle con i dati del momento.
+La copia su disco salva ogni raccolta come `Raccolte/&lt;nome&gt;.json` (+ `.csv`).
+
+## Regole
+
+- Se non sei sicuro di qualcosa, chiedi. Non indovinare.
+- Regole di dipendenza: niente import da altri widget; se serve qualcosa di condiviso sale in `core/` o `ui/`.
+- Un `.css` accanto a ogni componente; nessun esadecimale nei componenti (eccezioni: colori scelti dall&#x27;utente,
+  come pagine, materie, cartelle, scelte delle colonne select).
+- Tutto in italiano: codice, commenti, testi dell&#x27;interfaccia. Testi brevi e attivi (&quot;Inserisci tabella&quot;,
+  &quot;Allega alla nota&quot;, poi il toast &quot;Allegato&quot;).
+- Accessibilità: ogni pulsante con `aria-label`, focus visibile, i blocchi immagine/tabella/vista raggiungibili
+  con la tastiera.
+- Ogni fase si chiude con `npm run build`, `npm run lint` e `cargo check` (se tocchi Rust), più una prova a mano nei
+  4 temi × giorno/notte. Dimmi cosa hai provato e cosa no.
+- Una fase = un commit su `dev`, messaggio in italiano.
+
+## Domande aperte (rispondo prima della Fase 1)
+
+1. Aggiungo `@fontsource-variable/literata` per il font serif?
+2. Vuoi anche i font installati sul computer? Servirebbe un comando Rust (es. crate `font-kit`) e funzionerebbe
+   solo nella versione desktop.
+3. Le note stesse devono poter avere proprietà (campi come Materia, Scadenza) e comparire come righe di una
+   raccolta, oppure basta che le raccolte siano tabelle separate?
+4. Nella bacheca di una raccolta, il raggruppamento è solo per campo `select` o anche per data (settimana)?
+</pre>
+    </div>
+  </section>
+</div>
+
+<div class="modal-bg" id="keysModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="keysTitle">
+    <div class="modal-h"><h3 id="keysTitle">Scorciatoie</h3><button type="button" class="icon-btn" id="closeKeys" aria-label="Chiudi">✕</button></div>
+    <div class="keys" id="keysModalList"></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  const body = document.body;
+  const NOTES = {
+    notte: "<b>Notte.</b> Lavagna scura arrotondata con un riflesso in alto, barra degli strumenti in un'unica capsula, titoli Manrope leggeri. L'immagine selezionata ha l'anello luminoso; la 1×1 è la ghiera a tacche.",
+    opaco: "<b>Opaco.</b> Niente bordi né ombre: blocchi di pigmento. Strumenti come pillole separate (l'attivo è pieno), tabelle a fasce con intestazione scura, la vista collegata è un blocco senape, il PDF un blocco malva.",
+    quaderno: "<b>Quaderno.</b> Foglio a quadretti con margine rosso, titoli in Caveat a inchiostro blu. Immagini fissate con il nastro adesivo, tabelle a griglia d'inchiostro, la raccolta è una scheda d'archivio con etichetta post-it.",
+    fosforo: "<b>Fosforo.</b> Pagina come un display a punti, testo mono, titoli Doto. Gli strumenti sono tasti hardware con la scorciatoia stampata sopra; l'immagine ha il mirino agli angoli e le misure in pixel; LED rosso per la sincronizzazione."
+  };
+  // Colori pagina: ogni chiave ha un valore giorno e uno notte (come i token).
+  const PAGE = {
+    tema:    null,
+    crema:   { giorno: ["#FBF3DC", "#3A3220"], notte: ["#2B261A", "#F1E6C8"] },
+    salvia:  { giorno: ["#E4EBDC", "#24301F"], notte: ["#1F2A1D", "#DCE8D2"] },
+    cielo:   { giorno: ["#DFE9F6", "#1B2A3A"], notte: ["#18222F", "#D8E5F4"] },
+    rosa:    { giorno: ["#F7E4E8", "#3A2026"], notte: ["#2C1D22", "#F3DCE2"] },
+    grafite: { giorno: ["#2B2E33", "#ECEDEF"], notte: ["#3A3D44", "#EEF0F3"] }
+  };
+  const LABEL = { tema: "Tema", crema: "Crema", salvia: "Salvia", cielo: "Cielo", rosa: "Rosa", grafite: "Grafite" };
+  const state = { page: "tema", font: "", flip: false, light: false };
+  const past = [], future = [];
+  const page = document.getElementById("page"), fig = document.getElementById("fig");
+
+  function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+  function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("show"), 1600); }
+
+  function render() {
+    const m = body.dataset.m, p = PAGE[state.page];
+    if (p) { page.style.setProperty("--pb", p[m][0]); page.style.setProperty("--pi", p[m][1]); }
+    else { page.style.removeProperty("--pb"); page.style.removeProperty("--pi"); }
+    if (state.font) page.style.setProperty("--user-font", state.font); else page.style.removeProperty("--user-font");
+    document.getElementById("fontSel").value = state.font;
+    fig.classList.toggle("flip", state.flip); fig.classList.toggle("light", state.light);
+    document.getElementById("flipBtn").setAttribute("aria-pressed", state.flip);
+    document.getElementById("lightBtn").setAttribute("aria-pressed", state.light);
+    document.querySelectorAll(".sw").forEach(b => {
+      b.setAttribute("aria-pressed", b.dataset.k === state.page);
+      const v = PAGE[b.dataset.k]; if (v) b.style.background = v[m][0];
+    });
+  }
+  // Cronologia: ogni azione salva lo stato precedente (come lib/history.ts nell'app).
+  function act(label, fn) { past.push({ s: { ...state }, label }); future.length = 0; fn(); render(); }
+  function undo() { const e = past.pop(); if (!e) return toast("Niente da annullare"); future.push({ s: { ...state }, label: e.label }); Object.assign(state, e.s); render(); toast("Annullato: " + e.label); }
+  function redo() { const e = future.pop(); if (!e) return toast("Niente da ripetere"); past.push({ s: { ...state }, label: e.label }); Object.assign(state, e.s); render(); toast("Ripetuto: " + e.label); }
+
+  const sw = document.getElementById("swatches");
+  Object.keys(PAGE).forEach(k => {
+    const b = document.createElement("button"); b.type = "button"; b.className = "sw" + (k === "tema" ? " theme" : "");
+    b.dataset.k = k; b.title = "Pagina: " + LABEL[k]; b.setAttribute("aria-label", "Colore pagina " + LABEL[k]);
+    b.onclick = () => { if (state.page !== k) act("colore pagina", () => state.page = k); };
+    sw.appendChild(b);
+  });
+  document.getElementById("fontSel").onchange = e => act("font", () => state.font = e.target.value);
+  document.getElementById("flipBtn").onclick = () => act("specchia immagine", () => state.flip = !state.flip);
+  document.getElementById("lightBtn").onclick = () => act("luminosità immagine", () => state.light = !state.light);
+  document.getElementById("resetImg").onclick = () => { if (state.flip || state.light) act("ripristina immagine", () => { state.flip = false; state.light = false; }); };
+  document.getElementById("undoBtn").onclick = undo;
+  document.getElementById("redoBtn").onclick = redo;
+
+  // Tema e variante
+  function setTheme(t, m) {
+    body.dataset.t = t; body.dataset.m = m;
+    document.querySelectorAll("[data-theme-btn]").forEach(b => b.setAttribute("aria-pressed", b.dataset.themeBtn === t));
+    document.querySelectorAll("[data-mode-btn]").forEach(b => b.setAttribute("aria-pressed", b.dataset.modeBtn === m));
+    document.getElementById("themeNote").innerHTML = NOTES[t];
+    store("nr-theme", t); store("nr-mode", m); render();
+  }
+  document.querySelectorAll("[data-theme-btn]").forEach(b => b.onclick = () => setTheme(b.dataset.themeBtn, body.dataset.m));
+  document.querySelectorAll("[data-mode-btn]").forEach(b => b.onclick = () => setTheme(body.dataset.t, b.dataset.modeBtn));
+
+  // Tacche della 1x1 Notte
+  const ticks = document.getElementById("ticks"); let s = "";
+  for (let i = 0; i < 36; i++) { const a = (i / 36) * Math.PI * 2 - Math.PI / 2, r1 = 50, r2 = i % 3 === 0 ? 58 : 56;
+    s += `<line x1="${60 + r1 * Math.cos(a)}" y1="${60 + r1 * Math.sin(a)}" x2="${60 + r2 * Math.cos(a)}" y2="${60 + r2 * Math.sin(a)}" stroke="${i < 15 ? "var(--accent)" : "var(--surf3)"}" stroke-width="2.4" stroke-linecap="round"/>`; }
+  ticks.innerHTML = s;
+
+  // Raccolta
+  const ROWS = [
+    ["Thread e mutex", "TPSIT", "blu", "28 ott", "Fatto", "salvia", "8"],
+    ["Subnetting e VLSM", "Sistemi e reti", "salvia", "12 nov", "Da ripassare", "senape", ""],
+    ["Socket TCP in C", "TPSIT", "blu", "18 nov", "In corso", "blu", ""],
+    ["Normalizzazione 3FN", "Informatica", "malva", "21 nov", "Pronto", "salvia", ""],
+    ["Routing statico", "Sistemi e reti", "salvia", "3 dic", "In corso", "blu", ""]
+  ];
+  const USES = { "Subnetting e VLSM": 3, "Socket TCP in C": 1, "Routing statico": 2 };
+  const chip = (t, c) => `<span class="sel-chip sc-${c}">${t}</span>`;
+  const VIEWS = {
+    tabella: () => `<table class="ctable"><thead><tr>
+      <th><span class="ft"><svg class="i"><use href="#i-t-text"/></svg>Titolo</span></th><th><span class="ft"><svg class="i"><use href="#i-t-sel"/></svg>Materia</span></th>
+      <th><span class="ft"><svg class="i"><use href="#i-t-cal"/></svg>Data</span></th><th><span class="ft"><svg class="i"><use href="#i-t-sel"/></svg>Stato</span></th>
+      <th class="num"><span class="ft"><svg class="i"><use href="#i-t-num"/></svg>Voto</span></th><th>Nelle note</th></tr></thead><tbody>` +
+      ROWS.map(r => `<tr><td><b style="font-weight:600">${r[0]}</b></td><td>${chip(r[1], r[2])}</td><td>${r[3]}</td><td>${chip(r[4], r[5])}</td><td class="num">${r[6] || "–"}</td><td class="uses">${USES[r[0]] ? USES[r[0]] + (USES[r[0]] === 1 ? " nota" : " note") : "–"}</td></tr>`).join("") +
+      `<tr><td colspan="6" class="uses">+ Nuova riga</td></tr></tbody></table>`,
+    schede: () => `<div class="cards">` + ROWS.map(r => `<div class="ccard"><b>${r[0]}</b><small>${r[1]}, ${r[3]}</small><div>${chip(r[4], r[5])}</div></div>`).join("") + `</div>`,
+    bacheca: () => `<div class="board">` + ["Da ripassare", "In corso", ["Pronto", "Fatto"]].map(st => {
+      const list = ROWS.filter(r => Array.isArray(st) ? st.includes(r[4]) : r[4] === st); const name = Array.isArray(st) ? "Pronto o fatto" : st;
+      return `<div class="bcol"><h4>${name}<span class="uses">${list.length}</span></h4>` + list.map(r => `<div class="ccard"><b>${r[0]}</b><small>${r[1]}, ${r[3]}</small></div>`).join("") + `</div>`; }).join("") + `</div>`
+  };
+  const cview = document.getElementById("cview");
+  function setView(v) { cview.innerHTML = VIEWS[v](); document.querySelectorAll("[data-view]").forEach(b => b.setAttribute("aria-selected", b.dataset.view === v)); }
+  document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => setView(b.dataset.view));
+  setView("tabella");
+
+  // Scorciatoie
+  const KEYS = [
+    ["Modifica", [["Annulla", ["Ctrl", "Z"]], ["Ripeti", ["Ctrl", "⇧", "Z"]], ["Duplica blocco", ["Ctrl", "D"]], ["Sposta blocco", ["Alt", "↑ ↓"]], ["Menu inserisci", ["/"]], ["Riferimento a una riga", ["@"]]]],
+    ["Testo", [["Grassetto, corsivo, sottolineato", ["Ctrl", "B I U"]], ["Barrato", ["Ctrl", "⇧", "X"]], ["Link", ["Ctrl", "K"]], ["Titolo 1, 2, 3", ["Ctrl", "Alt", "1 2 3"]], ["Testo normale", ["Ctrl", "Alt", "0"]], ["Elenco, numerato, checklist", ["Ctrl", "⇧", "8 7 9"]], ["Spunta la riga", ["Ctrl", "Invio"]]]],
+    ["Tabelle", [["Cella successiva", ["Tab"]], ["Cella precedente", ["⇧", "Tab"]], ["Nuova tabella", ["Ctrl", "Alt", "T"]]]],
+    ["Navigazione", [["Nuova nota", ["Ctrl", "N"]], ["Cerca nella nota", ["Ctrl", "F"]], ["Cerca ovunque", ["Ctrl", "⇧", "F"]], ["Pagina prec., succ.", ["Ctrl", "PagSu PagGiù"]], ["Zoom", ["Ctrl", "+ − 0"]], ["Questo elenco", ["Ctrl", "/"]], ["Chiudi, deseleziona", ["Esc"]]]],
+    ["Scrittura a mano", [["Penna", ["P"]], ["Evidenziatore", ["H"]], ["Gomma", ["E"]], ["Torna al testo", ["T"]]]]
+  ];
+  const keysHtml = KEYS.map(([g, rows]) => `<div class="kgroup"><h3>${g}</h3>` + rows.map(([a, k]) => `<div class="krow"><span>${a}</span><span>${k.map(x => `<kbd>${x}</kbd>`).join("")}</span></div>`).join("") + `</div>`).join("");
+  document.getElementById("keysInline").innerHTML = keysHtml;
+  document.getElementById("keysModalList").innerHTML = keysHtml;
+  const modal = document.getElementById("keysModal");
+  const openKeys = () => { modal.hidden = false; document.getElementById("closeKeys").focus(); };
+  const closeKeys = () => { modal.hidden = true; };
+  document.getElementById("openKeys").onclick = openKeys; document.getElementById("keysBtn").onclick = openKeys;
+  document.getElementById("closeKeys").onclick = closeKeys;
+  modal.addEventListener("click", e => { if (e.target === modal) closeKeys(); });
+
+  // Simulazioni
+  const drop = document.getElementById("drop"), slash = document.getElementById("slash");
+  document.getElementById("toggleDrop").onclick = e => { drop.hidden = !drop.hidden; e.currentTarget.setAttribute("aria-pressed", !drop.hidden); };
+  document.getElementById("toggleSlash").onclick = e => { slash.hidden = !slash.hidden; e.currentTarget.setAttribute("aria-pressed", !slash.hidden); };
+
+  document.addEventListener("keydown", e => {
+    const mod = e.ctrlKey || e.metaKey, tag = (e.target.tagName || "").toLowerCase();
+    if (mod && e.key === "/") { e.preventDefault(); modal.hidden ? openKeys() : closeKeys(); return; }
+    if (e.key === "Escape") { closeKeys(); drop.hidden = true; slash.hidden = true; return; }
+    if (tag === "input" || tag === "select" || tag === "textarea") return;
+    if (mod && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+    else if (mod && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
+  });
+
+  // Copia del prompt
+  document.getElementById("copyPrompt").onclick = async () => {
+    const txt = document.getElementById("promptText").textContent;
+    try { await navigator.clipboard.writeText(txt); toast("Prompt copiato"); }
+    catch (err) { const r = document.createRange(); r.selectNodeContents(document.getElementById("promptText")); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Selezionato: premi Ctrl+C"); }
+  };
+
+  // Avvio: tema salvato, altrimenti Notte; variante dal sistema o dal visualizzatore.
+  const rootTheme = document.documentElement.getAttribute("data-theme");
+  const sysDark = rootTheme ? rootTheme === "dark" : (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
+  setTheme(load("nr-theme") || "notte", load("nr-mode") || (sysDark ? "notte" : "giorno"));
+})();
+</script>
