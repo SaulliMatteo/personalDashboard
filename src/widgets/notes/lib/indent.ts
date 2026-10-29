@@ -340,3 +340,69 @@ export function exitEmptyCheck(root: HTMLElement): boolean {
   else block.removeAttribute("data-check");
   return true;
 }
+
+/**
+ * Divide una riga che contiene più righe separate da <br> (Shift+Invio, testo incollato) in righe
+ * vere, una per riga: così ognuna può diventare una voce di checklist. I nodi di testo sono gli
+ * stessi, quindi il cursore resta dov'era.
+ */
+function splitLines(block: HTMLElement, moved: Map<Node, Node>): HTMLElement[] {
+  const nodes = Array.from(block.childNodes);
+  const segments: Node[][] = [[]];
+  nodes.forEach((n, i) => {
+    const isBreak = n instanceof HTMLElement && n.tagName === "BR";
+    // Il <br> finale serve solo a dare altezza all'ultima riga: non apre una riga nuova.
+    if (isBreak && i < nodes.length - 1) segments.push([]);
+    else if (!isBreak) segments[segments.length - 1].push(n);
+  });
+  if (segments.length < 2) return [block];
+  const lines = segments.map((seg) => {
+    const line = block.cloneNode(false) as HTMLElement;
+    for (const n of seg) line.appendChild(n);
+    if (!line.hasChildNodes()) line.appendChild(document.createElement("br"));
+    return line;
+  });
+  block.replaceWith(...lines);
+  moved.set(block, lines[0]);
+  return lines;
+}
+
+/**
+ * Pulsante della checklist con più righe selezionate: TUTTE le righe di testo toccate diventano
+ * voci di checklist (o tornano testo se lo erano già tutte). null = nessuna riga di testo nella
+ * selezione (chi chiama fa come prima).
+ */
+export function toggleChecklistLines(root: HTMLElement): boolean | null {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return null;
+  const first = sel.getRangeAt(0);
+  if (!root.contains(first.commonAncestorContainer)) return null;
+  const a = pointOf(first.startContainer, first.startOffset);
+  const b = pointOf(first.endContainer, first.endOffset);
+  const moved = new Map<Node, Node>();
+
+  liftWrappedBlocks(root, moved);
+  restore(root, a, b, moved);
+  if (sel.rangeCount === 0) return null;
+  wrapLooseRuns(root, sel.getRangeAt(0));
+  restore(root, a, b, moved);
+  if (sel.rangeCount === 0) return null;
+
+  // Righe di testo (non elenchi: hanno già il loro segno) toccate dalla selezione, una per riga.
+  const blocks = targets(root, sel.getRangeAt(0)).filter((el) => el.tagName !== "LI");
+  if (blocks.length === 0) return null;
+  const lines = blocks.flatMap((bl) => splitLines(bl, moved));
+  restore(root, a, b, moved);
+  const range = sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+  const touched = range ? lines.filter((l) => range.intersectsNode(l)) : lines;
+  const chosen = touched.length > 0 ? touched : lines;
+
+  const allChecks = chosen.every((l) => l.hasAttribute("data-check"));
+  for (const l of chosen) {
+    if (allChecks) l.removeAttribute("data-check");
+    else if (!l.hasAttribute("data-check")) l.setAttribute("data-check", "0");
+  }
+  restore(root, a, b, moved);
+  return true;
+}
+

@@ -241,6 +241,8 @@ function NoteEditor({
   const [codeDetectOn, setCodeDetectOn] = useState(true);
   /** Ctrl+Shift+V appena premuto: il prossimo incolla è sempre testo semplice. */
   const plainPaste = useRef(false);
+  /** Durante una trasformazione a più passi i singoli input non entrano in cronologia (una voce sola). */
+  const silentInput = useRef(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [fontSize, setFontSize] = useState(15);
   /** Colore libero del testo (l'ultimo scelto nel selettore). */
@@ -512,7 +514,7 @@ function NoteEditor({
 
   /** Testo scritto nella pagina: si unisce alla voce precedente se si continua nello stesso blocco. */
   function handleTyping(html: string) {
-    if (!page) return;
+    if (!page || silentInput.current) return;
     // Si continua a scrivere: il suggerimento "Converti in codice" non serve più.
     if (toastAction && !commandActive.current) {
       setToast(null);
@@ -1150,7 +1152,38 @@ async function changePageColor(color: string | null) {
     }
   }
 
+  /**
+   * "-" seguito da due spazi all'inizio di una riga di testo: la riga diventa un elenco puntato
+   * (si intercetta il secondo spazio; con uno solo "- " resta testo). Ctrl+Z torna a "- ".
+   */
+  function autoBullet(e: KeyboardEvent<HTMLDivElement>): boolean {
+    if (e.key !== " " || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || mode !== "text") return false;
+    const el = editorRef.current;
+    const sel = window.getSelection();
+    if (!el || !sel || sel.rangeCount === 0 || !sel.isCollapsed || caretCell(el)) return false;
+    const block = currentBlock(el);
+    if (!block || !/^(P|DIV)$/.test(block.tagName) || block.hasAttribute("data-check") || block.hasAttribute("data-block")) return false;
+    const before = document.createRange();
+    before.selectNodeContents(block);
+    before.setEnd(sel.anchorNode!, sel.anchorOffset);
+    if (before.toString().replace(/\u00a0/g, " ") !== "- ") return false;
+    sel.removeAllRanges();
+    sel.addRange(before);
+    commandActive.current = true;
+    silentInput.current = true;
+    try {
+      document.execCommand("delete");
+      document.execCommand("insertUnorderedList");
+    } finally {
+      commandActive.current = false;
+      silentInput.current = false;
+    }
+    commitEditor();
+    return true;
+  }
+
   function handleEditorKey(e: KeyboardEvent<HTMLDivElement>): boolean {
+    if (autoBullet(e)) return true;
     if (mention) {
       const count = mentionItems.length;
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
