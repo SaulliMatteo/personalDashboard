@@ -1326,3 +1326,143 @@ button.nq-crumb:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ---------- Schermo diviso ----------
+   Regole perse quando il file è stato riscritto per i temi (39af684): senza, i due riquadri
+   si impilano e il secondo editor compare sotto la nota principale. */
+
+.nq-split {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.nq-pane {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.nq-pane--side {
+  border-left: 1px solid var(--border-subtle);
+}
+
+/* ---------- Pulsante "Nuova nota" con modelli ---------- */
+
+.nq-split-btn {
+  display: inline-flex;
+}
+
+.nq-split-btn .nq-btn:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.nq-split-caret {
+  padding: 8px 6px !important;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid color-mix(in srgb, var(--on-accent) 25%, transparent) !important;
+}
+
+/* ---------- Finestra "Cartella su disco" ---------- */
+
+.nq-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+}
+
+.nq-modal {
+  width: min(480px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  border: var(--modal-border);
+  border-radius: var(--radius-card);
+  background: var(--modal-bg);
+  box-shadow: var(--shadow-pop);
+  color: var(--text-primary);
+}
+
+.nq-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 20px 20px;
+}
+
+.nq-modal-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.nq-modal-toggle input {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+
+.nq-modal-toggle span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+
+.nq-modal-toggle em {
+  font-style: normal;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.nq-modal code,
+.nq-panel-hint code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  font-size: 0.92em;
+}
+
+.nq-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- Ordina per e titolo del menu dei modelli (anche queste perse in 39af684) ---------- */
+
+.nq-select {
+  padding: 5px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  color-scheme: inherit;
+}
+
+/* Il menu aperto lo disegna il sistema: senza uno sfondo pieno le voci risultano illeggibili. */
+.nq-select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.nq-menu-title {
+  margin: 4px 10px 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}

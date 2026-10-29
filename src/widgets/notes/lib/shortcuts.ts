@@ -25,8 +25,11 @@ export type ShortcutAction =
   | "numbers"
   | "checklist"
   | "toggleCheck"
+  | "indent"
+  | "outdent"
   | "duplicate"
   | "table"
+  | "code"
   | "moveUp"
   | "moveDown"
   | "find"
@@ -98,7 +101,12 @@ export const SHORTCUTS: Record<ShortcutAction, ShortcutDef> = {
     combos: [{ code: "Enter", mod: true }, { code: "NumpadEnter", mod: true }],
   },
 
+  // Li gestisce la pagina (PageSurface: paragrafi, liste, checklist, tabelle); qui stanno per il pannello e i tooltip.
+  indent: { label: "Aumenta il rientro (nelle tabelle: cella dopo)", group: "Testo", combos: [{ code: "Tab" }] },
+  outdent: { label: "Riduci il rientro (nelle tabelle: cella prima)", group: "Testo", combos: [{ code: "Tab", shift: true }] },
+
   table: { label: "Nuova tabella", group: "Tabelle", combos: [{ key: "t", mod: true, alt: true }] },
+  code: { label: "Blocco di codice", group: "Testo", combos: [{ key: "c", mod: true, alt: true }] },
 
   find: { label: "Cerca nella nota", group: "Navigazione", combos: [{ key: "f", mod: true }] },
   findAll: { label: "Cerca in tutte le note", group: "Navigazione", combos: [{ key: "f", mod: true, shift: true }] },
@@ -177,6 +185,7 @@ const KEY_NAMES: Record<string, string> = {
   Enter: "Invio",
   NumpadEnter: "Invio",
   Escape: "Esc",
+  Tab: "Tab",
   NumpadAdd: "+",
   NumpadSubtract: "−",
 };

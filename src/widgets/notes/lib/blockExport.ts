@@ -1,3 +1,5 @@
+import { appendTokens, highlightCode } from "./codeHighlight";
+import { asCodeLang, asLangName, langLabel } from "./codeLanguages";
 import { attachmentDataUrl, extensionOf } from "./attachmentUrls";
 import { imageLayout, parseImageEdit } from "./imageEdit";
 import { formatBytes } from "./insertFiles";
@@ -99,10 +101,29 @@ function staticFile(block: HTMLElement) {
 }
 
 /** Riempie i blocchi della pagina da esportare (dentro `root`, già nel documento). */
+/**
+ * Blocco di codice per l'esportazione: barra con il linguaggio e il codice evidenziato. I nodi
+ * si creano con createElement + textContent dall'albero di token (lib/codeHighlight.ts):
+ * niente innerHTML, quindi niente HTML del codice viene mai interpretato.
+ */
+function staticCode(pre: HTMLElement) {
+  const doc = pre.ownerDocument;
+  const name = asLangName(pre.getAttribute("data-lang"));
+  const text = pre.querySelector("code")?.textContent ?? "";
+  const bar = doc.createElement("div");
+  bar.className = "nq-code-static-bar";
+  bar.textContent = langLabel(name);
+  const code = doc.createElement("code");
+  code.className = "nq-code-static nq-hl";
+  appendTokens(doc, code, highlightCode(text, asCodeLang(name)));
+  pre.replaceChildren(bar, code);
+}
+
 export async function renderStaticBlocks(root: HTMLElement, noteDir: string | null): Promise<void> {
   const ink = getComputedStyle(root).getPropertyValue("--note-page-ink").trim() || THEME_INK;
   const work: Promise<void>[] = [];
   root.querySelectorAll<HTMLElement>('figure[data-block="image"]').forEach((f) => work.push(staticImage(f, noteDir, ink)));
   root.querySelectorAll<HTMLElement>('div[data-block="file"]').forEach((b) => staticFile(b));
+  root.querySelectorAll<HTMLElement>('pre[data-block="code"]').forEach((p) => staticCode(p));
   await Promise.all(work);
 }

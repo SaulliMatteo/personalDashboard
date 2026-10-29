@@ -8,6 +8,8 @@ import { renderStaticBlocks } from "./blockExport";
 import { layoutTables } from "./tableDom";
 import { expandCollectionBlocks } from "./viewExport";
 import { THEME_INK, drawStrokes } from "./ink"; // al posto del solo drawStrokes
+import { CONTRAST_LARGE, asTitleColor } from "./titleColor";
+import { readableOn } from "./useTitleColor";
 
 export interface ExportMeta {
   title: string;
@@ -18,6 +20,10 @@ export interface ExportMeta {
   font?: NoteFont | null;
   /** Cartella della nota su disco: da lì si leggono le immagini dei blocchi. */
   noteDir?: string | null;
+  /** Colore del titolo scelto dall'utente (null = quello del tema). */
+  titleColor?: string | null;
+  /** Pagine della nota (per la riga sotto il titolo). */
+  pageCount?: number;
 }
 
 export interface RenderOptions {
@@ -48,10 +54,16 @@ const LIGHT_VARS: Record<string, string> = {
 // Markdown
 // ---------------------------------------------------------------------
 
-export function noteToMarkdown(title: string, pages: NotePage[]): string {
+/**
+ * Markdown della nota. Con un colore del titolo il file comincia con un frontmatter YAML
+ * (`titleColor: "#rrggbb"`, tra virgolette perché in YAML # apre un commento), come nota.md.
+ */
+export function noteToMarkdown(title: string, pages: NotePage[], titleColor: string | null = null): string {
   // Le viste collegate diventano tabelle con i dati del momento (lib/viewExport.ts).
   const body = pages.map((p) => htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }))).join("\n\n---\n\n");
-  return `# ${title || "Senza titolo"}\n\n${body}\n`;
+  const color = asTitleColor(titleColor);
+  const front = color ? `---\ntitleColor: ${JSON.stringify(color)}\n---\n\n` : "";
+  return `${front}# ${title || "Senza titolo"}\n\n${body}\n`;
 }
 
 // ---------------------------------------------------------------------
@@ -102,6 +114,23 @@ function buildStage(page: NotePage, number: number, meta: ExportMeta, light: boo
   footLeft.textContent = `${meta.kicker} · ${(meta.title || "Senza titolo").toUpperCase()}`;
   footRight.textContent = String(number).padStart(2, "0");
 
+  // Prima pagina: titolo e riga sotto, come nell'editor (anche l'inchiostro resta allineato al testo).
+  let titleEl: HTMLElement | null = null;
+  if (number === 1) {
+    const block = document.createElement("div");
+    block.className = "nq-page-titleblock";
+    titleEl = document.createElement("div");
+    titleEl.className = "nq-page-title";
+    titleEl.textContent = meta.title || "Senza titolo";
+    const props = document.createElement("div");
+    props.className = "nq-props";
+    const created = new Date(meta.createdAt).toLocaleDateString("it-IT", { day: "numeric", month: "short" });
+    const count = meta.pageCount ?? 1;
+    props.textContent = `Creata ${created} · ${count === 1 ? "1 pagina" : `${count} pagine`}`;
+    block.append(titleEl, props);
+    paper.querySelector(".nq-paper-head")?.after(block);
+  }
+
   const doc = paper.querySelector<HTMLElement>(".nq-doc");
   if (doc) {
     doc.innerHTML = sanitizeHtml(expandCollectionBlocks(page.content));
@@ -110,6 +139,10 @@ function buildStage(page: NotePage, number: number, meta: ExportMeta, light: boo
 
   stage.appendChild(paper);
   document.body.appendChild(stage);
+
+  // Il colore del titolo, leggibile sulla pagina esportata (chiara o del tema).
+  const readable = titleEl ? readableOn(titleEl, asTitleColor(meta.titleColor), CONTRAST_LARGE) : null;
+  if (titleEl && readable) titleEl.style.color = readable.color;
 
   // I "cerchietti" delle checklist sono ::before, che la clonazione degli
   // stili non porta con sé: si sostituiscono con elementi veri.
@@ -199,7 +232,8 @@ function safeScale(wanted: number, pages: NotePage[]): number {
 async function renderAll(pages: NotePage[], meta: ExportMeta, options: RenderOptions): Promise<HTMLCanvasElement[]> {
   const opts = { ...options, scale: safeScale(options.scale, pages) };
   const canvases: HTMLCanvasElement[] = [];
-  for (let i = 0; i < pages.length; i++) canvases.push(await renderPage(pages[i], i + 1, meta, opts));
+  const withCount = { ...meta, pageCount: pages.length };
+  for (let i = 0; i < pages.length; i++) canvases.push(await renderPage(pages[i], i + 1, withCount, opts));
   return canvases;
 }
 

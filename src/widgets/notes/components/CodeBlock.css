@@ -1,0 +1,343 @@
+/* Blocco di codice (CodeBlock.tsx) e la sua versione statica (anteprime, esportazioni).
+   Colori della sintassi: solo dai token del tema. Le tinte (--tint-*) sono fondi pastello:
+   mescolate con l'inchiostro della pagina diventano scure di giorno e chiare di notte, sempre
+   leggibili sul foglio. */
+
+.nq-doc pre[data-block="code"],
+.nq-code {
+  --code-ink: var(--note-page-ink, var(--text-primary));
+  --code-bg: color-mix(in oklab, var(--code-ink) 6%, transparent);
+  --code-border: color-mix(in oklab, var(--code-ink) 14%, transparent);
+  --code-muted: color-mix(in oklab, var(--code-ink) 55%, transparent);
+  --code-keyword: color-mix(in oklab, var(--accent) 80%, var(--code-ink));
+  --code-string: color-mix(in oklab, var(--tint-salvia) 45%, var(--code-ink));
+  --code-number: color-mix(in oklab, var(--tint-senape) 50%, var(--code-ink));
+  --code-type: color-mix(in oklab, var(--tint-blu) 45%, var(--code-ink));
+  --code-title: color-mix(in oklab, var(--tint-malva) 45%, var(--code-ink));
+  --code-font: "JetBrains Mono Variable", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --code-size: calc(var(--nq-px, 1px) * 13.5);
+}
+
+/* ---------- Forma del blocco ---------- */
+
+.nq-doc pre[data-block="code"] {
+  position: relative;
+  margin: 0.4em 0 0.8em;
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-item);
+  background: var(--code-bg);
+  color: var(--code-ink);
+  font-family: var(--code-font);
+  font-size: var(--code-size);
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Fuori dall'editor (anteprime delle card) il testo salvato si vede così com'è. */
+.nq-doc pre[data-block="code"] > code {
+  display: block;
+  padding: 0.7em 0.9em;
+  font: inherit;
+}
+
+/* Nell'editor lo disegna React (nodo [data-runtime]): il testo salvato resta nascosto. */
+.nq-doc pre[data-block="code"] > [data-runtime] ~ code {
+  display: none;
+}
+
+.nq-doc pre[data-block="code"]:has([data-runtime]) {
+  overflow: visible;
+  white-space: normal;
+}
+
+.nq-doc pre[data-block="code"]:focus-within {
+  border-color: color-mix(in oklab, var(--accent) 55%, transparent);
+}
+
+.nq-code {
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+.nq-code-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 4px 8px;
+  border-bottom: 1px solid var(--code-border);
+  font-family: var(--font-family);
+  font-size: calc(var(--nq-px, 1px) * 12);
+}
+
+.nq-code-gap {
+  flex: 1;
+}
+
+.nq-code-lang {
+  padding: 2px 4px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--code-muted);
+  font: inherit;
+  font-weight: 600;
+  color-scheme: inherit;
+  cursor: text;
+}
+
+.nq-code-lang::placeholder {
+  color: color-mix(in oklab, var(--code-muted) 70%, transparent);
+}
+
+.nq-code-lang:focus {
+  outline: none;
+  background: color-mix(in oklab, var(--code-ink) 8%, transparent);
+  color: var(--code-ink);
+}
+
+/* Linguaggio scritto a mano (senza colori): in corsivo. */
+.nq-code-lang.is-custom {
+  font-style: italic;
+}
+
+.nq-code-btn {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: var(--radius-item);
+  color: var(--code-muted);
+  cursor: pointer;
+}
+
+.nq-code-btn:hover,
+.nq-code-lang:hover {
+  background: color-mix(in oklab, var(--code-ink) 8%, transparent);
+  color: var(--code-ink);
+}
+
+.nq-code-btn[aria-pressed="true"] {
+  color: var(--accent);
+}
+
+.nq-code-btn:focus-visible,
+.nq-code-lang:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.nq-code-body {
+  display: flex;
+  align-items: stretch;
+}
+
+.nq-code-gutter {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  padding: 0.7em 0.6em 0.7em 0.9em;
+  border-right: 1px solid var(--code-border);
+  color: var(--code-muted);
+  font-family: var(--code-font);
+  font-size: var(--code-size);
+  line-height: 1.55;
+  text-align: right;
+  user-select: none;
+}
+
+.nq-code-scroll {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+/* Il <pre> evidenziato e il <textarea> nella stessa cella: stesso font e stesse misure, così
+   il cursore del textarea cade esattamente sulle lettere colorate. */
+.nq-code-stack {
+  display: grid;
+  min-width: 100%;
+  width: max-content;
+}
+
+.nq-code-hl,
+.nq-code-input {
+  grid-area: 1 / 1;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.7em 0.9em;
+  border: 0;
+  font-family: var(--code-font);
+  font-size: var(--code-size);
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: 0;
+  tab-size: 4;
+  white-space: pre;
+  word-wrap: normal;
+  overflow-wrap: normal;
+}
+
+.nq-code-hl {
+  color: var(--code-ink);
+  pointer-events: none;
+}
+
+.nq-code-input {
+  width: 100%;
+  min-width: 100%;
+  field-sizing: content;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--code-ink);
+  user-select: text;
+}
+
+.nq-code-input::placeholder {
+  color: var(--code-muted);
+}
+
+.nq-code-input::selection {
+  background: color-mix(in oklab, var(--accent) 30%, transparent);
+  color: transparent;
+}
+
+/* ---------- Colori della sintassi (classi di highlight.js) ---------- */
+
+.nq-hl .hljs-comment,
+.nq-hl .hljs-quote,
+.nq-hl .hljs-doctag {
+  color: var(--code-muted);
+  font-style: italic;
+}
+
+.nq-hl .hljs-keyword,
+.nq-hl .hljs-selector-tag,
+.nq-hl .hljs-meta .hljs-keyword,
+.nq-hl .hljs-tag .hljs-name {
+  color: var(--code-keyword);
+  font-weight: 600;
+}
+
+.nq-hl .hljs-string,
+.nq-hl .hljs-regexp,
+.nq-hl .hljs-addition,
+.nq-hl .hljs-attr .hljs-string,
+.nq-hl .hljs-template-tag {
+  color: var(--code-string);
+}
+
+.nq-hl .hljs-number,
+.nq-hl .hljs-literal,
+.nq-hl .hljs-symbol,
+.nq-hl .hljs-bullet,
+.nq-hl .hljs-variable.constant_ {
+  color: var(--code-number);
+}
+
+.nq-hl .hljs-type,
+.nq-hl .hljs-built_in,
+.nq-hl .hljs-class,
+.nq-hl .hljs-title.class_,
+.nq-hl .hljs-selector-class,
+.nq-hl .hljs-selector-id {
+  color: var(--code-type);
+}
+
+.nq-hl .hljs-title,
+.nq-hl .hljs-title.function_,
+.nq-hl .hljs-attr,
+.nq-hl .hljs-attribute,
+.nq-hl .hljs-property,
+.nq-hl .hljs-section,
+.nq-hl .hljs-selector-pseudo {
+  color: var(--code-title);
+}
+
+.nq-hl .hljs-meta,
+.nq-hl .hljs-variable,
+.nq-hl .hljs-template-variable,
+.nq-hl .hljs-params,
+.nq-hl .hljs-subst {
+  color: var(--code-ink);
+}
+
+.nq-hl .hljs-deletion {
+  color: var(--danger);
+}
+
+.nq-hl .hljs-link {
+  /* Solo colore: i link nel codice NON sono cliccabili (è testo). */
+  color: var(--code-type);
+  text-decoration: underline;
+}
+
+/* ---------- Versione statica (esportazione PDF/PNG) ---------- */
+
+.nq-code-static-bar {
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--code-border);
+  color: var(--code-muted);
+  font-family: var(--font-family);
+  font-size: calc(var(--nq-px, 1px) * 12);
+  font-weight: 600;
+}
+
+.nq-code-static {
+  display: block;
+  margin: 0;
+  padding: 0.7em 0.9em;
+  font: inherit;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---------- Forma per tema ---------- */
+
+/* Opaco: angoli tondi come le sue card. */
+:root[data-theme="opaco"] .nq-doc pre[data-block="code"] {
+  border-radius: 1.2em;
+  border-color: transparent;
+}
+
+:root[data-theme="opaco"] .nq-code-bar {
+  padding-left: 14px;
+}
+
+/* Quaderno: bordo tratteggiato nel colore d'accento, come i divisori del quaderno. */
+:root[data-theme="quaderno"] .nq-doc pre[data-block="code"] {
+  border: 1.5px dashed color-mix(in oklab, var(--accent) 70%, transparent);
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--code-ink) 4%, transparent);
+}
+
+:root[data-theme="quaderno"] .nq-code-bar,
+:root[data-theme="quaderno"] .nq-code-static-bar {
+  border-bottom-style: dashed;
+}
+
+:root[data-theme="quaderno"] .nq-code-lang {
+  font-family: var(--font-title);
+  font-size: 1.15em;
+}
+
+/* Fosforo: terminale, angoli netti e bordo a puntini. */
+:root[data-theme="fosforo"] .nq-doc pre[data-block="code"] {
+  border: 1px dotted var(--border-subtle);
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--code-ink) 4%, transparent);
+}
+
+:root[data-theme="fosforo"] .nq-code-bar,
+:root[data-theme="fosforo"] .nq-code-static-bar {
+  border-bottom-style: dotted;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
