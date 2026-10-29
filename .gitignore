@@ -75,3 +75,9 @@ src-tauri/gen/
 
 # Font della Lavagna copiati da node_modules (scripts/copy-excalidraw-assets.mjs)
 public/excalidraw-assets/
+
+src-tauri/gen/android/buildSrc/build/
+src-tauri/gen/android/buildSrc/.gradle/
+src-tauri/gen/android/app/src/main/jniLibs/
+supabase/.temp/
+supabase/.branches/
