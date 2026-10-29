@@ -1454,7 +1454,7 @@ button.nq-crumb:hover {
 
 /* Il menu aperto lo disegna il sistema: senza uno sfondo pieno le voci risultano illeggibili. */
 .nq-select option {
-  background: var(--bg-card);
+  background: var(--modal-bg);
   color: var(--text-primary);
 }
 
