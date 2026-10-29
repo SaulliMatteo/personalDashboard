@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>File Transfer 1×1</title>
+<!-- Solo per l'anteprima del mockup: nell'app i font arrivano dai pacchetti @fontsource locali. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Caveat:wght@400..700&family=Doto:wght@400..900&family=Figtree:wght@400..700&family=JetBrains+Mono:wght@400..600&family=Manrope:wght@200..700&display=swap" rel="stylesheet">
+<style>
+/* ==========================================================================
+   Proposte per la cella 1×1 del widget File Transfer.
+   Token copiati da src/styles/tokens.css e tokens-varianti.css
+   (Opaco: pigmento "senape", quello del File Transfer).
+   ========================================================================== */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #ECEBE7;
+  color: #1F1F1C;
+  font: 14px/1.5 system-ui, sans-serif;
+}
+
+/* ---------- Barra in alto (fuori dai temi) ---------- */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+  padding: 14px 32px;
+  background: rgba(236, 235, 231, 0.94);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid #D5D3CC;
+}
+.top h1 { margin: 0; font-size: 17px; font-weight: 650; }
+.ctl { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #55534C; }
+.seg { display: inline-flex; padding: 2px; border: 1px solid #CFCDC6; border-radius: 9px; background: #FFFFFF; }
+.seg button {
+  padding: 5px 11px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #55534C;
+  font: inherit;
+  cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: #1F1F1C; color: #FFFFFF; }
+.seg button:focus-visible { outline: 2px solid #1F1F1C; outline-offset: 1px; }
+
+.intro { max-width: 760px; padding: 22px 32px 26px; }
+.intro p { margin: 0 0 8px; color: #45443E; }
+.intro dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 12px 0 0; }
+.intro dt { font-weight: 650; }
+.intro dd { margin: 0; color: #45443E; }
+
+@media (prefers-color-scheme: dark) {
+  body { background: #181816; color: #ECEBE6; }
+  .top { background: rgba(24, 24, 22, 0.94); border-color: #2E2D29; }
+  .ctl, .intro p, .intro dd { color: #B4B2AA; }
+  .seg { background: #23231F; border-color: #3A3934; }
+  .seg button { color: #B4B2AA; }
+  .seg button[aria-pressed="true"] { background: #ECEBE6; color: #181816; }
+}
+
+/* ---------- Una fascia per tema ---------- */
+.band {
+  padding: 26px 32px 34px;
+  background: var(--main-bg);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+}
+.band h2 {
+  margin: 0 0 18px;
+  font-family: var(--font-title);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--band-fg);
+}
+.band h2 small { margin-left: 8px; font-family: var(--font-family); font-size: 12px; font-weight: 400; color: var(--band-muted); }
+.row { display: flex; flex-wrap: wrap; gap: 24px 18px; }
+figure { width: 184px; margin: 0; }
+figcaption { margin-top: 10px; font-size: 12px; line-height: 1.45; color: var(--band-muted); }
+figcaption b { display: block; margin-bottom: 1px; font-size: 13px; font-weight: 600; color: var(--band-fg); }
+figure.is-current { opacity: 0.85; }
+
+/* ---------- NOTTE ---------- */
+.band[data-theme="notte"] {
+  --font-family: "Manrope Variable", "Manrope", system-ui, sans-serif;
+  --font-display: var(--font-family);
+  --font-title: var(--font-family);
+  --display-weight: 200;
+  --display-tracking: -0.04em;
+  --radius-card: 22px;
+  --pad: 16px;
+  --num-s: 54px;
+  --ico-sw: 1.6;
+  --num-color: var(--text-primary);
+  --pill-bg: var(--accent); --pill-fg: var(--on-accent); --pill-border: 0; --pill-radius: 12px;
+  --doc-fill: var(--panel-bg); --doc-stroke: var(--line); --doc-sw: 1.2; --ext-fg: var(--accent);
+}
+.band[data-theme="notte"][data-mode="notte"] {
+  --main-bg: #090C15;
+  --card-bg: linear-gradient(180deg, #151B2E 0%, #10152A 100%);
+  --card-border: 1px solid #1F2740;
+  --card-shadow: inset 0 1px 0 rgba(200, 215, 255, 0.07);
+  --text-primary: #E9ECF5; --text-secondary: #9AA2BA;
+  --accent: #8EA6FF; --dot-on: var(--accent); --on-accent: #090C15;
+  --dot-off: #2A3350; --led: #7DD3B0; --success-text: #7DD3B0;
+  --panel-bg: #0B0F1C; --panel-border: 1px solid #182036; --line: #2A3350;
+  --band-fg: #E9ECF5; --band-muted: #9AA2BA;
+}
+.band[data-theme="notte"][data-mode="giorno"] {
+  --main-bg: #EEF1F7;
+  --card-bg: linear-gradient(180deg, #FFFFFF 0%, #F8FAFD 100%);
+  --card-border: 1px solid #DCE2EE;
+  --card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(20, 30, 60, 0.05), 0 6px 18px rgba(20, 30, 60, 0.04);
+  --text-primary: #141A2E; --text-secondary: #5B6480;
+  --accent: #3B57D6; --dot-on: var(--accent); --on-accent: #FFFFFF;
+  --dot-off: #CBD3E4; --led: #187A56; --success-text: #187A56;
+  --panel-bg: #F4F6FB; --panel-border: 1px solid #E1E6F0; --line: #CBD3E4;
+  --band-fg: #141A2E; --band-muted: #5B6480;
+}
+
+/* ---------- OPACO (pigmento senape) ---------- */
+.band[data-theme="opaco"] {
+  --font-family: "Bricolage Grotesque Variable", "Bricolage Grotesque", system-ui, sans-serif;
+  --font-display: var(--font-family);
+  --font-title: var(--font-family);
+  --display-weight: 800;
+  --display-tracking: -0.05em;
+  --radius-card: 28px;
+  --card-border: 0;
+  --card-shadow: none;
+  --pad: 18px;
+  --num-s: 72px;
+  --ico-sw: 2.4;
+  --card-bg: var(--pg-bg);
+  --text-primary: var(--pg-ink); --text-secondary: var(--pg-ink);
+  --accent: var(--pg-ink); --dot-on: var(--pg-ink); --on-accent: var(--pg-light);
+  --dot-off: var(--pg-dark); --led: var(--pg-ink); --success-text: var(--pg-ink);
+  --panel-bg: var(--pg-mid); --panel-border: 0; --line: var(--pg-dark);
+  --num-color: var(--pg-ink);
+  --pill-bg: var(--pg-ink); --pill-fg: var(--pg-light); --pill-border: 0; --pill-radius: 999px;
+  --doc-fill: var(--pg-ink); --doc-stroke: var(--pg-ink); --doc-sw: 1.2; --ext-fg: var(--pg-light);
+}
+.band[data-theme="opaco"][data-mode="giorno"] {
+  --main-bg: #D8D5CD;
+  --pg-bg: #D2B26A; --pg-ink: #3A2C0A; --pg-dark: #B89A55; --pg-mid: #C4A45E; --pg-light: #EFDFB8; --pg-half: #7A6230;
+  --band-fg: #22251F; --band-muted: #4D5047;
+}
+.band[data-theme="opaco"][data-mode="notte"] {
+  --main-bg: #1B1C18;
+  --pg-bg: #6B5523; --pg-ink: #F3E3BA; --pg-dark: #836A30; --pg-mid: #775F28; --pg-light: #3A2C0A; --pg-half: #D2B26A;
+  --band-fg: #ECE9E2; --band-muted: #A9A79E;
+}
+
+/* ---------- QUADERNO ---------- */
+.band[data-theme="quaderno"] {
+  --font-family: "Figtree Variable", "Figtree", system-ui, sans-serif;
+  --font-display: "Caveat Variable", "Caveat", cursive;
+  --font-title: var(--font-display);
+  --display-weight: 600;
+  --display-tracking: 0;
+  --radius-card: 8px;
+  --pad: 16px;
+  --num-s: 72px;
+  --ico-sw: 1.8;
+  --num-color: var(--accent);
+  --pill-bg: transparent; --pill-fg: var(--accent); --pill-border: 1.5px solid var(--accent); --pill-radius: 8px;
+  --doc-fill: var(--sheet-bg); --doc-stroke: var(--accent); --doc-sw: 1.5; --ext-fg: var(--accent);
+}
+.band[data-theme="quaderno"] h2 { font-size: 30px; line-height: 1; color: var(--accent); }
+.band[data-theme="quaderno"][data-mode="giorno"] {
+  --main-bg: linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, #FCFDFF;
+  --card-bg: #FFFFFF; --card-solid: #FFFFFF;
+  --card-border: 1px solid #C9D3E3;
+  --card-shadow: 0 3px 0 #DCE4F0;
+  --text-primary: #1B2433; --text-secondary: #556178;
+  --accent: #2340A0; --dot-on: var(--accent); --on-accent: #FFFFFF;
+  --dot-off: #B8C4D8; --led: #2F9E6B; --success-text: #1F7A50;
+  --panel-bg: #E9EEF8; --line: #C9D3E3;
+  --paper-margin: #F2A9A9; --sheet-bg: #FFFFFF; --rule: #DCE6F5; --sheet-edge: #C9D3E3; --sheet-shadow: #DCE4F0;
+  --band-fg: #1B2433; --band-muted: #556178;
+}
+.band[data-theme="quaderno"][data-mode="notte"] {
+  --main-bg: linear-gradient(#1C2330 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, #1C2330 1px, transparent 1px) 0 0 / 24px 24px, #121620;
+  --card-bg: #1A1F2B; --card-solid: #1A1F2B;
+  --card-border: 1px solid #2C3446;
+  --card-shadow: 0 3px 0 #0B0E15;
+  --text-primary: #E6EAF2; --text-secondary: #98A3B8;
+  --accent: #9FB6FF; --dot-on: var(--accent); --on-accent: #121620;
+  --dot-off: #3A4459; --led: #4CC38A; --success-text: #6FD3A2;
+  --panel-bg: #222A3A; --line: #2C3446;
+  --paper-margin: #8A3F45; --sheet-bg: #222A3A; --rule: #2C3446; --sheet-edge: #3A4459; --sheet-shadow: #0B0E15;
+  --band-fg: #E6EAF2; --band-muted: #98A3B8;
+}
+
+/* ---------- FOSFORO ---------- */
+.band[data-theme="fosforo"] {
+  --font-family: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, monospace;
+  --font-display: "Doto Variable", "Doto", monospace;
+  --font-title: var(--font-family);
+  --display-weight: 900;
+  --display-tracking: 0;
+  --radius-card: 14px;
+  --pad: 14px;
+  --num-s: 66px;
+  --ico-sw: 1.4;
+  --num-color: var(--dot-on);
+  --pill-bg: transparent; --pill-fg: var(--dot-on); --pill-border: 1px solid var(--line); --pill-radius: 999px;
+  --doc-fill: var(--display-bg); --doc-stroke: var(--dot-on); --doc-sw: 1; --ext-fg: var(--dot-on);
+}
+.band[data-theme="fosforo"] h2 { font-size: 15px; font-weight: 400; }
+.band[data-theme="fosforo"][data-mode="notte"] {
+  --main-bg: radial-gradient(circle at 94% 120%, #4A131B 0%, #2A0A10 16%, transparent 30%), #110709;
+  --card-bg: rgba(26, 13, 15, 0.9);
+  --card-border: 1px solid rgba(255, 214, 206, 0.12);
+  --card-shadow: none;
+  --text-primary: #F2E6E1; --text-secondary: #B39C97;
+  --accent: #F4E9E4; --dot-on: #F4E9E4; --on-accent: #110709;
+  --dot-off: #3A2326; --led: #FF4A3D; --success-text: #F4E9E4;
+  --display-bg: #0B0405;
+  --display-texture: radial-gradient(rgba(255, 230, 220, 0.07) 1px, transparent 1.3px) 0 0 / 7px 7px;
+  --panel-bg: #0B0405; --line: rgba(255, 214, 206, 0.16);
+  --band-fg: #F2E6E1; --band-muted: #B39C97;
+}
+.band[data-theme="fosforo"][data-mode="giorno"] {
+  --main-bg: radial-gradient(circle at 94% 120%, #E6C3C1 0%, #EDD5D2 16%, transparent 30%), #EFE9E5;
+  --card-bg: rgba(253, 250, 248, 0.92);
+  --card-border: 1px solid rgba(70, 24, 28, 0.12);
+  --card-shadow: none;
+  --text-primary: #2A1517; --text-secondary: #77605D;
+  --accent: #2A1215; --dot-on: #2A1215; --on-accent: #EFE9E5;
+  --dot-off: #D6C9C4; --led: #E0352B; --success-text: #2A1215;
+  --display-bg: #E5DDD7;
+  --display-texture: radial-gradient(rgba(60, 20, 24, 0.09) 1px, transparent 1.3px) 0 0 / 7px 7px;
+  --panel-bg: #E5DDD7; --line: rgba(70, 24, 28, 0.16);
+  --band-fg: #2A1517; --band-muted: #77605D;
+}
+
+/* ==========================================================================
+   CELLA 1×1 (comune)
+   ========================================================================== */
+.cell {
+  position: relative;
+  width: 184px;
+  height: 184px;
+  display: flex;
+  flex-direction: column;
+  padding: var(--pad);
+  overflow: hidden;
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+}
+button.cell { cursor: pointer; }
+button.cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.num {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking);
+  line-height: 1;
+  color: var(--num-color);
+  font-variant-numeric: tabular-nums;
+}
+.dot { flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: var(--dot-off); }
+.on .dot { background: var(--led); }
+.ico { fill: none; stroke: currentColor; stroke-width: var(--ico-sw); stroke-linecap: round; stroke-linejoin: round; }
+.pix { fill: currentColor; }
+
+/* ---------- Attuale ---------- */
+.cur { align-items: center; justify-content: center; }
+.cur .num { font-size: var(--num-s); }
+.cur .dot { position: absolute; top: 18px; right: 18px; }
+.cur .cap { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 12px; color: var(--text-secondary); }
+.band[data-theme="opaco"] .cur .cap { display: none; }
+.band[data-theme="opaco"] .cur .dot { top: 20px; right: 20px; width: 8px; height: 8px; }
+
+/* ---------- A · Etichetta ---------- */
+.ca .a-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.a-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+.a-label svg { width: 16px; height: 16px; }
+.ca .num { margin: auto 0; text-align: center; font-size: calc(var(--num-s) - 4px); }
+.ca .cap { text-align: center; font-size: 12px; color: var(--text-secondary); }
+
+.band[data-theme="opaco"] .a-label { font-size: 14px; font-weight: 600; }
+.band[data-theme="opaco"] .a-label svg { width: 18px; height: 18px; }
+.band[data-theme="opaco"] .ca .dot { width: 8px; height: 8px; }
+.band[data-theme="opaco"] .ca .num { margin: auto 0 0; text-align: left; font-size: 68px; line-height: 0.85; }
+.band[data-theme="opaco"] .ca .cap { margin-top: 6px; text-align: left; font-size: 13px; font-weight: 600; }
+
+.band[data-theme="quaderno"] .ca .a-top { align-items: baseline; padding-bottom: 2px; border-bottom: 2px solid var(--accent); }
+.band[data-theme="quaderno"] .a-label { font-family: var(--font-title); font-size: 24px; font-weight: 600; line-height: 1; color: var(--accent); }
+.band[data-theme="quaderno"] .a-label svg { width: 15px; height: 15px; transform: translateY(2px); }
+.band[data-theme="quaderno"] .ca .num { font-size: 66px; }
+
+.band[data-theme="fosforo"] .a-label { font-size: 11px; }
+.band[data-theme="fosforo"] .a-label svg { width: 12px; height: 12px; color: var(--dot-on); }
+.band[data-theme="fosforo"] .ca .num { font-size: 58px; }
+
+/* ---------- B · Stato ---------- */
+.cb { align-items: center; justify-content: center; text-align: center; }
+.cb .num { font-size: var(--num-s); }
+.b-status {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--success-text);
+}
+.b-status svg { width: 14px; height: 14px; color: var(--text-secondary); }
+.b-addr {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.b-icon { display: flex; color: var(--text-secondary); }
+.b-icon svg { width: 38px; height: 38px; }
+.on .b-icon { color: var(--accent); }
+.b-pill {
+  margin-top: 12px;
+  padding: 6px 14px;
+  border: var(--pill-border);
+  border-radius: var(--pill-radius);
+  background: var(--pill-bg);
+  color: var(--pill-fg);
+  font-size: 13px;
+  font-weight: 600;
+}
+.b-sub { margin-top: 6px; font-size: 11.5px; color: var(--text-secondary); }
+.b-wait { margin-top: 10px; font-size: 14px; font-weight: 500; }
+
+.band[data-theme="opaco"] .b-status { padding: 2px 8px 2px 6px; border-radius: 10px; background: var(--pg-ink); color: var(--pg-light); font-weight: 500; }
+.band[data-theme="opaco"] .b-status svg { color: var(--pg-light); }
+.band[data-theme="opaco"] .b-status .dot { display: none; }
+.band[data-theme="opaco"] .b-addr { font-weight: 600; }
+.band[data-theme="opaco"] .b-icon svg { width: 44px; height: 44px; }
+.band[data-theme="opaco"] .cb:not(.on) .b-icon { color: var(--pg-half); }
+.band[data-theme="opaco"] .b-wait { font-weight: 700; }
+
+.band[data-theme="quaderno"] .b-wait { font-family: var(--font-title); font-size: 24px; font-weight: 600; line-height: 1; color: var(--accent); }
+.band[data-theme="quaderno"] .b-pill { background: var(--card-solid); }
+
+.band[data-theme="fosforo"] .b-status { color: var(--text-secondary); }
+.band[data-theme="fosforo"] .b-status svg { width: 11px; height: 11px; color: var(--dot-on); }
+.band[data-theme="fosforo"] .b-icon svg { width: 34px; height: 34px; }
+.band[data-theme="fosforo"] .b-pill { font-weight: 400; }
+.band[data-theme="fosforo"] .b-wait { font-size: 12px; font-weight: 400; }
+
+/* ---------- C · Ultimo file ---------- */
+.c-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11.5px; color: var(--text-secondary); }
+.c-top .num { font-size: 17px; color: var(--text-primary); }
+.c-doc { position: relative; width: 46px; height: 58px; margin: 12px auto 8px; flex: 0 0 auto; }
+.c-doc svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.c-doc .f { fill: var(--doc-fill); stroke: var(--doc-stroke); stroke-width: var(--doc-sw); stroke-linejoin: round; }
+.c-doc .fold { fill: none; stroke: var(--doc-stroke); stroke-width: var(--doc-sw); stroke-linejoin: round; }
+.c-ext { position: absolute; left: 0; right: 0; bottom: 11px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; color: var(--ext-fg); }
+.c-name { overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.c-when { text-align: center; font-size: 11.5px; color: var(--text-secondary); }
+.cc.is-empty .c-doc .f { fill: none; stroke-dasharray: 3 3; }
+.cc.is-empty .c-doc .fold { stroke-dasharray: 3 3; }
+
+.band[data-theme="opaco"] .c-top { font-size: 13px; font-weight: 600; }
+.band[data-theme="opaco"] .c-top .num { font-size: 20px; }
+.band[data-theme="opaco"] .c-name { font-weight: 700; }
+.band[data-theme="opaco"] .cc.is-empty .c-doc .f { stroke: var(--pg-half); }
+
+.band[data-theme="quaderno"] .c-ext { font-family: var(--font-display); font-size: 17px; font-weight: 700; bottom: 8px; }
+.band[data-theme="quaderno"] .c-top .num { font-size: 24px; color: var(--accent); }
+
+.band[data-theme="fosforo"] .c-ext { font-weight: 400; }
+.band[data-theme="fosforo"] .c-top .num { color: var(--dot-on); }
+
+/* ---------- D · Notte: pannello ---------- */
+.dn { gap: 12px; }
+.dn-panel {
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+  border: var(--panel-border);
+  border-radius: 16px;
+  background: var(--panel-bg);
+  color: var(--text-secondary);
+}
+.dn.on .dn-panel {
+  color: var(--accent);
+  background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 62%), var(--panel-bg);
+}
+.dn-panel svg { width: 34px; height: 34px; }
+.dn-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+.dn .num { font-size: 40px; }
+.dn-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; padding-bottom: 3px; font-size: 11.5px; color: var(--text-secondary); }
+.dn-st { display: flex; align-items: center; gap: 5px; }
+.dn.on .dn-st { color: var(--success-text); }
+
+/* ---------- D · Opaco: freccia ---------- */
+.dop .num { font-size: 80px; line-height: 0.82; }
+.dop-arrow { position: absolute; right: 14px; bottom: 14px; width: 72px; height: 72px; color: var(--pg-ink); }
+.dop-arrow .ico { stroke-width: 3; }
+.dop:not(.on) .dop-arrow { color: var(--pg-half); }
+.dop-cap { position: absolute; left: 18px; bottom: 18px; font-size: 13px; font-weight: 700; line-height: 1.15; }
+.dop .dot { position: absolute; top: 20px; right: 20px; width: 8px; height: 8px; }
+
+/* ---------- D · Quaderno: foglio ---------- */
+.dq { padding: 0; }
+.dq-sheet {
+  position: absolute;
+  inset: 18px 18px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6px 10px 6px 30px;
+  border: 1px solid var(--sheet-edge);
+  border-radius: 3px;
+  background:
+    linear-gradient(90deg, transparent 20px, var(--paper-margin) 20px 21.5px, transparent 21.5px),
+    repeating-linear-gradient(transparent 0 19px, var(--rule) 19px 20px),
+    var(--sheet-bg);
+  box-shadow: 0 2px 0 var(--sheet-shadow);
+  transform: rotate(-1.5deg);
+}
+.dq-sheet::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(225deg, var(--card-solid) 50%, var(--sheet-edge) 50%);
+}
+.dq .num { font-size: 60px; line-height: 0.9; }
+.dq-word { font-family: var(--font-title); font-size: 21px; font-weight: 600; line-height: 1.05; color: var(--text-primary); }
+.dq:not(.on) .dq-word { color: var(--text-secondary); }
+.dq-clip { position: absolute; top: 4px; left: 42px; width: 16px; height: 34px; color: var(--text-secondary); transform: rotate(6deg); }
+.dq-clip .ico { stroke-width: 1.6; }
+.dq .dot { position: absolute; top: 9px; right: 9px; }
+
+/* ---------- D · Fosforo: display ---------- */
+.cell.dfo { padding: 0; background: var(--display-texture), var(--display-bg); }
+.dfo-tag { position: absolute; top: 14px; left: 15px; display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); }
+.dfo-tag svg { width: 12px; height: 12px; color: var(--dot-on); }
+.dfo .dot { position: absolute; top: 16px; right: 16px; }
+.dfo.on .dot { box-shadow: 0 0 6px var(--led); }
+.dfo .num { position: absolute; inset: 0; display: grid; place-items: center; padding-bottom: 4px; font-size: 66px; }
+.dfo:not(.on) .num { opacity: 0.5; }
+.dfo-bar { position: absolute; left: 0; right: 0; bottom: 18px; display: flex; justify-content: center; gap: 6px; }
+.dfo-bar i { width: 5px; height: 5px; border-radius: 50%; background: var(--dot-off); }
+.dfo.on .dfo-bar i { animation: rx 1.4s steps(1, end) infinite; animation-delay: calc(var(--i) * 0.2s); }
+@keyframes rx {
+  0% { background: var(--dot-on); }
+  15% { background: var(--dot-off); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dfo.on .dfo-bar i { animation: none; }
+  .dfo.on .dfo-bar i:nth-child(-n+3) { background: var(--dot-on); }
+}
+
+@media (max-width: 520px) {
+  .top, .intro, .band { padding-left: 16px; padding-right: 16px; }
+  .row { justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>File Transfer · cella 1×1</h1>
+  <div class="ctl">Variante
+    <div class="seg" data-group="mode">
+      <button type="button" data-value="nativa" aria-pressed="true">Nativa</button>
+      <button type="button" data-value="giorno" aria-pressed="false">Giorno</button>
+      <button type="button" data-value="notte" aria-pressed="false">Notte</button>
+    </div>
+  </div>
+  <div class="ctl">Stato
+    <div class="seg" data-group="state">
+      <button type="button" data-value="online" aria-pressed="true">Acceso, 12 file</button>
+      <button type="button" data-value="offline" aria-pressed="false">Server fermo</button>
+      <button type="button" data-value="empty" aria-pressed="false">Nessun file</button>
+    </div>
+  </div>
+</header>
+
+<section class="intro">
+  <p>Oggi la cella mostra solo il numero dei file ricevuti: senza il resto della card non si capisce di cosa parla.
+  Per ogni tema ci sono quattro proposte, accanto alla versione attuale.</p>
+  <dl>
+    <dt>A · Etichetta</dt><dd>Icona del vassoio e nome in alto, numero al centro: stessa struttura di Giorno e Meteo.</dd>
+    <dt>B · Stato</dt><dd>Da spento la cella è il pulsante che avvia il server; da acceso mostra l'indirizzo da aprire sull'iPad.</dd>
+    <dt>C · Ultimo file</dt><dd>Cosa è arrivato e quando; il totale passa in piccolo.</dd>
+    <dt>D · Firma del tema</dt><dd>Una forma propria di ogni tema: pannello, freccia, foglio, display.</dd>
+  </dl>
+</section>
+
+<main>
+  <section class="band" data-theme="notte" data-native="notte"><h2>Notte<small></small></h2><div class="row"></div></section>
+  <section class="band" data-theme="opaco" data-native="giorno"><h2>Opaco<small></small></h2><div class="row"></div></section>
+  <section class="band" data-theme="quaderno" data-native="giorno"><h2>Quaderno<small></small></h2><div class="row"></div></section>
+  <section class="band" data-theme="fosforo" data-native="notte"><h2>Fosforo<small></small></h2><div class="row"></div></section>
+</main>
+
+<script>
+const STATES = {
+  online:  { running: true,  count: 12, last: { name: "verbale-lab", ext: "PDF", ago: "3 min fa" }, addr: "192.168.1.42:5000" },
+  offline: { running: false, count: 12, last: { name: "verbale-lab", ext: "PDF", ago: "ieri" },     addr: null },
+  empty:   { running: true,  count: 0,  last: null,                                                  addr: "192.168.1.42:5000" },
+};
+
+const fos = (t) => t === "fosforo";
+const statusLabel = (t, on) => fos(t) ? (on ? "On" : "Off") : (on ? "Online" : "Offline");
+
+/* Icona "ricevi": vassoio con freccia. In Fosforo è una matrice di punti. */
+const PIXELS = [
+  "....#....",
+  "....#....",
+  "..#.#.#..",
+  "...###...",
+  "....#....",
+  ".........",
+  "#.......#",
+  "#.......#",
+  "#########",
+];
+function icon(t) {
+  if (fos(t)) {
+    let dots = "";
+    PIXELS.forEach((row, y) => [...row].forEach((c, x) => {
+      if (c === "#") dots += `<circle cx="${x + 0.5}" cy="${y + 0.5}" r="0.38"/>`;
+    }));
+    return `<svg class="pix" viewBox="0 0 9 9" aria-hidden="true">${dots}</svg>`;
+  }
+  return `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v10"/><path d="M7.5 9.5 12 14l4.5-4.5"/><path d="M4 14.5V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3.5"/></svg>`;
+}
+const DOC = `<svg viewBox="0 0 46 58" aria-hidden="true"><path class="f" d="M5 1h24l16 16v36a4 4 0 0 1-4 4H5a4 4 0 0 1-4-4V5a4 4 0 0 1 4-4z"/><path class="fold" d="M29 1v12a4 4 0 0 0 4 4h12"/></svg>`;
+const CLIP = `<svg class="dq-clip" viewBox="0 0 16 34" aria-hidden="true"><path class="ico" d="M4 8v17a4 4 0 0 0 8 0V6a3 3 0 0 0-6 0v18a1.5 1.5 0 0 0 3 0V9"/></svg>`;
+
+const aria = (s) => `File transfer: ${s.count} file ricevuti, ${s.running ? "online" : "server fermo"}`;
+const on = (s) => (s.running ? " on" : "");
+
+const CONCEPTS = [
+  {
+    id: "cur",
+    title: () => "Attuale",
+    text: () => "Solo il numero: fuori contesto non si capisce cos'è.",
+    html: (t, s) => `<div class="cell cur${on(s)}" role="img" aria-label="${aria(s)}">
+        <span class="num">${s.count}</span><span class="dot"></span><span class="cap">file</span></div>`,
+  },
+  {
+    id: "a",
+    title: () => "A · Etichetta",
+    text: () => "Icona e nome in alto: il widget si riconosce al primo sguardo.",
+    html: (t, s) => {
+      const opaco = t === "opaco";
+      const cap = !s.running ? "server fermo" : s.count === 0 ? "nessun file" : opaco ? "file ricevuti" : "ricevuti";
+      return `<div class="cell ca${on(s)}" role="img" aria-label="${aria(s)}">
+        <div class="a-top"><span class="a-label">${icon(t)}File</span><span class="dot"></span></div>
+        <span class="num">${s.count}</span><span class="cap">${cap}</span></div>`;
+    },
+  },
+  {
+    id: "b",
+    title: () => "B · Stato",
+    text: (t, s) => s.running ? "Acceso: indirizzo da aprire sull'iPad sempre visibile." : "Spento: un click sulla cella avvia il server.",
+    html: (t, s) => {
+      if (!s.running) {
+        return `<button type="button" class="cell cb" data-cell-action aria-label="Avvia il server per ricevere file dall'iPad">
+          <span class="b-icon">${icon(t)}</span>
+          <span class="b-pill">${fos(t) ? "avvia" : "Avvia server"}</span>
+          <span class="b-sub">${fos(t) ? "ricevi dall'iPad" : "per ricevere dall'iPad"}</span></button>`;
+      }
+      const status = `<span class="b-status">${icon(t)}<span class="dot"></span>${statusLabel(t, true)}</span>`;
+      const addr = `<span class="b-addr">${s.addr}</span>`;
+      if (s.count === 0) {
+        return `<div class="cell cb on" role="img" aria-label="File transfer: in attesa, ${s.addr}">${status}
+          <span class="b-icon">${icon(t)}</span><span class="b-wait">${fos(t) ? "in attesa" : "In attesa"}</span>${addr}</div>`;
+      }
+      return `<div class="cell cb on" role="img" aria-label="${aria(s)}, ${s.addr}">${status}<span class="num">${s.count}</span>${addr}</div>`;
+    },
+  },
+  {
+    id: "c",
+    title: () => "C · Ultimo file",
+    text: () => "Cosa è arrivato e quando; il totale resta in alto.",
+    html: (t, s) => {
+      const top = s.count > 0 ? `<span><span class="num">${s.count}</span> file</span>` : `<span>File</span>`;
+      const doc = s.last
+        ? `<div class="c-doc">${DOC}<span class="c-ext">${s.last.ext}</span></div><div class="c-name">${s.last.name}</div><div class="c-when">${s.running ? s.last.ago : "server fermo"}</div>`
+        : `<div class="c-doc">${DOC}</div><div class="c-name">Nessun file</div><div class="c-when">${s.running ? "in attesa" : "server fermo"}</div>`;
+      return `<div class="cell cc${on(s)}${s.last ? "" : " is-empty"}" role="img" aria-label="${aria(s)}${s.last ? `, ultimo: ${s.last.name}.${s.last.ext.toLowerCase()}, ${s.last.ago}` : ""}">
+        <div class="c-top">${top}<span class="dot"></span></div>${doc}</div>`;
+    },
+  },
+  {
+    id: "d",
+    title: (t) => ({ notte: "D · Pannello", opaco: "D · Freccia", quaderno: "D · Foglio", fosforo: "D · Display" })[t],
+    text: (t) => ({
+      notte: "Icona nel pannello interno, con l'alone dell'accent quando il server è acceso.",
+      opaco: "Numero enorme e freccia d'inchiostro, nello stile a blocchi.",
+      quaderno: "Un foglio a righe con la graffetta e il conteggio scritto a mano.",
+      fosforo: "Tutta la cella è il display; i punti in basso scorrono mentre riceve.",
+    })[t],
+    html: (t, s) => D[t](t, s),
+  },
+];
+
+const D = {
+  notte: (t, s) => `<div class="cell dn${on(s)}" role="img" aria-label="${aria(s)}">
+      <div class="dn-panel">${icon(t)}</div>
+      <div class="dn-row"><span class="num">${s.count}</span>
+        <span class="dn-meta"><span>file ricevuti</span><span class="dn-st"><span class="dot"></span>${statusLabel(t, s.running)}</span></span></div></div>`,
+  opaco: (t, s) => `<div class="cell dop${on(s)}" role="img" aria-label="${aria(s)}">
+      <span class="num">${s.count}</span><span class="dot"></span>
+      <svg class="dop-arrow" viewBox="0 0 24 24" aria-hidden="true"><path class="ico" d="M12 3.5v10"/><path class="ico" d="M7.5 9.5 12 14l4.5-4.5"/><path class="ico" d="M4 14.5V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3.5"/></svg>
+      <span class="dop-cap">${s.running ? (s.count ? "file<br>dall'iPad" : "nessun<br>file") : "server<br>fermo"}</span></div>`,
+  quaderno: (t, s) => `<div class="cell dq${on(s)}" role="img" aria-label="${aria(s)}">
+      <div class="dq-sheet"><span class="num">${s.count}</span>
+        <span class="dq-word">${s.running ? (s.count ? "file ricevuti" : "ancora nessun file") : "server spento"}</span></div>
+      ${CLIP}<span class="dot"></span></div>`,
+  fosforo: (t, s) => `<div class="cell dfo${on(s)}" role="img" aria-label="${aria(s)}">
+      <span class="dfo-tag">${icon(t)}file</span><span class="dot"></span>
+      <span class="num">${s.count}</span>
+      <span class="dfo-bar">${Array.from({ length: 7 }, (_, i) => `<i style="--i:${i}"></i>`).join("")}</span></div>`,
+};
+
+const choice = { mode: "nativa", state: "online" };
+
+function render() {
+  const s = STATES[choice.state];
+  document.querySelectorAll(".band").forEach((band) => {
+    const t = band.dataset.theme;
+    const mode = choice.mode === "nativa" ? band.dataset.native : choice.mode;
+    band.dataset.mode = mode;
+    band.querySelector("h2 small").textContent = `versione ${mode}${mode === band.dataset.native ? " (nativa)" : ""}`;
+    band.querySelector(".row").innerHTML = CONCEPTS.map((c) => `
+      <figure class="${c.id === "cur" ? "is-current" : ""}">${c.html(t, s)}
+        <figcaption><b>${c.title(t)}</b>${c.text(t, s)}</figcaption></figure>`).join("");
+  });
+}
+
+document.querySelectorAll(".seg").forEach((seg) => {
+  seg.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    choice[seg.dataset.group] = btn.dataset.value;
+    seg.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>

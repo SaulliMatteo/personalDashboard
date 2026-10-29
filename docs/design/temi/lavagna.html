@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lavagna — mockup dei temi</title>
+<!--
+  Mockup del widget Lavagna (Excalidraw) per Personal Dashboard.
+  Va in docs/design/temi/lavagna.html: i font vengono da node_modules del progetto
+  (gli stessi pacchetti @fontsource dell'app), quindi niente rete.
+
+  Cosa mostra:
+   1. la cella 1×1 e la cella 2×1 nei 4 temi (variante nativa, giorno o notte);
+   2. la pagina di dettaglio nel tema scelto: intestazione, avviso "non salvata",
+      cornice della lavagna. L'interno della cornice è Excalidraw e NON fa parte del design.
+
+  I colori qui sotto copiano i token di src/styles/tokens.css e tokens-varianti.css.
+  Nel codice vero si usano SOLO i var(--…) del tema: questi valori servono al mockup.
+  Fosforo giorno: alcuni valori (testo, display, LED) sono approssimati, nel codice valgono i token.
+-->
+<style>
+/* ---------- Font locali (stessi pacchetti dell'app) ---------- */
+@font-face { font-family: "Manrope Variable"; src: url("../../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2") format("woff2"); font-weight: 200 800; }
+@font-face { font-family: "Bricolage Grotesque Variable"; src: url("../../../node_modules/@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-opsz-normal.woff2") format("woff2"); font-weight: 200 800; }
+@font-face { font-family: "Figtree Variable"; src: url("../../../node_modules/@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2") format("woff2"); font-weight: 300 900; }
+@font-face { font-family: "Caveat Variable"; src: url("../../../node_modules/@fontsource-variable/caveat/files/caveat-latin-wght-normal.woff2") format("woff2"); font-weight: 400 700; }
+@font-face { font-family: "JetBrains Mono Variable"; src: url("../../../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2") format("woff2"); font-weight: 100 800; }
+@font-face { font-family: "Doto Variable"; src: url("../../../node_modules/@fontsource-variable/doto/files/doto-latin-wght-normal.woff2") format("woff2"); font-weight: 100 900; }
+
+/* ==========================================================================
+   TOKEN (copiati dai file del tema; .t = un "ambito di tema")
+   ========================================================================== */
+
+/* ---- Notte, nativa (notte) ---- */
+.t[data-theme="notte"][data-mode="notte"] {
+  color-scheme: dark;
+  --font-family: "Manrope Variable", system-ui, sans-serif;
+  --font-display: "Manrope Variable", system-ui, sans-serif;
+  --font-title: "Manrope Variable", system-ui, sans-serif;
+  --display-weight: 200;
+  --bg: #090C15; --main-bg: #090C15;
+  --card-bg: linear-gradient(180deg, #151B2E 0%, #10152A 100%);
+  --card-border: 1px solid #1F2740;
+  --card-shadow: inset 0 1px 0 rgba(200, 215, 255, 0.07);
+  --radius-card: 22px;
+  --panel-bg: #0B0F1C; --panel-border: 1px solid #182036; --radius-panel: 16px;
+  --display-bg: #0B0F1C; --display-texture: none; --display-border: 1px solid #182036; --radius-display: 16px;
+  --divider: #1F2740;
+  --text-primary: #E9ECF5; --text-secondary: #9AA2BA; --text-soft: #C9CFE0;
+  --accent: #8EA6FF; --accent-strong: color-mix(in srgb, #8EA6FF 64%, #ffffff); --on-accent: #090C15;
+  --warn: #F0B47A; --danger: #F08A8A; --led: #7DD3B0;
+  --dot-on: #8EA6FF;
+  --surface-1: rgba(233, 236, 245, 0.04);
+  --radius-item: 12px;
+  --btn-ghost-border: 1px solid #2A3350; --btn-ghost-bg: transparent; --btn-ghost-fg: #C9CFE0;
+  --focus-ring: 2px solid #8EA6FF;
+  --board-bg: #121212;
+}
+/* ---- Notte, giorno ---- */
+.t[data-theme="notte"][data-mode="giorno"] {
+  color-scheme: light;
+  --font-family: "Manrope Variable", system-ui, sans-serif;
+  --font-display: "Manrope Variable", system-ui, sans-serif;
+  --font-title: "Manrope Variable", system-ui, sans-serif;
+  --display-weight: 200;
+  --bg: #EEF1F7; --main-bg: #EEF1F7;
+  --card-bg: linear-gradient(180deg, #FFFFFF 0%, #F8FAFD 100%);
+  --card-border: 1px solid #DCE2EE;
+  --card-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(20, 30, 60, 0.05), 0 6px 18px rgba(20, 30, 60, 0.04);
+  --radius-card: 22px;
+  --panel-bg: #F4F6FB; --panel-border: 1px solid #E1E6F0; --radius-panel: 16px;
+  --display-bg: #F4F6FB; --display-texture: none; --display-border: 1px solid #E1E6F0; --radius-display: 16px;
+  --divider: #DCE2EE;
+  --text-primary: #141A2E; --text-secondary: #5B6480; --text-soft: #343C58;
+  --accent: #3B57D6; --accent-strong: color-mix(in srgb, #3B57D6 80%, #000000); --on-accent: #FFFFFF;
+  --warn: #C27628; --danger: #C2413A; --led: #187A56;
+  --dot-on: #3B57D6;
+  --surface-1: rgba(20, 26, 46, 0.04);
+  --radius-item: 12px;
+  --btn-ghost-border: 1px solid #CBD3E4; --btn-ghost-bg: transparent; --btn-ghost-fg: #343C58;
+  --focus-ring: 2px solid #3B57D6;
+  --board-bg: #FFFFFF;
+}
+/* ---- Opaco, nativa (giorno) ---- */
+.t[data-theme="opaco"][data-mode="giorno"] {
+  color-scheme: light;
+  --font-family: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-title: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --display-weight: 800;
+  --bg: #D8D5CD; --main-bg: #D8D5CD;
+  --card-bg: #EFECE5; --card-border: 0; --card-shadow: none; --radius-card: 28px;
+  --panel-bg: #E2DED5; --panel-border: 0; --radius-panel: 18px;
+  --display-bg: #E2DED5; --display-texture: none; --display-border: 0; --radius-display: 20px;
+  --divider: #C9C5BB;
+  --text-primary: #22251F; --text-secondary: #4D5047; --text-soft: #22251F;
+  --accent: #22251F; --accent-strong: #22251F; --on-accent: #ECE9E2;
+  --warn: #7A4E12; --danger: #8A2A1E; --led: #22251F;
+  --dot-on: #22251F;
+  --surface-1: rgba(34, 37, 31, 0.05);
+  --radius-item: 999px;
+  --btn-ghost-border: 0; --btn-ghost-bg: #C9C5BB; --btn-ghost-fg: #22251F;
+  --focus-ring: 2px solid #22251F;
+  --board-bg: #FFFFFF;
+  /* pigmento proposto per la Lavagna: salvia (il verde della lavagna d'ardesia) */
+  --pg-bg: #A9B59C; --pg-ink: #1F2B1C; --pg-dark: #8E9C80; --pg-mid: #95A387; --pg-light: #DCE4D3; --pg-half: #5E6E55;
+}
+/* ---- Opaco, notte ---- */
+.t[data-theme="opaco"][data-mode="notte"] {
+  color-scheme: dark;
+  --font-family: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-title: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --display-weight: 800;
+  --bg: #1B1C18; --main-bg: #1B1C18;
+  --card-bg: #2A2B26; --card-border: 0; --card-shadow: none; --radius-card: 28px;
+  --panel-bg: #34352F; --panel-border: 0; --radius-panel: 18px;
+  --display-bg: #34352F; --display-texture: none; --display-border: 0; --radius-display: 20px;
+  --divider: #34352F;
+  --text-primary: #ECE9E2; --text-secondary: #A9A79E; --text-soft: #ECE9E2;
+  --accent: #ECE9E2; --accent-strong: #ECE9E2; --on-accent: #1E1F1B;
+  --warn: #E0B070; --danger: #E38B7C; --led: #ECE9E2;
+  --dot-on: #ECE9E2;
+  --surface-1: rgba(236, 233, 226, 0.05);
+  --radius-item: 999px;
+  --btn-ghost-border: 0; --btn-ghost-bg: #34352F; --btn-ghost-fg: #ECE9E2;
+  --focus-ring: 2px solid #ECE9E2;
+  --board-bg: #121212;
+  --pg-bg: #3C4935; --pg-ink: #DCE6D0; --pg-dark: #56654D; --pg-mid: #4D5C45; --pg-light: #1F2B1C; --pg-half: #8FA083;
+}
+/* ---- Quaderno, nativa (giorno) ---- */
+.t[data-theme="quaderno"][data-mode="giorno"] {
+  color-scheme: light;
+  --font-family: "Figtree Variable", system-ui, sans-serif;
+  --font-display: "Caveat Variable", cursive;
+  --font-title: "Caveat Variable", cursive;
+  --display-weight: 600;
+  --bg: #FCFDFF;
+  --main-bg: linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, #FCFDFF;
+  --paper-margin: #F2A9A9;
+  --card-bg: #FFFFFF; --card-border: 1px solid #C9D3E3; --card-shadow: 0 3px 0 #DCE4F0; --radius-card: 8px;
+  --panel-bg: #FFFFFF; --panel-border: 1px solid #DCE6F5; --radius-panel: 6px;
+  --display-bg: #E9EEF8; --display-texture: none; --display-border: 1.5px solid #1B2433; --radius-display: 6px;
+  --divider: #DCE6F5;
+  --text-primary: #1B2433; --text-secondary: #556178; --text-soft: #1B2433;
+  --accent: #2340A0; --accent-strong: #2340A0; --on-accent: #FFFFFF;
+  --warn: #9A5B12; --danger: #B3261E; --led: #2F9E6B;
+  --dot-on: #2340A0;
+  --surface-1: rgba(35, 64, 160, 0.04);
+  --radius-item: 8px;
+  --btn-ghost-border: 1.5px solid #2340A0; --btn-ghost-bg: #FFFFFF; --btn-ghost-fg: #2340A0;
+  --highlight-mark: linear-gradient(transparent 55%, #FFE27A 55%, #FFE27A 92%, transparent 92%);
+  --focus-ring: 2px solid #2340A0;
+  --board-bg: #FFFFFF;
+}
+/* ---- Quaderno, notte ---- */
+.t[data-theme="quaderno"][data-mode="notte"] {
+  color-scheme: dark;
+  --font-family: "Figtree Variable", system-ui, sans-serif;
+  --font-display: "Caveat Variable", cursive;
+  --font-title: "Caveat Variable", cursive;
+  --display-weight: 600;
+  --bg: #121620;
+  --main-bg: linear-gradient(#1C2330 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #1C2330 1px, transparent 1px) 0 0 / 24px 24px, #121620;
+  --paper-margin: #8A3F45;
+  --card-bg: #1A1F2B; --card-border: 1px solid #2C3446; --card-shadow: 0 3px 0 #0B0E15; --radius-card: 8px;
+  --panel-bg: #1A1F2B; --panel-border: 1px solid #262E3D; --radius-panel: 6px;
+  --display-bg: #222A3A; --display-texture: none; --display-border: 1.5px solid #E6EAF2; --radius-display: 6px;
+  --divider: #262E3D;
+  --text-primary: #E6EAF2; --text-secondary: #98A3B8; --text-soft: #E6EAF2;
+  --accent: #9FB6FF; --accent-strong: #9FB6FF; --on-accent: #121620;
+  --warn: #E0A25A; --danger: #F08A80; --led: #4CC38A;
+  --dot-on: #9FB6FF;
+  --surface-1: rgba(159, 182, 255, 0.05);
+  --radius-item: 8px;
+  --btn-ghost-border: 1.5px solid #9FB6FF; --btn-ghost-bg: #1A1F2B; --btn-ghost-fg: #9FB6FF;
+  --highlight-mark: linear-gradient(transparent 55%, #7A6516 55%, #7A6516 92%, transparent 92%);
+  --focus-ring: 2px solid #9FB6FF;
+  --board-bg: #121212;
+}
+/* ---- Fosforo, nativa (notte) ---- */
+.t[data-theme="fosforo"][data-mode="notte"] {
+  color-scheme: dark;
+  --font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+  --font-display: "Doto Variable", monospace;
+  --font-title: "JetBrains Mono Variable", ui-monospace, monospace;
+  --display-weight: 900;
+  --bg: #110709; --main-bg: #110709;
+  --card-bg: rgba(26, 13, 15, 0.9); --card-border: 1px solid rgba(255, 214, 206, 0.12); --card-shadow: none; --radius-card: 14px;
+  --panel-bg: transparent; --panel-border: 1px solid rgba(255, 214, 206, 0.12); --radius-panel: 8px;
+  --display-bg: #0B0405;
+  --display-texture: radial-gradient(rgba(255, 230, 220, 0.07) 1px, transparent 1.3px) 0 0 / 7px 7px;
+  --display-border: 1px solid rgba(255, 214, 206, 0.08); --radius-display: 10px;
+  --divider: rgba(255, 214, 206, 0.08);
+  --text-primary: #F2E6E1; --text-secondary: #B39C97; --text-soft: #F4E9E4;
+  --accent: #F4E9E4; --accent-strong: #F4E9E4; --on-accent: #110709;
+  --warn: #F4E9E4; --danger: #FF4A3D; --led: #FF4A3D;
+  --dot-on: #F4E9E4;
+  --surface-1: rgba(255, 214, 206, 0.04);
+  --radius-item: 999px;
+  --btn-ghost-border: 1px solid rgba(255, 214, 206, 0.16); --btn-ghost-bg: transparent; --btn-ghost-fg: #B39C97;
+  --focus-ring: 1px solid #F4E9E4;
+  --board-bg: #121212;
+  --deco-fill: radial-gradient(circle at 30% 30%, #4A131B 0%, #2A0A10 45%, #170609 70%);
+}
+/* ---- Fosforo, giorno (alcuni valori approssimati) ---- */
+.t[data-theme="fosforo"][data-mode="giorno"] {
+  color-scheme: light;
+  --font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+  --font-display: "Doto Variable", monospace;
+  --font-title: "JetBrains Mono Variable", ui-monospace, monospace;
+  --display-weight: 900;
+  --bg: #EFE9E5; --main-bg: #EFE9E5;
+  --card-bg: rgba(253, 250, 248, 0.92); --card-border: 1px solid rgba(70, 24, 28, 0.12); --card-shadow: none; --radius-card: 14px;
+  --panel-bg: transparent; --panel-border: 1px solid rgba(70, 24, 28, 0.12); --radius-panel: 8px;
+  --display-bg: #E5DDD7;
+  --display-texture: radial-gradient(rgba(70, 24, 28, 0.08) 1px, transparent 1.3px) 0 0 / 7px 7px;
+  --display-border: 1px solid rgba(70, 24, 28, 0.1); --radius-display: 10px;
+  --divider: rgba(70, 24, 28, 0.08);
+  --text-primary: #2A1215; --text-secondary: #7A615C; --text-soft: #2A1215;
+  --accent: #2A1215; --accent-strong: #2A1215; --on-accent: #FDFAF8;
+  --warn: #2A1215; --danger: #D23A2E; --led: #D23A2E;
+  --dot-on: #2A1215;
+  --surface-1: rgba(70, 24, 28, 0.04);
+  --radius-item: 999px;
+  --btn-ghost-border: 1px solid rgba(70, 24, 28, 0.18); --btn-ghost-bg: transparent; --btn-ghost-fg: #7A615C;
+  --focus-ring: 1px solid #2A1215;
+  --board-bg: #FFFFFF;
+  --deco-fill: radial-gradient(circle at 30% 30%, #E6C3C1 0%, #EDD5D2 45%, #F0E3DF 70%);
+}
+
+/* Opaco: il pigmento ridefinisce i token dentro la cella e nella pagina (come [data-pigment] in tokens.css) */
+.t[data-theme="opaco"] [data-pigment] {
+  --card-bg: var(--pg-bg);
+  --text-primary: var(--pg-ink); --text-secondary: var(--pg-ink); --text-soft: var(--pg-ink);
+  --accent: var(--pg-ink); --accent-strong: var(--pg-ink); --on-accent: var(--pg-light);
+  --panel-bg: var(--pg-mid); --display-bg: var(--pg-dark); --divider: var(--pg-dark);
+  --btn-ghost-bg: var(--pg-mid); --btn-ghost-fg: var(--pg-ink);
+  --dot-on: var(--pg-ink);
+  --focus-ring: 2px solid var(--pg-ink);
+}
+
+/* ==========================================================================
+   PAGINA DEL MOCKUP (cornice neutra, non fa parte del design)
+   ========================================================================== */
+* { box-sizing: border-box; }
+body.mk {
+  margin: 0;
+  padding: 32px 32px 64px;
+  background: #E7E6E2;
+  color: #26251F;
+  font: 14px/1.5 system-ui, sans-serif;
+}
+.mk-head { max-width: 1240px; margin: 0 auto 28px; display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: end; justify-content: space-between; }
+.mk-head h1 { margin: 0; font-size: 22px; font-weight: 600; }
+.mk-head p { margin: 4px 0 0; color: #5D5B53; max-width: 62ch; }
+.mk-controls { display: flex; flex-wrap: wrap; gap: 18px; }
+.mk-seg { display: inline-flex; padding: 3px; border-radius: 9px; background: #D6D4CE; }
+.mk-seg button { border: 0; border-radius: 7px; padding: 6px 12px; background: transparent; color: #46443D; font: inherit; font-size: 13px; cursor: pointer; }
+.mk-seg button[aria-pressed="true"] { background: #FFFFFF; color: #1E1D19; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.mk-seg-label { display: block; margin-bottom: 4px; font-size: 12px; color: #6A685F; }
+.mk-section { max-width: 1240px; margin: 0 auto 40px; }
+.mk-section > h2 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+.mk-section > p { margin: 0 0 16px; color: #5D5B53; max-width: 80ch; }
+
+/* Le 4 colonne dei temi */
+.mk-themes { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+.mk-sheet {
+  position: relative;
+  overflow: hidden;
+  padding: 18px 18px 22px;
+  border-radius: 14px;
+  background: var(--main-bg);
+  font-family: var(--font-family);
+  color: var(--text-primary);
+}
+.mk-sheet[data-theme="fosforo"]::after {
+  content: ""; position: absolute; right: -90px; bottom: -110px; width: 260px; height: 260px;
+  border-radius: 50%; background: var(--deco-fill); z-index: 0;
+}
+.mk-sheet > * { position: relative; z-index: 1; }
+.mk-sheet-name { margin: 0 0 14px; font: 12px/1 system-ui, sans-serif; color: var(--text-secondary); }
+.mk-grid { display: grid; grid-template-columns: repeat(2, 128px); grid-auto-rows: 128px; gap: 12px; }
+.mk-grid .span2 { grid-column: span 2; }
+
+/* ==========================================================================
+   CELLA (cornice comune: nell'app la disegna WidgetFrame)
+   ========================================================================== */
+.cell {
+  position: relative;
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   GLIFO: un tratto di pennarello che fa un giro e finisce in una freccia.
+   È il gesto tipico della lavagna ("questo va lì"). Stesso tracciato in ogni
+   tema, cambia solo l'inchiostro: sottile e luminoso (Notte), pennarello
+   pieno (Opaco), biro (Quaderno), punti del display (Fosforo).
+   Al passaggio del mouse il tratto si ridisegna (maschera animata).
+   ========================================================================== */
+.lav-glyph { display: block; overflow: visible; }
+.lav-ink {
+  fill: none;
+  stroke: var(--glyph-color, var(--accent));
+  stroke-width: var(--glyph-w, 2);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: var(--glyph-dash, none);
+}
+.lav-reveal { fill: none; stroke: #fff; stroke-width: 18; stroke-linecap: round; stroke-linejoin: round; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .cell:hover .lav-reveal, .lav-board-empty:hover .lav-reveal {
+    stroke-dasharray: 1;
+    animation: lav-draw 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+@keyframes lav-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+/* inchiostro per tema */
+.t[data-theme="notte"]    { --glyph-w: 1.6; --glyph-color: var(--accent); }
+.t[data-theme="opaco"]    { --glyph-w: 8;   --glyph-color: var(--text-primary); }
+.t[data-theme="quaderno"] { --glyph-w: 2.6; --glyph-color: var(--accent); }
+.t[data-theme="fosforo"]  { --glyph-w: 4.2; --glyph-color: var(--dot-on); --glyph-dash: 0 6.4; }
+
+/* ==========================================================================
+   1×1 — solo il tratto, didascalia sotto (in Opaco niente didascalia)
+   ========================================================================== */
+.lavw-S {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  padding: 0 0 10px;
+  border: 0; border-radius: inherit;
+  background: transparent; color: inherit; font: inherit;
+  cursor: pointer;
+}
+.lavw-S .lav-glyph { width: 62%; height: auto; }
+.lavw-cap {
+  position: absolute; left: 0; right: 0; bottom: 14px;
+  text-align: center; font-size: 12px; color: var(--text-secondary);
+}
+.t[data-theme="opaco"] .lavw-S { padding: 0; }
+.t[data-theme="opaco"] .lavw-S .lav-glyph { width: 66%; }
+.t[data-theme="opaco"] .lavw-cap { display: none; }
+/* Fosforo: la cella è un display a puntini, come Studio 1×1 */
+.t[data-theme="fosforo"] .lavw-S { background: var(--display-texture), var(--display-bg); }
+.lavw-S:focus-visible { outline: var(--focus-ring); outline-offset: -4px; }
+
+/* ==========================================================================
+   2×1 — tratto + nome + una riga che dice la verità ("uscendo si cancella")
+   ========================================================================== */
+.lavw-W { display: flex; align-items: stretch; gap: 14px; height: 100%; padding: 14px; }
+.lavw-W-art {
+  flex: 0 0 auto; aspect-ratio: 1; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  border: var(--display-border); border-radius: var(--radius-display);
+  background: var(--display-texture), var(--display-bg);
+}
+.lavw-W-art .lav-glyph { width: 70%; }
+.lavw-W-text { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.lavw-W-text h2 { margin: 0; font-size: 15px; font-weight: 500; }
+.lavw-W-text p { margin: 0; font-size: 12.5px; line-height: 1.4; color: var(--text-secondary); }
+
+/* Opaco: niente pannello, titolo pesante, tratto grande sul pigmento */
+.t[data-theme="opaco"] .lavw-W { padding: 18px 12px 18px 22px; gap: 4px; flex-direction: row-reverse; justify-content: space-between; }
+.t[data-theme="opaco"] .lavw-W-art { border: 0; background: none; }
+.t[data-theme="opaco"] .lavw-W-art .lav-glyph { width: 82%; }
+.t[data-theme="opaco"] .lavw-W-text { justify-content: space-between; }
+.t[data-theme="opaco"] .lavw-W-text h2 { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+.t[data-theme="opaco"] .lavw-W-text p { font-size: 13px; font-weight: 500; }
+
+/* Quaderno: titolo a mano sottolineato, tratto direttamente sul foglio */
+.t[data-theme="quaderno"] .lavw-W { padding: 12px 18px 14px 20px; flex-direction: column; gap: 6px; }
+.t[data-theme="quaderno"] .lavw-W-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--accent); padding-bottom: 2px; }
+.t[data-theme="quaderno"] .lavw-W-head h2 { margin: 0; font-family: var(--font-title); font-size: 28px; font-weight: 600; line-height: 1; color: var(--accent); }
+.t[data-theme="quaderno"] .lavw-W-body { flex: 1; min-height: 0; display: flex; align-items: center; gap: 12px; }
+.t[data-theme="quaderno"] .lavw-W-art { height: 100%; border: 0; background: none; }
+.t[data-theme="quaderno"] .lavw-W-art .lav-glyph { width: 92%; }
+.t[data-theme="quaderno"] .lavw-W-body p { margin: 0; font-size: 13px; line-height: 1.4; color: var(--text-secondary); }
+.lavw-W-head, .lavw-W-body { display: none; }
+.t[data-theme="quaderno"] .lavw-W-head, .t[data-theme="quaderno"] .lavw-W-body { display: flex; }
+.t[data-theme="quaderno"] .lavw-W > .lavw-W-art, .t[data-theme="quaderno"] .lavw-W > .lavw-W-text { display: none; }
+
+/* Fosforo: display a sinistra, testo mono a destra */
+.t[data-theme="fosforo"] .lavw-W { padding: 12px; gap: 14px; }
+.t[data-theme="fosforo"] .lavw-W-text h2 { font-size: 13px; font-weight: 400; }
+.t[data-theme="fosforo"] .lavw-W-text p { font-size: 12px; }
+
+/* ==========================================================================
+   PAGINA DI DETTAGLIO
+   ========================================================================== */
+.mk-page {
+  display: flex; height: 680px; overflow: hidden;
+  border-radius: 14px;
+  background: var(--bg);
+  font-family: var(--font-family); color: var(--text-primary);
+  position: relative;
+}
+.mk-page[data-theme="fosforo"]::after {
+  content: ""; position: absolute; right: -140px; bottom: -180px; width: 420px; height: 420px;
+  border-radius: 50%; background: var(--deco-fill); z-index: 0;
+}
+.mk-side { flex: 0 0 172px; padding: 24px 16px; border-right: 1px solid var(--divider); position: relative; z-index: 1; }
+.mk-side-logo { font-size: 13px; font-weight: 600; margin-bottom: 22px; }
+.mk-side span { display: block; height: 10px; margin: 0 0 14px; border-radius: 5px; background: var(--surface-1); }
+.mk-side span:nth-child(2) { width: 70%; } .mk-side span:nth-child(3) { width: 82%; } .mk-side span:nth-child(4) { width: 60%; }
+.t[data-theme="opaco"] .mk-side, .t[data-theme="fosforo"] .mk-side { border-right: 0; }
+.mk-main { flex: 1; min-width: 0; padding: 26px 30px 26px; background: var(--main-bg); position: relative; z-index: 1; display: flex; }
+.t[data-theme="quaderno"] .mk-main { padding-left: 52px; }
+.t[data-theme="quaderno"] .mk-main::before { content: ""; position: absolute; left: 34px; top: 0; bottom: 0; width: 1.5px; background: var(--paper-margin); }
+
+/* Il contenuto vero della pagina (nell'app: .lav-detail dentro .detail-scope) */
+.lav-detail { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.lav-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.lav-header h1 { margin: 0; font-size: 28px; font-weight: 300; letter-spacing: -0.02em; line-height: 1.2; }
+.lav-header p { margin: 2px 0 0; font-size: 14px; color: var(--text-secondary); }
+.t[data-theme="opaco"] .lav-header h1 { font-size: 34px; font-weight: 800; }
+.t[data-theme="quaderno"] .lav-header h1 { font-family: var(--font-title); font-size: 44px; font-weight: 600; letter-spacing: 0; line-height: 1.1; color: var(--accent); }
+.t[data-theme="fosforo"] .lav-header h1 { font-size: 20px; font-weight: 400; letter-spacing: 0; }
+
+/* Pulsante indietro (BackButton) e la sua forma "armata" quando c'è un disegno */
+.lav-back {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  height: 36px; padding: 0 14px;
+  border: var(--btn-ghost-border); border-radius: var(--radius-item);
+  background: var(--btn-ghost-bg); color: var(--btn-ghost-fg);
+  font: inherit; font-size: 13.5px; cursor: pointer;
+}
+.lav-back:hover { color: var(--text-primary); }
+.lav-back:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.lav-back.is-armed {
+  border-color: transparent;
+  background: var(--danger); color: var(--on-accent);
+}
+.t[data-theme="fosforo"] .lav-back.is-armed { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+
+/* ---------- Avviso "non viene salvata" ----------
+   Una frase forte + una spiegazione. Forma per tema:
+   Notte: riga di stato tinta di ambra, con icona.
+   Opaco: pillola d'inchiostro sul passe-partout del pigmento (sta dentro la cornice).
+   Quaderno: nota a margine, scritta a mano in rosso, con evidenziatore.
+   Fosforo: barra del modulo con LED rosso che pulsa (sta dentro la cornice). */
+.lav-alert { display: flex; align-items: center; gap: 10px; font-size: 13.5px; line-height: 1.45; }
+.lav-alert strong { font-weight: 600; }
+.lav-alert-icon { flex: 0 0 auto; width: 18px; height: 18px; }
+
+.t[data-theme="notte"] .lav-alert {
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--warn) 32%, transparent);
+  border-radius: var(--radius-item);
+  background: color-mix(in srgb, var(--warn) 9%, transparent);
+  color: var(--text-soft);
+}
+.t[data-theme="notte"] .lav-alert-icon { color: var(--warn); }
+.t[data-theme="notte"] .lav-alert strong { color: var(--text-primary); }
+
+.t[data-theme="opaco"] .lav-alert {
+  align-self: flex-start;
+  padding: 9px 18px 9px 14px;
+  border-radius: 999px;
+  background: var(--pg-ink); color: var(--pg-light);
+  font-weight: 500;
+}
+.t[data-theme="opaco"] .lav-alert strong { font-weight: 800; }
+
+.t[data-theme="quaderno"] .lav-alert { gap: 14px; align-items: baseline; color: var(--text-primary); }
+.t[data-theme="quaderno"] .lav-alert-icon { display: none; }
+.lav-alert-hand { display: none; }
+.t[data-theme="quaderno"] .lav-alert-hand { display: inline; flex: 0 0 auto; font-family: var(--font-title); font-size: 26px; font-weight: 700; line-height: 1; color: var(--danger); transform: rotate(-3deg); }
+.t[data-theme="quaderno"] .lav-alert strong { background: var(--highlight-mark); font-weight: 600; }
+
+.t[data-theme="fosforo"] .lav-alert { font-size: 12.5px; color: var(--text-secondary); }
+.t[data-theme="fosforo"] .lav-alert-icon { display: none; }
+.t[data-theme="fosforo"] .lav-alert strong { font-weight: 400; color: var(--text-primary); }
+.lav-led { display: none; }
+.t[data-theme="fosforo"] .lav-led { display: inline-block; flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: var(--led); box-shadow: 0 0 6px color-mix(in srgb, var(--led) 70%, transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  .t[data-theme="fosforo"] .lav-led { animation: lav-pulse 1.6s steps(2, jump-none) infinite; }
+}
+@keyframes lav-pulse { 50% { opacity: 0.25; box-shadow: none; } }
+
+/* ---------- Cornice della lavagna (dentro: Excalidraw, fuori dal design) ---------- */
+.lav-frame { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.lav-board {
+  position: relative; flex: 1; min-height: 0;
+  background: var(--board-bg);
+  overflow: hidden;
+}
+/* Notte: pannello del tema */
+.t[data-theme="notte"] .lav-board { border: var(--panel-border); border-radius: var(--radius-panel); }
+/* Opaco: passe-partout di pigmento, l'avviso sta sul passe-partout */
+.t[data-theme="opaco"] .lav-frame { gap: 10px; padding: 10px; border-radius: var(--radius-card); background: var(--pg-bg); }
+.t[data-theme="opaco"] .lav-board { border-radius: calc(var(--radius-card) - 10px); }
+/* Quaderno: foglio appuntato, bordo a inchiostro e ombra piatta delle card */
+.t[data-theme="quaderno"] .lav-board { border: var(--display-border); border-radius: var(--radius-display); box-shadow: var(--card-shadow); }
+/* Fosforo: modulo hardware con barra in alto */
+.t[data-theme="fosforo"] .lav-frame { border: var(--card-border); border-radius: var(--radius-card); background: var(--card-bg); padding: 0 6px 6px; }
+.t[data-theme="fosforo"] .lav-frame .lav-alert { padding: 9px 8px; }
+.t[data-theme="fosforo"] .lav-board { border: var(--display-border); border-radius: calc(var(--radius-card) - 6px); }
+
+/* Segnaposto del mockup: qui va <Excalidraw/> */
+.lav-board-empty {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  font: 13px/1.4 system-ui, sans-serif; color: #8A8A8A; text-align: center;
+  background-image: radial-gradient(rgba(128,128,128,.18) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+}
+.lav-board-empty code { font-size: 12px; }
+.lav-board-empty .lav-glyph { width: 70px; --glyph-color: #9A9A9A; --glyph-w: 2; --glyph-dash: none; }
+.mk-demo-drawing { position: absolute; left: 12%; top: 22%; width: 52%; opacity: .9; }
+.mk-demo-drawing path, .mk-demo-drawing rect, .mk-demo-drawing ellipse { fill: none; stroke: #1E1E1E; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.lav-board[data-dark] .mk-demo-drawing path, .lav-board[data-dark] .mk-demo-drawing rect, .lav-board[data-dark] .mk-demo-drawing ellipse { stroke: #E3E3E8; }
+.mk-tag { position: absolute; right: 10px; bottom: 10px; padding: 3px 8px; border-radius: 6px; background: rgba(128,128,128,.14); color: #8A8A8A; font: 11.5px system-ui, sans-serif; }
+
+.mk-notes { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px 28px; color: #4A4840; font-size: 13px; }
+.mk-notes p { margin: 0; }
+.mk-notes b { font-weight: 600; color: #26251F; }
+</style>
+</head>
+<body class="mk">
+
+<header class="mk-head">
+  <div>
+    <h1>Lavagna</h1>
+    <p>Widget per disegni e schemi veloci con Excalidraw. Niente viene salvato: il design lo dice chiaramente, sulla cella e nella pagina. Solo la cornice segue il tema; l'interno della lavagna è Excalidraw.</p>
+  </div>
+  <div class="mk-controls">
+    <div>
+      <span class="mk-seg-label">Variante</span>
+      <div class="mk-seg" id="mode">
+        <button type="button" data-v="nativa" aria-pressed="true">Nativa</button>
+        <button type="button" data-v="giorno" aria-pressed="false">Giorno</button>
+        <button type="button" data-v="notte" aria-pressed="false">Notte</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ======================= 1. CELLE ======================= -->
+<section class="mk-section">
+  <h2>Celle in dashboard: 1×1 e 2×1</h2>
+  <p>Il 1×1 è ultra minimal come gli altri: un solo segno al centro. Qui il segno è un tratto di pennarello che finisce in una freccia, nell'inchiostro del tema. Passa il mouse su una cella: il tratto si ridisegna. Un click (o doppio click) apre la lavagna.</p>
+
+  <div class="mk-themes" id="cells"></div>
+</section>
+
+<!-- ======================= 2. PAGINA ======================= -->
+<section class="mk-section">
+  <h2>Pagina di dettaglio</h2>
+  <p>Intestazione del tema, avviso sempre visibile, lavagna che riempie il resto della finestra (la pagina non scrolla). Quando c'è un disegno, il pulsante per tornare alla dashboard chiede conferma.</p>
+
+  <div class="mk-controls" style="margin-bottom:14px">
+    <div>
+      <span class="mk-seg-label">Tema</span>
+      <div class="mk-seg" id="theme">
+        <button type="button" data-v="notte" aria-pressed="true">Notte</button>
+        <button type="button" data-v="opaco" aria-pressed="false">Opaco</button>
+        <button type="button" data-v="quaderno" aria-pressed="false">Quaderno</button>
+        <button type="button" data-v="fosforo" aria-pressed="false">Fosforo</button>
+      </div>
+    </div>
+    <div>
+      <span class="mk-seg-label">Stato della lavagna</span>
+      <div class="mk-seg" id="state">
+        <button type="button" data-v="vuota" aria-pressed="true">Vuota</button>
+        <button type="button" data-v="disegno" aria-pressed="false">Con un disegno</button>
+        <button type="button" data-v="armato" aria-pressed="false">Dopo il primo click su Esci</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="page"></div>
+
+  <div class="mk-notes">
+    <p><b>Avviso.</b> Testo identico in tutti i temi: «Questa lavagna non viene salvata.» + «Quando torni alla dashboard o chiudi l'app, il disegno si cancella.» Cambia solo la forma.</p>
+    <p><b>Uscita.</b> Lavagna vuota: «Dashboard» normale. Con un disegno: «Esci e cancella»; al primo click diventa «Sicuro? Il disegno si perde» per 3 secondi (ConfirmButton).</p>
+    <p><b>Excalidraw.</b> Tema chiaro o scuro di Excalidraw secondo il tema dell'app (<code>useTheme().scheme</code>), lingua italiana, menu ridotto, nessun collegamento esterno.</p>
+  </div>
+</section>
+
+<template id="glyph">
+  <svg class="lav-glyph" viewBox="0 0 100 100" aria-hidden="true">
+    <defs>
+      <mask id="M" maskUnits="userSpaceOnUse" x="-10" y="-10" width="120" height="120">
+        <path class="lav-reveal" pathLength="1" d="M14 70 C 18 44, 44 30, 52 46 C 58 60, 38 70, 34 56 C 30 40, 56 30, 84 34 M71 24 L 85 34 L 72 44"/>
+      </mask>
+    </defs>
+    <g mask="url(#M)">
+      <path class="lav-ink" d="M14 70 C 18 44, 44 30, 52 46 C 58 60, 38 70, 34 56 C 30 40, 56 30, 84 34"/>
+      <path class="lav-ink" d="M71 24 L 85 34 L 72 44"/>
+    </g>
+  </svg>
+</template>
+
+<script>
+const THEMES = [
+  { id: "notte", name: "Notte", native: "notte" },
+  { id: "opaco", name: "Opaco", native: "giorno" },
+  { id: "quaderno", name: "Quaderno", native: "giorno" },
+  { id: "fosforo", name: "Fosforo", native: "notte" },
+];
+const state = { mode: "nativa", theme: "notte", board: "vuota" };
+let maskSeq = 0;
+
+function glyph() {
+  const tpl = document.getElementById("glyph").content.cloneNode(true);
+  const id = "lavmask" + (++maskSeq);
+  tpl.querySelector("mask").id = id;
+  tpl.querySelector("g").setAttribute("mask", `url(#${id})`);
+  const box = document.createElement("div");
+  box.appendChild(tpl);
+  return box.innerHTML;
+}
+const modeOf = (t) => (state.mode === "nativa" ? t.native : state.mode);
+const pigment = (t) => (t.id === "opaco" ? ' data-pigment="salvia"' : "");
+
+function renderCells() {
+  document.getElementById("cells").innerHTML = THEMES.map((t) => `
+    <div class="mk-sheet t" data-theme="${t.id}" data-mode="${modeOf(t)}">
+      <p class="mk-sheet-name">${t.name}, ${modeOf(t)}${t.id === "opaco" ? ", pigmento salvia" : ""}</p>
+      <div class="mk-grid">
+        <div class="cell"${pigment(t)}>
+          <button type="button" class="lavw-S" data-cell-action aria-label="Apri la lavagna">${glyph()}</button>
+          <span class="lavw-cap">Lavagna</span>
+        </div>
+        <div></div>
+        <div class="cell span2"${pigment(t)}>
+          <div class="lavw-W">
+            <div class="lavw-W-art">${glyph()}</div>
+            <div class="lavw-W-text">
+              <h2>Lavagna</h2>
+              <p>Disegna al volo. Uscendo si cancella.</p>
+            </div>
+            <div class="lavw-W-head"><h2>Lavagna</h2></div>
+            <div class="lavw-W-body">
+              <div class="lavw-W-art">${glyph()}</div>
+              <p>Disegna al volo. Uscendo si cancella.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+function renderPage() {
+  const t = THEMES.find((x) => x.id === state.theme);
+  const mode = modeOf(t);
+  // Excalidraw usa il suo tema scuro nelle varianti notte (useTheme().scheme === "dark").
+  const dark = mode === "notte";
+  const hasDrawing = state.board !== "vuota";
+  const armed = state.board === "armato";
+  const backLabel = !hasDrawing ? "← Dashboard" : armed ? "Sicuro? Il disegno si perde" : "Esci e cancella";
+
+  const alert = `
+    <div class="lav-alert" role="note">
+      <span class="lav-led" aria-hidden="true"></span>
+      <svg class="lav-alert-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 2.8 19.5h18.4L12 3.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10v4.2M12 16.9v.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span class="lav-alert-hand" aria-hidden="true">Attenzione!</span>
+      <span><strong>Questa lavagna non viene salvata.</strong> Quando torni alla dashboard o chiudi l'app, il disegno si cancella.</span>
+    </div>`;
+
+  // Notte e Quaderno: avviso sopra la cornice. Opaco e Fosforo: dentro la cornice.
+  const alertInside = t.id === "opaco" || t.id === "fosforo";
+
+  const board = `
+    <div class="lav-board"${dark ? " data-dark" : ""}>
+      <div class="lav-board-empty">
+        ${hasDrawing ? `
+          <svg class="mk-demo-drawing" viewBox="0 0 320 160" aria-hidden="true">
+            <rect x="8" y="40" width="96" height="58" rx="10"/>
+            <path d="M108 70 C 150 70, 160 70, 196 70 M186 62 L 198 70 L 186 78"/>
+            <ellipse cx="252" cy="70" rx="58" ry="34"/>
+            <path d="M30 128 C 70 140, 120 118, 170 134"/>
+          </svg>` : `
+          ${glyph()}
+          <span>Qui va <code>&lt;Excalidraw/&gt;</code><br>tema ${dark ? "scuro" : "chiaro"} di Excalidraw</span>`}
+        <span class="mk-tag">Excalidraw, fuori dal design</span>
+      </div>
+    </div>`;
+
+  document.getElementById("page").innerHTML = `
+    <div class="mk-page t" data-theme="${t.id}" data-mode="${mode}">
+      <aside class="mk-side"><div class="mk-side-logo">Dashboard</div><span></span><span></span><span></span><span></span></aside>
+      <div class="mk-main"${pigment(t)}>
+        <div class="lav-detail">
+          <header class="lav-header">
+            <div>
+              <h1>Lavagna</h1>
+              <p>Schemi e disegni veloci.</p>
+            </div>
+            <button type="button" class="lav-back${armed ? " is-armed" : ""}">${backLabel}</button>
+          </header>
+          ${alertInside ? "" : alert}
+          <div class="lav-frame">
+            ${alertInside ? alert : ""}
+            ${board}
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function bindSeg(id, key, after) {
+  const seg = document.getElementById(id);
+  seg.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    state[key] = b.dataset.v;
+    seg.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    after();
+  });
+}
+bindSeg("mode", "mode", () => { renderCells(); renderPage(); });
+bindSeg("theme", "theme", renderPage);
+bindSeg("state", "board", renderPage);
+renderCells();
+renderPage();
+</script>
+</body>
+</html>
