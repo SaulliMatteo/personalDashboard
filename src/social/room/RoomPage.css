@@ -12,13 +12,22 @@
   color: var(--text-primary);
 }
 
-/* Intestazione compatta, tutta in alto a sinistra: il nome del gruppo e subito dopo i comandi. */
+/* Intestazione su due righe: a sinistra il nome del gruppo e, sotto, la sala guardata; a destra posto, gruppi e
+   impostazioni sulla prima riga e il timer sulla seconda. Se non c'è spazio i comandi vanno a capo, sempre a destra. */
 .roomp-header {
   flex: 0 0 auto;
   display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.roomp-top,
+.roomp-bar {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 20px;
+  justify-content: space-between;
+  gap: 8px 20px;
 }
 
 /* Il nome non si accorcia per stare accanto ai comandi: se non c'è spazio vanno a capo loro (i puntini solo se il
@@ -35,19 +44,31 @@
   text-overflow: ellipsis;
 }
 
-.roomp-actions {
+.roomp-actions,
+.roomp-controls {
+  margin-left: auto;
+}
+
+.roomp-controls {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
 
-.roomp-actions .grp-btn {
+.roomp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.roomp-header .grp-btn {
   height: 42px;
 }
 
 /* Dal mockup: "Siediti in questa sala" è pieno d'accento in tutti i temi (in Fosforo il primario sarebbe solo bordato). */
-.roomp-actions .roomp-fill {
+.roomp-header .roomp-fill {
   background: var(--accent);
   color: var(--on-accent);
 }
@@ -64,7 +85,7 @@
   gap: 8px;
 }
 
-.roomp-actions .roomp-arrow {
+.roomp-header .roomp-arrow {
   width: 36px;
   height: 36px;
   padding: 0;

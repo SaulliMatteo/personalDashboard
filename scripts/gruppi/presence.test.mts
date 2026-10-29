@@ -1,5 +1,6 @@
 /*
- * Prove della presenza dello Studio (payload e gestione dei canali), con orologio, timer e canali finti.
+ * Prove della presenza dello Studio (payload e gestione dei canali, con il limite di invii del server e la via rapida
+ * in broadcast), con orologio, timer e canali finti.
  * Lancio (da questa cartella del repo):
  *   npx rolldown scripts/gruppi/presence.test.mts --file node_modules/.tmp/gruppi-presence.test.mjs --platform node
  *   node node_modules/.tmp/gruppi-presence.test.mjs
@@ -18,6 +19,7 @@ import {
   type StudyPresence,
 } from "../../src/social/modules/study/presence/payload";
 import { StudyPresenceHub, type PresenceSnapshot } from "../../src/social/modules/study/presence/presenceHub";
+import { PRESENCE_MAX_TRACKS, PRESENCE_WINDOW_MS, type PresenceHubOptions } from "../../src/social/presence/presenceHub";
 
 let passed = 0;
 async function test(name: string, fn: () => void | Promise<void>) {
@@ -195,37 +197,43 @@ interface FakeChannel {
   groupId: string;
   listeners: PresenceListeners;
   tracked: Record<string, unknown>[];
+  /** messaggi mandati in broadcast */
+  sent: Record<string, unknown>[];
   left: boolean;
   failTrack: boolean;
 }
 
-function harness() {
+function harness(options: PresenceHubOptions = {}) {
   let now = NOW;
   let nextId = 1;
   const timers = new Map<number, { at: number; fn: () => void }>();
   const channels: FakeChannel[] = [];
   const snapshots: PresenceSnapshot[] = [];
-  const hub = new StudyPresenceHub({
-    now: () => now,
-    join: (groupId, listeners) => {
-      const ch: FakeChannel = { groupId, listeners, tracked: [], left: false, failTrack: false };
-      channels.push(ch);
-      return {
-        track: async (payload) => {
-          if (ch.failTrack) throw new Error("x");
-          ch.tracked.push(payload);
-        },
-        leave: async () => void (ch.left = true),
-      };
+  const hub = new StudyPresenceHub(
+    {
+      now: () => now,
+      join: (groupId, listeners) => {
+        const ch: FakeChannel = { groupId, listeners, tracked: [], sent: [], left: false, failTrack: false };
+        channels.push(ch);
+        return {
+          track: async (payload) => {
+            if (ch.failTrack) throw new Error("x");
+            ch.tracked.push(payload);
+          },
+          send: async (payload) => void ch.sent.push(payload),
+          leave: async () => void (ch.left = true),
+        };
+      },
+      setTimer: (fn, ms) => {
+        const id = nextId++;
+        timers.set(id, { at: now + ms, fn });
+        return id;
+      },
+      clearTimer: (id) => void timers.delete(id as number),
+      onChange: (s) => void snapshots.push(s),
     },
-    setTimer: (fn, ms) => {
-      const id = nextId++;
-      timers.set(id, { at: now + ms, fn });
-      return id;
-    },
-    clearTimer: (id) => void timers.delete(id as number),
-    onChange: (s) => void snapshots.push(s),
-  });
+    options
+  );
   const settle = async () => {
     for (let i = 0; i < 5; i++) await new Promise((r) => setImmediate(r));
   };
@@ -402,6 +410,107 @@ await test("dopo stop nessun evento arriva più all'app", async () => {
   await h.advance(60_000);
   assert.equal(h.snapshots.length, count);
   assert.equal(h.channels.length, 1);
+});
+
+// ---------------------------------------------------------------- limite di invii e via rapida
+
+const seated = (seat: number) => ({ timer: working, subject: null, rooms: { g1: 0 }, seats: { g1: seat } });
+
+await test("limite del server: al massimo 4 invii di presenza in 30 s, poi parte l'ultimo stato", async () => {
+  const h = harness();
+  h.hub.setGroups(["g1"]);
+  h.hub.setLocal(seated(0));
+  h.status("g1", "joined");
+  await h.settle();
+  for (let seat = 1; seat < 7; seat++) {
+    h.tick(1_000);
+    h.hub.setLocal(seated(seat));
+    await h.settle();
+  }
+  const ch = h.channels[0];
+  assert.equal(ch.tracked.length, PRESENCE_MAX_TRACKS, "il quinto e i successivi aspettano");
+  assert.deepEqual(ch.tracked.map((p) => p.seat), [0, 1, 2, 3]);
+  await h.advance(PRESENCE_WINDOW_MS);
+  assert.equal(ch.tracked.at(-1)?.seat, 6, "allo scadere della finestra parte l'ultimo, non quelli di mezzo");
+  assert.equal(ch.tracked.length, PRESENCE_MAX_TRACKS + 1);
+  h.hub.stop();
+});
+
+const FAST = { key: "io", instance: "istanza1" };
+
+await test("via rapida: ogni cambio parte subito in broadcast, anche quando la presenza aspetta", async () => {
+  const h = harness({ fastPath: FAST });
+  h.hub.setGroups(["g1"]);
+  h.hub.setLocal(seated(0));
+  h.status("g1", "joined");
+  await h.settle();
+  for (let seat = 1; seat < 7; seat++) {
+    h.tick(1_000);
+    h.hub.setLocal(seated(seat));
+    await h.settle();
+  }
+  const ch = h.channels[0];
+  assert.deepEqual(ch.sent.map((m) => (m.p as Record<string, unknown>).seat), [0, 1, 2, 3, 4, 5, 6]);
+  assert.ok(ch.sent.every((m) => m.k === "io" && (m.p as Record<string, unknown>)._i === "istanza1"));
+  assert.equal(ch.tracked.length, PRESENCE_MAX_TRACKS);
+  assert.equal(ch.tracked[0]._i, "istanza1", "anche la presenza dice quale istanza è");
+  h.hub.stop();
+});
+
+await test("via rapida in arrivo: sostituisce la presenza di quel dispositivo finché la presenza non la raggiunge", async () => {
+  const h = harness({ fastPath: FAST });
+  h.hub.setOffset(OFFSET);
+  h.hub.setGroups(["g1"]);
+  h.status("g1", "joined");
+  const ch = h.open("g1")[0];
+  const old = valid({ room: 0, seat: 1, _i: "x1" });
+  ch.listeners.sync({ anna: [old] });
+  assert.equal(h.last().members.g1.anna.seat, 1);
+  ch.listeners.message?.({ k: "anna", p: valid({ room: 0, seat: 4, _i: "x1" }) });
+  assert.equal(h.last().members.g1.anna.seat, 4, "subito al posto nuovo");
+  assert.equal("_i" in h.last().members.g1.anna, false, "il campo dell'istanza non arriva al modulo");
+  ch.listeners.sync({ anna: [old] });
+  assert.equal(h.last().members.g1.anna.seat, 4, "la presenza vecchia non lo riporta indietro");
+  // raggiunta (anche con le chiavi in un altro ordine): il broadcast non serve più
+  const { _i, ...rest } = valid({ room: 0, seat: 4 });
+  ch.listeners.sync({ anna: [{ _i: "x1", ...rest }] });
+  ch.listeners.sync({ anna: [valid({ room: 0, seat: 2, _i: "x1" })] });
+  assert.equal(h.last().members.g1.anna.seat, 2, "dopo, vale di nuovo la presenza");
+  h.hub.stop();
+});
+
+await test("via rapida in arrivo: chi non è nel canale non compare, e chi esce sparisce", async () => {
+  const h = harness({ fastPath: FAST });
+  h.hub.setOffset(OFFSET);
+  h.hub.setGroups(["g1"]);
+  h.status("g1", "joined");
+  const ch = h.open("g1")[0];
+  ch.listeners.message?.({ k: "dario", p: valid({ _i: "d1" }) });
+  ch.listeners.sync({ anna: [valid({ _i: "x1" })] });
+  ch.listeners.message?.({ k: "anna", p: valid({ seat: 3, room: 0, _i: "altro" }) });
+  ch.listeners.message?.({ k: "anna", p: "testo" });
+  ch.listeners.message?.(null);
+  assert.deepEqual(Object.keys(h.last().members.g1), ["anna"]);
+  assert.equal(h.last().members.g1.anna.seat, undefined, "un'istanza che non è nel canale non conta");
+  ch.listeners.message?.({ k: "anna", p: valid({ room: 0, seat: 3, _i: "x1" }) });
+  ch.listeners.sync({});
+  assert.deepEqual(h.last().members.g1, {}, "uscita dal canale: via anche lo stato in broadcast");
+  ch.listeners.sync({ anna: [valid({ _i: "x1" })] });
+  assert.equal(h.last().members.g1.anna.seat, undefined, "rientrata: niente stato vecchio");
+  h.hub.stop();
+});
+
+await test("senza via rapida i messaggi in broadcast si ignorano", async () => {
+  const h = harness();
+  h.hub.setOffset(OFFSET);
+  h.hub.setGroups(["g1"]);
+  h.status("g1", "joined");
+  const ch = h.open("g1")[0];
+  ch.listeners.sync({ anna: [valid({ _i: "x1" })] });
+  ch.listeners.message?.({ k: "anna", p: valid({ room: 0, seat: 3, _i: "x1" }) });
+  assert.equal(h.last().members.g1.anna.seat, undefined);
+  assert.equal(ch.sent.length, 0);
+  h.hub.stop();
 });
 
 console.log(`OK: ${passed} prove superate`);

@@ -78,7 +78,7 @@ export function PixyPresenceProvider({ children }: { children: ReactNode }) {
         parse: parsePixyChannelState,
       },
       readLocalRef.current(),
-      { minTrackIntervalMs: MIN_TRACK_INTERVAL_MS }
+      { minTrackIntervalMs: MIN_TRACK_INTERVAL_MS, fastPath: { key: activeUser, instance: crypto.randomUUID() } }
     );
     hubRef.current = next;
     openChannels(next, groupKeyRef.current);

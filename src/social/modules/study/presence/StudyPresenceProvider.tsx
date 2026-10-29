@@ -53,15 +53,19 @@ export function StudyPresenceProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!activeUser) return;
     let disposed = false;
-    const next = new StudyPresenceHub({
-      now: () => Date.now(),
-      join: (groupId, listeners) => joinPresenceChannel(groupId, STUDY_FEATURE_KEY, activeUser, listeners),
-      setTimer: (fn, ms) => window.setTimeout(fn, ms),
-      clearTimer: (handle) => window.clearTimeout(handle as number),
-      onChange: (value) => {
-        if (!disposed) setSnapshot(value);
+    const next = new StudyPresenceHub(
+      {
+        now: () => Date.now(),
+        join: (groupId, listeners) => joinPresenceChannel(groupId, STUDY_FEATURE_KEY, activeUser, listeners),
+        setTimer: (fn, ms) => window.setTimeout(fn, ms),
+        clearTimer: (handle) => window.clearTimeout(handle as number),
+        onChange: (value) => {
+          if (!disposed) setSnapshot(value);
+        },
       },
-    });
+      // cambi di posto e di timer subito ai compagni (la presenza ha un limite di invii)
+      { fastPath: { key: activeUser, instance: crypto.randomUUID() } }
+    );
     hubRef.current = next;
     next.setLocal(readLocalRef.current());
     openChannels(next, groupKeyRef.current);

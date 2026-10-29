@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { PixyPresence } from "../modules/pixy/payload";
 import { phaseElapsedSeconds } from "../modules/study/presence/payload";
+import MemberName from "./MemberName";
 import { formatClock } from "./roomText";
 import SeatPixy from "./SeatPixy";
 import type { RoomMember } from "./useRoomMembers";
@@ -154,7 +155,7 @@ function Seat({
           type="button"
           className={`rs-seat-btn${selected ? " is-selected" : ""}`}
           aria-pressed={selected}
-          aria-label={`${member.username}${member.isMe ? " (tu)" : ""}, ${member.kind === "studying" ? "sta studiando" : "in pausa"}`}
+          aria-label={`${member.username}${member.isMe ? ", sei tu" : ""}, ${member.kind === "studying" ? "sta studiando" : "in pausa"}`}
           onClick={() => props.onSelect(member.userId)}
         >
           <span className="rs-face-slot">
@@ -168,7 +169,9 @@ function Seat({
             />
           </span>
           <span className={`rs-pill rs-pill--${look}`}>{seatClock(member, props.serverNow)}</span>
-          <span className="rs-plate">{member.isMe ? `${member.username} (tu)` : member.username}</span>
+          <span className="rs-plate">
+            <MemberName username={member.username} isMe={member.isMe} />
+          </span>
         </button>
       )}
     </div>

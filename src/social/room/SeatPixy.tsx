@@ -12,6 +12,9 @@ import { useSettings } from "../../core/settings/useSettings";
 import type { MemberKind } from "../modules/study/leaderboard";
 import { sharedToSnapshot, type PixyPresence } from "../modules/pixy/payload";
 
+/** Un punto della faccia, in px: larghezza della testa (54 px, RoomScene.css) / (FACE_W 30 + 2 × padding 1). */
+const HEAD_POINT_SIZE = 54 / 32;
+
 /** Senza espressioni condivise si vede solo lo studio: la posa viene dal timer (già condiviso). */
 function studyPose(kind: MemberKind): PoseId {
   if (kind === "studying") return "study";
@@ -79,8 +82,9 @@ function SeatPixy({ kind, isMe, pixy, offsetMs, localNow, renderScale }: SeatPix
       showMouth={showMouth}
       bubble={bubble}
       bubbleSize="small"
-      maxPointSize={2.6}
-      // la testa è di 54×40 px: in Fosforo i LED scendono sotto i 3 px perché la faccia ci stia tutta
+      // il canvas è più grande della testa (per simboli e costumi): la faccia resta grande quanto la testa
+      maxPointSize={HEAD_POINT_SIZE}
+      // in Fosforo i LED scendono sotto i 3 px perché la faccia stia nella testa
       minPointSize={1}
       padding={1}
       renderScale={renderScale}

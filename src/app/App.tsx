@@ -5,7 +5,7 @@ import { NavProvider } from "../core/nav/NavContext";
 import { useNav } from "../core/nav/useNav";
 import WidgetProviders from "../widgets/WidgetProviders";
 import SocialProviders from "../social/SocialProviders";
-import { getWidget, widgetPigment } from "../widgets/registry";
+import { getWidget, WIDGET_REGISTRY, widgetPigment } from "../widgets/registry";
 import Dashboard from "../features/dashboard/Dashboard";
 import WidgetCatalog from "../features/settings/catalog/WidgetCatalog";
 import SettingsPage from "../features/settings/SettingsPage";
@@ -13,6 +13,9 @@ import RoomPage from "../social/room/RoomPage";
 import DatabaseGate from "./DatabaseGate";
 import AppShell from "./AppShell";
 import BootGate from "./BootGate";
+
+// i comandi che i widget mettono nella Stanza comune (social non può importare i widget)
+const ROOM_CONTROLS = WIDGET_REGISTRY.flatMap((w) => (w.roomControls ? [{ id: w.id, Controls: w.roomControls }] : []));
 
 function CurrentView() {
   const { view } = useNav();
@@ -26,7 +29,14 @@ function CurrentView() {
     content = <SettingsPage section={view.section} />;
   } else if (view.type === "room") {
     // in Opaco la sala usa il pigmento del widget Gruppi
-    content = <RoomPage pigment={widgetPigment("groups")} />;
+    content = (
+      <RoomPage
+        pigment={widgetPigment("groups")}
+        controls={ROOM_CONTROLS.map(({ id, Controls }) => (
+          <Controls key={id} />
+        ))}
+      />
+    );
   } else {
     // Qualunque widget con una pagina propria si aggancia qui registrando
     // `detailComponent` nella sua definizione, senza toccare questo switch.

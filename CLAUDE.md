@@ -21,7 +21,22 @@ cd src-tauri && cargo check   # dopo modifiche a Rust o C
 ```
 
 Servono Node (LTS), Rust e i prerequisiti di Tauri v2 per il sistema.
-Non esistono test automatici: si verifica con `npm run build` + `npm run lint` (+ `cargo check`).
+Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
+prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`.
+
+```bash
+# Prove pure dei Gruppi (scripts/gruppi/<nome>.test.mts, nessun server); una alla volta:
+npx rolldown scripts/gruppi/chat.test.mts --file node_modules/.tmp/gruppi-chat.test.mjs --platform node
+node node_modules/.tmp/gruppi-chat.test.mjs
+# Server dei Gruppi (Supabase locale, serve Docker): migrazioni in supabase/migrations/, test pgTAP in
+# supabase/tests/database/ (helper condivisi in _aiuti.psql)
+npx supabase start
+npx supabase db reset      # riapplica le migrazioni da zero
+npx supabase test db       # tutti i file pgTAP
+```
+
+Su Windows le porte 5432x di Supabase locale possono cadere nell'intervallo riservato da `winnat` ("bind forbidden"):
+`net stop winnat` + `net start winnat` da amministratore.
 Le logiche "pure" (es. `widgets/companion/engine/`, `core/pixy/engine/`, `widgets/youtube/lib/watchTracker.ts`, `core/layout/compactor.ts`)
 hanno orologio e random iniettati apposta per poter essere testate senza browser: uno script `.mts` lanciato con
 `node` (Node 24 toglie i tipi da solo) può importarle direttamente; se importano altri file senza estensione, prima
@@ -43,7 +58,8 @@ stesso in dev e nell'app installata: se l'installata è aperta lo blocca, chiude
 `WidgetDefinition` (`core/widgets/types.ts`: taglie, `defaultPlacement`, `detailComponent`, `provider`,
 `settingsGroup`, `mini`). Catalogo (che è anche Impostazioni > Widget: la rotellina di una card apre il suo
 `settingsGroup`), dashboard, layout di default, provider e scelte degli spazi in alto a destra dell'intestazione
-(`mini`, `features/dashboard/HeaderSlots.tsx`) derivano da lì:
+(`mini`, `features/dashboard/HeaderSlots.tsx`) e comandi nell'intestazione della Stanza comune (`roomControls`, raccolti
+in `app/App.tsx` e passati a `RoomPage`: così `social` non importa i widget) derivano da lì:
 aggiungere un widget = cartella `src/widgets/<nome>/` + una riga nel registry.
 
 **Regole di dipendenza**: `app → features, widgets, social, core`; `features → core, widgets/registry, ui`;
@@ -58,7 +74,10 @@ Debito noto: `widgets/youtube/screens/WatchScreen.tsx` importa `study/data/study
 **Dati**:
 - SQL solo nei `*Repository.ts` (es. `widgets/study/data/studyRepository.ts`); i componenti non scrivono SQL.
 - Schema: migrazioni versionate in `core/db/migrations.ts`, solo **aggiunte in fondo** (`version` = ultima + 1),
-  idempotenti (`IF NOT EXISTS`, `INSERT OR IGNORE`); mai modificare una migrazione rilasciata.
+  idempotenti (`IF NOT EXISTS`, `INSERT OR IGNORE`); mai modificare una migrazione rilasciata. Il runner
+  (`core/db/index.ts`) guarda solo `PRAGMA user_version`: due rami che usano lo stesso numero si scontrano al merge, e
+  un DB già passato da quel numero salta l'altra migrazione. Si rinumera la parte non rilasciata e si aggiunge una
+  migrazione di "riparazione" che riesegue quella saltata (es. la v16).
 - Impostazioni: `core/settings/schema.ts` è l'unica fonte (`DEFAULT_SETTINGS` + `SETTING_DEFS`; il controllo in UI
   compare da solo). Righe chiave/valore, niente migrazioni; valori non validi tornano al default (`sanitizeSettings`).
   Se le opzioni dipendono dal registry (che `core` non può importare) la chiave è `text` nello schema e la pagina
@@ -156,7 +175,11 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
   riceve, non calcolarne uno diverso (la libreria non si riallinea a props uguali alle precedenti).
 - Dopo un drag i click sulla cella si ignorano per un attimo: il rilascio genera un click sul pulsante trascinato
   (es. aprirebbe un video o una nota).
+- `<select>` nativi: il menu aperto lo disegna il sistema, quindi `color-scheme: inherit` sul select e sfondo pieno
+  sulle `option` (`--modal-bg`); `--panel-bg` non va bene, in Fosforo è trasparente e il menu esce bianco.
 - Valori "ultimi" in interval/listener di lunga durata → `core/hooks/useLatestRef.ts`.
+- Presenza Realtime dei Gruppi: il server chiude un canale con più di 5 `track` in 30 s. Ogni modulo passa da
+  `social/presence/presenceHub.ts` (limite rispettato + via rapida in broadcast), mai `track` diretti.
 - Contesti: `XContext.tsx` esporta solo il provider; contesto, tipo e hook in `useX.ts` (es. `useSettings.ts`).
 - `tauri-plugin-notification` è pinnato `=2.4.0` (e `tauri-winrt-notification` `=0.8.1`, la versione che usa) perché la 2.5 richiede `tauri ^2.12` (il progetto usa `2.11.3`):
   non aggiornarlo senza controllare il manifesto su crates.io. Idem `tauri-plugin-localhost` (`=2.3.1`, la 2.4 vuole `^2.12`),

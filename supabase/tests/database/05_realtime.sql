@@ -14,6 +14,11 @@ select ok(exists (select 1 from pg_policies where schemaname = 'realtime' and ta
   and policyname = 'gruppi: ricevere nei canali dei propri gruppi' and cmd = 'SELECT'), 'policy di ricezione presente');
 select ok(exists (select 1 from pg_policies where schemaname = 'realtime' and tablename = 'messages'
   and policyname = 'gruppi: inviare nei canali dei propri gruppi' and cmd = 'INSERT'), 'policy di invio presente');
+-- i canali di presenza portano anche il broadcast (la via rapida dei cambi di stato, social/presence/presenceHub.ts)
+select ok((select qual like '%broadcast%' and qual like '%presence%' from pg_policies where schemaname = 'realtime'
+  and tablename = 'messages' and policyname = 'gruppi: ricevere nei canali dei propri gruppi'), 'ricezione: presenza e broadcast');
+select ok((select with_check like '%broadcast%' and with_check like '%presence%' from pg_policies where schemaname = 'realtime'
+  and tablename = 'messages' and policyname = 'gruppi: inviare nei canali dei propri gruppi'), 'invio: presenza e broadcast');
 
 select pg_temp.entra('bruno');
 select ok(private.can_access_channel(pg_temp.leggi('topic')), 'un membro entra nel canale study del suo gruppo');
