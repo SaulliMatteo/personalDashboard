@@ -47,6 +47,8 @@ export interface WidgetDefinition {
    * una riga, alta al massimo ~56px, deve funzionare nei 4 temi.
    */
   mini?: ComponentType;
+  /** Comandi da mostrare nell'intestazione della Stanza comune dei Gruppi (es. il timer dello Studio). */
+  roomControls?: ComponentType;
   /** Provider di contesto che il widget richiede (sempre montato, anche se il widget non è in dashboard). */
   provider?: ComponentType<{ children: ReactNode }>;
 }

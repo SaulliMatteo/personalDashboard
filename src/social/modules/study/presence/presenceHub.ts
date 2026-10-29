@@ -3,6 +3,7 @@ import {
   PresenceHub,
   type ChannelState,
   type PresenceHubDeps,
+  type PresenceHubOptions,
   type PresenceSnapshot as GenericSnapshot,
 } from "../../../presence/presenceHub";
 import { buildPresence, parseChannelState, type StudyPresence } from "./payload";
@@ -36,7 +37,7 @@ export class StudyPresenceHub {
   private readonly hub: PresenceHub<StudyLocal, StudyPresence>;
   private readonly now: () => number;
 
-  constructor(deps: PresenceHubDeps<StudyPresence>) {
+  constructor(deps: PresenceHubDeps<StudyPresence>, options: PresenceHubOptions = {}) {
     this.now = deps.now;
     this.hub = new PresenceHub<StudyLocal, StudyPresence>(
       deps,
@@ -51,7 +52,8 @@ export class StudyPresenceHub {
           }),
         parse: parseChannelState,
       },
-      { timer: null, subject: null, rooms: {}, seats: {}, idleSince: deps.now() }
+      { timer: null, subject: null, rooms: {}, seats: {}, idleSince: deps.now() },
+      options
     );
   }
 

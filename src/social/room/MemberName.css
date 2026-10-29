@@ -1,0 +1,17 @@
+.mname {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mname-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mname-me {
+  flex: 0 0 auto;
+  white-space: pre;
+}

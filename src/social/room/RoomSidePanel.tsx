@@ -6,6 +6,7 @@ import { formatStudyTime } from "../modules/study/leaderboard";
 import { sharedOrder, todoProgress, type SharedTodo } from "../modules/todo/payload";
 import { useTodo } from "../modules/todo/useTodo";
 import { phaseElapsedSeconds } from "../modules/study/presence/payload";
+import MemberName from "./MemberName";
 import { formatClock, lastSeenText } from "./roomText";
 import type { MemberSection } from "./seating";
 import RoomChat from "./RoomChat";
@@ -196,7 +197,9 @@ function RoomSidePanel({ groupId, meId, sections, members, selectedId, onToggle,
                     <div key={userId} ref={open ? openRef : undefined} className={`rsp-row${open ? " is-open" : ""}`}>
                       <button type="button" className="rsp-row-btn" aria-expanded={open} onClick={() => onToggle(userId)}>
                         <span className={`grp-dot grp-dot--${member.kind}`} aria-hidden="true" />
-                        <span className="rsp-name">{member.isMe ? `${member.username} (tu)` : member.username}</span>
+                        <span className="rsp-name">
+                          <MemberName username={member.username} isMe={member.isMe} />
+                        </span>
                         <span className={`rsp-short rsp-short--${member.kind}`}>{shortText(member, room, serverNow)}</span>
                       </button>
                       {open && <MemberDetails member={member} serverNow={serverNow} sheet={sheetOf(member)} />}

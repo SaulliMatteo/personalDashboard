@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { useSettings } from "../useSettings";
 import type { SettingDef, SettingKey } from "../schema";
+import ExpandableText from "../../../ui/ExpandableText";
 import NumberField from "../../../ui/NumberField";
 import "./settingsFields.css";
 
@@ -109,9 +110,9 @@ function SettingsField({ def }: { def: SettingDef }) {
           {def.label}
         </label>
         {def.description && (
-          <p id={descId} className="settings-field-description">
+          <ExpandableText id={descId} className="settings-field-description">
             {def.description}
-          </p>
+          </ExpandableText>
         )}
       </div>
       <div className="settings-field-control">
