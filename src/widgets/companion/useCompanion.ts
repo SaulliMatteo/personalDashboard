@@ -1,8 +1,8 @@
 import { createContext, useContext } from "react";
-import type { BrainSnapshot } from "./engine/brain";
-import type { FaceFrame } from "./engine/animator";
-import type { AppCategory, ForegroundApp } from "./engine/appCategory";
-import type { PoseId } from "./engine/poses";
+import type { BrainSnapshot } from "../../core/pixy/engine/snapshot";
+import type { FaceFrame } from "../../core/pixy/engine/animator";
+import type { AppCategory, ForegroundApp } from "../../core/system/appCategory";
+import type { PoseId } from "../../core/pixy/engine/poses";
 
 /* Contesto e hook separati dal provider: così l'aggiornamento a caldo di Vite non crea
    un secondo contesto quando cambia il file del provider (o qualcosa che importa). */

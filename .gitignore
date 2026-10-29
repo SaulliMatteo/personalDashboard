@@ -24,6 +24,23 @@ lerna-debug.log*
 .env.*
 !.env.example
 
+# Supabase CLI (stato locale, link al progetto, credenziali)
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+supabase/.env.*
+supabase/*/.local.*
+
+# Credenziali e dump (mai nel repo)
+*.pem
+*.key
+credentials.json
+service-account.json
+client_secret.json
+*.dump
+*.sql.gz
+dump.sql
+
 # Database locali (non vanno mai nel repo)
 *.db
 *.db-journal
@@ -49,7 +66,12 @@ desktop.ini
 
 # Istruzioni locali per Claude
 CLAUDE.local.md
-# Build Android (output di Gradle, si rigenera)
-src-tauri/gen/android/app/build/
-src-tauri/gen/android/build/
-src-tauri/gen/android/.gradle/
+
+# Documentazione, mockup e prompt: solo in locale (vedi CLAUDE.md)
+docs
+
+# Progetto Android generato da Tauri (tauri android init lo ricrea), con i suoi output di Gradle
+src-tauri/gen/
+
+# Font della Lavagna copiati da node_modules (scripts/copy-excalidraw-assets.mjs)
+public/excalidraw-assets/

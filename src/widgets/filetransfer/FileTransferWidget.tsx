@@ -1,4 +1,4 @@
-import type { MouseEvent } from "react";
+import { createElement, type MouseEvent } from "react";
 import WidgetFrame from "../../core/widgets/WidgetFrame";
 import type { WidgetProps } from "../../core/widgets/types";
 import { sizeKey } from "../../core/widgets/sizes";
@@ -7,6 +7,7 @@ import { PlayIcon, StopIcon } from "../../ui/icons";
 import { useFileTransfer } from "./useFileTransfer";
 import { extensionOf, formatSize } from "./lib/format";
 import { STATUS_LABELS } from "./lib/labels";
+import { FT_CELLS } from "./card/cards";
 import "./FileTransferWidget.css";
 
 const LATEST_FILES = 3;
@@ -16,14 +17,15 @@ const LATEST_FILES = 3;
 const STOP_ROUND = { notte: 2, opaco: 3, quaderno: 2, fosforo: 0 };
 
 /**
- * Card del File transfer (temi-dashboard/docs/design/temi/*.html): la
- * struttura è la stessa in tutti i temi, cambiano font e colori (CSS).
- * 1×1: solo il numero di file ricevuti e il punto di stato.
+ * Card del File transfer (temi-dashboard/docs/design/temi/*.html): in 2×1 e
+ * 2×2 la struttura è la stessa in tutti i temi, cambiano font e colori (CSS).
+ * La 1×1 ha una forma per tema (card/cards.ts).
  */
 function FileTransferWidget({ w, h }: WidgetProps) {
   const { running, address, busy, files, ready, startServer, stopServer } = useFileTransfer();
   const [onLabel, offLabel] = useThemeVariant(STATUS_LABELS);
   const stopRound = useThemeVariant(STOP_ROUND);
+  const Cell = useThemeVariant(FT_CELLS);
   const size = sizeKey(w, h);
   const count = ready ? files.length : "–";
 
@@ -34,15 +36,7 @@ function FileTransferWidget({ w, h }: WidgetProps) {
   }
 
   if (size === "S") {
-    return (
-      <WidgetFrame>
-        <article className={`widget ftw ftw--S${running ? " is-online" : ""}`} aria-label={`File transfer: ${count} file ricevuti, ${running ? "online" : "offline"}`}>
-          <span className="ftw-num">{count}</span>
-          <span className="ftw-dot" aria-hidden="true" />
-          <span className="ftw-cap">file</span>
-        </article>
-      </WidgetFrame>
-    );
+    return <WidgetFrame>{createElement(Cell)}</WidgetFrame>;
   }
 
   const toggleLabel = running ? "Ferma il server" : "Avvia il server";

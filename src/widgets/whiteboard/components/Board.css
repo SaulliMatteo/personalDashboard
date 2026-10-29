@@ -1,0 +1,11 @@
+/* Excalidraw riempie il suo contenitore: qui prende tutta la cornice (.wb-board). */
+.wb-excalidraw {
+  position: absolute;
+  inset: 0;
+}
+
+/* Pulsante dello schermo intero: aspetto di "Libreria" (classe sidebar-trigger di Excalidraw).
+   La barra in alto a destra ha pointer-events: none, i pulsanti lo riattivano. */
+.wb-excalidraw .wb-fs-btn {
+  pointer-events: all;
+}

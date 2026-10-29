@@ -35,6 +35,11 @@
   scrollbar-color: var(--border-accent) transparent;
 }
 
+/* Viste che stanno tutte nella finestra (AppShell scroll={false}): scorre solo ciò che sta nei loro riquadri. */
+.main--fixed {
+  overflow: hidden;
+}
+
 .main::-webkit-scrollbar {
   width: 8px;
 }

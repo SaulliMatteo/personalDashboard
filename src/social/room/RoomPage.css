@@ -1,0 +1,203 @@
+/*
+ * Stanza comune (docs/mockup-gruppi/gruppi/stanza-comune.html). La sala sta in RoomScene.css, la colonna destra in
+ * RoomSidePanel.css. La pagina occupa tutta l'altezza di .main, che qui non scorre (AppShell scroll={false}).
+ */
+
+.roomp {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: var(--text-primary);
+}
+
+/* Intestazione su due righe: a sinistra il nome del gruppo e, sotto, la sala guardata; a destra posto, gruppi e
+   impostazioni sulla prima riga e il timer sulla seconda. Se non c'è spazio i comandi vanno a capo, sempre a destra. */
+.roomp-header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.roomp-top,
+.roomp-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 20px;
+}
+
+/* Il nome non si accorcia per stare accanto ai comandi: se non c'è spazio vanno a capo loro (i puntini solo se il
+   nome da solo non sta nella riga). */
+.roomp-header h1 {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 30px;
+  font-weight: var(--heading-weight);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.roomp-actions,
+.roomp-controls {
+  margin-left: auto;
+}
+
+.roomp-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roomp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.roomp-header .grp-btn {
+  height: 42px;
+}
+
+/* Dal mockup: "Siediti in questa sala" è pieno d'accento in tutti i temi (in Fosforo il primario sarebbe solo bordato). */
+.roomp-header .roomp-fill {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.roomp-icon-btn {
+  width: 42px;
+  padding: 0;
+}
+
+/* Cambio sala */
+.roomp-rooms {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.roomp-header .roomp-arrow {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.roomp-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.roomp-rooms-label {
+  min-width: 92px;
+  text-align: center;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.roomp-here {
+  padding: 4px 12px;
+  border-radius: var(--radius-item);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.roomp-full {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* I miei gruppi: come le voci della barra laterale. */
+.roomp-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border: var(--panel-border);
+  border-radius: var(--radius-item);
+  background: var(--panel-bg);
+}
+
+.roomp-groups button {
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--nav-fg);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.roomp-groups button.is-on {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-fg);
+}
+
+.roomp-groups button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* La sala e la colonna destra, alte quanto lo spazio che resta. */
+.roomp-main {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  gap: 14px;
+}
+
+.roomp-room {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  overflow: hidden;
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--card-shadow);
+}
+
+/* Il riquadro misurato per la scala della sala (RoomPage): la scena, già scalata, sta al centro. */
+.roomp-scene {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--scene-bg);
+}
+
+.roomp-scene .rs-fit {
+  flex: none;
+}
+
+/* ---------- Senza account o senza gruppi ---------- */
+.roomp-card {
+  display: flex;
+  flex-direction: column;
+  padding: 22px;
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+}
+
+/* Gli stati (accesso, nessun gruppo…) riempiono la pagina e, se non ci stanno, scorrono dentro il riquadro. */
+.roomp-card--state {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+}

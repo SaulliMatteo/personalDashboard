@@ -1,6 +1,9 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
+/* Secondi di silenzio dopo cui una connessione si chiude. */
+#define NET_CLIENT_TIMEOUT_S 30
+
 /* Unico punto del server con codice diverso per sistema operativo:
    Winsock e thread Win32 su Windows, socket POSIX e pthread altrove
    (macOS, Linux). Il resto del server usa solo i nomi definiti qui. */
@@ -28,7 +31,13 @@ static inline int  net_last_error(void)      { return WSAGetLastError(); }
 /* accept() fallito perché il socket in ascolto è stato chiuso (stop del server). */
 static inline int  net_listen_closed(int e)  { return e == WSAENOTSOCK || e == WSAEINVAL || e == WSAECONNABORTED; }
 static inline void net_shutdown(SOCKET s)    { (void)s; }  /* closesocket sblocca già accept() */
-static inline void net_prepare_client(SOCKET s) { (void)s; }
+/* Un client che non manda più niente non tiene occupato un thread per sempre. */
+static inline void net_prepare_client(SOCKET s) {
+    DWORD ms = NET_CLIENT_TIMEOUT_S * 1000;
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&ms, sizeof(ms));
+    setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, (const char *)&ms, sizeof(ms));
+}
+static inline long atomic_add(volatile long *v, long d) { return InterlockedExchangeAdd(v, d) + d; }
 
 #define make_dir(p)        _mkdir(p)
 #define file_seek(f, o, w) _fseeki64(f, o, w)
@@ -66,18 +75,28 @@ static inline int  net_listen_closed(int e)  { return e == EBADF || e == EINVAL 
 /* Su macOS close() non sblocca un accept() in attesa: serve prima shutdown(). */
 static inline void net_shutdown(SOCKET s)    { shutdown(s, SHUT_RDWR); }
 
+/* Un client che non manda più niente non tiene occupato un thread per sempre. */
+static inline void net_set_timeouts(SOCKET s) {
+    struct timeval tv = { NET_CLIENT_TIMEOUT_S, 0 };
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    setsockopt(s, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+}
+
 /* Se l'iPad chiude la connessione a metà invio, send() non deve
    uccidere l'app con SIGPIPE. */
 #ifdef SO_NOSIGPIPE
 static inline void net_prepare_client(SOCKET s) {
     int yes = 1;
     setsockopt(s, SOL_SOCKET, SO_NOSIGPIPE, &yes, sizeof(yes));
+    net_set_timeouts(s);
 }
 #define SEND_FLAGS 0
 #else
-static inline void net_prepare_client(SOCKET s) { (void)s; }
+static inline void net_prepare_client(SOCKET s) { net_set_timeouts(s); }
 #define SEND_FLAGS MSG_NOSIGNAL
 #endif
+
+static inline long atomic_add(volatile long *v, long d) { return __sync_add_and_fetch(v, d); }
 
 #define make_dir(p)        mkdir(p, 0755)
 #define file_seek(f, o, w) fseeko(f, (off_t)(o), w)

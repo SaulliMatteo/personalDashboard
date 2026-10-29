@@ -1,0 +1,239 @@
+/* Comandi delle tabelle (components/TableTools.tsx): sopra il testo, dentro la pagina.
+   Lo stile della tabella stessa sta in noteEditor.css (è contenuto della pagina). */
+
+.nq-tbl-tools {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  font-family: var(--font-family);
+}
+
+.nq-tbl-tools > * {
+  pointer-events: auto;
+}
+
+.nq-tbl-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.nq-tbl-anchor {
+  position: absolute;
+  display: inline-flex;
+}
+
+.nq-tbl-anchor:has(.nq-tbl-menu) {
+  z-index: 41;
+}
+
+/* + colonna e + riga: tratteggiati come nel mockup */
+.nq-tbl-add {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 0;
+  border: 1.5px dashed color-mix(in srgb, var(--note-page-ink) 26%, transparent);
+  border-radius: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--note-page-ink) 55%, transparent);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.nq-tbl-add--col {
+  width: 18px;
+}
+
+.nq-tbl-add--row {
+  height: 16px;
+}
+
+.nq-tbl-add:hover,
+.nq-tbl-add:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Maniglie di riga, di colonna e della tabella */
+.nq-tbl-grip {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--note-page-ink) 20%, transparent);
+  border-radius: 0;
+  background: var(--note-page-bg);
+  color: color-mix(in srgb, var(--note-page-ink) 60%, transparent);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.nq-tbl-grip:hover,
+.nq-tbl-grip[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.nq-tbl-grip:focus-visible,
+.nq-tbl-add:focus-visible,
+.nq-tbl-colh:focus-visible,
+.nq-tbl-aligns button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Confine tra due colonne: si trascina per cambiare la larghezza */
+.nq-tbl-colh {
+  position: absolute;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.nq-tbl-colh::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.nq-tbl-colh:hover::after,
+.nq-tbl-colh:focus-visible::after {
+  opacity: 1;
+}
+
+/* Menu (riusa .nq-menu di noteEditor.css) */
+.nq-tbl-menu {
+  min-width: 230px;
+  font-family: var(--font-family);
+}
+
+.nq-tbl-menu button strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nq-tbl-menu button strong svg {
+  font-size: 16px;
+}
+
+.nq-menu.nq-tbl-menu button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.nq-menu.nq-tbl-menu button:disabled:hover {
+  background: transparent;
+}
+
+.nq-tbl-aligns {
+  display: flex;
+  gap: 4px;
+  padding: 4px 6px;
+}
+
+.nq-menu .nq-tbl-aligns button {
+  flex: 1;
+  align-items: center;
+  padding: 7px 0;
+  font-size: 17px;
+}
+
+.nq-menu .nq-tbl-aligns button[aria-pressed="true"] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ---------- Per tema ---------- */
+
+:root[data-theme="opaco"] .nq-tbl-grip {
+  border: 0;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:root[data-theme="quaderno"] .nq-tbl-grip {
+  border: 1.5px solid var(--note-page-ink);
+}
+
+:root[data-theme="quaderno"] .nq-tbl-add {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .nq-tbl-grip {
+  border-style: dashed;
+}
+
+:root[data-theme="fosforo"] .nq-tbl-add {
+  border-style: dotted;
+}
+
+:root[data-theme="fosforo"] .nq-tbl-colh::after {
+  background: var(--led);
+}
+
+/* ---------- Aspetto della tabella (colori, spessore, stile) ---------- */
+
+.nq-tbl-look {
+  width: 250px;
+  min-width: 0;
+  max-height: 420px;
+}
+
+.nq-tbl-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 6px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.nq-tbl-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.nq-tbl-section .nq-swatch-grid {
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.nq-tbl-section .nq-sw-custom-row {
+  margin-top: 0;
+}
+
+.nq-tbl-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.nq-menu .nq-tbl-seg button {
+  padding: 5px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0;
+  font-size: 12px;
+}
+
+.nq-menu .nq-tbl-seg button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.nq-tbl-hint {
+  margin: 6px 8px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}

@@ -37,3 +37,20 @@ export function drawStrokes(
   }
   ctx.globalAlpha = 1;
 }
+
+/** Tratti validi da un valore qualunque (JSON letto da un attributo o da un file). */
+export function asStrokes(value: unknown): InkStroke[] {
+  if (!Array.isArray(value)) return [];
+  const out: InkStroke[] = [];
+  for (const s of value) {
+    if (!s || typeof s !== "object") continue;
+    const { tool, color, size, points } = s as Record<string, unknown>;
+    if ((tool !== "pen" && tool !== "highlighter") || typeof color !== "string" || !/^#[0-9a-f]{6}$/i.test(color)) continue;
+    if (typeof size !== "number" || !Number.isFinite(size) || !Array.isArray(points)) continue;
+    const pts = points.filter(
+      (p): p is [number, number] => Array.isArray(p) && p.length === 2 && p.every((n) => typeof n === "number" && Number.isFinite(n))
+    );
+    if (pts.length > 0) out.push({ tool, color, size: Math.min(40, Math.max(0.5, size)), points: pts });
+  }
+  return out;
+}

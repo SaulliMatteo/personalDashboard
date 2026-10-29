@@ -27,6 +27,11 @@ import {
 import { htmlToMarkdown } from "./html";
 import { markdownToHtml, parseFrontmatter, parseMetaString, parseMetaTags } from "./markdown";
 
+import { asPageColor } from "./pageColor";
+import { isNoteFont } from "./textStyle";
+import { loadCollections } from "./collectionsStore";
+import { expandCollectionBlocks } from "./viewExport";
+
 /**
  * COPIA SU DISCO (Documenti/Notes). SQLite resta il database di lavoro; ogni
  * nota viene rispecchiata in formati aperti:
@@ -108,19 +113,21 @@ function buildMarkdown(note: NoteSummary, pages: NotePage[]): string {
     `title: ${JSON.stringify(note.title)}`,
     `tags: [${note.tags.map((t) => JSON.stringify(t)).join(", ")}]`,
     `starred: ${note.starred}`,
+    ...(note.font ? [`font: ${note.font}`] : []),
     `created: ${new Date(note.createdAt).toISOString()}`,
     `updated: ${new Date(note.updatedAt).toISOString()}`,
     "---",
     "",
   ].join("\n");
-  const body = pages.map((p) => htmlToMarkdown(p.content)).join(`\n\n${PAGE_MARKER}\n\n`);
+  // In nota.md le viste collegate sono tabelle con i dati del momento; canvas.json tiene l'HTML vero.
+  const body = pages.map((p) => htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }))).join(`\n\n${PAGE_MARKER}\n\n`);
   return `${front}\n${body}\n`;
 }
 
 function buildCanvasJson(pages: NotePage[]): string {
   return JSON.stringify({
     version: 1,
-    pages: pages.map((p) => ({ background: p.background, strokes: p.ink, html: p.content })),
+    pages: pages.map((p) => ({ background: p.background, color: p.color, strokes: p.ink, html: p.content })),
   });
 }
 
@@ -160,6 +167,7 @@ async function writeNote(note: NoteSummary, pages: NotePage[], byId: Map<number,
 /** Riscrive su disco solo le note cambiate (o spostate/rinominate). Ritorna quante. */
 export async function syncPending(notes: NoteSummary[], folders: Folder[]): Promise<number> {
   const byId = new Map(folders.map((f) => [f.id, f]));
+  await loadCollections(); // per scrivere le viste collegate con i loro dati
   await ensureVaultDir();
   let written = 0;
   for (const note of notes) {
@@ -241,6 +249,7 @@ interface CanvasFilePage {
   background?: string;
   strokes?: InkStroke[];
   html?: string;
+  color?: string | null;
 }
 
 async function readCanvasFile(dir: string): Promise<CanvasFilePage[] | null> {
@@ -318,6 +327,7 @@ export async function importVault(knownPaths: Set<string>, folders: Folder[]): P
     for (let i = 0; i < count; i++) {
       const fromCanvas = canvas?.[i];
       pages.push({
+        color: asPageColor(fromCanvas?.color),
         content: fromCanvas?.html ? fromCanvas.html : markdownToHtml(mdPages[i] ?? ""),
         ink: Array.isArray(fromCanvas?.strokes) ? fromCanvas.strokes : [],
         background: asBackground(fromCanvas?.background),
@@ -332,6 +342,7 @@ export async function importVault(knownPaths: Set<string>, folders: Folder[]): P
       title: parseMetaString(meta.title) ?? segments[segments.length - 1].replace(/--\d+$/, "").replace(/-/g, " "),
       tags: parseMetaTags(meta.tags),
       starred: meta.starred === "true",
+      font: isNoteFont(meta.font) && meta.font !== "punti" ? meta.font : null,
       createdAt: Number.isFinite(created) ? created : now,
       updatedAt: Number.isFinite(updated) ? updated : now,
       deletedAt: trashed ? now : null,
@@ -341,4 +352,66 @@ export async function importVault(knownPaths: Set<string>, folders: Folder[]): P
     imported++;
   }
   return imported;
+}
+
+// ---------------------------------------------------------------------
+// Raccolte su disco: Notes/Raccolte/<nome>.json (+ .csv), file dei campi "File" in
+// Notes/Raccolte/allegati/<id raccolta>/. Si tolgono solo i .json scritti dall'app
+// (riconosciuti dal campo "kind"), mai file messi lì a mano.
+// ---------------------------------------------------------------------
+
+export const COLLECTIONS_DIR = `${VAULT_DIR}/Raccolte`;
+
+export interface CollectionFileSet {
+  /** Nome del file senza estensione (unico). */
+  base: string;
+  json: string;
+  csv: string;
+}
+
+/** Nome dei file di una raccolta: slug del nome, con l'id se due raccolte hanno lo stesso slug. */
+export function collectionFileBase(name: string, id: number, taken: Set<string>): string {
+  const slug = slugify(name, "raccolta");
+  return taken.has(slug) ? `${slug}--${id}` : slug;
+}
+
+/** Scrive le raccolte vive e toglie i file delle raccolte che non ci sono più. */
+export async function writeCollectionFiles(files: CollectionFileSet[], ownedKind: string): Promise<void> {
+  await mkdir(COLLECTIONS_DIR, { ...BASE, recursive: true });
+  const wanted = new Set(files.map((f) => f.base));
+  for (const f of files) {
+    await writeTextFile(`${COLLECTIONS_DIR}/${f.base}.json`, f.json, BASE);
+    await writeTextFile(`${COLLECTIONS_DIR}/${f.base}.csv`, f.csv, BASE);
+  }
+  for (const entry of await readDir(COLLECTIONS_DIR, BASE)) {
+    if (!entry.isFile || !entry.name.endsWith(".json")) continue;
+    const base = entry.name.slice(0, -5);
+    if (wanted.has(base)) continue;
+    try {
+      const parsed = JSON.parse(await readTextFile(`${COLLECTIONS_DIR}/${entry.name}`, BASE)) as { kind?: unknown };
+      if (parsed.kind !== ownedKind) continue;
+      await remove(`${COLLECTIONS_DIR}/${entry.name}`, BASE);
+      if (await exists(`${COLLECTIONS_DIR}/${base}.csv`, BASE)) await remove(`${COLLECTIONS_DIR}/${base}.csv`, BASE);
+    } catch (error) {
+      console.error("File di raccolta non controllato:", entry.name, error);
+    }
+  }
+}
+
+/** Copia un file per un campo "File" di una raccolta. Ritorna il nome finale. */
+export async function saveCollectionFile(collectionId: number, name: string, bytes: Uint8Array): Promise<string> {
+  const dir = `${COLLECTIONS_DIR}/allegati/${collectionId}`;
+  await mkdir(dir, { ...BASE, recursive: true });
+  const clean = safeFileName(name);
+  const dot = clean.lastIndexOf(".");
+  const stem = dot > 0 ? clean.slice(0, dot) : clean;
+  const ext = dot > 0 ? clean.slice(dot) : "";
+  let finalName = clean;
+  for (let n = 2; await exists(`${dir}/${finalName}`, BASE); n++) finalName = `${stem} (${n})${ext}`;
+  await writeFile(`${dir}/${finalName}`, bytes, BASE);
+  return finalName;
+}
+
+export async function collectionFilePath(collectionId: number, name: string): Promise<string> {
+  return join(await documentDir(), VAULT_DIR, "Raccolte", "allegati", String(collectionId), name);
 }

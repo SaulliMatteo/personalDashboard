@@ -153,7 +153,8 @@
 
   padding: 12px 14px;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-item);
+  /* schede su più righe: rettangoli smussati, non le pillole di --radius-item (Opaco e Fosforo) */
+  border-radius: var(--radius-panel);
   background: var(--surface-1);
   text-align: left;
   cursor: pointer;

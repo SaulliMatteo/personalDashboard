@@ -2,13 +2,22 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import type { NotePage } from "../data/notesRepository";
 import { htmlToMarkdown, monthYear, sanitizeHtml } from "./html";
-import { drawStrokes } from "./ink";
+import { isPageColorKey, luminance, paperVars } from "./pageColor";
+import type { NoteFont } from "./textStyle";
+import { renderStaticBlocks } from "./blockExport";
+import { layoutTables } from "./tableDom";
+import { expandCollectionBlocks } from "./viewExport";
+import { THEME_INK, drawStrokes } from "./ink"; // al posto del solo drawStrokes
 
 export interface ExportMeta {
   title: string;
   /** "LAVORO / PROGETTO ATLANTE" */
   kicker: string;
   createdAt: number;
+  /** Font predefinito della nota. */
+  font?: NoteFont | null;
+  /** Cartella della nota su disco: da lì si leggono le immagini dei blocchi. */
+  noteDir?: string | null;
 }
 
 export interface RenderOptions {
@@ -21,6 +30,11 @@ export interface RenderOptions {
 const PAPER_WIDTH = 870; // = 58em a 15px, la larghezza del foglio nell'editor
 const LIGHT_VARS: Record<string, string> = {
   "--bg-card": "#ffffff",
+  "--note-page-bg": "#ffffff",
+  "--note-page-ink": "#1a1a1e",
+  "--note-page-pattern": "none",
+  "--note-page-border": "0",
+  "--note-page-shadow": "none",
   "--text-primary": "#1a1a1e",
   "--text-secondary": "#3a3a42",
   "--text-muted": "#6e6e78",
@@ -35,7 +49,8 @@ const LIGHT_VARS: Record<string, string> = {
 // ---------------------------------------------------------------------
 
 export function noteToMarkdown(title: string, pages: NotePage[]): string {
-  const body = pages.map((p) => htmlToMarkdown(p.content)).join("\n\n---\n\n");
+  // Le viste collegate diventano tabelle con i dati del momento (lib/viewExport.ts).
+  const body = pages.map((p) => htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }))).join("\n\n---\n\n");
   return `# ${title || "Senza titolo"}\n\n${body}\n`;
 }
 
@@ -43,13 +58,13 @@ export function noteToMarkdown(title: string, pages: NotePage[]): string {
 // Pagina → canvas
 // ---------------------------------------------------------------------
 
-function luminance(hex: string): number {
-  const m = hex.trim().match(/^#([\da-f]{3}|[\da-f]{6})$/i);
-  if (!m) return 0;
-  const v = m[1].length === 3 ? m[1].split("").map((c) => c + c).join("") : m[1];
-  const [r, g, b] = [0, 2, 4].map((i) => parseInt(v.slice(i, i + 2), 16) / 255);
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
+// function luminance(hex: string): number {
+//   const m = hex.trim().match(/^#([\da-f]{3}|[\da-f]{6})$/i);
+//   if (!m) return 0;
+//   const v = m[1].length === 3 ? m[1].split("").map((c) => c + c).join("") : m[1];
+//   const [r, g, b] = [0, 2, 4].map((i) => parseInt(v.slice(i, i + 2), 16) / 255);
+//   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+// }
 
 /** Tratti quasi bianchi (invisibili su carta bianca) diventano quasi neri. */
 const lightInk = (color: string) => (luminance(color) > 0.85 ? "#1a1a1e" : color);
@@ -57,12 +72,24 @@ const lightInk = (color: string) => (luminance(color) > 0.85 ? "#1a1a1e" : color
 function buildStage(page: NotePage, number: number, meta: ExportMeta, light: boolean, minHeight: number) {
   const stage = document.createElement("div");
   stage.style.cssText = "position:fixed;left:-20000px;top:0;pointer-events:none;";
-  if (light) for (const [key, value] of Object.entries(LIGHT_VARS)) stage.style.setProperty(key, value);
+  if (light) {
+    for (const [key, value] of Object.entries(LIGHT_VARS)) stage.style.setProperty(key, value);
+    // Le pagine della palette (crema, salvia…) prendono i colori del giorno (tokens.css).
+    stage.classList.add("nq-export-light");
+  }
 
   const paper = document.createElement("div");
   paper.className = "nq-paper";
   paper.dataset.bg = page.background;
-  paper.style.cssText = `--nq-zoom:1;width:${PAPER_WIDTH}px;max-width:none;flex:none;border:none;border-radius:0;min-height:${minHeight}px;`;
+  // Prima le misure (cssText sostituisce tutto lo stile), poi il colore della pagina.
+  paper.style.cssText = `--nq-zoom:1;--nq-paper-w:${PAPER_WIDTH}px;width:${PAPER_WIDTH}px;max-width:none;flex:none;border:none;border-radius:0;box-shadow:none;min-height:${minHeight}px;`;
+  if (isPageColorKey(page.color)) {
+    paper.dataset.pageColor = page.color;
+  } else if (page.color) {
+    paper.style.backgroundColor = page.color;
+    for (const [key, value] of Object.entries(paperVars(page.color))) paper.style.setProperty(key, value);
+  }
+  if (meta.font) paper.dataset.noteFont = meta.font;
   paper.innerHTML =
     `<div class="nq-paper-head"><span></span><span></span></div>` +
     `<div class="nq-doc"></div>` +
@@ -76,7 +103,10 @@ function buildStage(page: NotePage, number: number, meta: ExportMeta, light: boo
   footRight.textContent = String(number).padStart(2, "0");
 
   const doc = paper.querySelector<HTMLElement>(".nq-doc");
-  if (doc) doc.innerHTML = sanitizeHtml(page.content);
+  if (doc) {
+    doc.innerHTML = sanitizeHtml(expandCollectionBlocks(page.content));
+    layoutTables(doc); // larghezze delle colonne
+  }
 
   stage.appendChild(paper);
   document.body.appendChild(stage);
@@ -123,6 +153,8 @@ async function renderPage(
 
   const { stage, paper } = buildStage(page, number, meta, light, minHeight);
   try {
+    // Immagini e schede file come HTML statico (prima di misurare l'altezza).
+    await renderStaticBlocks(paper, meta.noteDir ?? null);
     const width = PAPER_WIDTH;
     const height = Math.ceil(paper.getBoundingClientRect().height);
     const background = getComputedStyle(paper).backgroundColor;
@@ -144,7 +176,14 @@ async function renderPage(
     ctx.fillStyle = background;
     ctx.fillRect(0, 0, width, height);
     ctx.drawImage(image, 0, 0, width, height);
-    drawStrokes(ctx, width, page.ink, light ? lightInk : undefined);
+    // Su una pagina colorata l'inchiostro del tema è quello della pagina (scuro o chiaro a seconda del colore).
+    const pageInk = getComputedStyle(paper).getPropertyValue("--note-page-ink").trim() || THEME_INK;
+    const mapInk = page.color
+      ? (c: string) => (c.toLowerCase() === THEME_INK ? pageInk : c)
+      : light
+        ? lightInk
+        : undefined;
+    drawStrokes(ctx, width, page.ink, mapInk);
     return canvas;
   } finally {
     stage.remove();

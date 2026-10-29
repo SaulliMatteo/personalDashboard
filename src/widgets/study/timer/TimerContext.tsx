@@ -21,8 +21,14 @@ import {
 import { useSettings } from "../../../core/settings/useSettings";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import { emitActivityEvent, publishActivity } from "../../../core/activity/activityBus";
+import { readSystemSnapshot } from "../../../core/system/systemApi";
+import { sendAppNotification, type AppNotification } from "../../../core/notify/notifier";
+import { classifyApp, parseAppCategories, type AppCategory } from "../../../core/system/appCategory";
+import type { AppSettings } from "../../../core/settings/schema";
 import { colorForSubject, pickUnusedColor } from "../lib/colors";
-import { playChime, notify } from "./alerts";
+import { formatHoursMinutes } from "../lib/format";
+import { playChime } from "./alerts";
+import { AutoStopTracker, type AutoStopResult } from "./autoStop";
 import { TimerContext, type AddSubjectResult } from "./useTimer";
 
 const IDLE_STATE: TimerState = {
@@ -50,6 +56,24 @@ function isStopwatchState(s: TimerState): boolean {
 function elapsedSince(runningSince: number): number {
   return Math.max(0, Math.floor((Date.now() - runningSince) / 1000));
 }
+
+/** Ogni quanto si legge il sistema per lo stop automatico. */
+const AUTO_STOP_POLL_MS = 5000;
+
+/** Categorie di app che, scelte nelle impostazioni, fermano il timer anche senza inattività. */
+function autoStopCategories(cfg: AppSettings): Set<AppCategory> {
+  const categories = new Set<AppCategory>();
+  if (cfg.studyAutoStopGame) categories.add("game");
+  if (cfg.studyAutoStopVideo) categories.add("video");
+  if (cfg.studyAutoStopChat) categories.add("chat");
+  return categories;
+}
+
+const AUTO_STOP_REASON: Partial<Record<AppCategory, string>> = {
+  game: "Stai giocando",
+  video: "Stai guardando video",
+  chat: "Sei in chat",
+};
 
 function computeDisplaySeconds(s: TimerState): number {
   if (isStopwatchState(s)) {
@@ -138,6 +162,26 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     });
   }, [state.phase, state.runningSince, state.subjectId, subjects]);
 
+  // Il timer per chi deve ricostruirlo altrove (i Gruppi): un oggetto nuovo solo quando cambia lo stato.
+  useEffect(() => {
+    if (state.phase === "idle") {
+      publishActivity({ studyTimer: null });
+      return;
+    }
+    const stopwatch = state.phase === "work" && state.phaseTotalSeconds === 0;
+    publishActivity({
+      studyTimer: {
+        phase: state.phase === "work" ? "work" : "break",
+        mode: stopwatch ? "stopwatch" : "pomodoro",
+        runningSince: state.runningSince,
+        phaseTotalSeconds: state.phaseTotalSeconds,
+        // cronometro: remainingSeconds sono i secondi già fatti; pomodoro: quelli che mancano
+        accumulatedSeconds: stopwatch ? state.remainingSeconds : Math.max(0, state.phaseTotalSeconds - state.remainingSeconds),
+        changedAt: Date.now(),
+      },
+    });
+  }, [state.phase, state.runningSince, state.phaseTotalSeconds, state.remainingSeconds]);
+
   // Obiettivo giornaliero superato: evento UNA volta, nel momento in cui si passa la soglia
   // (non al caricamento se era già superato).
   const prevTodayTotalRef = useRef<number | null>(null);
@@ -156,10 +200,10 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, []);
 
-  function alertPhaseChange(title: string, body: string) {
+  function alertPhaseChange(notification: AppNotification) {
     const s = settingsRef.current;
     if (s.studySoundEnabled) playChime(s.studyVolume);
-    if (s.studyNotificationsEnabled) void notify(title, body);
+    if (s.studyNotificationsEnabled) void sendAppNotification(notification);
   }
 
   const completingRef = useRef(false);
@@ -193,10 +237,11 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         await saveTimerState(newState);
         const breakLabel = isLong ? "una pausa lunga" : "una pausa breve";
         emitActivityEvent({ type: "pomodoroDone" });
-        alertPhaseChange(
-          "Pomodoro completato",
-          subjectName ? `Hai studiato ${subjectName}. Inizia ${breakLabel}.` : `Inizia ${breakLabel}.`
-        );
+        alertPhaseChange({
+          kind: "pomodoroDone",
+          title: "Pomodoro completato",
+          body: subjectName ? `Hai studiato ${subjectName}. Inizia ${breakLabel}.` : `Inizia ${breakLabel}.`,
+        });
       } else if (s.phase === "short_break" || s.phase === "long_break") {
         // Pausa finita da sola: si riprende a studiare la stessa materia.
         const newState: TimerState = {
@@ -210,7 +255,11 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         setState(newState);
         await saveTimerState(newState);
         emitActivityEvent({ type: "breakOver" });
-        alertPhaseChange("Pausa finita", subjectName ? `Si riprende a studiare ${subjectName}.` : "Si riprende a studiare.");
+        alertPhaseChange({
+          kind: "breakOver",
+          title: "Pausa finita",
+          body: subjectName ? `Si riprende a studiare ${subjectName}.` : "Si riprende a studiare.",
+        });
       } else {
         // Fase "work" senza materia (es. materia cancellata): niente da
         // registrare. Senza questo ramo lo stato resterebbe "in corso" a 0
@@ -292,21 +341,32 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     void saveTimerState(newState);
   }
 
+  // Chiude la fase "work" registrando lo studio. `trimSeconds` sono gli ultimi secondi da
+  // NON contare (stop automatico: il tempo di assenza). Ritorna i secondi registrati (0 = nessuna sessione).
+  async function finishWork(trimSeconds: number): Promise<number> {
+    const s = stateRef.current;
+    const now = Date.now();
+    const display = computeDisplaySeconds(s);
+    const studied = Math.max(0, (isStopwatchState(s) ? display : s.phaseTotalSeconds - display) - trimSeconds);
+    let logged = 0;
+    if (s.subjectId !== null && studied >= settingsRef.current.studyMinLoggableSeconds) {
+      await logSession(s.subjectId, now - trimSeconds * 1000, studied);
+      await refreshToday();
+      logged = studied;
+    }
+    setState(IDLE_STATE);
+    await saveTimerState(IDLE_STATE);
+    emitActivityEvent({ type: "studyStopped", seconds: studied });
+    return logged;
+  }
+
   async function stopOrSkip() {
     const s = stateRef.current;
     if (s.phase === "idle") return;
     const now = Date.now();
-    const display = computeDisplaySeconds(s);
 
     if (s.phase === "work") {
-      const studied = isStopwatchState(s) ? display : s.phaseTotalSeconds - display;
-      if (s.subjectId !== null && studied >= settingsRef.current.studyMinLoggableSeconds) {
-        await logSession(s.subjectId, now, studied);
-        await refreshToday();
-      }
-      setState(IDLE_STATE);
-      await saveTimerState(IDLE_STATE);
-      emitActivityEvent({ type: "studyStopped", seconds: studied });
+      await finishWork(0);
     } else {
       // Salta pausa: nessun log (le pause non sono tempo di studio),
       // si riparte subito con un nuovo "work" sulla stessa materia.
@@ -323,6 +383,82 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       await saveTimerState(newState);
     }
   }
+
+  // Stop automatico: in studio si registra fino a `stoppedAt` (mai oltre l'ultima ripresa,
+  // il tempo accumulato prima di una pausa è studio vero); in pausa pomodoro si torna a zero.
+  // Preavviso: manca il 10% della soglia. Solo un avviso, il timer continua.
+  function warnAutoStop({ reason, category, awaySeconds, secondsLeft }: Extract<AutoStopResult, { type: "warn" }>) {
+    const what = (reason === "app" && category !== null && AUTO_STOP_REASON[category]) || "Sei inattivo";
+    const left = secondsLeft < 60 ? `${secondsLeft} secondi` : formatHoursMinutes(secondsLeft);
+    alertPhaseChange({
+      kind: "autoStopWarning",
+      title: "Attento al tempo",
+      body: `${what} da ${formatHoursMinutes(awaySeconds)}: tra ${left} fermo il timer.`,
+      reason,
+      category,
+    });
+  }
+
+  async function autoStop({ reason, category, stoppedAt }: Extract<AutoStopResult, { type: "stop" }>) {
+    const s = stateRef.current;
+    if (s.phase === "idle" || s.runningSince === null || completingRef.current) return;
+    completingRef.current = true;
+    try {
+      const now = Date.now();
+      const awaySeconds = Math.max(0, Math.floor((now - stoppedAt) / 1000));
+      const what = (reason === "app" && category !== null && AUTO_STOP_REASON[category]) || "Sei inattivo";
+      const why = `${what} da ${formatHoursMinutes(awaySeconds)}`;
+      if (s.phase === "work") {
+        const subjectName = subjectsRef.current.find((x) => x.id === s.subjectId)?.name ?? null;
+        const logged = await finishWork(Math.min(awaySeconds, elapsedSince(s.runningSince)));
+        const outcome =
+          logged > 0
+            ? `registrati ${formatHoursMinutes(logged)}${subjectName ? ` di ${subjectName}` : ""}`
+            : "nessuna sessione registrata";
+        alertPhaseChange({ kind: "autoStopped", title: "Timer fermato", body: `${why}: ${outcome}.`, reason, category });
+      } else {
+        setState(IDLE_STATE);
+        await saveTimerState(IDLE_STATE);
+        alertPhaseChange({ kind: "autoStopped", title: "Timer fermato", body: `${why}: pausa interrotta.`, reason, category });
+      }
+    } finally {
+      completingRef.current = false;
+    }
+  }
+
+  const autoStopRef = useLatestRef(autoStop);
+  const warnAutoStopRef = useLatestRef(warnAutoStop);
+
+  // Controllo dello stop automatico, solo mentre il timer corre. Un tracker nuovo a ogni
+  // avvio, ripresa o cambio di fase. Le app si guardano solo in studio: in pausa si gioca.
+  // Fuori da Tauri o su sistemi non supportati lo snapshot è null e non succede nulla.
+  useEffect(() => {
+    if (!settings.studyAutoStopEnabled || state.runningSince === null || state.phase === "idle") return;
+    const tracker = new AutoStopTracker();
+    const working = state.phase === "work";
+    let busy = false;
+    const interval = setInterval(async () => {
+      if (busy) return;
+      busy = true;
+      try {
+        const cfg = settingsRef.current;
+        const categories = working ? autoStopCategories(cfg) : new Set<AppCategory>();
+        const snapshot = await readSystemSnapshot(categories.size > 0);
+        if (snapshot === null) return;
+        const fg = snapshot.foreground;
+        const category =
+          categories.size > 0 && fg !== null && !fg.isSelf
+            ? classifyApp(fg.process, fg.description, fg.title, parseAppCategories(cfg.companionAppCategories)).category
+            : null;
+        const hit = tracker.check(Date.now(), { idleSeconds: snapshot.idleSeconds, category }, { minutes: cfg.studyAutoStopMinutes, categories });
+        if (hit?.type === "stop") await autoStopRef.current(hit);
+        else if (hit?.type === "warn") warnAutoStopRef.current(hit);
+      } finally {
+        busy = false;
+      }
+    }, AUTO_STOP_POLL_MS);
+    return () => clearInterval(interval);
+  }, [settings.studyAutoStopEnabled, state.runningSince, state.phase]);
 
   async function addSubjectHandler(name: string, mode?: SubjectMode): Promise<AddSubjectResult> {
     const trimmed = name.trim();

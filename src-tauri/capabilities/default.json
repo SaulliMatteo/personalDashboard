@@ -6,11 +6,13 @@
   "remote": { "urls": ["http://localhost:14321"] },
   "permissions": [
     "core:default",
+    "core:window:allow-set-fullscreen",
     "sql:default",
     "sql:allow-execute",
     "notification:default",
     "dialog:default",
     "opener:default",
+    "deep-link:default",
     { "identifier": "opener:allow-open-path", "allow": [{ "path": "$DOCUMENT/Notes" }, { "path": "$DOCUMENT/Notes/**" }] },
     { "identifier": "fs:allow-read-file", "allow": [{ "path": "$DESKTOP/**" }, { "path": "$DOCUMENT/**" }, { "path": "$DOWNLOAD/**" }, { "path": "$PICTURE/**" }, { "path": "$HOME/**" }] },
     { "identifier": "fs:allow-read-text-file", "allow": [{ "path": "$DESKTOP/**" }, { "path": "$DOCUMENT/**" }, { "path": "$DOWNLOAD/**" }, { "path": "$PICTURE/**" }, { "path": "$HOME/**" }] },
