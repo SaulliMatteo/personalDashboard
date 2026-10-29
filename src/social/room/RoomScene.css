@@ -294,9 +294,20 @@
   top: 38px;
 }
 
+/* Il disegno esce dalla testa (stesso centro, faccia grande uguale, vedi SeatPixy): simboli e costumi stanno attorno
+   alla faccia e spuntano sopra e di lato, sullo sfondo della sala. */
+.rs-face-slot .room-seat-face {
+  position: absolute;
+  inset: -14px -12px;
+  width: auto;
+  height: auto;
+  pointer-events: none;
+}
+
+/* 16px sopra il disegno = 30px sopra la testa */
 .rs-face-slot .pixy-bubble {
   top: auto;
-  bottom: calc(100% + 30px);
+  bottom: calc(100% + 16px);
   max-width: 140px;
 }
 

@@ -12,14 +12,21 @@ export type PresenceChannelStatus = "joined" | "error" | "closed";
 export interface PresenceListeners {
   /** Stato completo del canale: per ogni utente, un payload per dispositivo (non ancora validati). */
   sync: (state: Record<string, unknown[]>) => void;
+  /** Un messaggio in broadcast sullo stesso canale (non validato): la via rapida dei cambi di stato. */
+  message?: (payload: unknown) => void;
   status: (status: PresenceChannelStatus) => void;
 }
 
 export interface PresenceChannel {
   /** Pubblica il proprio stato (sostituisce il precedente). */
   track: (payload: Record<string, unknown>) => Promise<void>;
+  /** Manda un messaggio in broadcast agli altri nel canale (non a sé). Fallisce se il server non conferma. */
+  send: (payload: Record<string, unknown>) => Promise<void>;
   leave: () => Promise<void>;
 }
+
+/** Nome dell'evento broadcast sui canali di presenza (uno solo: il contenuto dice cos'è). */
+const BROADCAST_EVENT = "m";
 
 export function presenceTopic(groupId: string, featureKey: string): string {
   return `group:${groupId}:${featureKey}`;
@@ -50,7 +57,7 @@ export function joinPresenceChannel(
   const supabase = requireCloudClient();
   // più dispositivi dello stesso utente condividono la chiave: chi riceve li unisce
   const channel: RealtimeChannel = supabase.channel(presenceTopic(groupId, featureKey), {
-    config: { private: true, presence: { key: userId, enabled: true } },
+    config: { private: true, presence: { key: userId, enabled: true }, broadcast: { self: false, ack: true } },
   });
   let left = false;
   channel.on("presence", { event: "sync" }, () => {
@@ -59,6 +66,7 @@ export function joinPresenceChannel(
     for (const [key, entries] of Object.entries(raw)) state[key] = stripMeta(entries);
     listeners.sync(state);
   });
+  channel.on("broadcast", { event: BROADCAST_EVENT }, (message) => listeners.message?.(message.payload));
   channel.subscribe((status) => {
     if (left) return;
     if (status === "SUBSCRIBED") listeners.status("joined");
@@ -69,6 +77,10 @@ export function joinPresenceChannel(
     track: async (payload) => {
       const result = await channel.track(payload);
       if (result !== "ok") throw new Error("presence_track_failed");
+    },
+    send: async (payload) => {
+      const result = await channel.send({ type: "broadcast", event: BROADCAST_EVENT, payload });
+      if (result !== "ok") throw new Error("presence_send_failed");
     },
     leave: async () => {
       left = true;

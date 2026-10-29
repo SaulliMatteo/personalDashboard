@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useCloud } from "../../core/cloud/useCloud";
 import { useElementSize } from "../../core/hooks/useElementSize";
 import { useNav } from "../../core/nav/useNav";
@@ -49,8 +49,9 @@ function Arrow({ dir }: { dir: "prev" | "next" }) {
  * Membri. Posto e riga della lista condividono la selezione. Creare un gruppo o entrarci si fa dalla pagina Gruppi
  * (dettaglio del widget) o dagli stati senza gruppi, non da qui.
  * `pigment`: in Opaco la sala usa il pigmento del widget Gruppi (lo decide il registry, in app/App.tsx).
+ * `controls`: i comandi dei widget per la stanza (`roomControls`, es. il timer dello Studio), passati da app/App.tsx.
  */
-function RoomPage({ pigment }: { pigment: string }) {
+function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode }) {
   const { openWidgetDetail } = useNav();
   const { userId } = useCloud();
   const state = useGroupsState();
@@ -59,12 +60,11 @@ function RoomPage({ pigment }: { pigment: string }) {
   const { members: pixyMembers, offsetMs } = usePixyPresence();
   const group = state === "ok" ? selectedGroup : null;
   const { members, serverNow, localNow } = useRoomMembers(group?.id ?? null);
-  // la sala guardata e la riga aperta valgono per un gruppo: cambiando gruppo si riparte.
-  // selected: undefined = la mia riga (all'apertura, come nel mockup), null = nessuna aperta
-  const [view, setView] = useState<{ groupId: string | null; room: number | null; selected: string | null | undefined }>({
+  // la sala guardata e la riga aperta valgono per un gruppo: cambiando gruppo si riparte (nessuna riga aperta)
+  const [view, setView] = useState<{ groupId: string | null; room: number | null; selected: string | null }>({
     groupId: null,
     room: null,
-    selected: undefined,
+    selected: null,
   });
   // la sala si adatta al riquadro (scala uniforme, fino al doppio del mockup)
   const [sceneBox, setSceneBox] = useState<HTMLDivElement | null>(null);
@@ -93,7 +93,7 @@ function RoomPage({ pigment }: { pigment: string }) {
   const mySeatRoom = userId ? roomOf(rooms, userId) : -1;
   // da aprire: quella scelta, se no quella in cui siedo, se no la prima
   const ownRoom = mySeatRoom >= 0 ? mySeatRoom : (myChoice ?? 0);
-  const viewState = view.groupId === group.id ? view : { groupId: group.id, room: null, selected: undefined };
+  const viewState = view.groupId === group.id ? view : { groupId: group.id, room: null, selected: null };
   const roomCount = Math.max(rooms.length, ownRoom + 1);
   const shown = Math.min(viewState.room ?? ownRoom, roomCount - 1);
   const inShown = rooms[shown] ?? [];
@@ -107,7 +107,7 @@ function RoomPage({ pigment }: { pigment: string }) {
   const reservedSeat = mySeat !== null && mySeatRoom !== shown && places[mySeat] === null ? mySeat : null;
   const isMyRoom = mySeatRoom >= 0 ? shown === mySeatRoom : myChoice === shown;
   const roomFull = !isMyRoom && inShown.length >= ROOM_SEATS;
-  const selectedId = viewState.selected === undefined ? userId : viewState.selected;
+  const selectedId = viewState.selected;
   const sections = memberSections(
     rooms,
     shown,
@@ -122,8 +122,50 @@ function RoomPage({ pigment }: { pigment: string }) {
   return (
     <div className="roomp">
       <header className="roomp-header">
-        <h1>{group.name}</h1>
-        <div className="roomp-actions">
+        <div className="roomp-top">
+          <h1>{group.name}</h1>
+          <div className="roomp-actions">
+            {isMyRoom ? (
+              <span className="roomp-here">Sei seduto qui</span>
+            ) : roomFull ? (
+              <span className="roomp-full">Sala piena</span>
+            ) : (
+              <button type="button" className="grp-btn roomp-fill" onClick={() => setRoom(group.id, shown)}>
+                Siediti in questa sala
+              </button>
+            )}
+            {isMyRoom && chosenSeats[group.id] !== undefined && (
+              <button type="button" className="grp-btn grp-btn--ghost" onClick={() => setRoom(group.id, shown)}>
+                Posto automatico
+              </button>
+            )}
+            {groups.length > 0 && (
+              <div className="roomp-groups" role="group" aria-label="I miei gruppi">
+                {groups.map((g) => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    aria-pressed={g.id === group.id}
+                    className={g.id === group.id ? "is-on" : undefined}
+                    onClick={() => selectGroup(g.id)}
+                  >
+                    {g.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            <button
+              type="button"
+              className="grp-btn grp-btn--ghost roomp-icon-btn"
+              aria-label="Impostazioni dei gruppi"
+              onClick={() => openWidgetDetail(GROUPS_WIDGET_ID)}
+            >
+              <SettingsIcon />
+            </button>
+          </div>
+        </div>
+        {/* la sala guardata e i comandi dei widget (il timer dello Studio) */}
+        <div className="roomp-bar">
           <div className="roomp-rooms" role="group" aria-label={`Sala ${shown + 1} di ${roomCount}, ${roomInfo(inShown.length, ROOM_SEATS)}`}>
             <button
               type="button"
@@ -147,43 +189,7 @@ function RoomPage({ pigment }: { pigment: string }) {
               <Arrow dir="next" />
             </button>
           </div>
-          {isMyRoom ? (
-            <span className="roomp-here">Sei seduto qui</span>
-          ) : roomFull ? (
-            <span className="roomp-full">Sala piena</span>
-          ) : (
-            <button type="button" className="grp-btn roomp-fill" onClick={() => setRoom(group.id, shown)}>
-              Siediti in questa sala
-            </button>
-          )}
-          {isMyRoom && chosenSeats[group.id] !== undefined && (
-            <button type="button" className="grp-btn grp-btn--ghost" onClick={() => setRoom(group.id, shown)}>
-              Posto automatico
-            </button>
-          )}
-          {groups.length > 0 && (
-            <div className="roomp-groups" role="group" aria-label="I miei gruppi">
-              {groups.map((g) => (
-                <button
-                  key={g.id}
-                  type="button"
-                  aria-pressed={g.id === group.id}
-                  className={g.id === group.id ? "is-on" : undefined}
-                  onClick={() => selectGroup(g.id)}
-                >
-                  {g.name}
-                </button>
-              ))}
-            </div>
-          )}
-          <button
-            type="button"
-            className="grp-btn grp-btn--ghost roomp-icon-btn"
-            aria-label="Impostazioni dei gruppi"
-            onClick={() => openWidgetDetail(GROUPS_WIDGET_ID)}
-          >
-            <SettingsIcon />
-          </button>
+          <div className="roomp-controls">{controls}</div>
         </div>
       </header>
 

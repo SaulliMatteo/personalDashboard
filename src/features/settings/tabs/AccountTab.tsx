@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useCloud } from "../../../core/cloud/useCloud";
 import { normalizeUsername, usernameProblem, USERNAME_RULES } from "../../../core/cloud/username";
 import ConfirmButton from "../../../ui/ConfirmButton";
+import ExpandableText from "../../../ui/ExpandableText";
 
 /** Messaggio di un errore delle azioni di useCloud (sempre una frase nostra, mai il testo del server). */
 function messageOf(e: unknown): string {
@@ -41,9 +42,9 @@ function UsernameForm({ current }: { current: string | null }) {
         <label className="settings-field-label" htmlFor="account-username">
           {current === null ? "Scegli il tuo nome utente" : "Nome utente"}
         </label>
-        <p className="settings-field-description">
+        <ExpandableText className="settings-field-description">
           È l'unica cosa di te che vedono gli altri membri dei gruppi. {USERNAME_RULES}
-        </p>
+        </ExpandableText>
         {error && (
           <p className="settings-field-description" role="alert">
             {error}
@@ -75,11 +76,11 @@ function SignInField() {
     <div className="settings-field">
       <div className="settings-field-text">
         <span className="settings-field-label">{signingIn ? "Completa l'accesso nel browser" : "Accedi con Google"}</span>
-        <p className="settings-field-description">
+        <ExpandableText className="settings-field-description">
           {signingIn
             ? "Si è aperta una pagina nel browser: scegli l'account Google e torna qui."
             : "L'accesso avviene nel browser. A Google chiediamo solo l'identità: email e nome reale non vengono mostrati a nessuno."}
-        </p>
+        </ExpandableText>
         {signInError && (
           <p className="settings-field-description" role="alert">
             {signInError}
@@ -132,7 +133,7 @@ function AccountActions({ canDelete }: { canDelete: boolean }) {
         <div className="settings-field">
           <div className="settings-field-text">
             <span className="settings-field-label">Esci</span>
-            <p className="settings-field-description">Esci da questo computer. I tuoi dati locali restano dove sono.</p>
+            <ExpandableText className="settings-field-description">Esci da questo computer. I tuoi dati locali restano dove sono.</ExpandableText>
           </div>
           <div className="settings-field-control">
             <button type="button" className="sp-btn" onClick={() => void run(signOut)}>
@@ -144,11 +145,11 @@ function AccountActions({ canDelete }: { canDelete: boolean }) {
           <div className="settings-field">
             <div className="settings-field-text">
               <span className="settings-field-label">Elimina account</span>
-              <p className="settings-field-description">
+              <ExpandableText className="settings-field-description">
                 Cancella dal servizio online il tuo profilo, i dispositivi, le iscrizioni ai gruppi e i totali di studio
                 condivisi. Se sei owner, il gruppo passa al membro più anziano. Le sessioni di studio su questo computer
                 restano.
-              </p>
+              </ExpandableText>
             </div>
             <div className="settings-field-control">
               <ConfirmButton className="sp-btn sp-btn--danger" label="Elimina account" onConfirm={() => run(deleteAccount)} />
@@ -212,9 +213,9 @@ function AccountTab() {
               <div className="settings-field">
                 <div className="settings-field-text">
                   <span className="settings-field-label">Gruppi non raggiungibili</span>
-                  <p className="settings-field-description">
+                  <ExpandableText className="settings-field-description">
                     Sei offline oppure il servizio è in pausa. Riprovo da solo; intanto l'app funziona normalmente.
-                  </p>
+                  </ExpandableText>
                 </div>
                 <div className="settings-field-control">
                   <button type="button" className="sp-btn" onClick={retry}>
