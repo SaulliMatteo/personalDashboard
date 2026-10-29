@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "personaldashboard",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "it.matteo.personalDashboard",
   "build": {
     "frontendDist": "../dist",
@@ -12,6 +12,8 @@
   "app": {
     "windows": [
       {
+        "label": "main",
+        "create": false,
         "title": "personaldashboard",
         "width": 1200,
         "height": 620,

@@ -1,7 +1,8 @@
 import { useEffect, useRef, type PointerEvent } from "react";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
+import { useTheme } from "../../../core/theme/useTheme";
 import type { InkStroke } from "../data/notesRepository";
-import { REF_WIDTH, drawStrokes } from "../lib/ink";
+import { REF_WIDTH, THEME_INK, drawStrokes } from "../lib/ink";
 
 export type InkTool = "pen" | "highlighter" | "eraser";
 
@@ -19,7 +20,9 @@ function paint(canvas: HTMLCanvasElement, strokes: readonly InkStroke[]) {
   if (!ctx) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
-  drawStrokes(ctx, w, strokes);
+  // Letto dal canvas stesso: vale il token del tema e della variante (e del pigmento in Opaco).
+  const ink = getComputedStyle(canvas).getPropertyValue("--text-primary").trim() || THEME_INK;
+  drawStrokes(ctx, w, strokes, (c) => (c.toLowerCase() === THEME_INK ? ink : c));
 }
 
 interface InkLayerProps {
@@ -37,10 +40,12 @@ function InkLayer({ strokes, active, tool, color, size, onChange }: InkLayerProp
   const strokesRef = useLatestRef(strokes);
   const live = useRef<InkStroke | null>(null);
   const erasing = useRef(false);
+  const theme = useTheme();
 
+  // Si ridisegna anche quando cambiano tema o variante (compreso "auto" che segue il sistema).
   useEffect(() => {
     if (canvasRef.current) paint(canvasRef.current, strokes);
-  }, [strokes]);
+  }, [strokes, theme.id, theme.mode]);
 
   // La pagina cambia altezza mentre si scrive: il canvas va ridisegnato.
   useEffect(() => {

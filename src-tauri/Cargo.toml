@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "0.1.0"
+version = "0.1.1"
 description = "A Tauri App"
 authors = ["you"]
 license = ""
@@ -53,4 +53,8 @@ windows-sys = { version = "0.59", features = [
 # CoreGraphics, collegato direttamente in src/companion.rs.
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString", "NSURL"] }
+# YouTube su macOS: l'app installata serve il frontend da http://localhost (src/lib.rs),
+# perché da tauri:// WKWebView non manda il referrer e YouTube rifiuta il player
+# (errore 153). Pinnata ESATTA: la 2.4.0 richiede tauri ^2.12 (come la notification).
+tauri-plugin-localhost = "=2.3.1"
 objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "libc", "NSRunningApplication", "NSWorkspace"] }

@@ -55,7 +55,7 @@ function CompanionFace({ showBubble = true, bubbleSize = "normal", maxPointSize 
     const token = settings.companionColor === "accent" ? "--accent" : "--face-on";
     const css = getComputedStyle(wrap).getPropertyValue(token).trim();
     if (css) colorRef.current = css;
-  }, [settings.companionColor, settings.accentColor, settings.accentOverride, theme.id]);
+  }, [settings.companionColor, theme.accent, theme.id, theme.mode]);
 
   const drawOpts = useLatestRef({ style, showMouth: settings.companionShowMouth, maxPointSize, padding });
 

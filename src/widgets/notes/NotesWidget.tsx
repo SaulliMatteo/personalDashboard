@@ -25,6 +25,7 @@ function NotesWidget({ w, h }: WidgetProps) {
   const size = sizeKey(w, h);
   const [notes, setNotes] = useState<NoteSummary[]>([]);
   const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,14 +35,18 @@ function NotesWidget({ w, h }: WidgetProps) {
         setNotes(all.filter((n) => n.deletedAt === null).sort((a, b) => b.updatedAt - a.updatedAt));
         setReady(true);
       })
-      .catch((error) => console.error("Errore nel caricamento delle note:", error));
+      .catch((error) => {
+        console.error("Errore nel caricamento delle note:", error);
+        if (!cancelled) setFailed(true);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const count = ready ? notes.length : "–";
-  const countLabel = notes.length === 1 ? "nota" : "note";
+  const count = ready ? notes.length : failed ? "!" : "–";
+  const countLabel = failed ? "errore" : notes.length === 1 ? "nota" : "note";
+  const errorTitle = failed ? "Impossibile caricare le note (dettagli nella console)" : undefined;
 
   function openNote(e: MouseEvent, id: number) {
     e.stopPropagation();
@@ -52,7 +57,11 @@ function NotesWidget({ w, h }: WidgetProps) {
   if (size === "S") {
     return (
       <WidgetFrame>
-        <article className="widget nw nw--S" aria-label={`Note: ${count}`}>
+        <article
+          className={`widget nw nw--S${failed ? " nw--error" : ""}`}
+          aria-label={errorTitle ?? `Note: ${count}`}
+          title={errorTitle}
+        >
           <span className="nw-num">{count}</span>
           <span className="nw-cap">{countLabel}</span>
         </article>
@@ -61,7 +70,13 @@ function NotesWidget({ w, h }: WidgetProps) {
   }
 
   const recent = notes.slice(0, size === "M" ? RECENT.M : RECENT.STRIP);
-  const empty = ready && notes.length === 0 && <p className="nw-empty">Nessuna nota ancora. Apri il Quaderno per iniziare.</p>;
+  const empty = failed ? (
+    <p className="nw-empty nw-error" role="alert">
+      Impossibile caricare le note.
+    </p>
+  ) : (
+    ready && notes.length === 0 && <p className="nw-empty">Nessuna nota ancora. Apri il Quaderno per iniziare.</p>
+  );
 
   const head = numberOnSide ? (
     <div className="nw-side">
@@ -86,7 +101,7 @@ function NotesWidget({ w, h }: WidgetProps) {
 
   return (
     <WidgetFrame>
-      <article className={`widget nw nw--${size}${numberOnSide ? " nw--side" : ""}`}>
+      <article className={`widget nw nw--${size}${numberOnSide ? " nw--side" : ""}${failed ? " nw--error" : ""}`} title={errorTitle}>
         {head}
         {empty || <div className={size === "M" ? "nw-list" : "nw-cells"}>{items}</div>}
       </article>

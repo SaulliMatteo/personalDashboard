@@ -7,9 +7,10 @@ import { useSettings } from "../../core/settings/useSettings";
 import { useTheme } from "../../core/theme/useTheme";
 import { useLayout } from "../../core/layout/useLayout";
 import { useNav } from "../../core/nav/useNav";
-import { createDragCompactor, finalizeLayout, clampToBounds } from "../../core/layout/compactor";
+import { useLatestRef } from "../../core/hooks/useLatestRef";
+import { createDragCompactor, finalizeLayout, sameLayout } from "../../core/layout/compactor";
 import { saveLayout, type LayoutItem } from "../../core/layout/layoutRepository";
-import { GRID_COLS, MIN_ROW_HEIGHT } from "../../core/layout/gridConfig";
+import { GRID_COLS } from "../../core/layout/gridConfig";
 import { getWidget, widgetPigment } from "../../widgets/registry";
 import { useGhostPreview, useForceEndDragOnBlur } from "./useGhostPreview";
 import DashboardHeader from "./DashboardHeader";
@@ -18,6 +19,17 @@ import { fromInnerControl } from "./fromInnerControl";
 
 // La griglia non ha margine esterno: riempie l'area di .main come nei mockup.
 const NO_PADDING = [0, 0] as const;
+
+/** Dopo un rilascio i click (e i doppi click) sulla cella si ignorano per questo tempo. */
+const DRAG_CLICK_GUARD_MS = 400;
+/** Se dopo il mouseup il drag risulta ancora aperto, la libreria ha perso il rilascio. */
+const STUCK_DRAG_CHECK_MS = 50;
+/** Margine oltre il ritardo di spinta prima di ricalcolare col mouse fermo. */
+const PUSH_RETRY_EXTRA_MS = 30;
+
+function justDragged(dragEndedAt: number): boolean {
+  return performance.now() - dragEndedAt < DRAG_CLICK_GUARD_MS;
+}
 
 /**
  * Altezza disponibile del contenitore e spazio fra i widget (token --grid-gap
@@ -53,9 +65,10 @@ function Dashboard() {
   const { height, gap } = useGridMetrics(gridElement, theme.id);
   const marginTuple = [gap, gap] as const;
 
-  // La griglia riempie la finestra: le righe si dividono l'altezza disponibile.
-  // Sotto MIN_ROW_HEIGHT si lascia scorrere .main invece di schiacciare i widget.
-  const rowHeight = Math.max(MIN_ROW_HEIGHT, height > 0 ? (height - gap * (rows - 1)) / rows : MIN_ROW_HEIGHT);
+  // La griglia sta sempre nello spazio sotto l'intestazione: le righe si dividono l'altezza
+  // disponibile, quindi la dashboard non scorre mai (con più righe o la finestra bassa i widget
+  // si abbassano). Per difetto: gli arrotondamenti della libreria non devono sforare di 1px.
+  const rowHeight = Math.max(1, Math.floor((height - gap * (rows - 1)) / rows));
 
   const positionParams = {
     margin: marginTuple,
@@ -76,12 +89,52 @@ function Dashboard() {
   const { dragTarget, ghostPos, captureGhost, clearGhost } = useGhostPreview(positionParams, width);
   useForceEndDragOnBlur(clearGhost);
 
-  const dragOriginRef = useRef<{ id: string; layout: LayoutItem[] } | null>(null);
-  const suppressLayoutChangeRef = useRef(false);
+  // Il rilascio di un drag genera un click sul pulsante che si è trascinato con il widget
+  // (un video di YouTube, una nota...): per un attimo dopo il rilascio i click non passano.
+  const dragEndedAtRef = useRef(0);
 
-  // Distingue un doppio click "secco" (apre il dettaglio) da quello che
-  // chiude un drag (non deve navigare): un vero click non fa mai scattare onDrag.
-  const wasDraggingRef = useRef(false);
+  // Ultimo layout e posizione del mouse visti durante il drag (spinta col mouse fermo, rete di sicurezza).
+  const lastDragRef = useRef<{ layout: LayoutItem[]; x: number; y: number } | null>(null);
+  const pushTimerRef = useRef<number | undefined>(undefined);
+  // Cambiarla rimonta la griglia: solo per sbloccarla se la libreria perde un rilascio.
+  const [gridKey, setGridKey] = useState(0);
+
+  const finishDrag = (finalItems: LayoutItem[]) => {
+    window.clearTimeout(pushTimerRef.current);
+    dragEndedAtRef.current = performance.now();
+    lastDragRef.current = null;
+    dragCompactor.endDrag();
+    clearGhost();
+    setLayout(finalItems);
+    saveLayout(finalItems).catch((error) => console.error("Errore nel salvataggio del layout:", error));
+  };
+
+  const recoverStuckDrag = useLatestRef(() => {
+    const base = lastDragRef.current?.layout ?? layout;
+    finishDrag(finalizeLayout(dragCompactor.dropResult(base, GRID_COLS), GRID_COLS, rows) as LayoutItem[]);
+    setGridKey((key) => key + 1);
+  });
+
+  // Il mouseup passa da window (capture) PRIMA che lo veda la libreria: così il calcolo
+  // finale del rilascio, che la libreria fa con il nostro compactor, sa già che è un rilascio.
+  useEffect(() => {
+    let timer: number | undefined;
+    const onMouseUp = () => {
+      if (!dragCompactor.isActive()) return;
+      dragCompactor.beginDrop();
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (dragCompactor.isActive()) recoverStuckDrag.current();
+      }, STUCK_DRAG_CHECK_MS);
+    };
+    window.addEventListener("mouseup", onMouseUp, true);
+    return () => {
+      window.removeEventListener("mouseup", onMouseUp, true);
+      window.clearTimeout(timer);
+    };
+  }, [dragCompactor, recoverStuckDrag]);
+
+  useEffect(() => () => window.clearTimeout(pushTimerRef.current), []);
 
   const GhostComponent = dragTarget && settings.showDragGhost ? getWidget(dragTarget.i)?.component : undefined;
 
@@ -103,9 +156,13 @@ function Dashboard() {
           setGridElement(el);
         }}
         className="grid-container"
+        // Un drag nativo del browser (testo selezionato, un'immagine) si mangerebbe il mouseup
+        // e il widget resterebbe attaccato al mouse: nella griglia non serve a nessuno.
+        onDragStartCapture={(e) => e.preventDefault()}
       >
         {mounted && ready && height > 0 && (
           <GridLayout
+            key={gridKey}
             className={`widget-grid${settings.lockLayout ? " is-locked" : ""}`}
             layout={layout}
             gridConfig={{ cols: GRID_COLS, rowHeight, margin: [gap, gap], containerPadding: [0, 0], maxRows: rows }}
@@ -118,46 +175,33 @@ function Dashboard() {
             width={width}
             compactor={dragCompactor.compactor}
             onDragStart={(evLayout, oldItem, newItem, placeholder) => {
-              wasDraggingRef.current = false;
               const id = newItem?.i ?? oldItem?.i ?? null;
-              dragOriginRef.current = id ? { id, layout: layout.map((it) => ({ ...it })) } : null;
-              if (id) {
-                dragCompactor.startDrag(
-                  id,
-                  oldItem ? { x: oldItem.x, y: oldItem.y, w: oldItem.w, h: oldItem.h } : undefined
-                );
-              }
+              if (id) dragCompactor.startDrag(id, evLayout);
               captureGhost(evLayout, oldItem, newItem, placeholder);
             }}
-            onDrag={(evLayout, oldItem, newItem, placeholder) => {
-              wasDraggingRef.current = true;
+            onDrag={(evLayout, oldItem, newItem, placeholder, event) => {
               captureGhost(evLayout, oldItem, newItem, placeholder);
+              const mouse = event as MouseEvent;
+              lastDragRef.current = { layout: evLayout as LayoutItem[], x: mouse.clientX, y: mouse.clientY };
+              // La spinta "matura" solo quando la libreria ricalcola, cioè a ogni movimento:
+              // col mouse fermo sopra un widget si rimanda lo stesso movimento dopo il ritardo.
+              // Solo per i movimenti veri, così il movimento rimandato non si ripete all'infinito.
+              window.clearTimeout(pushTimerRef.current);
+              if (!mouse.isTrusted) return;
+              pushTimerRef.current = window.setTimeout(() => {
+                const last = lastDragRef.current;
+                if (!last || !dragCompactor.isActive()) return;
+                document.dispatchEvent(new MouseEvent("mousemove", { bubbles: true, clientX: last.x, clientY: last.y }));
+              }, settings.gridPushDelayMs + PUSH_RETRY_EXTRA_MS);
             }}
-            onDragStop={async (newLayout) => {
-              const dropped = newLayout as LayoutItem[];
-              const origin = dragOriginRef.current;
-
-              // Se il rilascio avviene con una sovrapposizione non ancora
-              // "maturata", si torna al layout di partenza.
-              const pending = origin ? dragCompactor.hasPendingCollision(dropped, origin.id) : false;
-              const source = origin && pending ? origin.layout : dropped;
-              const finalItems = finalizeLayout(source, GRID_COLS, rows) as LayoutItem[];
-
-              suppressLayoutChangeRef.current = true;
-              setLayout(finalItems);
-              clearGhost();
-              dragCompactor.endDrag();
-              dragOriginRef.current = null;
-              await saveLayout(finalItems);
-              setTimeout(() => {
-                suppressLayoutChangeRef.current = false;
-              }, 150);
-            }}
+            // Il layout ricevuto è già quello finale: la libreria l'ha calcolato con il nostro
+            // compactor in modalità rilascio (vedi beginDrop) e lo tiene uguale come stato suo.
+            onDragStop={(newLayout) => finishDrag(finalizeLayout(newLayout, GRID_COLS, rows) as LayoutItem[])}
             // Scatta anche per cambi non causati dal drag (es. widget
             // rimosso dal catalogo): tiene lo stato React sincronizzato.
             onLayoutChange={(newLayout) => {
-              if (suppressLayoutChangeRef.current) return;
-              setLayout(clampToBounds(newLayout as LayoutItem[], GRID_COLS, rows) as LayoutItem[]);
+              const next = finalizeLayout(newLayout, GRID_COLS, rows) as LayoutItem[];
+              if (!sameLayout(next, layout)) setLayout(next);
             }}
           >
             {layout.map((item) => {
@@ -168,12 +212,13 @@ function Dashboard() {
                 <div
                   key={item.i}
                   data-pigment={widgetPigment(item.i)}
+                  onClickCapture={(e) => {
+                    if (!justDragged(dragEndedAtRef.current)) return;
+                    e.stopPropagation();
+                    e.preventDefault();
+                  }}
                   onDoubleClick={(e) => {
-                    if (wasDraggingRef.current) {
-                      wasDraggingRef.current = false;
-                      return;
-                    }
-                    if (fromInnerControl(e)) return;
+                    if (justDragged(dragEndedAtRef.current) || fromInnerControl(e)) return;
                     if (settings.openDetailOnClick && widget.detailComponent) openWidgetDetail(item.i);
                   }}
                 >

@@ -48,6 +48,7 @@ import {
 import { noteToMarkdown, renderNoteImage, renderNotePdf, saveBytes, saveText } from "../lib/exportNote";
 import { attachmentAbsolutePath, removeAttachmentFile, slugify } from "../lib/vault";
 import { BACKGROUND_OPTIONS } from "../lib/templates";
+import { THEME_INK } from "../lib/ink";
 import { normalizeUrl, toggleChecklist } from "../lib/editorDom";
 import { formatWhen, htmlToText, monthYear, wordCount } from "../lib/html";
 import type { InkTool } from "./InkLayer";
@@ -79,7 +80,8 @@ function formatBytes(size: number): string {
 }
 
 const INK_SIZES = [1, 2, 3, 5, 8];
-const INK_COLORS = ["#6c8dff", "#f472b6", "#34d399", "#fbbf24", "#f2f2f4"];
+// L'ultimo è l'inchiostro del tema: chiaro di notte, scuro di giorno (vedi THEME_INK).
+const INK_COLORS = ["#6c8dff", "#f472b6", "#34d399", "#fbbf24", THEME_INK];
 
 function NoteEditor({
   note,
@@ -97,6 +99,7 @@ function NoteEditor({
   const [title, setTitle] = useState(note.title);
   const [pages, setPages] = useState<NotePage[]>([]);
   const [ready, setReady] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [index, setIndex] = useState(0);
   const [mode, setMode] = useState<"text" | "ink">("text");
   const [tool, setTool] = useState<InkTool>("pen");
@@ -136,7 +139,10 @@ function NoteEditor({
         setPages(loaded);
         setReady(true);
       })
-      .catch((error) => console.error("Errore nel caricamento delle pagine:", error));
+      .catch((error) => {
+        console.error("Errore nel caricamento delle pagine:", error);
+        if (!cancelled) setLoadFailed(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -148,7 +154,10 @@ function NoteEditor({
       .then((list) => {
         if (!cancelled) setAttachments(list);
       })
-      .catch((error) => console.error("Errore nel caricamento degli allegati:", error));
+      .catch((error) => {
+        console.error("Errore nel caricamento degli allegati:", error);
+        if (!cancelled) setToast("Impossibile caricare gli allegati");
+      });
     return () => {
       cancelled = true;
     };
@@ -175,6 +184,10 @@ function NoteEditor({
       onChanged();
     } catch (error) {
       console.error("Errore nel salvataggio della nota:", error);
+      // Restano "da salvare": la prossima modifica riprova a scriverle.
+      for (const id of ids) dirtyPages.current.add(id);
+      if (saveTitle) titleDirty.current = true;
+      setToast("Salvataggio non riuscito");
     }
   }, [note.id, onChanged, titleRef]);
 
@@ -204,7 +217,23 @@ function NoteEditor({
 
   function showToast(text: string) {
     setToast(text);
-    window.setTimeout(() => setToast(null), 2200);
+  }
+
+  // Un solo timer: un avviso nuovo non viene chiuso da quello del precedente.
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 2200);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  /** Azione dell'utente: se fallisce lo dice con un avviso (dettagli in console). */
+  async function attempt(failure: string, action: () => Promise<void>) {
+    try {
+      await action();
+    } catch (error) {
+      console.error(`${failure}:`, error);
+      showToast(failure);
+    }
   }
 
   const page = pages[index] ?? null;
@@ -307,13 +336,17 @@ function NoteEditor({
     const tag = tagDraft.trim().replace(/^#/, "").toLowerCase().slice(0, 24);
     setTagDraft("");
     if (!tag || note.tags.includes(tag)) return;
-    await updateNote(note.id, { tags: [...note.tags, tag] });
-    onChanged();
+    await attempt("Impossibile aggiungere il tag", async () => {
+      await updateNote(note.id, { tags: [...note.tags, tag] });
+      onChanged();
+    });
   }
 
   async function removeTag(tag: string) {
-    await updateNote(note.id, { tags: note.tags.filter((t) => t !== tag) });
-    onChanged();
+    await attempt("Impossibile rimuovere il tag", async () => {
+      await updateNote(note.id, { tags: note.tags.filter((t) => t !== tag) });
+      onChanged();
+    });
   }
 
   function handleTagKey(e: KeyboardEvent<HTMLInputElement>) {
@@ -324,12 +357,14 @@ function NoteEditor({
 
   async function handleAddPage() {
     await flush();
-    const created = await addPage(note.id, page?.background ?? "none");
-    const next = [...pagesRef.current, created];
-    pagesRef.current = next;
-    setPages(next);
-    setIndex(next.length - 1);
-    setMode("text");
+    await attempt("Impossibile aggiungere la pagina", async () => {
+      const created = await addPage(note.id, page?.background ?? "none");
+      const next = [...pagesRef.current, created];
+      pagesRef.current = next;
+      setPages(next);
+      setIndex(next.length - 1);
+      setMode("text");
+    });
   }
 
   async function movePage(from: number, to: number) {
@@ -342,18 +377,20 @@ function NoteEditor({
     pagesRef.current = reordered;
     setPages(reordered);
     setIndex(Math.max(0, reordered.findIndex((p) => p.id === currentId)));
-    await reorderPages(reordered.map((p) => p.id));
+    await attempt("Impossibile salvare il nuovo ordine delle pagine", () => reorderPages(reordered.map((p) => p.id)));
   }
 
   async function removePage(id: number) {
     if (pagesRef.current.length <= 1) return;
-    dirtyPages.current.delete(id);
-    await deletePage(id);
-    const next = pagesRef.current.filter((p) => p.id !== id);
-    pagesRef.current = next;
-    setPages(next);
-    setIndex((i) => Math.min(i, next.length - 1));
-    onChanged();
+    await attempt("Impossibile eliminare la pagina", async () => {
+      await deletePage(id);
+      dirtyPages.current.delete(id);
+      const next = pagesRef.current.filter((p) => p.id !== id);
+      pagesRef.current = next;
+      setPages(next);
+      setIndex((i) => Math.min(i, next.length - 1));
+      onChanged();
+    });
   }
 
   async function changeBackground(background: PageBackground) {
@@ -361,9 +398,11 @@ function NoteEditor({
     const next = pagesRef.current.map((p) => (p.id === page.id ? { ...p, background } : p));
     pagesRef.current = next;
     setPages(next);
-    await setPageBackground(page.id, note.id, background);
-    setSavedAt(Date.now());
-    onChanged();
+    await attempt("Impossibile cambiare lo sfondo della pagina", async () => {
+      await setPageBackground(page.id, note.id, background);
+      setSavedAt(Date.now());
+      onChanged();
+    });
   }
 
   async function exportAs(kind: "pdf" | "png" | "jpg" | "md" | "copy") {
@@ -403,6 +442,7 @@ function NoteEditor({
       onAttachPaths(note.id, Array.isArray(picked) ? picked : [picked]);
     } catch (error) {
       console.error("Selezione file non riuscita:", error);
+      showToast("Impossibile aprire la scelta dei file");
     }
   }
 
@@ -420,9 +460,11 @@ function NoteEditor({
   }
 
   async function removeAttachment(attachment: Attachment) {
-    if (note.diskPath) await removeAttachmentFile(note.diskPath, attachment.name);
-    await deleteAttachment(attachment.id);
-    setAttachments((list) => list.filter((a) => a.id !== attachment.id));
+    await attempt("Impossibile rimuovere l'allegato", async () => {
+      if (note.diskPath) await removeAttachmentFile(note.diskPath, attachment.name);
+      await deleteAttachment(attachment.id);
+      setAttachments((list) => list.filter((a) => a.id !== attachment.id));
+    });
   }
 
   const splitQ = splitQuery.trim().toLowerCase();
@@ -430,6 +472,13 @@ function NoteEditor({
     .filter((n) => n.id !== note.id && n.title.toLowerCase().includes(splitQ))
     .slice(0, 30);
 
+  if (loadFailed) {
+    return (
+      <p className="nq-loading nq-loading--error" role="alert">
+        Impossibile aprire la nota (dettagli nella console).
+      </p>
+    );
+  }
   if (!ready || !page) return <p className="nq-loading">Caricamento…</p>;
 
   const savedLabel = saving
@@ -698,9 +747,9 @@ function NoteEditor({
                   key={c}
                   type="button"
                   className={`nq-ink-dot${c === color ? " is-on" : ""}`}
-                  style={{ background: c }}
+                  style={{ background: c === THEME_INK ? "var(--text-primary)" : c }}
                   onClick={() => setColor(c)}
-                  aria-label={`Colore ${c}`}
+                  aria-label={c === THEME_INK ? "Inchiostro del tema" : `Colore ${c}`}
                 />
               ))}
               <select className="nq-select" value={size} onChange={(e) => setSize(Number(e.target.value))} aria-label="Spessore">

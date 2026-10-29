@@ -1,0 +1,164 @@
+/* Card del catalogo (pagina catalogo e Impostazioni > Widget). */
+
+.widget-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  /* Niente overflow proprio: scorre .main, e un overflow qui taglierebbe l'ombra delle card ai bordi. */
+}
+
+.widget-catalog-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  padding: 16px 18px;
+
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+/* Con le impostazioni aperte la card prende tutta la riga: i controlli non stanno in una colonna stretta. */
+.widget-catalog-card.is-open {
+  grid-column: 1 / -1;
+}
+
+.widget-catalog-card:hover {
+  border-color: var(--border-accent);
+  box-shadow: var(--shadow-pop);
+}
+
+.widget-catalog-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.widget-catalog-card-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.widget-catalog-status {
+  flex-shrink: 0;
+
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.widget-catalog-status.is-present {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.widget-catalog-status.is-available {
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.widget-catalog-status.is-full {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.widget-catalog-description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.widget-catalog-settings {
+  padding-top: 6px;
+  border-top: 1px solid var(--divider);
+}
+
+.widget-catalog-sizes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.widget-catalog-size-btn {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  background: transparent;
+
+  padding: 5px 10px;
+
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+
+.widget-catalog-size-btn:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.widget-catalog-size-btn.active {
+  background: var(--accent-soft);
+  border-color: var(--border-accent);
+  color: var(--accent);
+}
+
+.widget-catalog-size-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.widget-catalog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.widget-catalog-current-size {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.widget-catalog-btn {
+  border: none;
+  border-radius: var(--radius-item);
+  background: var(--accent);
+
+  padding: 7px 16px;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--on-accent);
+  cursor: pointer;
+
+  transition: opacity 150ms ease;
+}
+
+.widget-catalog-btn:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.widget-catalog-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.widget-catalog-btn--danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}

@@ -1,5 +1,5 @@
 import { getDatabase } from "../db";
-import { DEFAULT_SETTINGS, sanitizeSettings, type AppSettings } from "./schema";
+import { DEFAULT_SETTINGS, keysToPersistOnLoad, sanitizeSettings, type AppSettings } from "./schema";
 
 export async function loadSettings(): Promise<AppSettings> {
   try {
@@ -13,7 +13,10 @@ export async function loadSettings(): Promise<AppSettings> {
         // riga illeggibile: viene semplicemente ignorata (ricade sul default)
       }
     }
-    return sanitizeSettings(raw);
+    const settings = sanitizeSettings(raw);
+    const persist = keysToPersistOnLoad(raw, settings);
+    if (persist.length > 0) await saveSettingsPatch(Object.fromEntries(persist.map((key) => [key, settings[key]])));
+    return settings;
   } catch (error) {
     console.error("Errore nel caricamento delle impostazioni:", error);
     return { ...DEFAULT_SETTINGS };

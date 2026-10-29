@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gruppi: Impostazioni della stanza (mockup)</title>
+<!-- Mockup approvato della funzione Gruppi. Riferimento visivo per l'implementazione:
+     4 temi × versione chiara e scura, scegli dal selettore in basso a destra o con #tema=opaco&modo=notte.
+     I font qui arrivano da Google Fonts solo per comodità: nell'app si usano i pacchetti @fontsource locali. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,300..800&amp;family=Figtree:wght@300..800&amp;family=Caveat:wght@400..700&amp;family=JetBrains+Mono:wght@300..700&amp;family=Doto:wght@400..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button,input,textarea,select{font:inherit}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+</style>
+<style>
+#mockup-bar{position:fixed;right:12px;bottom:12px;z-index:9999;display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:10px;background:#111;color:#eee;font:13px/1.2 system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+#mockup-bar select{font:inherit;padding:3px 6px;border-radius:6px}
+#mockup-bar span{opacity:.75}
+</style>
+</head>
+<body>
+<div id="mockup-root"></div>
+<div id="mockup-bar" role="group" aria-label="Versione del mockup">
+  <span>Mockup approvato</span>
+  <label>Tema <select name="tema"><option value="notte">Notte</option><option value="opaco">Opaco</option><option value="quaderno">Quaderno</option><option value="fosforo">Fosforo</option></select></label>
+  <label>Versione <select name="modo"><option value="giorno">Chiara</option><option value="notte">Scura</option></select></label>
+</div>
+<template id="mockup-markup">
+<div style="min-height: 100vh; display: flex; flex-wrap: wrap; background: {{t.mainBg}}; color: {{t.text}}; font-family: {{t.font}}; font-size: {{t.size}}; line-height: 1.5;">
+
+  <aside style="flex: 1 1 216px; max-width: 216px; min-width: 200px; box-sizing: border-box; display: flex; flex-direction: column; gap: 26px; padding: 26px 14px; background: {{t.sideBg}}; border-right: {{t.sideBorder}};">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 0 10px; font-size: 15px; font-weight: 600;">
+      <sc-if value="{{logoMoon}}" hint-placeholder-val="{{true}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{t.logo}}" stroke-width="1.6" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path></svg></sc-if>
+      <sc-if value="{{logoBook}}" hint-placeholder-val="{{false}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{{t.logo}}" stroke-width="1.6" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"></rect><path d="M4 9h16M4 15h16M10 3v18"></path></svg></sc-if>
+      <sc-if value="{{logoDot}}" hint-placeholder-val="{{false}}"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: {{t.logo}};"></span></sc-if>
+      <span>Personal Dashboard</span>
+    </div>
+    <nav aria-label="Navigazione principale" style="display: flex; flex-direction: column; gap: 2px;">
+      <button type="button" aria-current="page" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 0; border-radius: {{t.rItem}}; background: {{t.navBg}}; color: {{t.navFg}}; font-weight: 500; text-align: left; cursor: pointer;"><span style="display: {{navDot}}; width: 6px; height: 6px; border-radius: 50%; background: {{t.accent}};"></span>Dashboard</button>
+      <button type="button" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 0; border-radius: {{t.rItem}}; background: transparent; color: {{t.navIdle}}; text-align: left; cursor: pointer;"><span style="display: {{navDot}}; width: 6px; height: 6px; visibility: hidden;"></span><span style="flex-grow: 1;">Stanza comune</span><span style="min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border-radius: 10px; background: {{t.accentSoft}}; color: {{t.accentStrong}}; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center;">8</span></button>
+    </nav>
+    <div style="margin-top: auto;">
+      <button type="button" style="width: 100%; display: flex; align-items: center; height: 40px; padding: 0 12px; border: 0; border-radius: {{t.rItem}}; background: transparent; color: {{t.navIdle}}; cursor: pointer;">Impostazioni</button>
+    </div>
+  </aside>
+
+  <main style="flex: 999 1 560px; min-width: 0; box-sizing: border-box; padding: 26px 32px 28px; display: flex; flex-direction: column; gap: 20px;">
+    <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px;">
+      <button type="button" style="height: 38px; display: flex; align-items: center; gap: 6px; padding: 0 12px 0 8px; border: {{t.ghostBorder}}; border-radius: {{t.rItem}}; background: {{t.ghostBg}}; color: {{t.ghostFg}}; cursor: pointer;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>Dashboard</button>
+      <h1 style="margin: 0; font-size: 28px; font-weight: {{t.headW}}; letter-spacing: -0.02em;">Gruppi</h1>
+    </header>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start;">
+
+      <nav aria-label="Gruppi e impostazioni" style="flex: 1 1 220px; max-width: 240px; box-sizing: border-box; padding: 12px; border-radius: {{t.rCard}}; background: {{t.cardBg}}; border: {{t.cardBorder}}; box-shadow: {{t.cardShadow}}; display: flex; flex-direction: column; gap: 4px;">
+        <button type="button" onClick="{{pickGeneral}}" aria-current="{{generalCurrent}}" style="display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px; border: 0; border-radius: {{t.rRow}}; background: {{generalBg}}; color: {{generalFg}}; text-align: left; cursor: pointer;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          <span>Cosa vedono gli altri</span>
+        </button>
+        <span style="margin: 10px 12px 2px; font-size: 12px; color: {{t.muted}};">I tuoi gruppi</span>
+        <sc-for list="{{groupNav}}" as="gn" hint-placeholder-count="2">
+          <button type="button" onClick="{{gn.pick}}" aria-current="{{gn.current}}" style="display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 4px 12px; border: 0; border-radius: {{t.rRow}}; background: {{gn.bg}}; color: {{gn.fg}}; text-align: left; cursor: pointer;">
+            <span aria-hidden="true" style="width: 28px; height: 28px; flex: 0 0 auto; border-radius: {{t.rIcon}}; background: {{gn.iconBg}}; color: {{gn.iconFg}}; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;">{{gn.initial}}</span>
+            <span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;">
+              <span style="font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{gn.name}}</span>
+              <span style="font-size: 12px; opacity: 0.8;">{{gn.sub}}</span>
+            </span>
+          </button>
+        </sc-for>
+        <div style="display: flex; gap: 6px; margin-top: 10px;">
+          <button type="button" style="flex: 1 1 0; height: 38px; padding: 0 8px; border: 0; border-radius: {{t.rItem}}; background: {{t.accent}}; color: {{t.onAccent}}; font-weight: 600; cursor: pointer;">Crea</button>
+          <button type="button" style="flex: 1 1 0; height: 38px; padding: 0 8px; border: {{t.ghostBorder}}; border-radius: {{t.rItem}}; background: {{t.ghostBg}}; color: {{t.ghostFg}}; cursor: pointer;">Entra</button>
+        </div>
+      </nav>
+
+      <div style="flex: 999 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 14px;">
+
+        <sc-if value="{{isGeneral}}" hint-placeholder-val="{{false}}">
+          <section aria-labelledby="t-gen" style="display: flex; flex-direction: column; gap: 16px; padding: 22px; border-radius: {{t.rCard}}; background: {{t.cardBg}}; border: {{t.cardBorder}}; box-shadow: {{t.cardShadow}};">
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <h2 id="t-gen" style="margin: 0; font-size: 18px; font-weight: {{t.titleW}};">Cosa vedono gli altri</h2>
+              <span style="color: {{t.text2}};">Vale per tutti i tuoi gruppi.</span>
+            </div>
+            <sc-for list="{{toggles}}" as="tg" hint-placeholder-count="2">
+              <label style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; border-radius: {{t.rPanel}}; background: {{t.panelBg}}; border: {{t.panelBorder}}; cursor: pointer;">
+                <span style="display: flex; flex-direction: column;">
+                  <span style="font-weight: 500;">{{tg.label}}</span>
+                  <span style="font-size: 12px; color: {{t.muted}};">{{tg.help}}</span>
+                </span>
+                <input type="checkbox" checked="{{tg.on}}" onChange="{{tg.toggle}}" style="position: absolute; opacity: 0; width: 1px; height: 1px;">
+                <span aria-hidden="true" style="flex: 0 0 auto; width: 42px; height: 24px; box-sizing: border-box; padding: 3px; border-radius: 12px; background: {{tg.bg}}; display: flex; justify-content: {{tg.justify}};"><span style="width: 18px; height: 18px; border-radius: 50%; background: {{tg.knob}};"></span></span>
+              </label>
+            </sc-for>
+            <div style="padding: 12px 14px; border-radius: {{t.rPanel}}; border: {{t.dashed}}; font-size: 13px; color: {{t.text2}};">
+              Gli altri vedono sempre e solo il tuo <strong style="color: {{t.text}}; font-weight: 600;">nome utente</strong>, se stai studiando o sei in pausa, e il tempo di oggi e della settimana. Email e nome Google non vengono mai mostrati. Le singole sessioni, le note e i video restano sul tuo computer. I messaggi arrivano solo a chi è connesso in quel momento e non vengono salvati.
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 2px; padding-top: 4px;">
+              <h3 style="margin: 0; font-size: 15px; font-weight: {{t.titleW}};">Per te</h3>
+              <span style="color: {{t.text2}};">Non cambia nulla di quello che vedono gli altri.</span>
+            </div>
+            <sc-for list="{{myToggles}}" as="tg" hint-placeholder-count="1">
+              <label style="position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; border-radius: {{t.rPanel}}; background: {{t.panelBg}}; border: {{t.panelBorder}}; cursor: pointer;">
+                <span style="display: flex; flex-direction: column;">
+                  <span style="font-weight: 500;">{{tg.label}}</span>
+                  <span style="font-size: 12px; color: {{t.muted}};">{{tg.help}}</span>
+                </span>
+                <input type="checkbox" checked="{{tg.on}}" onChange="{{tg.toggle}}" style="position: absolute; opacity: 0; width: 1px; height: 1px;">
+                <span aria-hidden="true" style="flex: 0 0 auto; width: 42px; height: 24px; box-sizing: border-box; padding: 3px; border-radius: 12px; background: {{tg.bg}}; display: flex; justify-content: {{tg.justify}};"><span style="width: 18px; height: 18px; border-radius: 50%; background: {{tg.knob}};"></span></span>
+              </label>
+            </sc-for>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{isGroup}}" hint-placeholder-val="{{true}}">
+          <section aria-labelledby="t-group" style="display: flex; flex-direction: column; border-radius: {{t.rCard}}; background: {{t.cardBg}}; border: {{t.cardBorder}}; box-shadow: {{t.cardShadow}}; overflow: hidden;">
+            <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 20px 22px 0;">
+              <div style="display: flex; flex-direction: column;">
+                <h2 id="t-group" style="margin: 0; font-size: 22px; font-weight: {{t.headW}};">{{g.name}}</h2>
+                <span style="color: {{t.text2}};">{{g.roleLine}}</span>
+              </div>
+            </div>
+            <div role="tablist" aria-label="Sezioni del gruppo" style="display: flex; gap: 4px; padding: 14px 18px 0; border-bottom: {{t.panelBorderLine}};">
+              <sc-for list="{{tabs}}" as="tb" hint-placeholder-count="3">
+                <button type="button" role="tab" aria-selected="{{tb.selected}}" onClick="{{tb.pick}}" style="height: 40px; padding: 0 14px; border: 0; border-bottom: 2px solid {{tb.line}}; border-radius: 0; background: transparent; color: {{tb.fg}}; font-weight: {{tb.weight}}; cursor: pointer;">{{tb.label}}</button>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{isTabGroup}}" hint-placeholder-val="{{true}}">
+              <div role="tabpanel" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; padding: 18px 22px 22px; align-items: start;">
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                  <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <h3 style="margin: 0; font-size: 14px; font-weight: {{t.titleW}};">Codice invito</h3>
+                    <div style="display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 16px; border-radius: {{t.rPanel}}; background: {{t.panelBg}}; border: {{t.panelBorder}};">
+                      <span style="flex: 1 1 auto; font-family: {{t.disp}}; font-size: 26px; font-weight: {{t.dispW}}; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; white-space: nowrap;">{{codeText}}</span>
+                      <button type="button" onClick="{{toggleCode}}" aria-label="{{codeEyeLabel}}" aria-pressed="{{codeShownAttr}}" style="width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border: {{t.ghostBorder}}; border-radius: {{t.rItem}}; background: {{t.ghostBg}}; color: {{t.ghostFg}}; cursor: pointer;">
+                        <sc-if value="{{codeShown}}" hint-placeholder-val="{{false}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.2A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7a9.8 9.8 0 0 0 5.4-1.6"></path></svg></sc-if>
+                        <sc-if value="{{codeHidden}}" hint-placeholder-val="{{true}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"></path><circle cx="12" cy="12" r="3"></circle></svg></sc-if>
+                      </button>
+                      <button type="button" onClick="{{copy}}" style="height: 38px; padding: 0 12px; border: 0; border-radius: {{t.rItem}}; background: {{t.accent}}; color: {{t.onAccent}}; font-weight: 600; cursor: pointer;">{{copyLabel}}</button>
+                    </div>
+                    <sc-if value="{{g.owner}}" hint-placeholder-val="{{true}}">
+                      <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                        <span style="font-size: 12px; color: {{t.muted}};">Rigenerandolo, il vecchio codice smette subito di funzionare.</span>
+                        <button type="button" style="height: 34px; padding: 0 12px; border: {{t.ghostBorder}}; border-radius: {{t.rItem}}; background: {{t.ghostBg}}; color: {{t.ghostFg}}; cursor: pointer; white-space: nowrap;">Rigenera</button>
+                      </div>
+                    </sc-if>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <h3 style="margin: 0; font-size: 14px; font-weight: {{t.titleW}};">Informazioni</h3>
+                    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: {{t.text2}};">Nome
+                      <input type="text" value="{{g.name}}" maxlength="40" readonly="{{g.readonly}}" style="height: 40px; box-sizing: border-box; padding: 0 12px; border-radius: {{t.rField}}; border: {{t.fieldBorder}}; background: {{t.fieldBg}}; color: {{t.text}}; font-size: 14px;">
+                    </label>
+                    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: {{t.text2}};">Descrizione
+                      <textarea rows="2" maxlength="200" readonly="{{g.readonly}}" style="box-sizing: border-box; padding: 10px 12px; border-radius: {{t.rField}}; border: {{t.fieldBorder}}; background: {{t.fieldBg}}; color: {{t.text}}; font-size: 14px; resize: none;">{{g.desc}}</textarea>
+                    </label>
+                    <sc-if value="{{g.readonly}}" hint-placeholder-val="{{false}}">
+                      <span style="font-size: 12px; color: {{t.muted}};">Solo il proprietario può modificarle.</span>
+                    </sc-if>
+                  </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                  <h3 style="margin: 0; font-size: 14px; font-weight: {{t.titleW}};">Membri ({{g.count}} / 30)</h3>
+                  <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <sc-for list="{{members}}" as="m" hint-placeholder-count="6">
+                      <div style="display: flex; align-items: center; gap: 12px; min-height: 42px; padding: 2px 8px; border-radius: {{t.rRow}}; background: {{m.rowBg}};">
+                        <span aria-hidden="true" style="width: 30px; height: 30px; flex: 0 0 auto; border-radius: 50%; background: {{t.panelBg}}; border: {{t.ghostBorder}}; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: {{t.accentStrong}};">{{m.initial}}</span>
+                        <span style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column;">
+                          <span style="font-weight: 500;">{{m.name}}</span>
+                          <span style="font-size: 12px; color: {{t.muted}};">{{m.since}}</span>
+                        </span>
+                        <sc-if value="{{m.isOwner}}" hint-placeholder-val="{{false}}">
+                          <span style="padding: 2px 10px; border-radius: {{t.rItem}}; background: {{t.accentSoft}}; color: {{t.accentStrong}}; font-size: 12px;">Proprietario</span>
+                        </sc-if>
+                        <sc-if value="{{m.canRemove}}" hint-placeholder-val="{{true}}">
+                          <button type="button" aria-label="{{m.removeLabel}}" style="width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: {{t.rItem}}; background: transparent; color: {{t.muted}}; cursor: pointer;">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+                          </button>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+
+                <div style="grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: {{t.rPanel}}; border: {{t.dangerBorderLine}}; background: {{t.dangerSoftBg}};">
+                  <span style="display: flex; flex-direction: column; max-width: 460px;">
+                    <span style="font-weight: 600;">Abbandona il gruppo</span>
+                    <span style="font-size: 12px; color: {{t.text2}};">{{g.leaveText}}</span>
+                  </span>
+                  <button type="button" style="height: 38px; padding: 0 16px; border: {{t.dangerBorder}}; border-radius: {{t.rItem}}; background: {{t.dangerSoft}}; color: {{t.danger}}; font-weight: 600; cursor: pointer;">Abbandona</button>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{isTabRank}}" hint-placeholder-val="{{false}}">
+              <div role="tabpanel" style="display: flex; flex-direction: column; gap: 14px; padding: 18px 22px 22px;">
+                <div role="group" aria-label="Periodo" style="align-self: flex-start; display: flex; gap: 2px; padding: 3px; border-radius: {{t.rItem}}; background: {{t.panelBg}}; border: {{t.panelBorder}};">
+                  <sc-for list="{{rankPeriods}}" as="rp" hint-placeholder-count="3">
+                    <button type="button" onClick="{{rp.pick}}" aria-pressed="{{rp.on}}" style="height: 30px; padding: 0 12px; border: 0; border-radius: {{t.rItem}}; background: {{rp.bg}}; color: {{rp.fg}}; font-size: 13px; cursor: pointer;">{{rp.label}}</button>
+                  </sc-for>
+                </div>
+                <ol style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px;">
+                  <sc-for list="{{ranking}}" as="r" hint-placeholder-count="6">
+                    <li style="display: grid; grid-template-columns: 28px minmax(0, 160px) minmax(0, 1fr) 72px; align-items: center; gap: 12px; min-height: 40px; padding: 0 10px; border-radius: {{t.rRow}}; background: {{r.bg}};">
+                      <span style="font-weight: 700; color: {{r.rankFg}}; font-variant-numeric: tabular-nums;">{{r.rank}}</span>
+                      <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{r.name}}</span>
+                      <span aria-hidden="true" style="height: 8px; border-radius: 4px; background: {{t.track}}; overflow: hidden;"><span style="display: block; height: 100%; width: {{r.pct}}; border-radius: 4px; background: {{t.accent}};"></span></span>
+                      <span style="text-align: right; font-family: {{t.disp}}; font-size: 16px; font-weight: {{t.dispW}}; font-variant-numeric: tabular-nums; white-space: nowrap;">{{r.time}}</span>
+                    </li>
+                  </sc-for>
+                </ol>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{isTabReport}}" hint-placeholder-val="{{false}}">
+              <div role="tabpanel" style="display: flex; flex-direction: column; gap: 16px; padding: 18px 22px 22px;">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;">
+                  <div role="group" aria-label="Periodo" style="display: flex; gap: 2px; padding: 3px; border-radius: {{t.rItem}}; background: {{t.panelBg}}; border: {{t.panelBorder}};">
+                    <sc-for list="{{reportPeriods}}" as="rp" hint-placeholder-count="3">
+                      <button type="button" onClick="{{rp.pick}}" aria-pressed="{{rp.on}}" style="height: 30px; padding: 0 12px; border: 0; border-radius: {{t.rItem}}; background: {{rp.bg}}; color: {{rp.fg}}; font-size: 13px; cursor: pointer;">{{rp.label}}</button>
+                    </sc-for>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" aria-label="Periodo precedente" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: {{t.ghostBorder}}; border-radius: {{t.rItem}}; background: {{t.ghostBg}}; color: {{t.ghostFg}}; cursor: pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></button>
+                    <span style="font-weight: 500; white-space: nowrap;">{{reportRange}}</span>
+                    <button type="button" aria-label="Periodo successivo" disabled="{{true}}" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: {{t.ghostBorder}}; border-radius: {{t.rItem}}; background: {{t.ghostBg}}; color: {{t.ghostFg}}; opacity: 0.35;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg></button>
+                  </div>
+                </div>
+
+                <div style="display: flex; flex-wrap: wrap; gap: 18px; align-items: stretch;">
+                  <div style="flex: 3 1 340px; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 14px 14px 10px; border-radius: {{t.rPanel}}; background: {{t.panelBg}}; border: {{t.panelBorder}};">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; color: {{t.muted}};"><span>Tempo del gruppo per giorno</span><span>{{reportTotal}}</span></div>
+                    <div role="img" aria-label="{{chartLabel}}" style="height: 170px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; align-items: end;">
+                      <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+                        <div style="display: flex; flex-direction: column; align-items: stretch; gap: 4px; height: 100%; justify-content: flex-end;">
+                          <div style="display: flex; flex-direction: column-reverse; gap: 2px; height: {{d.h}};">
+                            <sc-for list="{{d.parts}}" as="pt" hint-placeholder-count="3">
+                              <span style="display: block; height: {{pt.h}}; border-radius: 3px; background: {{pt.c}};"></span>
+                            </sc-for>
+                          </div>
+                          <span style="text-align: center; font-size: 11px; color: {{d.fg}};">{{d.label}}</span>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                  <ul style="flex: 2 1 220px; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px;">
+                    <sc-for list="{{subjects}}" as="s" hint-placeholder-count="4">
+                      <li style="display: flex; align-items: center; gap: 10px; min-height: 34px; padding: 0 10px; border-radius: {{t.rRow}}; background: {{t.panelBg}}; border: {{t.panelBorder}};">
+                        <span aria-hidden="true" style="width: 10px; height: 10px; flex: 0 0 auto; border-radius: 3px; background: {{s.c}};"></span>
+                        <span style="flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column;">
+                          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{s.name}}</span>
+                          <span style="font-size: 11px; color: {{t.muted}};">{{s.who}}</span>
+                        </span>
+                        <span style="font-family: {{t.disp}}; font-size: 15px; font-weight: {{t.dispW}}; white-space: nowrap;">{{s.time}}</span>
+                      </li>
+                    </sc-for>
+                  </ul>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: {{t.rPanel}}; border: {{t.dashed}};">
+                  <div style="display: flex; flex-direction: column;">
+                    <h3 style="margin: 0; font-size: 14px; font-weight: {{t.titleW}};">Le tue materie in questo gruppo</h3>
+                    <span style="font-size: 12px; color: {{t.muted}};">Abbiniamo le tue materie a quelle del gruppo, così "Analisi 2" e "analisi" finiscono insieme. Controlla le proposte: entrano nel report solo le materie che confermi.</span>
+                  </div>
+                  <sc-for list="{{mappings}}" as="mp" hint-placeholder-count="3">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+                      <span style="flex: 0 0 140px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{mp.mine}}</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{t.muted}}" stroke-width="1.8" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                      <label style="flex: 1 1 160px; display: flex;">
+                        <span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);">{{mp.selectLabel}}</span>
+                        <select style="flex: 1 1 auto; height: 36px; padding: 0 10px; border-radius: {{t.rField}}; border: {{t.fieldBorder}}; background: {{t.fieldBg}}; color: {{t.text}};">
+                          <sc-for list="{{mp.options}}" as="op" hint-placeholder-count="4">
+                            <option value="{{op.v}}" selected="{{op.sel}}">{{op.label}}</option>
+                          </sc-for>
+                        </select>
+                      </label>
+                      <sc-if value="{{mp.proposed}}" hint-placeholder-val="{{true}}">
+                        <button type="button" onClick="{{mp.confirm}}" style="height: 36px; padding: 0 12px; border: 0; border-radius: {{t.rItem}}; background: {{t.accent}}; color: {{t.onAccent}}; font-weight: 600; cursor: pointer; white-space: nowrap;">Conferma</button>
+                      </sc-if>
+                      <sc-if value="{{mp.confirmed}}" hint-placeholder-val="{{false}}">
+                        <span style="display: flex; align-items: center; gap: 4px; font-size: 12px; color: {{t.success}}; white-space: nowrap;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>Confermata</span>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+          </section>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+</div>
+</template>
+<script type="text/plain" id="mockup-logic">
+class Component extends DCLogic {
+  // Token dei temi presi da src/styles/tokens.css (variante nativa) e tokens-varianti.css (l'altra).
+  // `chart` = colori delle materie del gruppo nel report (come le materie in Studio); `other` = "Altre materie".
+  static NATIVE = { notte: 'notte', opaco: 'giorno', quaderno: 'giorno', fosforo: 'notte' };
+  static BASE = {
+    notte: { font: "'Manrope', system-ui, sans-serif", disp: "'Manrope', system-ui, sans-serif", dispW: 200, headW: 300, titleW: 500, size: '14px',
+      mainBg: '#090C15', sideBg: '#090C15', sideBorder: '1px solid #161D30',
+      cardBg: 'linear-gradient(180deg, #151B2E 0%, #10152A 100%)', cardBorder: '1px solid #1F2740', cardShadow: 'inset 0 1px 0 rgba(200,215,255,0.07)', rCard: '22px',
+      panelBg: '#0B0F1C', panelBorder: '1px solid #182036', panelBorderLine: '1px solid #1F2740', rPanel: '16px', rItem: '12px', rField: '12px', rRow: '12px', rIcon: '8px',
+      text: '#E9ECF5', text2: '#9AA2BA', muted: '#8890A8',
+      accent: '#8EA6FF', accentStrong: '#B7C6FF', accentSoft: 'rgba(142,166,255,0.14)', onAccent: '#090C15',
+      navBg: '#161C2E', navFg: '#E9ECF5', navIdle: '#9AA2BA', ghostBorder: '1px solid #2A3350', ghostBg: 'transparent', ghostFg: '#C9CFE0',
+      danger: '#F08A8A', dangerSoft: 'rgba(240,138,138,0.16)', dangerBorder: '1px solid rgba(240,138,138,0.45)', dangerBorderLine: '1px solid rgba(240,138,138,0.28)', dangerSoftBg: 'transparent',
+      success: '#7DD3B0', track: '#1E2538', knobOff: '#8890A8', rowActive: '#161C2E', fieldBg: '#0B0F1C', fieldBorder: '1px solid #182036', dashed: '1px dashed #2A3350', logo: '#8EA6FF',
+      rank1: '#B7C6FF', rankN: '#8890A8', chart: ['#8EA6FF', '#7DD3B0', '#F0B47A', '#C9A0F0'], other: '#3A4566' },
+    opaco: { font: "'Bricolage Grotesque', system-ui, sans-serif", disp: "'Bricolage Grotesque', system-ui, sans-serif", dispW: 800, headW: 800, titleW: 700, size: '14px',
+      mainBg: '#D8D5CD', sideBg: '#D8D5CD', sideBorder: '0',
+      cardBg: '#EFECE5', cardBorder: '0', cardShadow: 'none', rCard: '28px',
+      panelBg: '#E2DED5', panelBorder: '0', panelBorderLine: '2px solid #E2DED5', rPanel: '18px', rItem: '999px', rField: '14px', rRow: '18px', rIcon: '999px',
+      text: '#22251F', text2: '#4D5047', muted: '#4D5047',
+      accent: '#22251F', accentStrong: '#22251F', accentSoft: 'rgba(34,37,31,0.10)', onAccent: '#ECE9E2',
+      navBg: '#22251F', navFg: '#ECE9E2', navIdle: '#4D5047', ghostBorder: '0', ghostBg: '#C9C5BB', ghostFg: '#22251F',
+      danger: '#8A2A1E', dangerSoft: 'rgba(138,42,30,0.12)', dangerBorder: '0', dangerBorderLine: '0', dangerSoftBg: '#E6C9BF',
+      success: '#3F6B3A', track: '#C9C5BB', knobOff: '#4D5047', rowActive: '#E2DED5', fieldBg: '#E2DED5', fieldBorder: '0', dashed: '2px dashed #C9C5BB', logo: '#22251F',
+      rank1: '#22251F', rankN: '#4D5047', chart: ['#4E6273', '#5E6E55', '#B89A55', '#8F7690'], other: '#C9C5BB' },
+    quaderno: { font: "'Figtree', system-ui, sans-serif", disp: "'Caveat', cursive", dispW: 600, headW: 600, titleW: 600, size: '14px',
+      mainBg: 'linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, #FCFDFF', sideBg: '#FFFFFF', sideBorder: '1px solid #D6DEEA',
+      cardBg: '#FFFFFF', cardBorder: '1px solid #C9D3E3', cardShadow: '0 3px 0 #DCE4F0', rCard: '8px',
+      panelBg: '#FFFFFF', panelBorder: '1px solid #DCE6F5', panelBorderLine: '1px solid #DCE6F5', rPanel: '6px', rItem: '8px', rField: '6px', rRow: '6px', rIcon: '4px',
+      text: '#1B2433', text2: '#556178', muted: '#556178',
+      accent: '#2340A0', accentStrong: '#2340A0', accentSoft: 'rgba(35,64,160,0.08)', onAccent: '#FFFFFF',
+      navBg: '#EEF2FB', navFg: '#2340A0', navIdle: '#556178', ghostBorder: '1.5px solid #2340A0', ghostBg: 'transparent', ghostFg: '#2340A0',
+      danger: '#B3261E', dangerSoft: 'rgba(179,38,30,0.08)', dangerBorder: '1.5px solid #B3261E', dangerBorderLine: '1.5px solid #B3261E', dangerSoftBg: 'transparent',
+      success: '#1F7A52', track: '#DCE6F5', knobOff: '#FFFFFF', rowActive: '#FFF1A8', fieldBg: '#FFFFFF', fieldBorder: '1.5px solid #C9D3E3', dashed: '1.5px dashed #B8C4D8', logo: '#2340A0',
+      rank1: '#2340A0', rankN: '#556178', chart: ['#2340A0', '#2F9E6B', '#E0A030', '#C2416A'], other: '#B8C4D8' },
+    fosforo: { font: "'JetBrains Mono', ui-monospace, monospace", disp: "'Doto', monospace", dispW: 900, headW: 400, titleW: 400, size: '13px',
+      mainBg: 'radial-gradient(circle at 96% 104%, #4A131B 0%, #2A0A10 14%, #170609 24%, transparent 25%), #110709', sideBg: 'transparent', sideBorder: '0',
+      cardBg: 'rgba(26,13,15,0.9)', cardBorder: '1px solid rgba(255,214,206,0.12)', cardShadow: 'none', rCard: '14px',
+      panelBg: '#0B0405', panelBorder: '1px solid rgba(255,214,206,0.12)', panelBorderLine: '1px solid rgba(255,214,206,0.12)', rPanel: '8px', rItem: '999px', rField: '8px', rRow: '8px', rIcon: '999px',
+      text: '#F2E6E1', text2: '#B39C97', muted: '#B39C97',
+      accent: '#F4E9E4', accentStrong: '#F4E9E4', accentSoft: 'rgba(255,214,206,0.07)', onAccent: '#110709',
+      navBg: '#F4E9E4', navFg: '#110709', navIdle: '#B39C97', ghostBorder: '1px solid rgba(255,214,206,0.16)', ghostBg: 'transparent', ghostFg: '#B39C97',
+      danger: '#FF4A3D', dangerSoft: 'rgba(255,74,61,0.12)', dangerBorder: '1px solid rgba(255,74,61,0.4)', dangerBorderLine: '1px solid rgba(255,74,61,0.3)', dangerSoftBg: 'transparent',
+      success: '#F4E9E4', track: '#3A2326', knobOff: '#B39C97', rowActive: 'rgba(255,214,206,0.05)', fieldBg: '#0B0405', fieldBorder: '1px solid rgba(255,214,206,0.12)', dashed: '1px dashed rgba(255,214,206,0.2)', logo: '#FF4A3D',
+      rank1: '#FF4A3D', rankN: '#B39C97', chart: ['#FF4A3D', '#F4E9E4', '#B39C97', '#7A5753'], other: '#3A2326' }
+  };
+  static OTHER = {
+    notte: { mainBg: '#EEF1F7', sideBg: '#EEF1F7', sideBorder: '1px solid #DCE2EE',
+      cardBg: 'linear-gradient(180deg, #FFFFFF 0%, #F8FAFD 100%)', cardBorder: '1px solid #DCE2EE', cardShadow: 'none',
+      panelBg: '#F4F6FB', panelBorder: '1px solid #E1E6F0', panelBorderLine: '1px solid #E1E6F0',
+      text: '#141A2E', text2: '#5B6480', muted: '#646C89',
+      accent: '#3B57D6', accentStrong: '#3049B8', accentSoft: 'rgba(59,87,214,0.10)', onAccent: '#FFFFFF',
+      navBg: '#E4E9F6', navFg: '#141A2E', navIdle: '#5B6480', ghostBorder: '1px solid #CBD3E4', ghostFg: '#2A3350',
+      danger: '#C2413A', dangerSoft: 'rgba(194,65,58,0.10)', dangerBorder: '1px solid rgba(194,65,58,0.4)', dangerBorderLine: '1px solid rgba(194,65,58,0.3)',
+      success: '#187A56', track: '#E3E8F1', knobOff: '#646C89', rowActive: '#E4E9F6', fieldBg: '#F4F6FB', fieldBorder: '1px solid #DCE2EE', dashed: '1px dashed #CBD3E4', logo: '#3B57D6',
+      rank1: '#3049B8', rankN: '#646C89', chart: ['#3B57D6', '#187A56', '#C27628', '#8A4FC2'], other: '#C3CBDC' },
+    opaco: { mainBg: '#1B1C18', sideBg: '#1B1C18', cardBg: '#2A2B26', panelBg: '#34352F', panelBorderLine: '2px solid #34352F', dangerSoftBg: '#4A2E28',
+      text: '#ECE9E2', text2: '#A9A79E', muted: '#A9A79E',
+      accent: '#ECE9E2', accentStrong: '#ECE9E2', accentSoft: 'rgba(236,233,226,0.10)', onAccent: '#1E1F1B',
+      navBg: '#ECE9E2', navFg: '#1E1F1B', navIdle: '#A9A79E', ghostBg: '#34352F', ghostFg: '#ECE9E2',
+      danger: '#E38B7C', dangerSoft: 'rgba(227,139,124,0.14)',
+      success: '#9DC28F', track: '#34352F', knobOff: '#A9A79E', rowActive: '#34352F', fieldBg: '#34352F', dashed: '2px dashed #3F403A', logo: '#ECE9E2',
+      rank1: '#ECE9E2', rankN: '#A9A79E', chart: ['#9DB0C0', '#A9B59C', '#D2B26A', '#B8A1B4'], other: '#4A4B44' },
+    quaderno: { mainBg: 'linear-gradient(#1C2330 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #1C2330 1px, transparent 1px) 0 0 / 24px 24px, #121620', sideBg: '#121620', sideBorder: '1px solid #262D3B',
+      cardBg: '#1A1F2B', cardBorder: '1px solid #2C3446', cardShadow: '0 3px 0 #0C0F16', panelBg: '#1A1F2B', panelBorder: '1px solid #262E3D', panelBorderLine: '1px solid #262E3D',
+      text: '#E6EAF2', text2: '#98A3B8', muted: '#98A3B8',
+      accent: '#9FB6FF', accentStrong: '#9FB6FF', accentSoft: 'rgba(159,182,255,0.10)', onAccent: '#121620',
+      navBg: '#222A3B', navFg: '#9FB6FF', navIdle: '#98A3B8', ghostBorder: '1.5px solid #9FB6FF', ghostFg: '#9FB6FF',
+      danger: '#F08A80', dangerSoft: 'rgba(240,138,128,0.12)', dangerBorder: '1.5px solid #F08A80', dangerBorderLine: '1.5px solid #F08A80',
+      success: '#4CC38A', track: '#262E3D', knobOff: '#98A3B8', rowActive: 'rgba(227,213,140,0.18)', fieldBg: '#121620', fieldBorder: '1.5px solid #2C3446', dashed: '1.5px dashed #3A4459', logo: '#9FB6FF',
+      rank1: '#9FB6FF', rankN: '#98A3B8', chart: ['#9FB6FF', '#4CC38A', '#E0A25A', '#F08A80'], other: '#3A4459' },
+    fosforo: { mainBg: 'radial-gradient(circle at 96% 104%, #E6C3C1 0%, #EDD5D2 14%, #F0E3DF 24%, transparent 25%), #EFE9E5',
+      cardBg: 'rgba(253,250,248,0.92)', cardBorder: '1px solid rgba(70,24,28,0.12)', panelBg: '#E5DDD7', panelBorder: '1px solid rgba(70,24,28,0.12)', panelBorderLine: '1px solid rgba(70,24,28,0.12)',
+      text: '#2A1517', text2: '#77605D', muted: '#77605D',
+      accent: '#2A1215', accentStrong: '#2A1215', accentSoft: 'rgba(70,24,28,0.07)', onAccent: '#EFE9E5',
+      navBg: '#2A1215', navFg: '#EFE9E5', navIdle: '#77605D', ghostBorder: '1px solid rgba(70,24,28,0.16)', ghostFg: '#77605D',
+      danger: '#C42A21', dangerSoft: 'rgba(224,53,43,0.10)', dangerBorder: '1px solid rgba(224,53,43,0.4)', dangerBorderLine: '1px solid rgba(224,53,43,0.3)',
+      success: '#2A1215', track: '#D6C9C4', knobOff: '#77605D', rowActive: 'rgba(70,24,28,0.05)', fieldBg: '#FDFAF8', fieldBorder: '1px solid rgba(70,24,28,0.16)', dashed: '1px dashed rgba(70,24,28,0.25)', logo: '#E0352B',
+      rank1: '#E0352B', rankN: '#77605D', chart: ['#E0352B', '#2A1215', '#77605D', '#B8A6A1'], other: '#D6C9C4' }
+  };
+
+  state = { view: 'g0', tab: 'gruppo', showCode: false, copied: false, liveSubject: false, reportSubjects: false, shareTodo: true, notifyChat: true, rankPeriod: 'week', reportPeriod: 'week', confirmed: {} };
+
+  renderVals() {
+    const tema = Component.BASE[this.props.tema] ? this.props.tema : 'notte';
+    const modo = this.props.modo === 'giorno' || this.props.modo === 'notte' ? this.props.modo : Component.NATIVE[tema];
+    const t = Object.assign({}, Component.BASE[tema], modo === Component.NATIVE[tema] ? {} : Component.OTHER[tema]);
+    const st = this.state;
+    const pad = (n) => String(n).padStart(2, '0');
+    const hm = (s) => { const m = Math.floor(s / 60), h = Math.floor(m / 60); return h > 0 ? h + 'h ' + pad(m % 60) + 'm' : (m % 60) + 'm'; };
+
+    const groups = [
+      { name: 'Ingegneria', owner: true, code: 'K7QM-3XRP', desc: 'Si studia insieme fino agli esami di febbraio.', count: 13,
+        people: [['matteo_s', 'tu, dal 2 ottobre', true], ['giulia.r', 'dal 2 ottobre'], ['chiara_b', 'dal 4 ottobre'], ['luca04', 'dal 9 ottobre'], ['sara.m', 'dal 11 ottobre'], ['nico.p', 'dal 12 ottobre'], ['marco_t', 'dal 15 ottobre'], ['davide', 'dal 20 ottobre']],
+        ranking: { day: [['giulia.r', 11537], ['sara.m', 6300], ['matteo_s', 6912], ['giorgia.f', 9300], ['chiara_b', 5820], ['davide', 4500]], week: [['giulia.r', 54837], ['sara.m', 47200], ['matteo_s', 42512], ['giorgia.f', 43200], ['chiara_b', 34120], ['bea_', 35200], ['davide', 26500]], month: [['giulia.r', 198000], ['matteo_s', 171000], ['sara.m', 160200], ['giorgia.f', 151000], ['bea_', 120400], ['chiara_b', 118300], ['davide', 90100]] } },
+      { name: 'Studio ITA', owner: false, ownerName: 'paolo_g', code: 'P2WD-8KHT', desc: 'Gruppo per studiare insieme.', count: 5,
+        people: [['paolo_g', 'dal 1 ottobre', false, true], ['matteo_s', 'tu, dal 3 ottobre', true], ['fede', 'dal 3 ottobre'], ['anna.l', 'dal 8 ottobre'], ['ire_99', 'dal 21 ottobre']],
+        ranking: { day: [['paolo_g', 5500], ['matteo_s', 6912], ['fede', 3600], ['anna.l', 2700]], week: [['paolo_g', 22300], ['matteo_s', 42512], ['fede', 19800], ['anna.l', 15400], ['ire_99', 0]], month: [['matteo_s', 171000], ['paolo_g', 88000], ['fede', 70200], ['anna.l', 52000], ['ire_99', 3600]] } }
+    ];
+    const gi = st.view === 'g1' ? 1 : 0;
+    const G = groups[gi];
+    const isGeneral = st.view === 'general';
+
+    const sw = (on) => ({ bg: on ? t.accent : t.track, justify: on ? 'flex-end' : 'flex-start', knob: on ? t.onAccent : t.knobOff });
+    const toggles = [
+      Object.assign({ label: 'Mostra la materia che sto studiando', help: 'Nella Stanza comune, accanto al tuo timer', on: st.liveSubject, toggle: () => this.setState({ liveSubject: !st.liveSubject }) }, sw(st.liveSubject)),
+      Object.assign({ label: 'Includi le mie materie nei report dei gruppi', help: 'Solo quelle che abbini nel report di ogni gruppo. Spento: il tuo tempo conta in "Altre materie"', on: st.reportSubjects, toggle: () => this.setState({ reportSubjects: !st.reportSubjects }) }, sw(st.reportSubjects)),
+      Object.assign({ label: 'Mostra la mia lista Da fare', help: 'Solo a chi è connesso, in sola lettura, nei dettagli della tua riga in Membri. Non viene salvata sul server', on: st.shareTodo, toggle: () => this.setState({ shareTodo: !st.shareTodo }) }, sw(st.shareTodo))
+    ];
+    const myToggles = [
+      Object.assign({ label: 'Notifica i messaggi nuovi', help: 'Quando l\'app non è in primo piano o la scheda Messaggi è chiusa', on: st.notifyChat, toggle: () => this.setState({ notifyChat: !st.notifyChat }) }, sw(st.notifyChat))
+    ];
+
+    const rankRows = G.ranking[st.rankPeriod].slice().sort((a, b) => b[1] - a[1]);
+    const max = rankRows[0] ? rankRows[0][1] || 1 : 1;
+    const ranking = rankRows.map(([name, s], i) => ({
+      rank: i + 1, name: name === 'matteo_s' ? name + ' (tu)' : name, time: hm(s), pct: Math.round((s / max) * 100) + '%',
+      rankFg: i === 0 ? t.rank1 : t.rankN, bg: name === 'matteo_s' ? t.accentSoft : 'transparent'
+    }));
+
+    // Report: materie del gruppo (già unite) per giorno, sommate su tutti i membri.
+    const subj = gi === 0
+      ? [['Analisi', 'giulia.r, matteo_s, nico.p', [5400, 7200, 3600, 9000, 6300, 4500, 2700]],
+         ['Fisica', 'giulia.r, giorgia.f', [3600, 1800, 5400, 2700, 4500, 1800, 900]],
+         ['Elettronica', 'chiara_b, luca04', [1800, 3600, 0, 2700, 1800, 3600, 0]],
+         ['Chimica', 'bea_', [0, 1800, 2700, 0, 1800, 0, 0]]]
+      : [['Storia', 'paolo_g, fede', [3600, 2700, 4500, 1800, 3600, 0, 900]],
+         ['Letteratura', 'anna.l, matteo_s', [1800, 2700, 0, 3600, 1800, 2700, 0]],
+         ['Latino', 'fede', [0, 1800, 1800, 0, 900, 0, 0]]];
+    const other = [1800, 900, 2700, 1800, 0, 900, 1800];
+    const cols = t.chart.slice(0, subj.length).concat([t.other]);
+    const all = subj.map((s, i) => ({ name: s[0], who: s[1], per: s[2], c: cols[i] })).concat([{ name: 'Altre materie', who: 'non abbinate o non condivise', per: other, c: t.other }]);
+    const dayTotals = [0, 1, 2, 3, 4, 5, 6].map((d) => all.reduce((a, s) => a + s.per[d], 0));
+    const dMax = Math.max.apply(null, dayTotals) || 1;
+    const labels = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
+    const days = labels.map((label, d) => ({
+      label, fg: d === 4 ? t.text : t.muted,
+      h: Math.round((dayTotals[d] / dMax) * 140) + 'px',
+      parts: all.filter((s) => s.per[d] > 0).map((s) => ({ c: s.c, h: Math.max(2, Math.round((s.per[d] / dMax) * 140) - 2) + 'px' }))
+    }));
+    const subjects = all.map((s) => ({ name: s.name, who: s.who, c: s.c, time: hm(s.per.reduce((a, b) => a + b, 0)) }));
+    const grand = dayTotals.reduce((a, b) => a + b, 0);
+
+    const groupSubjects = gi === 0 ? ['Analisi', 'Fisica', 'Elettronica', 'Chimica'] : ['Storia', 'Letteratura', 'Latino'];
+    const mine = gi === 0 ? [['Analisi 2', 'Analisi', 'proposed'], ['fisica 1', 'Fisica', 'confirmed'], ['Inglese', '', 'none']] : [['Letteratura italiana', 'Letteratura', 'proposed'], ['Analisi 2', '', 'none']];
+    const mappings = mine.map(([m, target, status]) => {
+      const done = st.confirmed[gi + m] || status === 'confirmed';
+      return {
+        mine: m, selectLabel: 'Materia del gruppo per ' + m,
+        proposed: status === 'proposed' && !done, confirmed: done,
+        confirm: () => this.setState({ confirmed: Object.assign({}, st.confirmed, { [gi + m]: true }) }),
+        options: [{ v: '', label: 'Non condividere', sel: !target }].concat(groupSubjects.map((g) => ({ v: g, label: g, sel: g === target })), [{ v: '+', label: 'Nuova materia del gruppo…', sel: false }])
+      };
+    });
+
+    const seg = (list, cur, key) => list.map(([id, label]) => ({ label, on: cur === id, bg: cur === id ? t.navBg : 'transparent', fg: cur === id ? t.navFg : t.navIdle, pick: () => this.setState({ [key]: id }) }));
+    const tabs = [['gruppo', 'Gruppo'], ['classifica', 'Classifica'], ['report', 'Report']].map(([id, label]) => ({
+      label, selected: st.tab === id ? 'true' : 'false', pick: () => this.setState({ tab: id }),
+      line: st.tab === id ? t.accent : 'transparent', fg: st.tab === id ? t.text : t.text2, weight: st.tab === id ? 600 : 400
+    }));
+
+    return {
+      t,
+      logoMoon: tema === 'notte', logoBook: tema === 'quaderno', logoDot: tema === 'fosforo',
+      navDot: tema === 'notte' ? 'block' : 'none',
+      isGeneral, isGroup: !isGeneral,
+      generalCurrent: isGeneral ? 'page' : 'false',
+      generalBg: isGeneral ? t.navBg : 'transparent', generalFg: isGeneral ? t.navFg : t.text,
+      pickGeneral: () => this.setState({ view: 'general' }),
+      groupNav: groups.map((x, i) => {
+        const cur = !isGeneral && gi === i;
+        return {
+          name: x.name, initial: x.name.charAt(0), sub: x.count + ' membri' + (x.owner ? ', proprietario' : ''),
+          current: cur ? 'page' : 'false', bg: cur ? t.navBg : 'transparent', fg: cur ? t.navFg : t.text,
+          iconBg: cur ? t.navFg : t.accentSoft, iconFg: cur ? t.navBg : t.accentStrong,
+          pick: () => this.setState({ view: 'g' + i, showCode: false, copied: false })
+        };
+      }),
+      toggles, myToggles,
+      g: {
+        name: G.name, desc: G.desc, count: G.count, owner: G.owner, readonly: !G.owner,
+        roleLine: G.owner ? 'Sei il proprietario' : 'Proprietario: ' + G.ownerName,
+        leaveText: G.owner ? 'Sei il proprietario: il gruppo passerà a giulia.r, il membro più anziano. Il tuo studio resta sul tuo computer.' : 'Per rientrare ti servirà un nuovo codice invito. Il tuo studio resta sul tuo computer.'
+      },
+      tabs, isTabGroup: st.tab === 'gruppo', isTabRank: st.tab === 'classifica', isTabReport: st.tab === 'report',
+      codeText: st.showCode ? G.code : '••••-••••', codeShown: st.showCode, codeHidden: !st.showCode, codeShownAttr: st.showCode ? 'true' : 'false',
+      codeEyeLabel: st.showCode ? 'Nascondi il codice' : 'Mostra il codice',
+      toggleCode: () => this.setState({ showCode: !st.showCode }),
+      copyLabel: st.copied ? 'Copiato' : 'Copia', copy: () => this.setState({ copied: true }),
+      members: G.people.map(([name, since, me, isOwnerOther]) => {
+        const isOwner = (me && G.owner) || !!isOwnerOther;
+        return { name, since, initial: name.charAt(0).toUpperCase(), isOwner, canRemove: G.owner && !me, removeLabel: 'Rimuovi ' + name, rowBg: me ? t.rowActive : 'transparent' };
+      }),
+      rankPeriods: seg([['day', 'Oggi'], ['week', 'Settimana'], ['month', 'Mese']], st.rankPeriod, 'rankPeriod'),
+      ranking,
+      reportPeriods: seg([['week', 'Settimana'], ['month', 'Mese'], ['year', 'Anno']], st.reportPeriod, 'reportPeriod'),
+      reportRange: '19 – 25 ottobre', reportTotal: 'Totale ' + hm(grand),
+      chartLabel: 'Tempo di studio del gruppo per giorno e per materia, totale ' + hm(grand),
+      days, subjects, mappings
+    };
+  }
+}
+</script>
+<script>
+/* Mini-motore per vedere i mockup fuori dall'editor: legge il markup del mockup
+   (segnaposto {{...}}, <sc-for>, <sc-if>, onClick/onChange) e lo ridisegna a ogni setState.
+   Serve solo come riferimento visivo: NON è codice da riusare nell'app. */
+(function () {
+  const tpl = document.getElementById('mockup-markup');
+  const src = document.getElementById('mockup-logic').textContent;
+  const root = document.getElementById('mockup-root');
+
+  class DCLogic {
+    constructor(props) { this.props = props || {}; }
+    setState(patch) { this.state = Object.assign({}, this.state, typeof patch === 'function' ? patch(this.state) : patch); schedule(); }
+    forceUpdate() { schedule(); }
+  }
+  const Component = new Function('DCLogic', src + '\n;return Component;')(DCLogic);
+
+  const params = new URLSearchParams(location.hash.slice(1));
+  const props = { tema: params.get('tema') || 'notte', modo: params.get('modo') || '' };
+  const NATIVE = { notte: 'notte', opaco: 'giorno', quaderno: 'giorno', fosforo: 'notte' };
+  if (!props.modo) props.modo = NATIVE[props.tema] || 'notte';
+
+  let inst = new Component(props);
+  inst.state = inst.state || {};
+  if (inst.componentDidMount) inst.componentDidMount();
+
+  function lookup(path, scope) {
+    path = path.trim();
+    if (path === 'true') return true;
+    if (path === 'false') return false;
+    let o = scope;
+    for (const k of path.split('.')) { if (o == null) return undefined; o = o[k]; }
+    return o;
+  }
+  const WHOLE = /^\s*\{\{\s*([\w.$]+)\s*\}\}\s*$/;
+  const ANY = /\{\{\s*([\w.$]+)\s*\}\}/g;
+  const interp = (s, scope) => s.replace(ANY, (_, p) => { const v = lookup(p, scope); return v == null ? '' : String(v); });
+
+  function process(node, scope) {
+    if (node.nodeType === 3) { if (node.nodeValue.includes('{{')) node.nodeValue = interp(node.nodeValue, scope); return; }
+    if (node.nodeType !== 1) return;
+    const tag = node.localName;
+    if (tag === 'sc-for') {
+      const list = lookup((node.getAttribute('list').match(WHOLE) || [])[1] || '', scope) || [];
+      const as = node.getAttribute('as') || 'item';
+      const frag = document.createDocumentFragment();
+      list.forEach((item, i) => {
+        for (const child of Array.from(node.childNodes)) {
+          const c = child.cloneNode(true);
+          const s = Object.assign({}, scope, { [as]: item, $index: i });
+          const holder = document.createElement('div'); holder.appendChild(c);
+          process(c, s);
+          while (holder.firstChild) frag.appendChild(holder.firstChild);
+        }
+      });
+      node.replaceWith(frag);
+      return;
+    }
+    if (tag === 'sc-if') {
+      const v = lookup((node.getAttribute('value').match(WHOLE) || [])[1] || '', scope);
+      if (!v) { node.remove(); return; }
+      const kids = Array.from(node.childNodes);
+      kids.forEach((k) => process(k, scope));
+      node.replaceWith(...Array.from(node.childNodes));
+      return;
+    }
+    for (const attr of Array.from(node.attributes)) {
+      const name = attr.name, val = attr.value;
+      if (name.startsWith('hint-')) { node.removeAttribute(name); continue; }
+      if (name.startsWith('on')) {
+        node.removeAttribute(name);
+        const m = val.match(WHOLE); const fn = m && lookup(m[1], scope);
+        const ev = name.slice(2).toLowerCase() === 'change' ? 'change' : name.slice(2).toLowerCase();
+        if (typeof fn === 'function') node.addEventListener(ev, fn);
+        continue;
+      }
+      if (!val.includes('{{')) continue;
+      const m = val.match(WHOLE);
+      if (m) {
+        const v = lookup(m[1], scope);
+        if (typeof v === 'boolean' && !name.startsWith('aria-')) {
+          if (v) node.setAttribute(name, ''); else node.removeAttribute(name);
+          if (name === 'checked' || name === 'disabled') node[name] = v;
+        } else node.setAttribute(name, v == null ? '' : String(v));
+      } else node.setAttribute(name, interp(val, scope));
+    }
+    for (const child of Array.from(node.childNodes)) process(child, scope);
+  }
+
+  let pending = false;
+  function schedule() { if (!pending) { pending = true; requestAnimationFrame(() => { pending = false; render(); }); } }
+  function render() {
+    const vals = inst.renderVals();
+    const frag = tpl.content.cloneNode(true);
+    const holder = document.createElement('div');
+    holder.appendChild(frag);
+    for (const c of Array.from(holder.childNodes)) process(c, vals);
+    root.replaceChildren(...Array.from(holder.childNodes));
+  }
+  render();
+
+  // Selettore tema / chiaro-scuro.
+  const bar = document.getElementById('mockup-bar');
+  const selT = bar.querySelector('[name=tema]'), selM = bar.querySelector('[name=modo]');
+  selT.value = props.tema; selM.value = props.modo;
+  function change() {
+    location.hash = 'tema=' + selT.value + '&modo=' + selM.value;
+    if (inst.componentWillUnmount) inst.componentWillUnmount();
+    inst = new Component({ tema: selT.value, modo: selM.value });
+    inst.state = inst.state || {};
+    if (inst.componentDidMount) inst.componentDidMount();
+    render();
+  }
+  selT.addEventListener('change', change);
+  selM.addEventListener('change', change);
+})();
+
+</script>
+</body>
+</html>
