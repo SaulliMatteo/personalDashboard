@@ -19,6 +19,7 @@ import {
   MdDoneAll,
   MdHighlight,
   MdHorizontalRule,
+  MdCode,
   MdKeyboard,
   MdLink,
   MdLooks3,
@@ -29,6 +30,7 @@ import {
   MdOutlineAttachFile,
   MdOutlineImage,
   MdOutlineBackspace,
+  MdOutlineShapeLine,
   MdOutlineBorderColor,
   MdOutlineCalendarToday,
   MdOutlineEdit,
@@ -56,7 +58,11 @@ import {
   deletePage,
   getPages,
   listAttachments,
+  loadCodeDetect,
+  loadInkShapes,
   reorderPages,
+  saveCodeDetect,
+  saveInkShapes,
   savePage,
   setPageBackground,
   updateNote,
@@ -72,6 +78,8 @@ import { noteToMarkdown, renderNoteImage, renderNotePdf, saveBytes, saveText } f
 import { attachmentAbsolutePath, removeAttachmentFile, slugify } from "../lib/vault";
 import { BACKGROUND_OPTIONS } from "../lib/templates";
 import { THEME_INK } from "../lib/ink";
+import { CONTRAST_LARGE, TITLE_COLORS, isTitleColor } from "../lib/titleColor";
+import { useTitleColor } from "../lib/useTitleColor";
 import NumberField from "../../../ui/NumberField";
 import PageThumb from "./PageThumb";
 import { PAGE_COLORS, customPageColor, isPageColorKey } from "../lib/pageColor";
@@ -103,10 +111,12 @@ import { formatWhen, monthYear, sanitizeHtml, wordCount } from "../lib/html";
 import { createHistory, type RecordMeta } from "../lib/history";
 import { getTextOffsets, setTextOffsets, type TextOffsets } from "../lib/selectionOffsets";
 import { duplicateBlock, moveBlock } from "../lib/blockActions";
-import { createTableElement, placeCaret } from "../lib/tableDom";
+import { caretCell, createTableElement, placeCaret } from "../lib/tableDom";
 import { shortcutLabel, type ShortcutAction } from "../lib/shortcuts";
 import { filterInsertItems, type InsertItem } from "../lib/insertItems";
-import { createFileBlock, createImageBlock, createRowRef, createViewBlock, insertBlocks, caretAt, serializeEditor } from "../lib/blocks";
+import { createCodeBlock, createFileBlock, createImageBlock, createRowRef, createViewBlock, insertBlocks, caretAt, serializeEditor } from "../lib/blocks";
+import { detectCode } from "../lib/codeDetect";
+import { normalizeLang, type CodeLang } from "../lib/codeLanguages";
 import { rowTitle } from "../lib/collections";
 import { createCollection, createView, fieldsOf, restoreRow, rowInfo, setCell, trashRow, useCollections } from "../lib/collectionsStore";
 import type { CollectionLinks } from "../collections/CollectionView";
@@ -216,6 +226,7 @@ function NoteEditor({
   const [tool, setTool] = useState<InkTool>("pen");
   const [color, setColor] = useState(INK_COLORS[0]);
   const [size, setSize] = useState(2);
+  const [shapes, setShapes] = useState(true);
   const [zoom, setZoom] = useState(100);
   const [block, setBlock] = useState("p");
   const [saving, setSaving] = useState(false);
@@ -224,6 +235,14 @@ function NoteEditor({
   const [linkUrl, setLinkUrl] = useState("");
   const [tagDraft, setTagDraft] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+  /** Pulsante dell'avviso (es. "Converti in codice"); null = avviso semplice. */
+  const [toastAction, setToastAction] = useState<{ label: string; run: () => void } | null>(null);
+  /** Riconoscimento del codice incollato (opzione nel menu "⋯"). */
+  const [codeDetectOn, setCodeDetectOn] = useState(true);
+  /** Ctrl+Shift+V appena premuto: il prossimo incolla è sempre testo semplice. */
+  const plainPaste = useRef(false);
+  /** Durante una trasformazione a più passi i singoli input non entrano in cronologia (una voce sola). */
+  const silentInput = useRef(false);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [fontSize, setFontSize] = useState(15);
   /** Colore libero del testo (l'ultimo scelto nel selettore). */
@@ -233,6 +252,15 @@ function NoteEditor({
   const [colorKey, setColorKey] = useState("");
   const [inTitle, setInTitle] = useState(false);
   const [noteFont, setNoteFont] = useState<NoteFont | null>(note.font);
+  /** Colore del titolo (null = quello del tema) e se adesso è corretto per il contrasto. */
+  const [titleColor, setTitleColor] = useState<string | null>(note.titleColor);
+  const [titleAdjusted, setTitleAdjusted] = useState(false);
+  const titleInputRef = useRef<HTMLTextAreaElement | null>(null);
+  /** Colore del titolo ancora da scrivere nel DB (lo scrive flush, anche uscendo dall'editor). */
+  const titleColorDirty = useRef(false);
+  const titleColorRef = useLatestRef(titleColor);
+  // Il titolo sta solo sulla prima pagina: si ricolora quando torna visibile o cambia lo sfondo della pagina.
+  useTitleColor(titleInputRef, titleColor, CONTRAST_LARGE, [index, ready, pages[0]?.color, pages[0]?.background], setTitleAdjusted);
   const [menu, setMenu] = useState<"export" | "split" | "color" | "mark" | "more" | "pages" | "views" | null>(null);
   const store = useCollections();
   const [mentionState, setMention] = useState<SlashState | null>(null);
@@ -351,9 +379,16 @@ function NoteEditor({
     dirtyPages.current.clear();
     const saveTitle = titleDirty.current;
     titleDirty.current = false;
-    if (ids.length === 0 && !saveTitle) return;
+    const saveColor = titleColorDirty.current;
+    titleColorDirty.current = false;
+    if (ids.length === 0 && !saveTitle && !saveColor) return;
     try {
-      if (saveTitle) await updateNote(note.id, { title: titleRef.current });
+      if (saveTitle || saveColor) {
+        await updateNote(note.id, {
+          ...(saveTitle ? { title: titleRef.current } : {}),
+          ...(saveColor ? { titleColor: titleColorRef.current } : {}),
+        });
+      }
       for (const id of ids) {
         const page = pagesRef.current.find((p) => p.id === id);
         if (page) await savePage(page.id, note.id, page.content, page.ink);
@@ -366,9 +401,10 @@ function NoteEditor({
       // Restano "da salvare": la prossima modifica riprova a scriverle.
       for (const id of ids) dirtyPages.current.add(id);
       if (saveTitle) titleDirty.current = true;
+      if (saveColor) titleColorDirty.current = true;
       setToast("Salvataggio non riuscito");
     }
-  }, [note.id, onChanged, titleRef]);
+  }, [note.id, onChanged, titleRef, titleColorRef]);
 
   const flushRef = useLatestRef(flush);
 
@@ -420,15 +456,28 @@ function NoteEditor({
   }
 
   function showToast(text: string) {
+    setToastAction(null);
+    setToast(text);
+  }
+
+  /** Avviso con un pulsante: resta qualche secondo in più, sparisce se si continua a scrivere. */
+  function showSuggestion(text: string, label: string, run: () => void) {
+    setToastAction({ label, run });
     setToast(text);
   }
 
   // Un solo timer: un avviso nuovo non viene chiuso da quello del precedente.
   useEffect(() => {
     if (!toast) return;
-    const timer = window.setTimeout(() => setToast(null), 2200);
+    const timer = window.setTimeout(
+      () => {
+        setToast(null);
+        setToastAction(null);
+      },
+      toastAction ? 6000 : 2200
+    );
     return () => window.clearTimeout(timer);
-  }, [toast]);
+  }, [toast, toastAction]);
 
   /** Azione dell'utente: se fallisce lo dice con un avviso (dettagli in console). */
   async function attempt(failure: string, action: () => Promise<void>) {
@@ -465,7 +514,12 @@ function NoteEditor({
 
   /** Testo scritto nella pagina: si unisce alla voce precedente se si continua nello stesso blocco. */
   function handleTyping(html: string) {
-    if (!page) return;
+    if (!page || silentInput.current) return;
+    // Si continua a scrivere: il suggerimento "Converti in codice" non serve più.
+    if (toastAction && !commandActive.current) {
+      setToast(null);
+      setToastAction(null);
+    }
     const meta: RecordMeta = commandActive.current ? { kind: "other" } : { kind: "typing", blockKey: topBlockKey(editorRef.current) };
     patchPage(page.id, { content: html }, meta);
   }
@@ -526,6 +580,16 @@ function NoteEditor({
   function handleMark(key: string | null) {
     setMenu(null);
     withSelection((root) => applyTextAttr(root, "data-mark", key));
+  }
+
+  /**
+   * Colore del titolo: si vede subito e si salva col resto della nota (il selettore libero manda
+   * un evento a ogni spostamento del cursore, non serve scrivere ognuno).
+   */
+  function changeTitleColor(color: string | null) {
+    setTitleColor(color);
+    titleColorDirty.current = true;
+    schedule();
   }
 
   async function changeNoteFont(font: NoteFont | null) {
@@ -657,6 +721,44 @@ async function changePageColor(color: string | null) {
     else showToast("Niente da ripetere");
   }
 
+  /** Blocco di codice dove sta il cursore; il cursore va dentro il blocco. */
+  function insertCodeBlock(lang: CodeLang = "plaintext", text = "") {
+    const el = editorRef.current;
+    if (!el || mode !== "text") return;
+    const at = insertionPoint();
+    el.focus({ preventScroll: true });
+    insertBlocks(el, at && el.contains(at.startContainer) ? at : null, [createCodeBlock(lang, text, true)]);
+    commitEditor();
+  }
+
+  /**
+   * Il testo appena incollato (da `start` a `end` nel testo della pagina) diventa un blocco di
+   * codice. È una modifica a parte: Ctrl+Z torna al testo incollato normale.
+   */
+  function convertPastedToCode(start: number, end: number, lang: CodeLang, text: string) {
+    setToast(null);
+    setToastAction(null);
+    const el = editorRef.current;
+    if (!el || mode !== "text") return;
+    el.focus({ preventScroll: true });
+    setTextOffsets(el, { start, end });
+    const sel = window.getSelection();
+    const squash = (s: string) => s.replace(/\s+/g, "");
+    if (!sel || sel.rangeCount === 0 || squash(sel.getRangeAt(0).toString()) !== squash(text)) {
+      showToast("Il testo è cambiato: non si può più convertire");
+      return;
+    }
+    commandActive.current = true;
+    try {
+      document.execCommand("delete");
+    } finally {
+      commandActive.current = false;
+    }
+    const at = sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+    insertBlocks(el, at, [createCodeBlock(lang, text, true)]);
+    commitEditor();
+  }
+
   /** Tabella 3×3 con intestazione dove sta il cursore (dopo il paragrafo, o al suo posto se è vuoto). */
   function insertTable() {
     const el = editorRef.current;
@@ -668,6 +770,55 @@ async function changePageColor(color: string | null) {
     const first = table.querySelector<HTMLElement>("th, td");
     if (first) placeCaret(first, false);
     commitEditor();
+  }
+
+  // Riconoscimento del codice incollato, e Ctrl+Shift+V (incolla sempre come testo semplice).
+  useEffect(() => {
+    let alive = true;
+    loadCodeDetect()
+      .then((on) => {
+        if (alive) setCodeDetectOn(on);
+      })
+      .catch((err) => console.error("Riconoscimento del codice: lettura non riuscita", err));
+    let timer: number | undefined;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "v") {
+        plainPaste.current = true;
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => (plainPaste.current = false), 500);
+      }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      alive = false;
+      window.clearTimeout(timer);
+      window.removeEventListener("keydown", onKey, true);
+    };
+  }, []);
+
+  function toggleCodeDetect() {
+    const next = !codeDetectOn;
+    setCodeDetectOn(next);
+    saveCodeDetect(next).catch((err) => console.error("Riconoscimento del codice: salvataggio non riuscito", err));
+  }
+
+  // Forme automatiche: la scelta resta tra un'apertura e l'altra.
+  useEffect(() => {
+    let alive = true;
+    loadInkShapes()
+      .then((on) => {
+        if (alive) setShapes(on);
+      })
+      .catch((err) => console.error("Forme automatiche: lettura non riuscita", err));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  function toggleShapes() {
+    const next = !shapes;
+    setShapes(next);
+    saveInkShapes(next).catch((err) => console.error("Forme automatiche: salvataggio non riuscito", err));
   }
 
   function handleInk(strokes: InkStroke[]) {
@@ -716,11 +867,19 @@ async function changePageColor(color: string | null) {
         return true;
       case "toggleCheck":
         return blockAction(toggleCurrentCheck);
+      case "indent":
+      case "outdent":
+        // Nel testo li gestisce già la pagina; altrove Tab resta quello del browser.
+        return false;
       case "duplicate":
         return blockAction(duplicateBlock);
       case "table":
         if (mode !== "text") return false;
         insertTable();
+        return true;
+      case "code":
+        if (mode !== "text") return false;
+        insertCodeBlock();
         return true;
       case "moveUp":
         return blockAction((root) => moveBlock(root, -1));
@@ -804,6 +963,7 @@ async function changePageColor(color: string | null) {
     { id: "numbers", label: "Elenco numerato", icon: <MdFormatListNumbered />, hint: shortcutLabel("numbers"), keywords: "lista elenco numeri" },
     { id: "checklist", label: "Checklist", icon: <MdChecklist />, hint: shortcutLabel("checklist"), keywords: "cose da fare spunta todo" },
     { id: "table", label: "Tabella", icon: <MdOutlineTableChart />, hint: shortcutLabel("table"), keywords: "tabella griglia righe colonne" },
+    { id: "code", label: "Codice", icon: <MdCode />, hint: shortcutLabel("code"), keywords: "codice programma script blocco python sql java javascript html" },
     { id: "view", label: "Tabella da una raccolta", icon: <MdOutlineStorage />, hint: "vista", keywords: "raccolta vista collegata database dati" },
     { id: "ref", label: "Riferimento a una riga", icon: <MdAlternateEmail />, hint: "@", keywords: "riferimento riga raccolta menzione chiocciola" },
     { id: "divider", label: "Divisore", icon: <MdHorizontalRule />, keywords: "linea separatore riga" },
@@ -969,6 +1129,9 @@ async function changePageColor(color: string | null) {
       case "table":
         insertTable();
         break;
+      case "code":
+        insertCodeBlock();
+        break;
       case "view":
         commitEditor();
         setMenu("views");
@@ -989,7 +1152,38 @@ async function changePageColor(color: string | null) {
     }
   }
 
+  /**
+   * "-" seguito da due spazi all'inizio di una riga di testo: la riga diventa un elenco puntato
+   * (si intercetta il secondo spazio; con uno solo "- " resta testo). Ctrl+Z torna a "- ".
+   */
+  function autoBullet(e: KeyboardEvent<HTMLDivElement>): boolean {
+    if (e.key !== " " || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || mode !== "text") return false;
+    const el = editorRef.current;
+    const sel = window.getSelection();
+    if (!el || !sel || sel.rangeCount === 0 || !sel.isCollapsed || caretCell(el)) return false;
+    const block = currentBlock(el);
+    if (!block || !/^(P|DIV)$/.test(block.tagName) || block.hasAttribute("data-check") || block.hasAttribute("data-block")) return false;
+    const before = document.createRange();
+    before.selectNodeContents(block);
+    before.setEnd(sel.anchorNode!, sel.anchorOffset);
+    if (before.toString().replace(/\u00a0/g, " ") !== "- ") return false;
+    sel.removeAllRanges();
+    sel.addRange(before);
+    commandActive.current = true;
+    silentInput.current = true;
+    try {
+      document.execCommand("delete");
+      document.execCommand("insertUnorderedList");
+    } finally {
+      commandActive.current = false;
+      silentInput.current = false;
+    }
+    commitEditor();
+    return true;
+  }
+
   function handleEditorKey(e: KeyboardEvent<HTMLDivElement>): boolean {
+    if (autoBullet(e)) return true;
     if (mention) {
       const count = mentionItems.length;
       if (e.key === "ArrowDown" || e.key === "ArrowUp") {
@@ -1120,7 +1314,14 @@ async function changePageColor(color: string | null) {
     setMenu(null);
     await flush();
     const list = pagesRef.current;
-    const meta = { title, kicker: (pathLabel || "Senza cartella").toUpperCase(), createdAt: note.createdAt, font: noteFont, noteDir: note.diskPath };
+    const meta = {
+      title,
+      kicker: (pathLabel || "Senza cartella").toUpperCase(),
+      createdAt: note.createdAt,
+      font: noteFont,
+      noteDir: note.diskPath,
+      titleColor,
+    };
     const base = slugify(title || "nota");
     setBusy(true);
     try {
@@ -1128,7 +1329,7 @@ async function changePageColor(color: string | null) {
         await navigator.clipboard.writeText(noteToMarkdown(title, list));
         showToast("Markdown copiato negli appunti");
       } else if (kind === "md") {
-        if (await saveText(`${base}.md`, "md", "Markdown", noteToMarkdown(title, list))) showToast("Markdown salvato");
+        if (await saveText(`${base}.md`, "md", "Markdown", noteToMarkdown(title, list, titleColor))) showToast("Markdown salvato");
       } else if (kind === "pdf") {
         const bytes = await renderNotePdf(list, meta, { scale: 2, light: lightExport });
         if (await saveBytes(`${base}.pdf`, "pdf", "PDF", bytes)) showToast("PDF salvato");
@@ -1238,6 +1439,48 @@ async function changePageColor(color: string | null) {
         }
       })();
       return true;
+    }
+    const text = e.clipboardData.getData("text/plain");
+    const el = editorRef.current;
+    const insertPlain = () => {
+      commandActive.current = true;
+      try {
+        document.execCommand("insertText", false, text);
+      } finally {
+        commandActive.current = false;
+      }
+    };
+    // Ctrl+Shift+V: sempre testo semplice, senza riconoscimento.
+    if (plainPaste.current) {
+      plainPaste.current = false;
+      e.preventDefault();
+      insertPlain();
+      commitEditor();
+      return true;
+    }
+    // Codice incollato: prima il linguaggio dato dagli appunti (VS Code), poi le euristiche.
+    if (codeDetectOn && text && el && !caretCell(el)) {
+      let hint: CodeLang | null = null;
+      try {
+        const vscode = e.clipboardData.getData("vscode-editor-data");
+        if (vscode) hint = normalizeLang((JSON.parse(vscode) as { mode?: string }).mode) ?? "plaintext";
+      } catch {
+        /* dati di VS Code illeggibili: si usano le euristiche */
+      }
+      const guess = detectCode(text, { hint });
+      if (guess.level !== "nessuna") {
+        e.preventDefault();
+        const before = getTextOffsets(el);
+        insertPlain();
+        commitEditor(); // prima voce: incollato come testo (Ctrl+Z dopo la conversione torna qui)
+        const after = getTextOffsets(el);
+        if (before && after) {
+          const convert = () => convertPastedToCode(before.start, after.end, guess.lang, text);
+          if (guess.level === "alta") convert();
+          else showSuggestion("Sembra codice", "Converti in codice", convert);
+        }
+        return true;
+      }
     }
     const html = e.clipboardData.getData("text/html");
     if (html) {
@@ -1378,9 +1621,11 @@ async function changePageColor(color: string | null) {
   const createdLabel = new Date(note.createdAt).toLocaleDateString("it-IT", { day: "numeric", month: "short" });
   const textOff = mode !== "text";
 
+
   const titleBlock = (
     <div className="nq-page-titleblock">
       <textarea
+        ref={titleInputRef}
         className="nq-page-title"
         value={title}
         rows={1}
@@ -1389,9 +1634,12 @@ async function changePageColor(color: string | null) {
         aria-label="Titolo della nota"
         onChange={(e) => handleTitle(e.target.value.replace(/\n/g, " "))}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
+          // Invio e Tab passano al testo della pagina; Shift+Tab non fa uscire dall'editor.
+          if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) {
             e.preventDefault();
             editorRef.current?.focus();
+          } else if (e.key === "Tab") {
+            e.preventDefault();
           }
         }}
       />
@@ -1581,6 +1829,54 @@ async function changePageColor(color: string | null) {
                     ))}
                   </select>
                 </label>
+                <div className="nq-menu-field" role="group" aria-label="Colore del titolo">
+                  <span>Colore del titolo</span>
+                  <span className="nq-title-colors">
+                    <button
+                      type="button"
+                      className="nq-title-default"
+                      aria-pressed={titleColor === null}
+                      title="Torna al colore del tema"
+                      onClick={() => changeTitleColor(null)}
+                    >
+                      Predefinito
+                    </button>
+                    {TITLE_COLORS.map((c) => (
+                      <button
+                        key={c.color}
+                        type="button"
+                        className="nq-ink-dot"
+                        aria-pressed={titleColor === c.color}
+                        style={{ background: c.color }}
+                        aria-label={`Titolo: ${c.label}`}
+                        title={c.label}
+                        onClick={() => changeTitleColor(c.color)}
+                      />
+                    ))}
+                    <label
+                      className={`nq-ink-dot nq-ink-custom${titleColor && !TITLE_COLORS.some((c) => c.color === titleColor) ? " is-on" : ""}`}
+                      title="Colore libero"
+                      style={titleColor && !TITLE_COLORS.some((c) => c.color === titleColor) ? { background: titleColor } : undefined}
+                    >
+                      <input
+                        type="color"
+                        value={isTitleColor(titleColor) ? titleColor : "#1c7ed6"}
+                        onChange={(e) => changeTitleColor(e.target.value.toLowerCase())}
+                        aria-label="Titolo: colore libero"
+                      />
+                    </label>
+                  </span>
+                  {titleColor && titleAdjusted && (
+                    <small className="nq-title-warn">Adattato per leggibilità su questo sfondo</small>
+                  )}
+                </div>
+                <label className="nq-menu-check nq-menu-check--pref">
+                  <input type="checkbox" checked={codeDetectOn} onChange={toggleCodeDetect} />
+                  <span>
+                    Riconosci il codice incollato
+                    <small>Ctrl+Shift+V incolla sempre come testo</small>
+                  </span>
+                </label>
                 <ConfirmButton
                   className="nq-menu-danger"
                   label="Sposta nel cestino"
@@ -1753,6 +2049,7 @@ async function changePageColor(color: string | null) {
         )}
         <span className="nq-tsep" />
         <ToolButton label="Inserisci tabella" shortcut="table" icon={<MdOutlineTableChart />} disabled={textOff} onClick={insertTable} />
+        <ToolButton label="Blocco di codice" shortcut="code" icon={<MdCode />} disabled={textOff} onClick={() => insertCodeBlock()} />
         <ToolButton label="Inserisci immagine" legend="img" icon={<MdOutlineImage />} disabled={busy} onClick={() => void pickAndInsert("image")} />
         <ToolButton label="Allega file" legend="file" icon={<MdOutlineAttachFile />} onClick={() => void pickFiles()} />
         <div className="nq-menu-anchor">
@@ -1855,6 +2152,15 @@ async function changePageColor(color: string | null) {
           <ToolButton label="Penna" shortcut="pen" text="Penna" icon={<MdOutlineEdit />} pressed={tool === "pen"} onClick={() => setTool("pen")} />
           <ToolButton label="Evidenziatore" shortcut="highlighter" text="Evidenziatore" icon={<MdOutlineBorderColor />} pressed={tool === "highlighter"} onClick={() => setTool("highlighter")} />
           <ToolButton label="Gomma" shortcut="eraser" text="Gomma" icon={<MdOutlineBackspace />} pressed={tool === "eraser"} onClick={() => setTool("eraser")} />
+          <ToolButton
+            label={shapes ? "Forme automatiche: accese (tieni fermo a fine tratto)" : "Forme automatiche: spente"}
+            legend="forme"
+            text="Forme"
+            icon={<MdOutlineShapeLine />}
+            pressed={shapes}
+            disabled={tool === "eraser"}
+            onClick={toggleShapes}
+          />
           <span className="nq-tsep" />
           <span className="nq-ink-colors">
             {INK_COLORS.map((c) => (
@@ -1934,6 +2240,7 @@ async function changePageColor(color: string | null) {
             tool={tool}
             color={color}
             size={size}
+            shapes={shapes}
             header={index === 0 ? titleBlock : null}
             noteFont={noteFont}
             noteDir={note.diskPath}
@@ -2134,8 +2441,13 @@ async function changePageColor(color: string | null) {
         })()}
 
       {toast && (
-        <div className="nq-toast" role="status">
+        <div className={`nq-toast${toastAction ? " nq-toast--action" : ""}`} role="status">
           {toast}
+          {toastAction && (
+            <button type="button" className="nq-toast-btn" onMouseDown={(e) => e.preventDefault()} onClick={toastAction.run}>
+              {toastAction.label}
+            </button>
+          )}
         </div>
       )}
     </div>

@@ -50,7 +50,7 @@ interface ImageBlockProps {
   /** Gli attributi del blocco sono cambiati: si salva e va nella cronologia. */
   onCommit: () => void;
   onDelete: () => void;
-  ink: { tool: InkTool; color: string; size: number };
+  ink: { tool: InkTool; color: string; size: number; shapes: boolean };
 }
 
 function readStrokes(figure: HTMLElement): InkStroke[] {
@@ -415,7 +415,7 @@ function ImageBlock({ figure, noteDir, selected, onSelect, onCommit, onDelete, i
         )}
 
         {!crop && (strokes.length > 0 || drawing) && (
-          <InkLayer className="nq-img-ink" strokes={strokes} active={drawing} tool={ink.tool} color={ink.color} size={ink.size} onChange={onInk} />
+          <InkLayer className="nq-img-ink" strokes={strokes} active={drawing} tool={ink.tool} color={ink.color} size={ink.size} shapes={ink.shapes} onChange={onInk} />
         )}
 
         {crop && (

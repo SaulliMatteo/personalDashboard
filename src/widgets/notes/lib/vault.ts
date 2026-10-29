@@ -29,6 +29,7 @@ import { markdownToHtml, parseFrontmatter, parseMetaString, parseMetaTags } from
 
 import { asPageColor } from "./pageColor";
 import { isNoteFont } from "./textStyle";
+import { asTitleColor } from "./titleColor";
 import { loadCollections } from "./collectionsStore";
 import { expandCollectionBlocks } from "./viewExport";
 
@@ -114,6 +115,8 @@ function buildMarkdown(note: NoteSummary, pages: NotePage[]): string {
     `tags: [${note.tags.map((t) => JSON.stringify(t)).join(", ")}]`,
     `starred: ${note.starred}`,
     ...(note.font ? [`font: ${note.font}`] : []),
+    // Tra virgolette: in YAML # apre un commento.
+    ...(note.titleColor ? [`titleColor: ${JSON.stringify(note.titleColor)}`] : []),
     `created: ${new Date(note.createdAt).toISOString()}`,
     `updated: ${new Date(note.updatedAt).toISOString()}`,
     "---",
@@ -343,6 +346,7 @@ export async function importVault(knownPaths: Set<string>, folders: Folder[]): P
       tags: parseMetaTags(meta.tags),
       starred: meta.starred === "true",
       font: isNoteFont(meta.font) && meta.font !== "punti" ? meta.font : null,
+      titleColor: asTitleColor(parseMetaString(meta.titleColor)),
       createdAt: Number.isFinite(created) ? created : now,
       updatedAt: Number.isFinite(updated) ? updated : now,
       deletedAt: trashed ? now : null,

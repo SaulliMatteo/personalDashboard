@@ -520,6 +520,70 @@
   padding-left: 1.4em;
 }
 
+/* Punti e numeri: il reset di Tailwind (preflight) toglie list-style a tutte le liste dell'app.
+   Ogni livello di sottolista ha il suo segno, come negli editor di testo. */
+.nq-doc ul {
+  list-style: disc;
+}
+
+.nq-doc ul ul {
+  list-style: circle;
+}
+
+.nq-doc ul ul ul {
+  list-style: square;
+}
+
+.nq-doc ol {
+  list-style: decimal;
+}
+
+.nq-doc ol ol {
+  list-style: lower-alpha;
+}
+
+.nq-doc ol ol ol {
+  list-style: lower-roman;
+}
+
+.nq-doc li::marker {
+  color: inherit;
+}
+
+/* Sottoliste (Tab su un elemento): nessuno spazio in più sopra e sotto. */
+.nq-doc li > ul,
+.nq-doc li > ol,
+.nq-doc ul > ul,
+.nq-doc ol > ol {
+  margin: 0.15em 0 0;
+}
+
+/* Rientro di paragrafi, titoli e checklist (Tab, lib/indent.ts): 24px per livello, uguale per
+   titoli e testo (così restano allineati) e in --nq-px, quindi segue lo zoom. */
+.nq-doc [data-indent="1"] {
+  margin-left: calc(var(--nq-px) * 24);
+}
+
+.nq-doc [data-indent="2"] {
+  margin-left: calc(var(--nq-px) * 48);
+}
+
+.nq-doc [data-indent="3"] {
+  margin-left: calc(var(--nq-px) * 72);
+}
+
+.nq-doc [data-indent="4"] {
+  margin-left: calc(var(--nq-px) * 96);
+}
+
+.nq-doc [data-indent="5"] {
+  margin-left: calc(var(--nq-px) * 120);
+}
+
+.nq-doc [data-indent="6"] {
+  margin-left: calc(var(--nq-px) * 144);
+}
+
 .nq-doc a {
   color: var(--accent);
   text-decoration: underline;
@@ -1005,6 +1069,54 @@
 }
 
 /* ---------- Avviso ---------- */
+
+.nq-toast--action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.nq-toast-btn {
+  all: unset;
+  padding: 3px 10px;
+  border-radius: var(--radius-item);
+  background: color-mix(in oklab, var(--on-accent) 20%, transparent);
+  color: var(--on-accent);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nq-toast-btn:hover {
+  background: color-mix(in oklab, var(--on-accent) 32%, transparent);
+}
+
+.nq-toast-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.nq-menu-check--pref {
+  margin: 2px 10px 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.nq-menu-check--pref input {
+  accent-color: var(--accent);
+}
+
+.nq-menu-check--pref span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nq-menu-check--pref small {
+  font-size: 11px;
+  color: var(--text-muted);
+}
 
 .nq-toast {
   position: absolute;
@@ -1664,6 +1776,44 @@
 
 .nq-menu-field .nq-tsel {
   max-width: none;
+}
+
+/* Colore del titolo (menu "⋯"): "Predefinito" + pallini della palette + colore libero. */
+.nq-title-colors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 2px;
+  max-width: 236px;
+}
+
+.nq-title-default {
+  all: unset;
+  box-sizing: border-box;
+  height: 22px;
+  margin-right: 4px;
+  padding: 0 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  font-size: 11px;
+  line-height: 20px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.nq-title-default[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.nq-title-default:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.nq-title-warn {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 :root[data-theme="opaco"] .nq-swatches {

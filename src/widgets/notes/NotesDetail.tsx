@@ -66,6 +66,7 @@ import type { DragItem } from "./lib/drag";
 import { folderIcon } from "./lib/folders";
 import { htmlToText } from "./lib/html";
 import { markdownToHtml, parseFrontmatter, parseMetaString, parseMetaTags, plainTextToHtml } from "./lib/markdown";
+import { asTitleColor } from "./lib/titleColor";
 import { buildFromTemplate } from "./lib/templates";
 import {
   VAULT_DIR,
@@ -756,6 +757,7 @@ function NotesDetail() {
       return createNote(folderId, {
         title: parseMetaString(meta.title) ?? title,
         tags: parseMetaTags(meta.tags),
+        titleColor: asTitleColor(parseMetaString(meta.titleColor)),
         pages: plain(markdownToHtml(body)),
       });
     }

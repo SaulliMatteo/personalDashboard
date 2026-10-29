@@ -1,6 +1,7 @@
 import { useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { MdAdd, MdOutlineDescription, MdOutlineStorage } from "react-icons/md";
 import type { NotesCardData } from "./useNotesCard";
+import NoteTitle from "../components/NoteTitle";
 import "./notesCard.css";
 
 /** Una nota in elenco: pallino del colore della cartella, titolo, quando. */
@@ -16,7 +17,9 @@ export function NoteRows({ data, limit }: { data: NotesCardData; limit: number }
           title={`Apri ${note.title}`}
         >
           <span className="nc-dot" style={note.color ? ({ "--nc-dot": note.color } as CSSProperties) : undefined} />
-          <span className="nc-row-title">{note.title}</span>
+          <NoteTitle className="nc-row-title" color={note.titleColor}>
+            {note.title}
+          </NoteTitle>
           <time>{note.when}</time>
         </button>
       ))}
@@ -114,7 +117,9 @@ export function NotesCardStrip({ data }: { data: NotesCardData }) {
     <div className="nc-strip">
       {last ? (
         <button type="button" className="nc-strip-main" onClick={(e) => data.open(e, last.id)} title={`Apri ${last.title}`}>
-          <b>{last.title}</b>
+          <NoteTitle as="b" color={last.titleColor}>
+            {last.title}
+          </NoteTitle>
           <p>{last.excerpt || "Nota vuota"}</p>
         </button>
       ) : (

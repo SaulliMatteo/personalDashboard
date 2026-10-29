@@ -1,5 +1,6 @@
 import { focusedBlock } from "./blocks";
 import { caretCell } from "./tableDom";
+import { toggleChecklistLines } from "./indent";
 
 /**
  * Blocco "corrente" dell'editor: l'<li> che contiene il cursore, altrimenti
@@ -22,9 +23,17 @@ export function currentBlock(root: HTMLElement | null): HTMLElement | null {
   return found?.tagName === "TABLE" ? null : found;
 }
 
-/** Trasforma la riga corrente in voce di checklist (o la riporta a testo normale). */
+/**
+ * Trasforma in voce di checklist la riga corrente, o tutte le righe selezionate (o le riporta a
+ * testo normale).
+ */
 export function toggleChecklist(root: HTMLElement): boolean {
   if (caretCell(root)) return false; // nelle celle niente checklist
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+    const done = toggleChecklistLines(root);
+    if (done !== null) return done;
+  }
   let block = currentBlock(root);
   if (!block) {
     document.execCommand("formatBlock", false, "<p>");

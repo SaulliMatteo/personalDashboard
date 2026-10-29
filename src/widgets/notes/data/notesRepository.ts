@@ -1,6 +1,7 @@
-import { getDatabase } from "../../../core/db";
+import { getDatabase, getMeta, setMeta } from "../../../core/db";
 import { asPageColor } from "../lib/pageColor";
 import { isNoteFont, type NoteFont } from "../lib/textStyle";
+import { asTitleColor } from "../lib/titleColor";
 // ---------------------------------------------------------------------
 // Tipi
 // ---------------------------------------------------------------------
@@ -47,6 +48,8 @@ export interface NoteSummary {
   syncedAt: number | null;
   /** Font predefinito della nota (null = quello del tema). */
   font: NoteFont | null;
+  /** Colore del titolo, "#rrggbb" scelto dall'utente (null = quello del tema). */
+  titleColor: string | null;
 }
 
 interface NoteRow {
@@ -63,6 +66,7 @@ interface NoteRow {
   disk_path: string | null;
   synced_at: number | null;
   font: string | null;
+  title_color: string | null;
 }
 
 /** Un tratto di scrittura a mano. Coordinate normalizzate sulla LARGHEZZA della pagina (0..1). */
@@ -190,7 +194,7 @@ export async function deleteFolders(ids: number[]): Promise<void> {
 export async function listNotes(): Promise<NoteSummary[]> {
   const db = await getDatabase();
   const rows = await db.select<NoteRow[]>(
-    `SELECT n.id, n.folder_id, n.title, n.tags, n.starred, n.created_at, n.updated_at, n.deleted_at, n.disk_path, n.synced_at, n.font,
+    `SELECT n.id, n.folder_id, n.title, n.tags, n.starred, n.created_at, n.updated_at, n.deleted_at, n.disk_path, n.synced_at, n.font, n.title_color,
             (SELECT substr(p.content, 1, 4000) FROM note_pages p WHERE p.note_id = n.id ORDER BY p.position LIMIT 1) AS first_content,
             (SELECT COUNT(*) FROM note_pages p WHERE p.note_id = n.id) AS page_count
      FROM notes n
@@ -210,6 +214,7 @@ export async function listNotes(): Promise<NoteSummary[]> {
     diskPath: r.disk_path,
     syncedAt: r.synced_at,
     font: isNoteFont(r.font) && r.font !== "punti" ? r.font : null,
+    titleColor: asTitleColor(r.title_color),
   }));
 }
 
@@ -223,6 +228,8 @@ export interface NewPageInput {
 export interface NewNoteInput {
   title: string;
   tags: string[];
+  /** Colore del titolo (null o assente = quello del tema). */
+  titleColor?: string | null;
   pages: NewPageInput[];
 }
 
@@ -236,8 +243,8 @@ export async function createNote(folderId: number | null, input: NewNoteInput = 
   const db = await getDatabase();
   const now = Date.now();
   const result = await db.execute(
-    `INSERT INTO notes (folder_id, title, tags, starred, created_at, updated_at) VALUES (?, ?, ?, 0, ?, ?)`,
-    [folderId, input.title, JSON.stringify(input.tags), now, now]
+    `INSERT INTO notes (folder_id, title, tags, starred, created_at, updated_at, title_color) VALUES (?, ?, ?, 0, ?, ?, ?)`,
+    [folderId, input.title, JSON.stringify(input.tags), now, now, asTitleColor(input.titleColor)]
   );
   const id = result.lastInsertId;
   if (id == null) throw new Error("Nota non creata");
@@ -265,8 +272,8 @@ export interface ImportedNote extends NewNoteInput {
 export async function insertImportedNote(input: ImportedNote): Promise<number> {
   const db = await getDatabase();
   const result = await db.execute(
-    `INSERT INTO notes (folder_id, title, tags, starred, created_at, updated_at, deleted_at, disk_path, synced_at, font)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO notes (folder_id, title, tags, starred, created_at, updated_at, deleted_at, disk_path, synced_at, font, title_color)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       input.folderId,
       input.title,
@@ -278,6 +285,7 @@ export async function insertImportedNote(input: ImportedNote): Promise<number> {
       input.diskPath,
       Date.now(),
       input.font ?? null,
+      asTitleColor(input.titleColor),
     ]
   );
   const id = result.lastInsertId;
@@ -298,6 +306,7 @@ export interface NotePatch {
   starred?: boolean;
   folderId?: number | null;
   font?: NoteFont | null;
+  titleColor?: string | null;
 }
 
 /** `touch` = aggiorna anche "ultima modifica" (non serve per preferiti/spostamenti). */
@@ -323,6 +332,10 @@ export async function updateNote(id: number, patch: NotePatch, touch = true): Pr
   if (patch.font !== undefined) {
     sets.push("font = ?");
     values.push(patch.font);
+  }
+  if (patch.titleColor !== undefined) {
+    sets.push("title_color = ?");
+    values.push(asTitleColor(patch.titleColor));
   }
   if (sets.length === 0) return;
   if (touch) {
@@ -471,4 +484,29 @@ export async function setPageColor(pageId: number, noteId: number, color: string
   const db = await getDatabase();
   await db.execute(`UPDATE note_pages SET color = ? WHERE id = ?`, [color, pageId]);
   await db.execute(`UPDATE notes SET updated_at = ? WHERE id = ?`, [Date.now(), noteId]);
+}
+
+// ---------------------------------------------------------------------
+// Preferenze della scrittura a mano
+
+const INK_SHAPES_KEY = "notes.inkShapes";
+
+/** Forme automatiche della penna: accese se non è mai stato scelto altro. */
+export async function loadInkShapes(): Promise<boolean> {
+  return (await getMeta(INK_SHAPES_KEY)) !== "0";
+}
+
+export async function saveInkShapes(enabled: boolean): Promise<void> {
+  await setMeta(INK_SHAPES_KEY, enabled ? "1" : "0");
+}
+
+const CODE_DETECT_KEY = "notes.codeDetect";
+
+/** Riconoscimento del codice incollato: acceso se non è mai stato scelto altro. */
+export async function loadCodeDetect(): Promise<boolean> {
+  return (await getMeta(CODE_DETECT_KEY)) !== "0";
+}
+
+export async function saveCodeDetect(enabled: boolean): Promise<void> {
+  await setMeta(CODE_DETECT_KEY, enabled ? "1" : "0");
 }

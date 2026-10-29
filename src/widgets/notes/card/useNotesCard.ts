@@ -18,6 +18,8 @@ export interface NotesCardNote {
   when: string;
   /** Colore della cartella (scelto dall'utente), null = senza cartella o senza colore. */
   color: string | null;
+  /** Colore del titolo scelto dall'utente (null = quello del tema). */
+  titleColor: string | null;
 }
 
 /** La prossima voce di una raccolta (riga con una data da oggi in poi): riga in fondo alla 2×2. */
@@ -115,6 +117,7 @@ export function useNotesCard(): NotesCardData {
     excerpt: htmlToText(n.firstContent).slice(0, 200),
     when: relativeWhen(n.updatedAt, now),
     color: n.folderId !== null ? colors.get(n.folderId) ?? null : null,
+    titleColor: n.titleColor,
   }));
 
   function open(e: MouseEvent, id: number) {

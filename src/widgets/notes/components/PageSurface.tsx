@@ -12,15 +12,18 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import type { InkStroke, NotePage, PageBackground } from "../data/notesRepository";
-import { BLOCK_SELECTOR, hydrateBlocks, serializeEditor, type BlockKind } from "../lib/blocks";
-import { currentBlock } from "../lib/editorDom";
+import { BLOCK_SELECTOR, createCodeBlock, hydrateBlocks, serializeEditor, type BlockKind } from "../lib/blocks";
+import { parseFence } from "../lib/codeLanguages";
+import { currentBlock, topBlock } from "../lib/editorDom";
 import { sanitizeHtml } from "../lib/html";
 import { paperAttrs, paperStyle } from "../lib/pageColor";
 import { caretCell, layoutTables, moveToCell } from "../lib/tableDom";
+import { exitEmptyCheck, indentSelection, outdentAtCaretStart } from "../lib/indent";
 import { getCollectionsState, rowInfo, subscribeCollections } from "../lib/collectionsStore";
 import { rowTitle } from "../lib/collections";
 import CollectionView, { type CollectionLinks } from "../collections/CollectionView";
 import type { NoteFont } from "../lib/textStyle";
+import CodeBlock from "./CodeBlock";
 import FileCard from "./FileCard";
 import ImageBlock from "./ImageBlock";
 import InkLayer, { type InkTool } from "./InkLayer";
@@ -34,6 +37,8 @@ interface PageSurfaceProps {
   tool: InkTool;
   color: string;
   size: number;
+  /** Forme automatiche della penna (tenere premuto a fine tratto). */
+  shapes: boolean;
   /** In cima alla pagina, fuori dal testo modificabile (titolo e proprietà della nota sulla prima pagina). */
   header?: ReactNode;
   /** Font predefinito della nota (null = quello del tema). */
@@ -82,14 +87,26 @@ interface BlockEntry {
   kind: BlockKind;
 }
 
-/** Mette il cursore all'inizio del blocco dopo `el` (creando un paragrafo se manca). */
+/** Una riga di testo vuota senza niente dentro (<p></p>): alta zero, il cursore non ci entra. */
+function isHollow(el: Element): boolean {
+  return /^(P|DIV|H1|H2|H3)$/.test(el.tagName) && !el.hasAttribute("data-block") && el.childNodes.length === 0;
+}
+
+/**
+ * Mette il cursore all'inizio della riga dopo `el`. Se dopo non c'è una riga di testo (niente,
+ * un altro blocco, un elenco, una tabella, una linea) ne crea una in mezzo; a una riga vuota
+ * senza <br> lo aggiunge, altrimenti il browser rimanderebbe il cursore sopra il blocco.
+ */
 function caretAfter(el: HTMLElement) {
   let next = el.nextElementSibling as HTMLElement | null;
-  if (!next || next.matches(BLOCK_SELECTOR)) {
+  const textLine = next && /^(P|DIV|H1|H2|H3)$/.test(next.tagName) && !next.matches(BLOCK_SELECTOR);
+  if (!next || !textLine) {
     const p = document.createElement("p");
     p.appendChild(document.createElement("br"));
     el.after(p);
     next = p;
+  } else if (isHollow(next)) {
+    next.appendChild(document.createElement("br"));
   }
   const range = document.createRange();
   range.setStart(next, 0);
@@ -144,6 +161,19 @@ function PageSurface(props: PageSurfaceProps) {
     if (!el) return;
     // Prima l'osservatore, poi l'HTML: così anche i blocchi della pagina appena aperta vengono trovati.
     const scan = () => {
+      // Dopo l'ultimo blocco (codice, immagine, file, vista) o tabella serve sempre una riga di testo:
+      // senza, sotto non si può mettere il cursore (es. Backspace sulla riga vuota sotto il blocco).
+      // Righe vuote senza niente dentro (<p></p>, salvate così da note vecchie): ricevono il loro
+      // <br>, così hanno altezza e il cursore ci può entrare.
+      for (const child of Array.from(el.children)) {
+        if (isHollow(child)) child.appendChild(document.createElement("br"));
+      }
+      const last = el.lastElementChild;
+      if (last && (last.matches(BLOCK_SELECTOR) || last.tagName === "TABLE")) {
+        const p = document.createElement("p");
+        p.appendChild(document.createElement("br"));
+        el.appendChild(p); // l'osservatore richiama scan, che adesso trova la riga e si ferma
+      }
       // Le larghezze delle colonne (colgroup) si rifanno da data-width: dopo annulla, incolla…
       layoutTables(el);
       refreshRefs(el);
@@ -282,6 +312,8 @@ function PageSurface(props: PageSurfaceProps) {
         e.preventDefault();
         setSelected(null);
         target.blur();
+      } else if (e.key === "Tab") {
+        e.preventDefault(); // il focus resta nella pagina
       }
       return;
     }
@@ -298,6 +330,44 @@ function PageSurface(props: PageSurfaceProps) {
         document.execCommand("insertLineBreak");
         return;
       }
+    }
+    // Tab / Shift+Tab nel testo: rientro di paragrafi, checklist e liste (lib/indent.ts), mai fuori
+    // dall'editor. Solo nel testo della pagina: i campi dei blocchi (es. didascalie) hanno i loro tasti.
+    if (e.key === "Tab" && !e.ctrlKey && !e.metaKey && !e.altKey && target === editorRef.current) {
+      e.preventDefault();
+      if (indentSelection(editorRef.current, e.shiftKey ? -1 : 1)) onBlockChange();
+      return;
+    }
+    const plainKey = !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && target === editorRef.current;
+    // Backspace all'inizio di una riga rientrata: toglie un livello (non la unisce alla riga sopra).
+    if (plainKey && e.key === "Backspace" && editorRef.current && outdentAtCaretStart(editorRef.current)) {
+      e.preventDefault();
+      onBlockChange();
+      return;
+    }
+    // Invio su una riga "```py" (o solo "```"): la riga diventa un blocco di codice.
+    if (plainKey && e.key === "Enter" && editorRef.current) {
+      const line = topBlock(editorRef.current);
+      const lang = line && /^(P|DIV)$/.test(line.tagName) && !line.hasAttribute("data-block") ? parseFence(line.textContent ?? "") : null;
+      if (line && lang) {
+        e.preventDefault();
+        const pre = createCodeBlock(lang, "", true);
+        line.replaceWith(pre);
+        const next = pre.nextElementSibling;
+        if (!next || next.matches(BLOCK_SELECTOR) || next.tagName === "TABLE") {
+          const p = document.createElement("p");
+          p.appendChild(document.createElement("br"));
+          pre.after(p);
+        }
+        onBlockChange();
+        return;
+      }
+    }
+    // Invio su una riga di checklist vuota: si esce dalla checklist.
+    if (plainKey && e.key === "Enter" && editorRef.current && exitEmptyCheck(editorRef.current)) {
+      e.preventDefault();
+      onBlockChange();
+      return;
     }
     // Invio nella didascalia: la didascalia è una riga sola, si va al testo sotto l'immagine.
     const caption = target.closest?.("figcaption");
@@ -360,6 +430,7 @@ function PageSurface(props: PageSurfaceProps) {
           tool={props.tool}
           color={props.color}
           size={props.size}
+          shapes={props.shapes}
           onChange={props.onInk}
         />
 
@@ -377,6 +448,8 @@ function PageSurface(props: PageSurfaceProps) {
               onNotice={(message) => props.onNotice?.(message)}
               onRemove={() => removeBlock(b.el)}
             />
+          ) : b.kind === "code" ? (
+            <CodeBlock block={b.el} onCommit={onBlockChange} onRemove={() => removeBlock(b.el)} onExit={() => caretAfter(b.el)} />
           ) : b.kind === "image" ? (
             <ImageBlock
               figure={b.el}
@@ -385,7 +458,7 @@ function PageSurface(props: PageSurfaceProps) {
               onSelect={() => selectBlock(b.el)}
               onCommit={onBlockChange}
               onDelete={() => removeBlock(b.el)}
-              ink={{ tool: props.tool, color: props.color, size: props.size }}
+              ink={{ tool: props.tool, color: props.color, size: props.size, shapes: props.shapes }}
             />
           ) : (
             <FileCard

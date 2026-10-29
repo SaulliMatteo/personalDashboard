@@ -4,17 +4,20 @@ import { stripLookVars } from "./tableDom";
 /**
  * Blocchi nella pagina: <figure data-block="image">, <div data-block="file"> e
  * <div data-block="collection-view" data-view="ID"> (vista collegata di una raccolta).
+ * Blocco di codice: <pre data-block="code" data-lang="python" data-lines="1"><code>testo</code></pre>;
+ * il codice è SOLO testo (textContent), mai HTML, e non viene mai eseguito.
  * Riferimenti a una riga di raccolta: <span data-ref-row="ID">titolo</span> nel testo.
  * Nell'HTML salvato c'è solo la descrizione (file, modifiche, didascalia); quello che si vede
  * (immagine, barra, maniglie, scheda del file) lo disegna React dentro un nodo "di servizio"
  * [data-runtime], che non viene mai salvato.
  */
 
-export const BLOCK_SELECTOR = '[data-block="image"], [data-block="file"], [data-block="collection-view"]';
-export type BlockKind = "image" | "file" | "view";
+export const BLOCK_SELECTOR = '[data-block="image"], [data-block="file"], [data-block="collection-view"], [data-block="code"]';
+export type BlockKind = "image" | "file" | "view" | "code";
 
 function kindOf(el: HTMLElement): BlockKind {
-  return el.dataset.block === "collection-view" ? "view" : el.dataset.block === "file" ? "file" : "image";
+  const kind = el.dataset.block;
+  return kind === "collection-view" ? "view" : kind === "file" ? "file" : kind === "code" ? "code" : "image";
 }
 
 /** HTML da salvare: senza i nodi di React e senza gli attributi messi solo per l'editor. */
@@ -36,6 +39,7 @@ export function serializeEditor(root: HTMLElement): string {
     el.removeAttribute("data-selected");
     el.removeAttribute("data-moving");
     el.removeAttribute("style"); // posizione delle immagini libere: si ricalcola dagli attributi
+    el.removeAttribute("data-focus"); // blocco di codice appena creato: il cursore ci va dentro
     el.querySelectorAll("figcaption").forEach((c) => c.removeAttribute("contenteditable"));
   });
   return clone.innerHTML;
@@ -98,6 +102,36 @@ export function createImageBlock(name: string, nw: number, nh: number): HTMLElem
   figure.dataset.width = String(initialWidth(nw));
   figure.dataset.edit = serializeImageEdit(defaultEdit(nw, nh));
   return figure;
+}
+
+/**
+ * Un blocco di codice nuovo. Il testo va solo con textContent: anche "<script>" resta testo.
+ * `focus` = il cursore ci entra appena il blocco compare nella pagina.
+ */
+export function createCodeBlock(lang: string, text = "", focus = false): HTMLElement {
+  const pre = document.createElement("pre");
+  pre.dataset.block = "code";
+  pre.dataset.lang = lang;
+  if (focus) pre.dataset.focus = "1";
+  const code = document.createElement("code");
+  code.textContent = text;
+  pre.appendChild(code);
+  return pre;
+}
+
+/** Il testo di un blocco di codice (quello del suo <code>, senza il nodo di React). */
+export function codeTextOf(pre: HTMLElement): string {
+  return pre.querySelector(":scope > code")?.textContent ?? "";
+}
+
+/** Scrive il testo nel blocco (sempre come testo). */
+export function setCodeText(pre: HTMLElement, text: string) {
+  let code = pre.querySelector<HTMLElement>(":scope > code");
+  if (!code) {
+    code = document.createElement("code");
+    pre.appendChild(code);
+  }
+  code.textContent = text;
 }
 
 /** La scheda di un file allegato nella pagina. */

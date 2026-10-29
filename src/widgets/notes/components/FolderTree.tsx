@@ -3,6 +3,7 @@ import { MdAdd, MdChevronRight, MdExpandMore, MdOutlineDescription } from "react
 import type { Folder, NoteSummary } from "../data/notesRepository";
 import type { DragItem } from "../lib/drag";
 import { folderIcon } from "../lib/folders";
+import NoteTitle from "./NoteTitle";
 
 interface FolderTreeProps {
   childrenOf: Map<number | null, Folder[]>;
@@ -127,7 +128,9 @@ function FolderTree(props: FolderTreeProps) {
                       onPointerDown={(e) => props.onDragStart(e, { kind: "note", id: note.id, label: note.title || "Senza titolo" })}
                     >
                       <MdOutlineDescription />
-                      <span className="nq-tree-name">{note.title || "Senza titolo"}</span>
+                      <NoteTitle className="nq-tree-name" color={note.titleColor} deps={[openNoteId === note.id]}>
+                        {note.title || "Senza titolo"}
+                      </NoteTitle>
                     </button>
                   ))}
                 {selected && direct.length > 3 && (

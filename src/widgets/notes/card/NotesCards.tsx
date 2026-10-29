@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { SizeKey } from "../../../core/widgets/sizes";
 import WidgetFrame from "../../../core/widgets/WidgetFrame";
+import NoteTitle from "../components/NoteTitle";
 import { NotesCardM, NotesCardStrip } from "./NotesCardParts";
 import { useNotesCard, type NotesCardData } from "./useNotesCard";
 import "./notesCard.css";
@@ -114,7 +115,9 @@ export function NotesCardQuaderno({ size }: CardProps) {
       {size === "S" ? (
         last ? (
           <button type="button" className="nc-s-quaderno" onClick={(e) => data.open(e, last.id)} data-cell-action>
-            <b>{last.title}</b>
+            <NoteTitle as="b" color={last.titleColor}>
+              {last.title}
+            </NoteTitle>
             <small>modificata {last.when}</small>
           </button>
         ) : (

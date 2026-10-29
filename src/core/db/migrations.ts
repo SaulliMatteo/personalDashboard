@@ -373,4 +373,13 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE notes ADD COLUMN font TEXT`,
     ],
   },
+  {
+    version: 17,
+    description: "Notes: colore del titolo della nota",
+    statements: [
+      // NULL = colore del tema; altrimenti "#rrggbb" scelto dall'utente (widgets/notes/lib/titleColor.ts).
+      // Rieseguita su un DB che la ha già non fa nulla (duplicate column ignorato in core/db/index.ts).
+      `ALTER TABLE notes ADD COLUMN title_color TEXT`,
+    ],
+  },
 ];
