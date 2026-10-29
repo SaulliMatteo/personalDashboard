@@ -44,6 +44,30 @@ jobs:
 
       - run: npm ci
 
+      # Avvisa (senza fermare la build e senza stampare i valori) se i Secrets dei Gruppi mancano o sono
+      # sbagliati: l'app uscirebbe in solo locale ("Gruppi non configurati", src/core/cloud/config.ts).
+      - name: Controlla la configurazione dei Gruppi
+        shell: bash
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          url="$(printf '%s' "$SUPABASE_URL" | tr -d '[:space:]')"
+          key="$(printf '%s' "$SUPABASE_PUBLISHABLE_KEY" | tr -d '[:space:]')"
+          if [ -z "$url" ]; then
+            echo "::warning::Secret SUPABASE_URL vuoto o assente (Settings > Secrets and variables > Actions > Repository secrets): build senza Gruppi."
+          elif [[ "$url" != https://* ]]; then
+            echo "::warning::SUPABASE_URL deve iniziare con https:// (es. https://<ref>.supabase.co): build senza Gruppi."
+          elif [[ "$url" != *.supabase.co && "$url" != *.supabase.co/ ]]; then
+            echo "::warning::SUPABASE_URL non finisce in .supabase.co: controlla che sia l'URL del progetto."
+          fi
+          if [ -z "$key" ]; then
+            echo "::warning::Secret SUPABASE_PUBLISHABLE_KEY vuoto o assente: build senza Gruppi."
+          elif [[ "$key" == sb_secret_* ]]; then
+            echo "::error::SUPABASE_PUBLISHABLE_KEY contiene una chiave secret: va messa la publishable (sb_publishable_...). Ruota la secret su Supabase."
+            exit 1
+          fi
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
