@@ -1,0 +1,187 @@
+/* Scheda Da fare della Stanza comune (docs/mockup-gruppi/gruppi/stanza-comune.html). Raggio delle righe da RoomSidePanel.css. */
+
+.rtd {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rtd-top {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 12px 8px;
+}
+
+.rtd-who {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.rtd-who svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.rtd-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-strong);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.rtd-add {
+  display: flex;
+  gap: 8px;
+}
+
+.rtd-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+}
+
+.rtd-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 38px;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.rtd-plus {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+}
+
+.rtd-list {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-accent) transparent;
+}
+
+.rtd-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: var(--rsp-row-radius);
+}
+
+.rtd-check {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+
+.rtd-item.is-done .rtd-check {
+  min-height: 36px;
+  color: var(--text-muted);
+}
+
+.rtd-check input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.rtd-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rtd-item.is-done .rtd-text {
+  text-decoration: line-through;
+}
+
+.rtd-remove {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.rtd-empty {
+  padding: 14px 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.rtd-done-toggle {
+  margin-top: 8px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.rtd-chevron {
+  display: flex;
+}
+
+.rtd-chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.rtd-link:focus-visible,
+.rtd-plus:focus-visible,
+.rtd-remove:focus-visible,
+.rtd-done-toggle:focus-visible,
+.rtd-check input:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.rtd-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

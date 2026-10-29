@@ -91,6 +91,11 @@ export const DEFAULT_SETTINGS = {
   studyVolume: 50,
   studyNotificationsEnabled: true,
   studyStopwatchLapMinutes: 60,
+  studyAutoStopEnabled: true,
+  studyAutoStopMinutes: 10,
+  studyAutoStopGame: true,
+  studyAutoStopVideo: false,
+  studyAutoStopChat: false,
   studyDailyGoalMinutes: 0,
   studyMinLoggableSeconds: 10,
   studyBreakColor: "#f5a35c",
@@ -122,11 +127,27 @@ export const DEFAULT_SETTINGS = {
   // ---- Widget: Meteo ----
   /** Vuota = meteo spento: nessuna richiesta in rete. */
   weatherCity: "",
+
+  // ---- Gruppi ----
+  /** Il nome della materia in corso arriva ai compagni di gruppo solo se attivo (spento di default). */
+  groupsShowSubject: false,
+  /** Il tempo delle materie abbinate e confermate entra nei report dei gruppi (spento di default). Senza effetto fino al report per materie. */
+  groupsReportSubjects: false,
+  /** Le pose vere di Pixy rivelano l'app in primo piano: ai compagni arrivano solo se attivo (spento di default). */
+  groupsSharePixy: false,
+  /** I fumetti di Pixy ai compagni (solo con le espressioni condivise). */
+  groupsSharePixyBubbles: false,
+  /** Chi guarda può non vedere i fumetti degli altri anche se li mandano. */
+  groupsShowOthersBubbles: true,
+  /** Il foglietto Da fare ai compagni, solo dal vivo (spento di default). */
+  groupsShareTodo: false,
+  /** Notifica di sistema per i messaggi nuovi dei gruppi. */
+  groupsNotifyMessages: true,
 };
 
 export type AppSettings = typeof DEFAULT_SETTINGS;
 export type SettingKey = keyof AppSettings;
-export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion" | "weather";
+export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion" | "weather" | "groups";
 
 interface BaseDef {
   key: SettingKey;
@@ -224,6 +245,12 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "studyAutoStartNext", group: "study", section: "Timer", type: "boolean", label: "Avvia in automatico la fase successiva", description: "Solo pomodoro. Se spento, a fine fase il timer si ferma e aspetta che premi play." },
   { key: "studyStopwatchLapMinutes", group: "study", section: "Timer", type: "number", control: "input", min: 1, max: 240, step: 1, label: "Giro dell'anello del cronometro (min)", description: "Ogni quanti minuti l'anello del cronometro compie un giro." },
 
+  { key: "studyAutoStopEnabled", group: "study", section: "Stop automatico", type: "boolean", label: "Ferma il timer se sei inattivo", description: "Senza mouse né tastiera per il tempo qui sotto, il timer si ferma e registra lo studio fino a quando hai smesso. Solo Windows e macOS." },
+  { key: "studyAutoStopMinutes", group: "study", section: "Stop automatico", type: "number", control: "input", min: 1, max: 120, step: 1, dependsOn: "studyAutoStopEnabled", label: "Inattività prima dello stop (min)", description: "Vale anche per le app qui sotto. Le assenze più brevi contano come studio." },
+  { key: "studyAutoStopGame", group: "study", section: "Stop automatico", type: "boolean", dependsOn: "studyAutoStopEnabled", label: "Ferma anche se stai giocando", description: "Giochi e launcher (Steam, Epic, Riot…) in primo piano, anche se non sei inattivo." },
+  { key: "studyAutoStopVideo", group: "study", section: "Stop automatico", type: "boolean", dependsOn: "studyAutoStopEnabled", label: "Ferma anche se guardi video", description: "YouTube, Netflix, Twitch… nel browser o nelle loro app. I video aperti nella dashboard non contano." },
+  { key: "studyAutoStopChat", group: "study", section: "Stop automatico", type: "boolean", dependsOn: "studyAutoStopEnabled", label: "Ferma anche se sei in chat", description: "Discord, WhatsApp, Telegram… La categoria di un'app si può cambiare nella pagina di Pixy." },
+
   { key: "studySoundEnabled", group: "study", section: "Suoni e notifiche", type: "boolean", label: "Suono a fine fase" },
   { key: "studyVolume", group: "study", section: "Suoni e notifiche", type: "number", control: "slider", min: 5, max: 100, step: 5, unit: "%", dependsOn: "studySoundEnabled", label: "Volume" },
   { key: "studyNotificationsEnabled", group: "study", section: "Suoni e notifiche", type: "boolean", label: "Notifica di sistema a fine fase" },
@@ -246,6 +273,37 @@ export const SETTING_DEFS: SettingDef[] = [
   {
     key: "weatherCity", group: "weather", section: "Località", type: "text", maxLength: 60, placeholder: "Es. Milano", label: "Città",
     description: "Il meteo usa internet (Open-Meteo, gratuito e senza account) solo se il widget o il suo mini sono in uso e la città è impostata.",
+  },
+
+  // ======================= GRUPPI =======================
+  {
+    key: "groupsShowSubject", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Mostra la materia che sto studiando",
+    description: "Spento: i compagni di gruppo vedono che stai studiando e da quanto, ma non cosa.",
+  },
+  {
+    key: "groupsReportSubjects", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Includi le mie materie nei report dei gruppi",
+    description: "Solo quelle che abbini nel report di ogni gruppo; spento, il tuo tempo conta in \"Altre materie\". Vale per il tuo account, su tutti i dispositivi.",
+  },
+  {
+    key: "groupsSharePixy", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Condividi le espressioni di Pixy",
+    description:
+      "Nella Stanza comune i compagni vedono il tuo Pixy con le stesse pose ed espressioni che vedi tu. Le pose rivelano che tipo di app hai in primo piano (un gioco, YouTube, Discord…). Spento: vedono solo se studi o sei in pausa.",
+  },
+  {
+    key: "groupsSharePixyBubbles", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", dependsOn: "groupsSharePixy", label: "Condividi anche i fumetti",
+    description: "Le frasi di Pixy arrivano ai compagni. Possono contenere il tuo nome (Impostazioni › Generale) e il nome delle app.",
+  },
+  {
+    key: "groupsShareTodo", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Mostra la mia lista Da fare",
+    description: "Ai compagni connessi, in sola lettura, nei dettagli della tua riga in Membri. Non viene salvata sul server.",
+  },
+  {
+    key: "groupsNotifyMessages", group: "groups", section: "Stanza comune", type: "boolean", label: "Notifica i messaggi nuovi",
+    description: "Quando l'app non è in primo piano o la scheda Messaggi è chiusa.",
+  },
+  {
+    key: "groupsShowOthersBubbles", group: "groups", section: "Stanza comune", type: "boolean", label: "Mostra i fumetti degli altri",
+    description: "Spento: non vedi le frasi dei Pixy dei compagni, anche se loro le condividono.",
   },
 
   // ======================= WIDGET: COMPANION =======================

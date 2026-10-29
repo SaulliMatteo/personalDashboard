@@ -1,0 +1,50 @@
+/* Chip delle scelte (mockup: .sel-chip). I colori sono i --tint-* del tema, giorno e notte. */
+
+.nq-choice,
+.nq-cell-select[data-color] {
+  --nq-choice-bg: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  --nq-choice-ink: var(--text-primary);
+}
+
+.nq-choice {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--nq-choice-bg);
+  color: var(--nq-choice-ink);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:is(.nq-choice, .nq-cell-select)[data-color="senape"] { --nq-choice-bg: var(--tint-senape); --nq-choice-ink: var(--tint-senape-ink); --nq-choice-dot: var(--led); }
+:is(.nq-choice, .nq-cell-select)[data-color="salvia"] { --nq-choice-bg: var(--tint-salvia); --nq-choice-ink: var(--tint-salvia-ink); --nq-choice-dot: var(--tint-salvia); }
+:is(.nq-choice, .nq-cell-select)[data-color="blu"] { --nq-choice-bg: var(--tint-blu); --nq-choice-ink: var(--tint-blu-ink); --nq-choice-dot: var(--tint-blu); }
+:is(.nq-choice, .nq-cell-select)[data-color="malva"] { --nq-choice-bg: var(--tint-malva); --nq-choice-ink: var(--tint-malva-ink); --nq-choice-dot: var(--tint-malva); }
+
+:root[data-theme="quaderno"] .nq-choice {
+  border-radius: 3px;
+}
+
+/* Fosforo: contorno e pallino colorato */
+:root[data-theme="fosforo"] .nq-choice {
+  border: 1px solid var(--border-subtle);
+  background: transparent;
+  color: inherit;
+  font-weight: 500;
+}
+
+:root[data-theme="fosforo"] .nq-choice::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--nq-choice-dot, var(--text-secondary));
+  vertical-align: 1px;
+}

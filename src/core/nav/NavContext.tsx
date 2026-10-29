@@ -9,6 +9,7 @@ export function NavProvider({ children }: { children: ReactNode }) {
       view,
       goToDashboard: () => setView({ type: "dashboard" }),
       goToCatalog: () => setView({ type: "catalog" }),
+      openRoom: () => setView({ type: "room" }),
       openSettings: (section = "appearance") => setView({ type: "settings", section }),
       openWidgetDetail: (widgetId) => setView({ type: "widgetDetail", widgetId }),
     }),

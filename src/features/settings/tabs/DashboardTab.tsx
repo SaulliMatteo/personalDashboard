@@ -5,6 +5,7 @@ import { useSettings } from "../../../core/settings/useSettings";
 import { useThemeVariant } from "../../../core/theme/variants";
 import { WIDGET_REGISTRY } from "../../../widgets/registry";
 import ConfirmButton from "../../../ui/ConfirmButton";
+import ExpandableText from "../../../ui/ExpandableText";
 
 /** I widget che hanno una versione mini, nell'ordine del registry. */
 const MINI_OPTIONS = WIDGET_REGISTRY.filter((widget) => widget.mini).map((widget) => ({ value: widget.id, label: widget.name }));
@@ -67,7 +68,7 @@ function DashboardTab() {
           <div className="settings-field">
             <div className="settings-field-text">
               <span className="settings-field-label">Ripristina il layout</span>
-              <p className="settings-field-description">Rimette i widget nelle posizioni iniziali e toglie quelli aggiunti dal catalogo.</p>
+              <ExpandableText className="settings-field-description">Rimette i widget nelle posizioni iniziali e toglie quelli aggiunti dal catalogo.</ExpandableText>
             </div>
             <div className="settings-field-control">
               <ConfirmButton className="sp-btn sp-btn--danger" label="Ripristina" onConfirm={resetLayout} />

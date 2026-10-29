@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { createElement, useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
-import { readFile, readTextFile } from "@tauri-apps/plugin-fs";
 import { openPath } from "@tauri-apps/plugin-opener";
 import {
   MdOutlineCreateNewFolder,
@@ -14,21 +13,43 @@ import {
   MdOutlineVerticalSplit,
   MdSearch,
   MdAdd,
-  MdChevronRight,
+  MdOutlineTableChart,
+  MdRestoreFromTrash,
 } from "react-icons/md";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
-import { useSettings } from "../../core/settings/useSettings";
 import FolderPanel from "./components/FolderPanel";
 import VaultPanel from "./components/VaultPanel";
 import FolderTree from "./components/FolderTree";
 import NoteCollection, { type LayoutMode, type SortKey } from "./components/NoteCollection";
 import NoteEditor from "./components/NoteEditor";
+import Crumbs, { type Crumb } from "./components/Crumbs";
+import ShortcutsPanel from "./components/ShortcutsPanel";
+import CollectionPage from "./collections/CollectionPage";
+import { COLLECTION_FILE_KIND, collectionToCsv, collectionToJson } from "./lib/collections";
+import {
+  createCollection,
+  fieldsOf,
+  getCollectionsState,
+  loadCollections,
+  purgeCollection,
+  restoreCollection,
+  rowsOf,
+  subscribeCollections,
+  useCollections,
+} from "./lib/collectionsStore";
+import { fromFormField, matchShortcut, shortcutLabel } from "./lib/shortcuts";
+import type { EditorApi, ScreenPoint, StoredFile } from "./lib/editorApi";
+import { createFileBlock, createImageBlock } from "./lib/blocks";
+import { imageSize, releaseAttachmentUrls } from "./lib/attachmentUrls";
+import { MAX_FILE_BYTES, classifyFile, readPaths, type IncomingFile } from "./lib/insertFiles";
 import { takePendingNote } from "./lib/launch";
 import {
   addAttachment,
   addFolder,
   createNote,
   deleteFolders,
+  getPages,
+  savePage,
   deleteNoteForever,
   emptyTrash,
   listFolders,
@@ -48,7 +69,7 @@ import { markdownToHtml, parseFrontmatter, parseMetaString, parseMetaTags, plain
 import { buildFromTemplate } from "./lib/templates";
 import {
   VAULT_DIR,
-  baseName,
+  collectionFileBase,
   ensureVaultDir,
   importVault,
   isVaultEnabled,
@@ -57,6 +78,7 @@ import {
   setVaultEnabled,
   syncPending,
   vaultAbsolutePath,
+  writeCollectionFiles,
 } from "./lib/vault";
 import "./NotesDetail.css";
 
@@ -66,25 +88,13 @@ type View =
   | { kind: "recent" }
   | { kind: "trash" }
   | { kind: "folder"; id: number }
-  | { kind: "tag"; tag: string };
+  | { kind: "tag"; tag: string }
+  | { kind: "collection"; id: number };
 
 const RECENT_LIMIT = 12;
-const MAX_ATTACHMENT_BYTES = 50 * 1024 * 1024;
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "Q";
-  return parts
-    .slice(0, 2)
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase();
-}
 
 /** Pagina "Notes": cartelle, raccolta di note ed editor. */
 function NotesDetail() {
-  const { settings } = useSettings();
-
   const [folders, setFolders] = useState<Folder[]>([]);
   const [notes, setNotes] = useState<NoteSummary[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -128,6 +138,12 @@ function NotesDetail() {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  // Raccolte: cache condivisa (lib/collectionsStore.ts), caricata una volta.
+  const collectionsState = useCollections();
+  useEffect(() => {
+    void loadCollections();
+  }, []);
 
   // Il widget può chiedere di aprire subito una nota (lib/launch.ts). In
   // StrictMode l'effetto gira due volte: la prima lettura consuma la richiesta.
@@ -218,6 +234,8 @@ function NotesDetail() {
         return trashed;
       case "tag":
         return live.filter((n) => n.tags.includes(view.tag));
+      case "collection":
+        return [];
       case "folder": {
         const ids = new Set(subtreeIds(view.id));
         return live.filter((n) => n.folderId !== null && ids.has(n.folderId));
@@ -226,6 +244,53 @@ function NotesDetail() {
   }, [searching, q, view, live, trashed, searchIndex, subtreeIds]);
 
   const selectedFolder = view.kind === "folder" ? folderById.get(view.id) ?? null : null;
+  const liveCollections = collectionsState.collections.filter((c) => c.deletedAt === null);
+  const trashedCollections = collectionsState.collections.filter((c) => c.deletedAt !== null);
+  const [armedCollection, setArmedCollection] = useState<number | null>(null);
+  const noteRefs = useMemo(() => live.map((n) => ({ id: n.id, title: n.title })), [live]);
+  const collectionLinks = {
+    notes: noteRefs,
+    onOpenNote: (id: number) => {
+      setSplitId(null);
+      setOpenId(id);
+    },
+    onOpenCollection: (id: number) => goTo({ kind: "collection", id }),
+  };
+
+
+  // Copia su disco delle raccolte (Notes/Raccolte/<nome>.json e .csv), poco dopo ogni modifica.
+  const titlesRef = useLatestRef(new Map(notes.map((n) => [n.id, n.title])));
+  useEffect(() => {
+    if (!vaultOn) return;
+    let timer: number | undefined;
+    const write = () => {
+      const s = getCollectionsState();
+      if (!s.loaded || s.error) return;
+      const ctx = { now: new Date(), noteTitle: (id: number) => titlesRef.current.get(id) ?? null };
+      const taken = new Set<string>();
+      const files = s.collections
+        .filter((c) => c.deletedAt === null)
+        .sort((a, b) => a.id - b.id)
+        .map((c) => {
+          const fields = fieldsOf(s, c.id);
+          const rows = rowsOf(s, c.id);
+          const base = collectionFileBase(c.name, c.id, taken);
+          taken.add(base);
+          return { base, json: collectionToJson(c, fields, rows), csv: collectionToCsv(fields, rows, ctx) };
+        });
+      writeCollectionFiles(files, COLLECTION_FILE_KIND).catch((error: unknown) => console.error("Copia su disco delle raccolte non riuscita:", error));
+    };
+    const schedule = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(write, 1500);
+    };
+    schedule();
+    const unsubscribe = subscribeCollections(schedule);
+    return () => {
+      unsubscribe();
+      window.clearTimeout(timer);
+    };
+  }, [vaultOn, titlesRef]);
   const openNote = openId !== null ? notes.find((n) => n.id === openId && n.deletedAt === null) ?? null : null;
   const splitNote =
     openNote && splitId !== null && splitId !== openId ? live.find((n) => n.id === splitId) ?? null : null;
@@ -234,7 +299,8 @@ function NotesDetail() {
   // ---------------- Azioni ----------------
 
   async function handleNewNote(templateId?: string) {
-    const folderId = view.kind === "folder" ? view.id : null;
+    // Nella cartella aperta: quella selezionata, o quella della nota che si sta leggendo.
+    const folderId = view.kind === "folder" ? view.id : openNote?.folderId ?? null;
     try {
       const id = await createNote(folderId, templateId ? buildFromTemplate(templateId) : undefined);
       setQuery("");
@@ -249,26 +315,92 @@ function NotesDetail() {
   const newNoteRef = useLatestRef(handleNewNote);
   const openIdRef = useLatestRef(openId);
 
-  // Scorciatoie: Ctrl/Cmd+K cerca, N crea una nota (solo fuori dall'editor e dai campi di testo).
+  // ---------------- Scorciatoie (lib/shortcuts.ts) ----------------
+  // Un solo ascoltatore per la pagina: le azioni della pagina si fanno qui, quelle sul testo
+  // vanno all'editor del riquadro attivo (quello cliccato o con il focus, nello schermo diviso).
+
+  const editorApis = useRef(new Map<"main" | "side", EditorApi>());
+  const activePane = useRef<"main" | "side">("main");
+  const [keysOpen, setKeysOpen] = useState(false);
+  const keysOpenRef = useLatestRef(keysOpen);
+
+  const registerMain = useCallback((api: EditorApi | null) => {
+    if (api) editorApis.current.set("main", api);
+    else editorApis.current.delete("main");
+  }, []);
+  const registerSide = useCallback((api: EditorApi | null) => {
+    if (api) editorApis.current.set("side", api);
+    else {
+      editorApis.current.delete("side");
+      activePane.current = "main";
+    }
+  }, []);
+
+  function focusSearch() {
+    // La ricerca sta nella barra laterale: se è nascosta la si riapre.
+    setSideOpen(true);
+    window.requestAnimationFrame(() => searchRef.current?.focus());
+  }
+  const focusSearchRef = useLatestRef(focusSearch);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const typing =
-        !!target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable);
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        searchRef.current?.focus();
+      if (e.defaultPrevented) return; // già gestito (menu "/", campi del pannello…)
+      const action = matchShortcut(e);
+      if (fromFormField(e.target)) return; // nei campi di testo i tasti restano loro
+      if (!action) {
+        // N senza modificatori, fuori dal testo e senza nota aperta: nuova nota (come prima).
+        const target = e.target as HTMLElement | null;
+        const plain = !e.ctrlKey && !e.metaKey && !e.altKey && !target?.isContentEditable;
+        if (plain && e.key.toLowerCase() === "n" && openIdRef.current === null) {
+          e.preventDefault();
+          void newNoteRef.current();
+        }
         return;
       }
-      if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
-      if (e.key.toLowerCase() === "n" && openIdRef.current === null) {
+      if (action === "help") {
+        e.preventDefault();
+        setKeysOpen((v) => !v);
+        return;
+      }
+      if (keysOpenRef.current) {
+        if (action === "escape") {
+          e.preventDefault();
+          setKeysOpen(false);
+        }
+        return;
+      }
+      if (action === "findAll") {
+        e.preventDefault();
+        focusSearchRef.current();
+        return;
+      }
+      if (action === "newNote") {
         e.preventDefault();
         void newNoteRef.current();
+        return;
+      }
+      const api = editorApis.current.get(activePane.current) ?? editorApis.current.get("main");
+      if (api?.action(action)) e.preventDefault();
+      // Senza una nota aperta Ctrl+F apre la ricerca (e non quella del browser).
+      else if (action === "find") {
+        e.preventDefault();
+        focusSearchRef.current();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [newNoteRef, openIdRef]);
+  }, [newNoteRef, openIdRef, keysOpenRef, focusSearchRef]);
+
+  async function handleNewCollection() {
+    try {
+      const id = await createCollection();
+      goTo({ kind: "collection", id });
+    } catch (error) {
+      console.error("Errore nella creazione della raccolta:", error);
+      showNotice("Impossibile creare la raccolta (dettagli nella console).");
+    }
+  }
 
   function goTo(next: View) {
     setView(next);
@@ -483,6 +615,15 @@ function NotesDetail() {
 
   // ---------------- Avvisi, copia su disco, file dal desktop ----------------
 
+  async function collectionAction(action: () => Promise<void>, failure: string) {
+    try {
+      await action();
+    } catch (error) {
+      console.error(failure, error);
+      showNotice(failure);
+    }
+  }
+
   function showNotice(text: string) {
     setNotice(text);
   }
@@ -554,74 +695,108 @@ function NotesDetail() {
     }
   }
 
+  /** Cartella della nota su disco: la crea (attivando la copia su disco) se non c'è ancora. */
+  async function noteDirFor(noteId: number): Promise<string> {
+    if (!vaultOn) {
+      await setVaultEnabled(true); // gli allegati vivono nella cartella su disco
+      setVaultOn(true);
+    }
+    let fresh = (await listNotes()).find((n) => n.id === noteId);
+    if (fresh && !fresh.diskPath) {
+      await syncPending([fresh], folders);
+      fresh = (await listNotes()).find((n) => n.id === noteId);
+    }
+    if (!fresh?.diskPath) throw new Error("Cartella della nota non creata");
+    return fresh.diskPath;
+  }
+
+  /** Copia i file in <nota>/allegati/ e li aggiunge agli allegati. Usata da editor, allegati e rilascio. */
+  async function storeFiles(noteId: number, files: IncomingFile[]): Promise<StoredFile[]> {
+    const dir = await noteDirFor(noteId);
+    const stored: StoredFile[] = [];
+    for (const file of files) {
+      if (file.bytes.length > MAX_FILE_BYTES) {
+        showNotice(`«${file.name}» supera i 50 MB e non è stato allegato.`);
+        continue;
+      }
+      const finalName = await saveAttachmentFile(dir, file.name, file.bytes);
+      await addAttachment(noteId, finalName, file.bytes.length);
+      stored.push({ name: finalName, size: file.bytes.length });
+    }
+    if (stored.length > 0) {
+      setAttachVersion((v) => v + 1);
+      await reload();
+    }
+    return stored;
+  }
+
   async function attachPaths(noteId: number, paths: string[]) {
     try {
-      if (!vaultOn) {
-        await setVaultEnabled(true); // gli allegati vivono nella cartella su disco
-        setVaultOn(true);
-      }
-      let fresh = (await listNotes()).find((n) => n.id === noteId);
-      if (!fresh) return;
-      if (!fresh.diskPath) {
-        await syncPending([fresh], folders);
-        fresh = (await listNotes()).find((n) => n.id === noteId);
-      }
-      if (!fresh?.diskPath) throw new Error("Cartella della nota non creata");
-
-      let added = 0;
-      for (const path of paths) {
-        const bytes = await readFile(path);
-        if (bytes.length > MAX_ATTACHMENT_BYTES) {
-          showNotice(`«${baseName(path)}» supera i 50 MB e non è stato allegato.`);
-          continue;
-        }
-        const finalName = await saveAttachmentFile(fresh.diskPath, baseName(path), bytes);
-        await addAttachment(noteId, finalName, bytes.length);
-        added++;
-      }
-      if (added > 0) {
-        setAttachVersion((v) => v + 1);
-        showNotice(added === 1 ? "File allegato." : `${added} file allegati.`);
-        await reload();
-      }
+      const stored = await storeFiles(noteId, await readPaths(paths));
+      if (stored.length > 0) showNotice(stored.length === 1 ? "File allegato." : `${stored.length} file allegati.`);
     } catch (error) {
       console.error("Allegato non riuscito:", error);
       showNotice("Impossibile allegare il file: controlla i permessi di lettura (dettagli nella console).");
     }
   }
 
-  async function createNoteFromFile(path: string, folderId: number | null): Promise<number> {
-    const name = baseName(path);
+  /** Una nota nuova da un file: testo per .md/.txt, immagine o scheda del file per gli altri. */
+  async function createNoteFromFile(file: IncomingFile, folderId: number | null): Promise<number> {
+    const name = file.name;
     const title = name.replace(/\.[^.]+$/, "") || name;
     const plain = (content: string) => [{ content, ink: [], background: "none" as const }];
+    const kind = classifyFile(name);
+    const text = () => new TextDecoder().decode(file.bytes);
 
-    if (/\.txt$/i.test(name)) {
-      return createNote(folderId, { title, tags: [], pages: plain(plainTextToHtml(await readTextFile(path))) });
+    if (kind === "text") {
+      return createNote(folderId, { title, tags: [], pages: plain(plainTextToHtml(text())) });
     }
-    if (/\.(md|markdown)$/i.test(name)) {
-      const { meta, body } = parseFrontmatter(await readTextFile(path));
+    if (kind === "markdown") {
+      const { meta, body } = parseFrontmatter(text());
       return createNote(folderId, {
         title: parseMetaString(meta.title) ?? title,
         tags: parseMetaTags(meta.tags),
         pages: plain(markdownToHtml(body)),
       });
     }
-    const safe = name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const id = await createNote(folderId, { title, tags: [], pages: plain(`<p>File allegato: ${safe}</p>`) });
-    await attachPaths(id, [path]);
+    const id = await createNote(folderId, { title, tags: [], pages: plain("<p><br></p>") });
+    const [stored] = await storeFiles(id, [file]);
+    if (stored) {
+      let block: HTMLElement;
+      if (kind === "image") {
+        const dims = await imageSize(file.bytes, name).catch(() => ({ width: 0, height: 0 }));
+        block = createImageBlock(stored.name, dims.width, dims.height);
+      } else {
+        block = createFileBlock(stored.name, stored.size);
+      }
+      const [first] = await getPages(id);
+      if (first) await savePage(first.id, id, `${block.outerHTML}<p><br></p>`, []);
+    }
     return id;
   }
 
-  async function handleExternalDrop(paths: string[]) {
+  /** Cartella sotto il punto (barra laterale): id, "root" = fuori dalle cartelle, null = nessuna. */
+  function folderKeyAt(point: ScreenPoint): string | null {
+    return document.elementFromPoint(point.x, point.y)?.closest<HTMLElement>("[data-drop-folder]")?.dataset.dropFolder ?? null;
+  }
+
+  async function handleExternalDrop(paths: string[], point: ScreenPoint) {
     if (paths.length === 0) return;
-    if (openIdRef.current !== null) {
+    // Prima la pagina di un riquadro aperto (Inserisci nella pagina / Allega alla nota).
+    for (const key of ["side", "main"] as const) {
+      const api = editorApis.current.get(key);
+      if (api && (await api.drop(paths, point))) return;
+    }
+    const folderKey = folderKeyAt(point);
+    if (folderKey === null && openIdRef.current !== null) {
+      // Rilasciato sull'intestazione o sulla barra di una nota aperta: allegato, come prima.
       await attachPaths(openIdRef.current, paths);
       return;
     }
-    const folderId = view.kind === "folder" ? view.id : null;
+    const folderId = folderKey === "root" ? null : folderKey !== null ? Number(folderKey) : view.kind === "folder" ? view.id : null;
     try {
       let last: number | null = null;
-      for (const path of paths) last = await createNoteFromFile(path, folderId);
+      for (const file of await readPaths(paths)) last = await createNoteFromFile(file, folderId);
       await reload();
       showNotice(paths.length === 1 ? "Nota creata dal file." : `${paths.length} note create dai file.`);
       if (paths.length === 1 && last !== null) setOpenId(last);
@@ -631,20 +806,40 @@ function NotesDetail() {
     }
   }
 
+  /** Il trascinamento passa sopra la finestra: pannello sulla pagina, cartella evidenziata. */
+  function handleExternalOver(point: ScreenPoint | null, count: number) {
+    for (const api of editorApis.current.values()) api.dragOver(point, count);
+    const key = point ? folderKeyAt(point) : null;
+    setDropKey(key !== null && key !== "root" ? key : null);
+  }
+
+  const overRef = useLatestRef(handleExternalOver);
   const dropRef = useLatestRef(handleExternalDrop);
 
   // File trascinati dal desktop dentro la finestra (evento nativo di Tauri).
   useEffect(() => {
     let cancelled = false;
     let unlisten: (() => void) | null = null;
+    let count = 0;
+    // Tauri dà la posizione in pixel fisici della finestra: in px CSS si divide per devicePixelRatio.
+    const toCss = (pos: { x: number; y: number }): ScreenPoint => ({
+      x: pos.x / (window.devicePixelRatio || 1),
+      y: pos.y / (window.devicePixelRatio || 1),
+    });
     getCurrentWebview()
       .onDragDropEvent((event) => {
         const payload = event.payload;
-        if (payload.type === "enter" || payload.type === "over") setExtDrag(true);
-        else if (payload.type === "leave") setExtDrag(false);
-        else {
+        if (payload.type === "enter" || payload.type === "over") {
+          if (payload.type === "enter") count = payload.paths.length;
+          setExtDrag(true);
+          overRef.current(toCss(payload.position), count);
+        } else if (payload.type === "leave") {
           setExtDrag(false);
-          void dropRef.current(payload.paths);
+          overRef.current(null, 0);
+        } else {
+          setExtDrag(false);
+          overRef.current(null, 0);
+          void dropRef.current(payload.paths, toCss(payload.position));
         }
       })
       .then((fn) => {
@@ -656,14 +851,26 @@ function NotesDetail() {
       cancelled = true;
       unlisten?.();
     };
-  }, [dropRef]);
+  }, [dropRef, overRef]);
+
+  // Lasciando la pagina Notes si libera la memoria delle immagini lette dal disco.
+  useEffect(() => releaseAttachmentUrls, []);
 
   function renderEditor(note: NoteSummary, compact: boolean, onClosePane?: () => void) {
     return (
       <NoteEditor
+        registerEditor={onClosePane ? registerSide : registerMain}
+        onStoreFiles={storeFiles}
+        onOpenShortcuts={() => setKeysOpen(true)}
         key={`${onClosePane ? "side" : "main"}-${note.id}`}
         note={note}
         pathLabel={pathOf(note.folderId)}
+        crumbs={[
+          ...pathFolders(note.folderId).map((f) => ({ label: f.name, onClick: () => selectFolder(f.id) })),
+          { label: note.title || "Senza titolo" },
+        ]}
+        onToggleSide={onClosePane ? undefined : () => setSideOpen((v) => !v)}
+        sideOpen={sideOpen}
         onChanged={() => void reload()}
         onToggleStar={() => void handleToggleStar(note)}
         onTrash={() => {
@@ -683,6 +890,7 @@ function NotesDetail() {
         splitCandidates={live}
         compact={compact}
         onClosePane={onClosePane}
+        collections={collectionLinks}
       />
     );
   }
@@ -702,6 +910,10 @@ function NotesDetail() {
         return { title: "Cestino", subtitle: "Le note eliminate restano qui finché non le rimuovi per sempre.", icon: <MdDeleteOutline />, accent: null };
       case "tag":
         return { title: `# ${view.tag}`, subtitle: "Note con questo tag.", icon: <span>#</span>, accent: null };
+      case "collection": {
+        const c = collectionsState.collections.find((x) => x.id === view.id);
+        return { title: c?.name ?? "Raccolta", subtitle: "Raccolta", icon: <MdOutlineTableChart />, accent: null };
+      }
       case "folder": {
         const folder = selectedFolder;
         const Icon = folderIcon(folder?.icon ?? "folder");
@@ -709,7 +921,7 @@ function NotesDetail() {
         return {
           title: folder?.name ?? "Cartella",
           subtitle: parent ? `Dentro ${parent.name}` : "Cartella principale",
-          icon: <Icon />,
+          icon: createElement(Icon),
           accent: folder?.color ?? null,
         };
       }
@@ -720,7 +932,7 @@ function NotesDetail() {
 
   // ---------------- Briciole di pane ----------------
 
-  const crumbs: { label: string; onClick?: () => void }[] = [];
+  const crumbs: Crumb[] = [];
   if (openNote) {
     for (const f of pathFolders(openNote.folderId)) crumbs.push({ label: f.name, onClick: () => selectFolder(f.id) });
     crumbs.push({ label: openNote.title || "Senza titolo" });
@@ -730,8 +942,6 @@ function NotesDetail() {
   } else {
     crumbs.push({ label: header.title });
   }
-
-  const userName = settings.userName.trim();
 
   if (!loaded) {
     if (loadError === null) return <p className="nq-loading">Caricamento…</p>;
@@ -749,42 +959,48 @@ function NotesDetail() {
   return (
     <div className="nq">
       {sideOpen && (
-        <aside className="nq-side">
-          <div className="nq-brand">
-            <span className="nq-brand-icon">
-              <MdOutlineDescription />
-            </span>
-            <span>Notes</span>
-          </div>
-
-          <div className="nq-user">
-            <span className="nq-avatar">{initials(userName)}</span>
-            <div>
-              <strong>{userName || "Il tuo spazio"}</strong>
-              <span>Spazio personale</span>
-            </div>
-          </div>
-
-          <nav className="nq-nav">
-            <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "all" ? " is-active" : ""}`} onClick={() => goTo({ kind: "all" })}>
-              <MdOutlineDescription /> <span>Tutte le note</span> <em>{live.length}</em>
-            </button>
-            <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "starred" ? " is-active" : ""}`} onClick={() => goTo({ kind: "starred" })}>
-              <MdOutlineStarBorder /> <span>Preferiti</span> <em>{live.filter((n) => n.starred).length}</em>
-            </button>
-            <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "recent" ? " is-active" : ""}`} onClick={() => goTo({ kind: "recent" })}>
-              <MdOutlineHistory /> <span>Recenti</span>
-            </button>
-          </nav>
-
-          <div className="nq-section-head">
-            <span>Le tue cartelle</span>
-            <button type="button" className="nq-icon-btn" onClick={() => setNewFolder({ parentId: null })} aria-label="Nuova cartella" title="Nuova cartella">
-              <MdOutlineCreateNewFolder />
-            </button>
-          </div>
+        <aside className="nq-side" aria-label="Note e cartelle">
+          <label className="nq-search">
+            <MdSearch aria-hidden="true" />
+            <input
+              ref={searchRef}
+              value={query}
+              placeholder="Cerca"
+              aria-label="Cerca nelle note"
+              onChange={(e) => {
+                setQuery(e.target.value);
+                if (e.target.value) setOpenId(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setQuery("");
+                  e.currentTarget.blur();
+                }
+              }}
+            />
+            <kbd>{shortcutLabel("findAll")}</kbd>
+          </label>
 
           <div className="nq-side-scroll">
+            <nav className="nq-nav">
+              <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "all" ? " is-active" : ""}`} onClick={() => goTo({ kind: "all" })}>
+                <MdOutlineDescription /> <span>Tutte le note</span> <em>{live.length}</em>
+              </button>
+              <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "starred" ? " is-active" : ""}`} onClick={() => goTo({ kind: "starred" })}>
+                <MdOutlineStarBorder /> <span>Preferiti</span> <em>{live.filter((n) => n.starred).length}</em>
+              </button>
+              <button type="button" className={`nq-nav-item${!openNote && !searching && view.kind === "recent" ? " is-active" : ""}`} onClick={() => goTo({ kind: "recent" })}>
+                <MdOutlineHistory /> <span>Recenti</span>
+              </button>
+            </nav>
+
+            <h3 className="nq-section-head">
+              <span>Cartelle</span>
+              <button type="button" className="nq-icon-btn nq-icon-btn--small" onClick={() => setNewFolder({ parentId: null })} aria-label="Nuova cartella" title="Nuova cartella">
+                <MdAdd />
+              </button>
+            </h3>
+
             <FolderTree
               childrenOf={childrenOf}
               counts={counts}
@@ -812,29 +1028,46 @@ function NotesDetail() {
               </div>
             )}
 
-            <button type="button" className="nq-nav-item nq-new-folder" onClick={() => setNewFolder({ parentId: null })}>
-              <MdAdd /> <span>Nuova cartella</span>
-            </button>
-
             {allTags.length > 0 && (
               <>
-                <div className="nq-section-head">
+                <h3 className="nq-section-head">
                   <span>Tag</span>
-                </div>
+                </h3>
                 <div className="nq-tags">
                   {allTags.map((tag) => (
                     <button
                       key={tag}
                       type="button"
                       className={`nq-tag${view.kind === "tag" && view.tag === tag && !openNote ? " is-active" : ""}`}
+                      aria-pressed={view.kind === "tag" && view.tag === tag && !openNote}
                       onClick={() => goTo({ kind: "tag", tag })}
                     >
-                      # {tag}
+                      #{tag}
                     </button>
                   ))}
                 </div>
               </>
             )}
+
+            <h3 className="nq-section-head">
+              <span>Raccolte</span>
+              <button type="button" className="nq-icon-btn nq-icon-btn--small" onClick={() => void handleNewCollection()} aria-label="Nuova raccolta" title="Nuova raccolta">
+                <MdAdd />
+              </button>
+            </h3>
+            <nav className="nq-nav" aria-label="Raccolte">
+              {liveCollections.length === 0 && <p className="nq-side-hint">Tabelle di dati da usare in più note.</p>}
+              {liveCollections.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`nq-nav-item${!openNote && !searching && view.kind === "collection" && view.id === c.id ? " is-active" : ""}`}
+                  onClick={() => goTo({ kind: "collection", id: c.id })}
+                >
+                  <MdOutlineTableChart /> <span>{c.name}</span> <em>{rowsOf(collectionsState, c.id).filter((r) => r.deletedAt === null).length}</em>
+                </button>
+              ))}
+            </nav>
           </div>
 
           <div className="nq-side-foot">
@@ -852,56 +1085,76 @@ function NotesDetail() {
       )}
 
       <section className="nq-main">
-        <div className="nq-topbar">
-          <button type="button" className="nq-icon-btn" onClick={() => setSideOpen((v) => !v)} aria-label="Mostra o nascondi la barra laterale">
-            <MdOutlineVerticalSplit />
-          </button>
-          <nav className="nq-crumbs" aria-label="Percorso">
-            {crumbs.map((crumb, i) => (
-              <span key={`${crumb.label}-${i}`} className="nq-crumb">
-                {i > 0 && <MdChevronRight />}
-                {crumb.onClick ? (
-                  <button type="button" onClick={crumb.onClick}>
-                    {crumb.label}
-                  </button>
-                ) : (
-                  <span className={i === crumbs.length - 1 ? "is-current" : ""}>{crumb.label}</span>
-                )}
-              </span>
-            ))}
-          </nav>
-          <label className="nq-search">
-            <MdSearch />
-            <input
-              ref={searchRef}
-              value={query}
-              placeholder="Cerca nelle tue note"
-              onChange={(e) => {
-                setQuery(e.target.value);
-                if (e.target.value) setOpenId(null);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  setQuery("");
-                  e.currentTarget.blur();
-                }
-              }}
-            />
-            <kbd>Ctrl K</kbd>
-          </label>
-        </div>
+        {!openNote && (
+          <div className="nq-topbar">
+            <button type="button" className="nq-icon-btn" onClick={() => setSideOpen((v) => !v)} aria-label={sideOpen ? "Nascondi la barra laterale" : "Mostra la barra laterale"} aria-pressed={sideOpen}>
+              <MdOutlineVerticalSplit />
+            </button>
+            <Crumbs items={crumbs} />
+          </div>
+        )}
 
         <div className="nq-body">
           {openNote ? (
             splitNote ? (
               <div className="nq-split">
-                <div className="nq-pane">{renderEditor(openNote, true)}</div>
-                <div className="nq-pane nq-pane--side">{renderEditor(splitNote, true, () => setSplitId(null))}</div>
+                <div
+                  className="nq-pane"
+                  onPointerDownCapture={() => (activePane.current = "main")}
+                  onFocusCapture={() => (activePane.current = "main")}
+                >
+                  {renderEditor(openNote, true)}
+                </div>
+                <div
+                  className="nq-pane nq-pane--side"
+                  onPointerDownCapture={() => (activePane.current = "side")}
+                  onFocusCapture={() => (activePane.current = "side")}
+                >
+                  {renderEditor(splitNote, true, () => setSplitId(null))}
+                </div>
               </div>
             ) : (
               renderEditor(openNote, false)
             )
+          ) : !searching && view.kind === "collection" ? (
+            <CollectionPage
+              key={view.id}
+              collectionId={view.id}
+              notes={noteRefs}
+              onOpenNote={(id) => setOpenId(id)}
+              onNotice={showNotice}
+              onTrashed={() => goTo({ kind: "all" })}
+            />
           ) : (
+            <>
+            {!searching && view.kind === "trash" && trashedCollections.length > 0 && (
+              <section className="nq-trash-colls" aria-label="Raccolte eliminate">
+                <h3>Raccolte eliminate</h3>
+                {trashedCollections.map((c) => (
+                  <div key={c.id} className="nq-trash-coll">
+                    <MdOutlineTableChart aria-hidden="true" />
+                    <span>{c.name}</span>
+                    <button type="button" className="nq-btn nq-btn--small" onClick={() => void collectionAction(() => restoreCollection(c.id), "Impossibile ripristinare la raccolta")}>
+                      <MdRestoreFromTrash aria-hidden="true" /> Ripristina
+                    </button>
+                    <button
+                      type="button"
+                      className={`nq-btn nq-btn--small nq-btn--danger${armedCollection === c.id ? " is-armed" : ""}`}
+                      onClick={() => {
+                        if (armedCollection !== c.id) {
+                          setArmedCollection(c.id);
+                          return;
+                        }
+                        setArmedCollection(null);
+                        void collectionAction(() => purgeCollection(c.id), "Impossibile eliminare la raccolta");
+                      }}
+                    >
+                      {armedCollection === c.id ? "Clicca ancora" : "Elimina per sempre"}
+                    </button>
+                  </div>
+                ))}
+              </section>
+            )}
             <NoteCollection
               title={header.title}
               subtitle={header.subtitle}
@@ -925,17 +1178,20 @@ function NotesDetail() {
               onDragStart={startDrag}
               onCustomize={selectedFolder && !searching ? () => setCustomizeId(selectedFolder.id) : undefined}
             />
+            </>
           )}
         </div>
       </section>
 
-      {extDrag && (
+      {extDrag && !openNote && (
         <div className="nq-drop-overlay">
           <div>{openNote ? "Rilascia per allegare alla nota" : "Rilascia per creare una nota dal file"}</div>
         </div>
       )}
 
       {notice && <div className="nq-notice">{notice}</div>}
+
+      {keysOpen && <ShortcutsPanel onClose={() => setKeysOpen(false)} />}
 
       {vaultPanel && (
         <VaultPanel

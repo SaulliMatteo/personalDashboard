@@ -1,10 +1,11 @@
 import type { ActivityEvent, ActivityStatus } from "../../../core/activity/activityBus";
-import type { AppId, ForegroundApp } from "./appCategory";
+import type { AppId, ForegroundApp } from "../../../core/system/appCategory";
 import { ANIMATIONS } from "./animations";
-import { EMOTIONS, type EmotionId, type FaceMotion, type GlyphId } from "./face";
-import { PERSONALITIES, fillPhrase, type PersonalityId, type PhraseKey } from "./personalities";
-import { POSES, resolvePose, type CostumeId, type GazeMode, type PoseId } from "./poses";
+import { EMOTIONS, type EmotionId, type GlyphId } from "../../../core/pixy/engine/face";
+import { PERSONALITIES, fillPhrase, type PersonalityId, type PhraseKey } from "../../../core/pixy/engine/personalities";
+import { POSES, resolvePose, type PoseId } from "../../../core/pixy/engine/poses";
 import { subjectKind } from "./subjectKind";
+import type { BrainSnapshot, Bubble, Reaction } from "../../../core/pixy/engine/snapshot";
 
 /**
  * Il "cervello" del Companion: decide COSA mostrare (posa, reazioni,
@@ -45,61 +46,6 @@ export interface BrainInput {
   hour: number;
 }
 
-export interface Reaction {
-  /** Posa della reazione (null = solo un'espressione sopra la posa di fondo). */
-  pose: PoseId | null;
-  emotion: EmotionId;
-  glyph: GlyphId | null;
-  /** undefined = resta il costume della posa di fondo. */
-  costume?: CostumeId | null;
-  motion?: FaceMotion;
-  gaze?: GazeMode;
-  doze?: boolean;
-  /** Velocità delle animazioni della reazione (già moltiplicata per la personalità). */
-  tempo?: number;
-  startedAt: number;
-  until: number;
-  priority: number;
-}
-
-export interface Bubble {
-  id: number;
-  text: string;
-  until: number;
-  durationMs: number;
-  priority: number;
-}
-
-export interface BrainSnapshot {
-  pose: PoseId;
-  /** Cosa sta facendo, a parole (card, mini, pagina). */
-  status: string;
-  personality: PersonalityId;
-  /** Espressione di fondo della posa corrente. */
-  mood: EmotionId;
-  gaze: GazeMode;
-  /** Simbolo di fondo della posa (es. "z" quando dorme). */
-  glyph: GlyphId | null;
-  costume: CostumeId | null;
-  /** Avanzamento (0..1) per i costumi che lo mostrano, es. la barra del video. */
-  costumeValue: number | null;
-  /** Movimento della posa (null = quello dell'espressione). */
-  motion: FaceMotion | null;
-  /** Si appisola e si risveglia di scatto. */
-  doze: boolean;
-  /** Bagliore dello schermo che scorre sugli occhi. */
-  screenGlow: boolean;
-  /** Velocità delle animazioni (personalità × posa). */
-  tempo: number;
-  /** Può guardare il mouse in questo momento. */
-  canFollow: boolean;
-  reaction: Reaction | null;
-  bubble: Bubble | null;
-  /** Animazioni accese (già tenuto conto dell'anteprima in corso). */
-  blink: boolean;
-  wander: boolean;
-  breath: boolean;
-}
 
 const EMOTE_MEAN_MS: Record<Frequency, number> = { rare: 100_000, normal: 45_000, often: 18_000 };
 const CHAT_MEAN_MS: Record<Frequency, number> = { rare: 9 * 60_000, normal: 4 * 60_000, often: 90_000 };

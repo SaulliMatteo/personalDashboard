@@ -33,9 +33,11 @@ interface InkLayerProps {
   color: string;
   size: number;
   onChange: (strokes: InkStroke[]) => void;
+  /** Classe del canvas: "nq-ink" sulla pagina, un'altra dentro un'immagine. */
+  className?: string;
 }
 
-function InkLayer({ strokes, active, tool, color, size, onChange }: InkLayerProps) {
+function InkLayer({ strokes, active, tool, color, size, onChange, className = "nq-ink" }: InkLayerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const strokesRef = useLatestRef(strokes);
   const live = useRef<InkStroke | null>(null);
@@ -107,7 +109,7 @@ function InkLayer({ strokes, active, tool, color, size, onChange }: InkLayerProp
   return (
     <canvas
       ref={canvasRef}
-      className={`nq-ink${active ? " is-active" : ""}${active && tool === "eraser" ? " is-eraser" : ""}`}
+      className={`${className}${active ? " is-active" : ""}${active && tool === "eraser" ? " is-eraser" : ""}`}
       onPointerDown={handleDown}
       onPointerMove={handleMove}
       onPointerUp={handleUp}

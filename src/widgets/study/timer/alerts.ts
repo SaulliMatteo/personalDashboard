@@ -1,9 +1,7 @@
-import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
-
 /**
- * Avvisi di fine fase: suono e notifica di sistema. Tenuti fuori dal
- * TimerContext perché non dipendono dallo stato del timer: per cambiare
- * suono o formato delle notifiche si tocca solo questo file.
+ * Suono degli avvisi di fine fase. Tenuto fuori dal TimerContext perché non
+ * dipende dallo stato del timer. Le notifiche di sistema passano da
+ * core/notify/notifier.ts (le firma Pixy).
  */
 
 /**
@@ -37,20 +35,5 @@ export function playChime(volumePercent: number) {
     window.setTimeout(() => void ctx.close(), 1000);
   } catch (error) {
     console.error("Impossibile riprodurre il suono di notifica:", error);
-  }
-}
-
-/**
- * Notifica di sistema (visibile anche con l'app minimizzata). Il permesso
- * viene chiesto solo al bisogno, la prima volta che serve davvero — non
- * all'avvio, per non mostrare un popup prima ancora di avviare un timer.
- */
-export async function notify(title: string, body: string) {
-  try {
-    let granted = await isPermissionGranted();
-    if (!granted) granted = (await requestPermission()) === "granted";
-    if (granted) sendNotification({ title, body });
-  } catch (error) {
-    console.error("Impossibile inviare la notifica di sistema:", error);
   }
 }

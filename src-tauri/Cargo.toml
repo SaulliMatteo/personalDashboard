@@ -26,13 +26,19 @@ tauri-plugin-opener = "2"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
-tauri = { version = "2.11.3", features = [] }
+# Pinnata ESATTA: "2.11.3" vorrebbe dire ^2.11.3 e accetterebbe la 2.12, che i plugin pinnati
+# qui sotto (notification, localhost, deep-link, single-instance) non supportano.
+tauri = { version = "=2.11.3", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 # Pinnata ESATTA (non "2" o "^2.4"): la 2.5.0 richiede tauri ^2.12, che
 # confliggerebbe con la tauri = "2.11.3" pinnata sopra. Verificato contro
 # il manifesto pubblicato su crates.io prima di aggiungerla.
 tauri-plugin-notification = "=2.4.0"
+# Gruppi: ritorno del login Google con personaldashboard://auth/callback (docs/GRUPPI.md).
+# Pinnata ESATTA: dalla 2.5.0 richiede tauri ^2.12. Va pinnata anche qui perché il ^2.4.10 di
+# tauri-plugin-single-instance altrimenti risolverebbe alla 2.6.x. Verificato su crates.io.
+tauri-plugin-deep-link = "=2.4.10"
 # Anteprima immagini di File Transfer (invio al frontend come data URL).
 base64 = "0.22"
 
@@ -47,6 +53,9 @@ windows-sys = { version = "0.59", features = [
   "Win32_UI_Input_KeyboardAndMouse",
   "Win32_UI_WindowsAndMessaging",
 ] }
+# Notifiche con la faccia di Pixy (src/notify.rs). Pinnata ESATTA alla versione
+# già nel Cargo.lock come dipendenza di tauri-plugin-notification 2.4.0.
+tauri-winrt-notification = "=0.8.1"
 
 # Companion su macOS: app in primo piano (NSWorkspace). Versioni già nel
 # Cargo.lock come dipendenze di tauri su macOS. L'inattività arriva da
@@ -58,3 +67,18 @@ objc2-foundation = { version = "0.3", default-features = false, features = ["std
 # (errore 153). Pinnata ESATTA: la 2.4.0 richiede tauri ^2.12 (come la notification).
 tauri-plugin-localhost = "=2.3.1"
 objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "libc", "NSRunningApplication", "NSWorkspace"] }
+
+# Gruppi: su Windows e Linux il deep link apre una seconda istanza, che inoltra l'URL a quella
+# già aperta e si chiude. Pinnata ESATTA: dalla 2.5.0 richiede tauri ^2.12 (verificato su crates.io).
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-single-instance = { version = "=2.4.5", features = ["deep-link"] }
+
+# Gruppi: sessione nel portachiavi del sistema (src/secure_store.rs). La 3.x: la 4.x richiede
+# Rust 1.88 ed edizione 2024. Le feature native vanno attivate a mano (nessuna di default).
+[target.'cfg(windows)'.dependencies.keyring]
+version = "=3.6.3"
+features = ["windows-native"]
+
+[target.'cfg(target_os = "macos")'.dependencies.keyring]
+version = "=3.6.3"
+features = ["apple-native"]

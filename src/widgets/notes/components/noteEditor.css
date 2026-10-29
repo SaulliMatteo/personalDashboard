@@ -1,8 +1,11 @@
-/* Editor del Notes: intestazione, toolbar, pagine, foglio, inchiostro. */
+/* Editor delle Notes (docs/design/temi/notes-redesign.html, "La pagina Notes"):
+   intestazione, barra strumenti, pagina, barra delle pagine, menu.
+   Le forme per tema sono in fondo, divise per tema; i colori vengono dai token. */
 
 .nq-editor {
   position: relative;
   flex: 1;
+  min-width: 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -18,62 +21,14 @@
   color: var(--danger);
 }
 
-/* ---------- Intestazione ---------- */
+/* ---------- Intestazione: percorso, tag, azioni ---------- */
 
-.nq-editor-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 22px 12px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.nq-editor-titleblock {
-  flex: 1;
-  min-width: 0;
-}
-
-.nq-editor-titlerow {
+.nq-ed-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.nq-title-input {
-  flex: 1;
-  min-width: 0;
-  background: transparent;
-  border: none;
-  outline: none;
-  padding: 0;
-  font: inherit;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.nq-title-input::placeholder {
-  color: var(--text-muted);
-}
-
-.nq-editor-meta {
-  margin: 4px 0 8px;
-  font-size: 12.5px;
-  color: var(--text-muted);
-}
-
-.nq-editor-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.nq-save-status {
-  font-size: 12px;
-  color: var(--text-muted);
-  white-space: nowrap;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 14px 22px 10px;
 }
 
 .nq-tag-row {
@@ -86,12 +41,17 @@
 .nq-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 6px;
+  gap: 5px;
+  padding: 2px 9px;
+  border-radius: 999px;
   background: var(--surface-2);
-  color: var(--text-secondary);
-  font-size: 11.5px;
+  color: var(--text-primary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.nq-chip svg {
+  font-size: 13px;
 }
 
 .nq-chip button {
@@ -102,105 +62,178 @@
   font-size: 12px;
 }
 
-.nq-chip button:hover {
+.nq-chip button:hover,
+.nq-chip button:focus-visible {
   color: var(--text-primary);
 }
 
 .nq-tag-input {
-  width: 74px;
-  background: transparent;
+  width: 64px;
+  padding: 2px 8px;
   border: 1px dashed var(--border-subtle);
-  border-radius: 6px;
-  padding: 3px 8px;
-  color: var(--text-primary);
-  font-size: 11.5px;
+  border-radius: 999px;
   outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
 }
 
 .nq-tag-input:focus {
-  border-color: var(--border-accent);
+  border-color: var(--accent);
 }
 
-/* ---------- Toolbar ---------- */
-
-.nq-toolbar,
-.nq-ink-bar {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 8px 18px;
+.nq-star.is-on {
+  color: var(--accent);
 }
+
+/* ---------- Barra strumenti ---------- */
 
 .nq-toolbar {
-  border-bottom: 1px solid var(--border-subtle);
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin: 0 22px 14px;
 }
 
-.nq-tool {
+.nq-tb {
   all: unset;
+  position: relative;
   box-sizing: border-box;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-width: 30px;
-  height: 30px;
-  border-radius: var(--radius-item);
-  color: var(--text-secondary);
+  gap: 1px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 7px;
+  border-radius: 9px;
+  color: var(--text-primary);
   font-size: 18px;
   cursor: pointer;
-  transition: background 150ms ease, color 150ms ease;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
 }
 
-.nq-tool--wide {
-  padding: 0 10px;
+.nq-tb-face {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nq-tb-text {
   font-size: 13px;
 }
 
-.nq-tool--wide svg {
-  font-size: 16px;
-}
-
-.nq-tool:hover:not(:disabled) {
+.nq-tb:hover:not(:disabled) {
   background: var(--surface-2);
-  color: var(--text-primary);
 }
 
-.nq-tool.is-on {
+.nq-tb[aria-pressed="true"] {
   background: var(--accent-soft);
   color: var(--accent);
 }
 
-.nq-tool:disabled {
+.nq-tb:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
 
-.nq-tool-sep {
+.nq-tb:focus-visible,
+.nq-tsel:focus-visible,
+.nq-tsize-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Legenda del tasto: si vede solo in Fosforo (tasti hardware). */
+.nq-kc {
+  display: none;
+  font-size: 8.5px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.nq-tsep {
   width: 1px;
-  height: 18px;
+  height: 20px;
   margin: 0 6px;
   background: var(--border-subtle);
 }
 
-.nq-select {
+.nq-tsel {
+  height: 32px;
+  max-width: 150px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
   color-scheme: inherit;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-item);
-  padding: 5px 8px;
+}
+
+/* Il menu aperto lo disegna il sistema: serve uno sfondo pieno. */
+.nq-tsel option {
+  background: var(--modal-bg);
+  color: var(--text-primary);
+}
+
+.nq-tsel:disabled {
+  opacity: 0.4;
+}
+
+.nq-tsize {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  padding: 0 2px;
+  border-radius: 9px;
+  background: var(--surface-2);
+}
+
+.nq-tsize-btn {
+  all: unset;
+  box-sizing: border-box;
+  padding: 0 6px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 7px;
   color: var(--text-primary);
   font-size: 12.5px;
+  cursor: pointer;
 }
 
-/* Il menu aperto è disegnato dal sistema: senza uno sfondo pieno le voci risultavano illeggibili. */
-.nq-select option {
-  background: var(--bg-card);
+.nq-tsize-btn:hover:not(:disabled) {
+  background: var(--surface-3);
+}
+
+.nq-tsize-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.nq-size-input {
+  width: 40px;
+  height: 26px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
   color: var(--text-primary);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: center;
 }
 
-.nq-select:disabled {
+.nq-size-input:disabled {
   opacity: 0.4;
 }
 
@@ -208,200 +241,124 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 4px 2px 8px;
+  padding: 2px 4px 2px 10px;
+  border-radius: 9px;
   background: var(--surface-2);
-  border-radius: var(--radius-item);
 }
 
 .nq-link-pop input {
   width: 190px;
-  background: transparent;
   border: none;
   outline: none;
+  background: transparent;
   color: var(--text-primary);
+  font: inherit;
   font-size: 12.5px;
 }
 
-/* ---------- Corpo ---------- */
-
-.nq-editor-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
+/* Barra della scrittura a mano (sotto la principale) */
+.nq-ink-bar {
+  margin-top: -6px;
 }
 
-.nq-pages {
-  flex: 0 0 168px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 0;
-  padding: 14px 12px;
-  border-right: 1px solid var(--border-subtle);
-}
-
-.nq-pages-head {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 4px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: normal;
-  color: var(--text-muted);
-}
-
-.nq-pages-list {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.nq-thumb-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 11.5px;
-  color: var(--text-muted);
-}
-
-.nq-thumb-wrap.is-active {
-  color: var(--accent);
-}
-
-.nq-thumb {
-  all: unset;
-  box-sizing: border-box;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  height: 92px;
-  padding: 10px;
-  overflow: hidden;
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  background: var(--surface-1);
-  cursor: pointer;
-}
-
-.nq-thumb-wrap.is-active .nq-thumb {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent);
-}
-
-.nq-thumb-kicker {
-  font-size: 7.5px;
-  letter-spacing: normal;
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.nq-thumb-text {
-  font-size: 10px;
-  line-height: 1.4;
-  color: var(--text-secondary);
-}
-
-.nq-thumb-ink {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  color: var(--accent);
-  font-size: 13px;
-}
-
-.nq-thumb-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 2px;
-}
-
-.nq-thumb-tools {
-  display: flex;
+.nq-ink-colors {
+  display: inline-flex;
   align-items: center;
   gap: 2px;
-}
-
-.nq-thumb-tools button {
-  all: unset;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  font-size: 13px;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.nq-thumb-tools button:hover:not(:disabled) {
-  background: var(--surface-2);
-  color: var(--text-primary);
-}
-
-.nq-thumb-tools button:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-
-.nq-thumb-tools .nq-thumb-del {
-  width: auto;
   padding: 0 4px;
-  font-size: 11px;
-}
-
-.nq-thumb-tools .nq-thumb-del.is-armed {
-  color: var(--danger);
-}
-
-.nq-pages-hint {
-  margin: 0;
-  padding: 0 4px;
-  font-size: 11px;
-  line-height: 1.5;
-  color: var(--text-muted);
-}
-
-.nq-canvas-area {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.nq-ink-bar {
-  justify-content: center;
-  padding-bottom: 0;
 }
 
 .nq-ink-dot {
   all: unset;
+  position: relative;
   box-sizing: border-box;
-  width: 18px;
-  height: 18px;
-  margin: 0 3px;
+  width: 20px;
+  height: 20px;
+  margin: 0 2px;
   border-radius: 50%;
-  border: 2px solid transparent;
+  border: 1px solid var(--border-subtle);
   cursor: pointer;
 }
 
-.nq-ink-dot.is-on {
-  border-color: var(--text-primary);
+.nq-ink-dot[aria-pressed="true"],
+.nq-ink-custom.is-on {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.nq-ink-dot:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Colore libero: il ventaglio di colori è l'icona del selettore, non un colore della pagina. */
+.nq-ink-custom {
+  overflow: hidden;
+  background: conic-gradient(var(--tint-senape), var(--tint-salvia), var(--tint-blu), var(--tint-malva), var(--tint-senape));
+}
+
+.nq-ink-custom input {
+  position: absolute;
+  inset: -6px;
+  width: 32px;
+  height: 32px;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* ---------- Allegati ---------- */
+
+.nq-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -4px 22px 12px;
+}
+
+.nq-attach {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  font-size: 12px;
+}
+
+.nq-attach button {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.nq-attach button:hover,
+.nq-attach button:focus-visible {
+  color: var(--text-primary);
+}
+
+.nq-attach em {
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+/* ---------- Area della pagina ---------- */
+
+/* Contiene la pagina e la barra "Cerca nella nota" che le sta sopra. */
+.nq-scroll-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .nq-scroll {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 16px 20px;
+  padding: 6px 22px 22px;
   scrollbar-width: thin;
 }
 
@@ -410,9 +367,10 @@
   justify-content: safe center;
 }
 
-/* ---------- Il foglio ----------
-   Tutte le misure sono in em: lo zoom cambia solo il font-size (--nq-zoom). */
-
+/* La pagina. Le misure sono in em: lo zoom cambia solo il font-size (--nq-zoom).
+   Larghezza (58em = 870px a 100%), margini interni e corpo del testo sono gli stessi in tutti i
+   temi e uguali a prima: i tratti a mano sono salvati su questa geometria e devono restare
+   sopra le parole su cui sono stati scritti. */
 .nq-paper {
   position: relative;
   box-sizing: border-box;
@@ -422,19 +380,22 @@
   min-height: 56em;
   padding: 2.6em 3.4em 2.2em;
   font-size: calc(15px * var(--nq-zoom, 1));
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 0.6em;
+  background: var(--note-page-pattern), var(--note-page-bg);
+  color: var(--note-page-ink);
+  border: var(--note-page-border);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--note-page-shadow);
+  transition: background-color 200ms ease;
 }
 
+/* Intestazione e piede: li usano solo miniature ed esportazione. */
 .nq-paper-head,
 .nq-paper-foot {
   display: flex;
   justify-content: space-between;
   gap: 1em;
   font-size: 0.68em;
-  letter-spacing: normal;
-  color: var(--text-muted);
+  color: color-mix(in srgb, var(--note-page-ink) 60%, transparent);
 }
 
 .nq-paper-head {
@@ -445,12 +406,62 @@
   margin-top: 2.4em;
 }
 
-/* ---------- Contenuto (editor e anteprime) ---------- */
+/* ---------- Testata della pagina: titolo e proprietà sulla prima, vuota sulle altre ---------- */
+
+/* Alta almeno quanto la vecchia intestazione (0.68em × 1.5 + 1.8em): vedi l'inchiostro più sotto. */
+.nq-page-head {
+  min-height: 2.82em;
+}
+
+.nq-page-titleblock {
+  padding-bottom: 1.45em;
+}
+
+.nq-page-title {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 0 0.1em;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  field-sizing: content;
+  background: transparent;
+  color: inherit;
+}
+
+.nq-page-title::placeholder {
+  color: color-mix(in srgb, var(--note-page-ink) 40%, transparent);
+}
+
+.nq-props {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55em;
+  margin-top: 0.65em;
+  font-size: 0.8em;
+  color: color-mix(in srgb, var(--note-page-ink) 65%, transparent);
+}
+
+.nq-props .nq-chip {
+  font-size: 1em;
+  color: inherit;
+}
+
+/* ---------- Contenuto (editor, miniature, anteprime) ---------- */
 
 .nq-doc {
-  color: var(--text-secondary);
+  --nq-px: calc(1px * var(--nq-zoom, 1));
+  color: inherit;
   line-height: 1.6;
   word-break: break-word;
+}
+
+.nq-doc--card {
+  --nq-zoom: 0.8;
 }
 
 .nq-doc--editor {
@@ -461,19 +472,41 @@
   cursor: text;
 }
 
+/* Titolo della nota (nella testata): misure del mockup. */
+.nq-page-title {
+  font-family: var(--font-family);
+  font-size: 2.67em;
+  font-weight: 300;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+/* Titoli nel testo: dimensioni, interlinea e margini restano quelli di prima (l'inchiostro
+   è salvato su questa geometria); per tema cambiano font, peso e colore. */
+.nq-doc h1,
+.nq-doc h2,
+.nq-doc h3 {
+  font-family: var(--font-family);
+}
+
 .nq-doc h1 {
   margin: 0 0 0.35em;
   font-size: 2.3em;
-  font-weight: 500;
+  font-weight: 300;
   line-height: 1.15;
-  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .nq-doc h2 {
   margin: 0.9em 0 0.35em;
   font-size: 1.15em;
+  font-weight: 500;
+}
+
+.nq-doc h3 {
+  margin: 0.8em 0 0.3em;
+  font-size: 1.05em;
   font-weight: 600;
-  color: var(--text-primary);
 }
 
 .nq-doc p,
@@ -492,9 +525,18 @@
   text-decoration: underline;
 }
 
-.nq-doc b,
-.nq-doc strong {
-  color: var(--text-primary);
+.nq-doc hr {
+  margin: 1em 0;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--note-page-ink) 22%, transparent);
+}
+
+:root[data-theme="quaderno"] .nq-doc hr {
+  border-top: 1.5px dashed var(--accent);
+}
+
+:root[data-theme="fosforo"] .nq-doc hr {
+  border-top: 1px dotted var(--border-subtle);
 }
 
 /* Checklist: un blocco con data-check; il "cerchietto" è un ::before cliccabile. */
@@ -528,17 +570,43 @@
 }
 
 .nq-doc [data-check="1"] {
-  color: var(--text-muted);
+  color: color-mix(in srgb, var(--note-page-ink) 55%, transparent);
   text-decoration: line-through;
+}
+
+/* ---------- Sfondi della pagina scelti dall'utente (in em: seguono lo zoom) ---------- */
+
+.nq-paper[data-bg="dots"] {
+  background-image: radial-gradient(color-mix(in srgb, var(--note-page-ink) 30%, transparent) 0.07em, transparent 0.11em);
+  background-size: 1.6em 1.6em;
+  background-position: 0.8em 0.8em;
+}
+
+.nq-paper[data-bg="grid"] {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--note-page-ink) 10%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--note-page-ink) 10%, transparent) 1px, transparent 1px);
+  background-size: 1.6em 1.6em;
+}
+
+.nq-paper[data-bg="lines"] {
+  background-image: linear-gradient(color-mix(in srgb, var(--note-page-ink) 13%, transparent) 1px, transparent 1px);
+  background-size: 100% 1.6em;
+  background-position: 0 2.6em;
 }
 
 /* ---------- Inchiostro ---------- */
 
+/* Parte da (testata − 2.82em): sulle pagine senza titolo coincide con la pagina, come prima.
+   Un canvas non si allunga con top/bottom (ha un'altezza sua): l'altezza va scritta. */
 .nq-ink {
+  --nq-ink-top: max(0px, calc(var(--nq-head-h, 2.82em) - 2.82em));
   position: absolute;
-  inset: 0;
+  z-index: 2; /* sopra le immagini libere: si scrive anche su di loro */
+  top: var(--nq-ink-top);
+  left: 0;
   width: 100%;
-  height: 100%;
+  height: calc(100% - var(--nq-ink-top));
   pointer-events: none;
 }
 
@@ -552,84 +620,211 @@
   cursor: cell;
 }
 
-/* ---------- Barra di stato ---------- */
+/* ---------- Barra delle pagine ---------- */
 
-.nq-statusbar {
+.nq-pagebar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 20px;
-  border-top: 1px solid var(--border-subtle);
+  justify-content: center;
+  gap: 8px 12px;
+  padding: 0 22px 16px;
   font-size: 12px;
-  color: var(--text-muted);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.nq-pdots {
+  display: inline-flex;
+  gap: 5px;
+  max-width: 240px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nq-pdot {
+  all: unset;
+  flex: none;
+  box-sizing: border-box;
+  width: 22px;
+  height: 28px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.nq-pdot[aria-pressed="true"] {
+  border: 2px solid var(--accent);
+}
+
+.nq-pdot:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .nq-pager {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.nq-toast {
-  position: absolute;
-  left: 50%;
-  bottom: 52px;
-  transform: translateX(-50%);
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: var(--text-primary);
-  color: var(--bg-card);
-  font-size: 12.5px;
-  font-weight: 600;
+.nq-pager--muted {
+  color: var(--text-muted);
+}
+
+/* Pannello "Pagine": miniature, sposta, elimina, aggiungi. */
+.nq-pages-pop {
+  width: 220px;
+  max-height: min(70vh, 640px);
+  gap: 10px;
+  padding: 10px;
+}
+
+.nq-pages-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.nq-pages-list {
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nq-thumb-wrap {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.nq-thumb-wrap.is-active {
+  color: var(--accent);
+}
+
+.nq-thumb {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.nq-thumb:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.nq-thumb-wrap.is-active .nq-thumb {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Miniatura: la pagina vera a 870px, ridotta con transform dentro un riquadro a proporzioni fisse. */
+.nq-thumb-box {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 870 / 1100;
+  overflow: hidden;
   pointer-events: none;
 }
 
-/* ---------- Il foglio nel linguaggio del tema ---------- */
-
-/* Quaderno: foglio a quadretti con il margine rosso, come lo sfondo dell'app. */
-:root[data-theme="quaderno"] .nq-paper {
-  background: linear-gradient(90deg, transparent 2.2em, var(--paper-margin) 2.2em calc(2.2em + 1.5px), transparent calc(2.2em + 1.5px)),
-    var(--main-bg);
-  border: var(--display-border);
-  border-radius: 0.4em;
-}
-
-/* Opaco: un foglio di carta pieno, senza bordo. */
-:root[data-theme="opaco"] .nq-paper {
+.nq-thumb-paper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 870px;
+  max-width: none;
+  height: 1100px;
+  min-height: 0;
+  flex: none;
+  overflow: hidden;
+  transform-origin: 0 0;
+  border-radius: 0;
   border: 0;
-  border-radius: 1.2em;
+  box-shadow: none;
 }
 
-/* Fosforo: pannello del display, con la trama a punti. */
-:root[data-theme="fosforo"] .nq-paper {
-  background: var(--display-texture, none), var(--bg-card);
-  border: var(--display-border);
-  border-radius: var(--radius-panel);
+.nq-thumb-paper .nq-paper-head {
+  display: flex;
 }
 
-/* ---------- Sfondi della pagina (in em: seguono lo zoom) ---------- */
-
-.nq-paper[data-bg="dots"] {
-  background-image: radial-gradient(color-mix(in srgb, var(--text-muted) 55%, transparent) 0.07em, transparent 0.11em);
-  background-size: 1.6em 1.6em;
-  background-position: 0.8em 0.8em;
+.nq-thumb-paper .nq-doc {
+  display: block;
 }
 
-.nq-paper[data-bg="grid"] {
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--text-muted) 18%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--text-muted) 18%, transparent) 1px, transparent 1px);
-  background-size: 1.6em 1.6em;
+.nq-thumb-ink {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.nq-paper[data-bg="lines"] {
-  background-image: linear-gradient(color-mix(in srgb, var(--text-muted) 22%, transparent) 1px, transparent 1px);
-  background-size: 100% 1.6em;
-  background-position: 0 2.6em;
+.nq-thumb-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
 }
 
-/* ---------- Menu a comparsa (esporta, affianca, modelli) ---------- */
+.nq-thumb-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nq-thumb-tools button {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.nq-thumb-tools button:hover:not(:disabled),
+.nq-thumb-tools button:focus-visible {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+.nq-thumb-tools button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.nq-thumb-tools .nq-thumb-del {
+  width: auto;
+  padding: 0 4px;
+  font-size: 11px;
+}
+
+.nq-thumb-tools .nq-thumb-del.is-armed {
+  color: var(--danger);
+}
+
+/* ---------- Menu a comparsa ---------- */
 
 .nq-menu-anchor {
   position: relative;
@@ -654,15 +849,28 @@
   max-height: 360px;
   overflow-y: auto;
   padding: 6px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  background: var(--modal-bg);
+  color: var(--text-primary);
+  border: var(--modal-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-pop);
 }
 
 .nq-menu--right {
   left: auto;
   right: 0;
+}
+
+.nq-menu--up {
+  top: auto;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 0;
+}
+
+.nq-menu--more {
+  min-width: 240px;
 }
 
 .nq-menu button {
@@ -672,13 +880,14 @@
   flex-direction: column;
   gap: 2px;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: 9px;
   color: var(--text-primary);
   font-size: 13px;
   cursor: pointer;
 }
 
-.nq-menu button:hover {
+.nq-menu button:hover,
+.nq-menu button:focus-visible {
   background: var(--surface-2);
 }
 
@@ -691,13 +900,20 @@
   color: var(--text-muted);
 }
 
-.nq-menu-title {
-  margin: 4px 10px 2px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.nq-menu-status {
+  margin: 4px 10px;
+  font-size: 12px;
   color: var(--text-muted);
+}
+
+.nq-menu .nq-menu-danger {
+  margin-top: 4px;
+  color: var(--danger);
+}
+
+.nq-menu .nq-menu-danger.is-armed {
+  background: var(--danger);
+  color: var(--on-danger);
 }
 
 .nq-menu-check {
@@ -722,8 +938,13 @@
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   color: var(--text-primary);
+  font: inherit;
   font-size: 13px;
   outline: none;
+}
+
+.nq-menu-search:focus {
+  border-color: var(--accent);
 }
 
 .nq-menu-empty {
@@ -732,78 +953,933 @@
   color: var(--text-muted);
 }
 
-.nq-select--end {
-  margin-left: auto;
+/* Selettori di colore */
+.nq-menu--swatches {
+  width: 204px;
+  min-width: 0;
+  padding: 10px;
 }
 
-/* ---------- Allegati ---------- */
-
-.nq-attachments {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 8px 20px;
-  border-bottom: 1px solid var(--border-subtle);
+.nq-swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
 }
 
-.nq-attach {
-  display: inline-flex;
-  align-items: center;
+.nq-menu button.nq-sw {
+  width: 24px;
+  height: 24px;
+  padding: 0;
   border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  background: var(--surface-1);
-  font-size: 12px;
+  border-radius: 50%;
+  cursor: pointer;
 }
 
-.nq-attach button {
-  all: unset;
-  display: inline-flex;
+.nq-menu button.nq-sw:hover {
+  transform: scale(1.12);
+}
+
+.nq-sw-custom-row {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 8px;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12.5px;
   color: var(--text-secondary);
   cursor: pointer;
 }
 
-.nq-attach button:hover {
-  color: var(--text-primary);
+.nq-sw-custom-row input {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
 }
 
-.nq-attach em {
-  font-style: normal;
-  color: var(--text-muted);
+.nq-menu-reset {
+  margin-bottom: 8px;
+}
+
+/* ---------- Avviso ---------- */
+
+.nq-toast {
+  position: absolute;
+  left: 50%;
+  bottom: 60px;
+  z-index: 45;
+  transform: translateX(-50%);
+  padding: 9px 16px;
+  border-radius: var(--radius-item);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
 }
 
 /* ---------- Pannello stretto (schermo diviso) ---------- */
 
-.nq-pages[hidden] {
-  display: none;
-}
-
-.nq-editor--compact .nq-editor-head {
-  padding: 12px 14px 10px;
-}
-
-.nq-editor--compact .nq-title-input {
-  font-size: 18px;
-}
-
-.nq-editor--compact .nq-save-status {
-  display: none;
-}
-
-.nq-editor--compact .nq-editor-actions {
-  gap: 6px;
+.nq-editor--compact .nq-ed-head {
+  padding: 12px 14px 8px;
 }
 
 .nq-editor--compact .nq-toolbar {
-  padding: 6px 10px;
+  margin: 0 12px 10px;
 }
 
 .nq-editor--compact .nq-scroll {
-  padding: 12px;
+  padding: 4px 12px 12px;
 }
 
 .nq-editor--compact .nq-paper {
   padding: 2em 2em 1.6em;
+}
+
+.nq-editor--compact .nq-pagebar {
+  padding: 0 12px 12px;
+}
+
+.nq-editor--compact .nq-save-status,
+.nq-editor--compact .nq-pdots {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .nq-ed-head,
+  .nq-scroll {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .nq-toolbar {
+    margin-left: 12px;
+    margin-right: 12px;
+  }
+}
+
+/* ==========================================================================
+   Forme per tema
+   ========================================================================== */
+
+/* ---------- Notte: lavagna arrotondata, barra in un'unica capsula ---------- */
+:root[data-theme="notte"] .nq-toolbar {
+  padding: 6px;
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: 16px;
+  box-shadow: var(--card-shadow);
+}
+
+:root[data-theme="notte"] .nq-paper {
+  border-radius: 1.2em;
+}
+
+/* ---------- Opaco: pillole separate, pagina di pigmento senza bordi ---------- */
+:root[data-theme="opaco"] .nq-toolbar {
+  gap: 6px;
+}
+
+:root[data-theme="opaco"] .nq-tb {
+  min-width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+:root[data-theme="opaco"] .nq-tb[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:root[data-theme="opaco"] .nq-tb--wide {
+  padding: 0 14px;
+}
+
+:root[data-theme="opaco"] .nq-tsep {
+  display: none;
+}
+
+:root[data-theme="opaco"] .nq-tsel {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+:root[data-theme="opaco"] .nq-tsize,
+:root[data-theme="opaco"] .nq-ink-colors,
+:root[data-theme="opaco"] .nq-link-pop {
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+:root[data-theme="opaco"] .nq-paper {
+  border-radius: 1.87em;
+}
+
+:root[data-theme="opaco"] .nq-page-title {
+  font-size: 2.93em;
+}
+
+:root[data-theme="opaco"] .nq-page-title,
+:root[data-theme="opaco"] .nq-doc h1 {
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+:root[data-theme="opaco"] .nq-doc h2,
+:root[data-theme="opaco"] .nq-doc h3 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+:root[data-theme="opaco"] .nq-menu {
+  border-radius: 22px;
+  padding: 8px;
+}
+
+:root[data-theme="opaco"] .nq-menu button {
+  border-radius: 999px;
+}
+
+:root[data-theme="opaco"] .nq-pdot,
+:root[data-theme="opaco"] .nq-thumb {
+  border: 0;
+}
+
+/* ---------- Quaderno: inchiostro squadrato, foglio a quadretti col margine ---------- */
+:root[data-theme="quaderno"] .nq-toolbar {
+  gap: 4px;
+  padding: 6px;
+  background: var(--bg-card);
+  border: var(--card-border);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
+}
+
+:root[data-theme="quaderno"] .nq-tb {
+  border: 1.5px solid transparent;
+  border-radius: 6px;
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .nq-tb:hover:not(:disabled),
+:root[data-theme="quaderno"] .nq-tb[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: transparent;
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .nq-tsel,
+:root[data-theme="quaderno"] .nq-tsize,
+:root[data-theme="quaderno"] .nq-link-pop {
+  background: transparent;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .nq-tsize-btn {
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .nq-tsep {
+  background: transparent;
+  border-left: 1.5px dashed var(--border-subtle);
+}
+
+:root[data-theme="quaderno"] .nq-chip {
+  border-radius: 4px;
+}
+
+:root[data-theme="quaderno"] .nq-paper {
+  border-radius: 4px;
+}
+
+/* Il margine rosso del quaderno, dentro il margine interno della pagina. */
+:root[data-theme="quaderno"] .nq-paper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2.2em;
+  width: 1.5px;
+  background: var(--note-margin);
+  pointer-events: none;
+}
+
+:root[data-theme="quaderno"] .nq-thumb-paper::before {
+  display: none;
+}
+
+:root[data-theme="quaderno"] .nq-page-title,
+:root[data-theme="quaderno"] .nq-doc h1,
+:root[data-theme="quaderno"] .nq-doc h2,
+:root[data-theme="quaderno"] .nq-doc h3 {
+  font-family: var(--font-title);
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .nq-page-title {
+  font-size: 3.47em;
+  line-height: 1;
+}
+
+:root[data-theme="quaderno"] .nq-menu {
+  border: 1.5px solid var(--accent);
+  border-radius: 6px;
+}
+
+/* ---------- Fosforo: tasti hardware con la legenda, display a punti ---------- */
+:root[data-theme="fosforo"] .nq-toolbar {
+  gap: 5px;
+  padding: 8px;
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: 12px;
+}
+
+:root[data-theme="fosforo"] .nq-tb {
+  min-width: 40px;
+  height: 42px;
+  padding-bottom: 3px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  background: var(--surface-2);
+  box-shadow: var(--note-key-shadow);
+}
+
+:root[data-theme="fosforo"] .nq-kc {
+  display: block;
+}
+
+:root[data-theme="fosforo"] .nq-tb[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:root[data-theme="fosforo"] .nq-tb[aria-pressed="true"] .nq-kc {
+  color: inherit;
+  opacity: 0.7;
+}
+
+/* LED acceso sul tasto premuto. */
+:root[data-theme="fosforo"] .nq-tb[aria-pressed="true"]::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--led);
+}
+
+:root[data-theme="fosforo"] .nq-tsep {
+  display: none;
+}
+
+:root[data-theme="fosforo"] .nq-tsel,
+:root[data-theme="fosforo"] .nq-tsize,
+:root[data-theme="fosforo"] .nq-ink-colors,
+:root[data-theme="fosforo"] .nq-link-pop {
+  height: 42px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  background: transparent;
+}
+
+:root[data-theme="fosforo"] .nq-ink-dot {
+  border-radius: 3px;
+}
+
+:root[data-theme="fosforo"] .nq-paper {
+  border-radius: 0.74em;
+}
+
+:root[data-theme="fosforo"] .nq-page-title,
+:root[data-theme="fosforo"] .nq-doc h1,
+:root[data-theme="fosforo"] .nq-doc h2,
+:root[data-theme="fosforo"] .nq-doc h3 {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+}
+
+:root[data-theme="fosforo"] .nq-page-title {
+  font-size: 2.67em;
+}
+
+:root[data-theme="fosforo"] .nq-page-title,
+:root[data-theme="fosforo"] .nq-doc h1 {
+  font-weight: 900;
+}
+
+:root[data-theme="fosforo"] .nq-doc h2,
+:root[data-theme="fosforo"] .nq-doc h3 {
+  font-weight: 800;
+}
+
+:root[data-theme="fosforo"] .nq-pdot {
+  border-radius: 2px;
+}
+
+/* ==========================================================================
+   Stile del testo scelto dall'utente (lib/textStyle.ts) e colore della pagina
+   ========================================================================== */
+
+/* Font della selezione (span) e font predefinito della nota (pagina). */
+.nq-doc [data-font="sans"] {
+  font-family: "Manrope Variable", system-ui, sans-serif;
+}
+
+.nq-doc [data-font="grottesco"] {
+  font-family: "Bricolage Grotesque Variable", system-ui, sans-serif;
+}
+
+.nq-doc [data-font="figtree"] {
+  font-family: "Figtree Variable", system-ui, sans-serif;
+}
+
+.nq-doc [data-font="serif"] {
+  font-family: "Literata Variable", Georgia, serif;
+}
+
+.nq-doc [data-font="mano"] {
+  font-family: "Caveat Variable", cursive;
+}
+
+.nq-doc [data-font="mono"] {
+  font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+}
+
+.nq-doc [data-font="punti"] {
+  font-family: "Doto Variable", monospace;
+}
+
+.nq-paper[data-note-font="sans"] .nq-doc {
+  font-family: "Manrope Variable", system-ui, sans-serif;
+}
+
+.nq-paper[data-note-font="grottesco"] .nq-doc {
+  font-family: "Bricolage Grotesque Variable", system-ui, sans-serif;
+}
+
+.nq-paper[data-note-font="figtree"] .nq-doc {
+  font-family: "Figtree Variable", system-ui, sans-serif;
+}
+
+.nq-paper[data-note-font="serif"] .nq-doc {
+  font-family: "Literata Variable", Georgia, serif;
+}
+
+.nq-paper[data-note-font="mano"] .nq-doc {
+  font-family: "Caveat Variable", cursive;
+}
+
+.nq-paper[data-note-font="mono"] .nq-doc {
+  font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+}
+
+/* Dimensione in px a zoom 100% (12–40): segue lo zoom come il resto del testo. */
+.nq-doc [data-size="12"] { font-size: calc(12 * var(--nq-px)); }
+.nq-doc [data-size="13"] { font-size: calc(13 * var(--nq-px)); }
+.nq-doc [data-size="14"] { font-size: calc(14 * var(--nq-px)); }
+.nq-doc [data-size="15"] { font-size: calc(15 * var(--nq-px)); }
+.nq-doc [data-size="16"] { font-size: calc(16 * var(--nq-px)); }
+.nq-doc [data-size="17"] { font-size: calc(17 * var(--nq-px)); }
+.nq-doc [data-size="18"] { font-size: calc(18 * var(--nq-px)); }
+.nq-doc [data-size="19"] { font-size: calc(19 * var(--nq-px)); }
+.nq-doc [data-size="20"] { font-size: calc(20 * var(--nq-px)); }
+.nq-doc [data-size="21"] { font-size: calc(21 * var(--nq-px)); }
+.nq-doc [data-size="22"] { font-size: calc(22 * var(--nq-px)); }
+.nq-doc [data-size="23"] { font-size: calc(23 * var(--nq-px)); }
+.nq-doc [data-size="24"] { font-size: calc(24 * var(--nq-px)); }
+.nq-doc [data-size="25"] { font-size: calc(25 * var(--nq-px)); }
+.nq-doc [data-size="26"] { font-size: calc(26 * var(--nq-px)); }
+.nq-doc [data-size="27"] { font-size: calc(27 * var(--nq-px)); }
+.nq-doc [data-size="28"] { font-size: calc(28 * var(--nq-px)); }
+.nq-doc [data-size="29"] { font-size: calc(29 * var(--nq-px)); }
+.nq-doc [data-size="30"] { font-size: calc(30 * var(--nq-px)); }
+.nq-doc [data-size="31"] { font-size: calc(31 * var(--nq-px)); }
+.nq-doc [data-size="32"] { font-size: calc(32 * var(--nq-px)); }
+.nq-doc [data-size="33"] { font-size: calc(33 * var(--nq-px)); }
+.nq-doc [data-size="34"] { font-size: calc(34 * var(--nq-px)); }
+.nq-doc [data-size="35"] { font-size: calc(35 * var(--nq-px)); }
+.nq-doc [data-size="36"] { font-size: calc(36 * var(--nq-px)); }
+.nq-doc [data-size="37"] { font-size: calc(37 * var(--nq-px)); }
+.nq-doc [data-size="38"] { font-size: calc(38 * var(--nq-px)); }
+.nq-doc [data-size="39"] { font-size: calc(39 * var(--nq-px)); }
+.nq-doc [data-size="40"] { font-size: calc(40 * var(--nq-px)); }
+
+/* Colori del testo e dell'evidenziatore: un valore per il giorno e uno per la notte (token). */
+.nq-doc [data-color="rosso"],
+.nq-color-ico[data-color="rosso"],
+.nq-sw--ink[data-color="rosso"] {
+  --nq-ink: var(--nq-ink-rosso);
+}
+
+.nq-doc [data-color="arancio"],
+.nq-color-ico[data-color="arancio"],
+.nq-sw--ink[data-color="arancio"] {
+  --nq-ink: var(--nq-ink-arancio);
+}
+
+.nq-doc [data-color="verde"],
+.nq-color-ico[data-color="verde"],
+.nq-sw--ink[data-color="verde"] {
+  --nq-ink: var(--nq-ink-verde);
+}
+
+.nq-doc [data-color="blu"],
+.nq-color-ico[data-color="blu"],
+.nq-sw--ink[data-color="blu"] {
+  --nq-ink: var(--nq-ink-blu);
+}
+
+.nq-doc [data-color="viola"],
+.nq-color-ico[data-color="viola"],
+.nq-sw--ink[data-color="viola"] {
+  --nq-ink: var(--nq-ink-viola);
+}
+
+.nq-doc [data-color="grigio"],
+.nq-color-ico[data-color="grigio"],
+.nq-sw--ink[data-color="grigio"] {
+  --nq-ink: var(--nq-ink-grigio);
+}
+
+.nq-doc [data-color],
+.nq-color-ico[data-color] {
+  color: var(--nq-ink);
+}
+
+/* .nq-menu button azzera lo stile (all: unset): i campioni vanno ripresi con la stessa forza. */
+.nq-menu button.nq-sw--ink {
+  background: var(--nq-ink);
+}
+
+.nq-doc [data-mark="giallo"],
+.nq-sw--mark[data-mark="giallo"] {
+  --nq-mark: var(--nq-mark-giallo);
+}
+
+.nq-doc [data-mark="verde"],
+.nq-sw--mark[data-mark="verde"] {
+  --nq-mark: var(--nq-mark-verde);
+}
+
+.nq-doc [data-mark="azzurro"],
+.nq-sw--mark[data-mark="azzurro"] {
+  --nq-mark: var(--nq-mark-azzurro);
+}
+
+.nq-doc [data-mark="rosa"],
+.nq-sw--mark[data-mark="rosa"] {
+  --nq-mark: var(--nq-mark-rosa);
+}
+
+.nq-doc [data-mark="arancio"],
+.nq-sw--mark[data-mark="arancio"] {
+  --nq-mark: var(--nq-mark-arancio);
+}
+
+.nq-doc [data-mark="viola"],
+.nq-sw--mark[data-mark="viola"] {
+  --nq-mark: var(--nq-mark-viola);
+}
+
+.nq-doc [data-mark="tema"],
+.nq-sw--mark[data-mark="tema"] {
+  --nq-mark: var(--accent);
+}
+
+/* Colore pieno (il colore mescolato al fondo della pagina): dove due parti evidenziate si
+   sovrappongono non si scurisce. Lo prendono anche i pezzi di testo più grandi dentro
+   l'evidenziatura, così lo sfondo è alto quanto il loro testo. */
+.nq-doc [data-mark],
+.nq-sw--mark {
+  --nq-mark-fill: color-mix(in srgb, var(--nq-mark) var(--nq-mark-strength), var(--note-page-bg));
+}
+
+.nq-doc [data-mark] {
+  padding: 0 0.1em;
+  border-radius: 0.15em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.nq-doc [data-mark],
+.nq-doc [data-mark] [data-size],
+.nq-doc [data-mark] [style*="font-size"] {
+  background: var(--nq-mark-fill);
+}
+
+.nq-menu button.nq-sw--mark {
+  background: var(--nq-mark-fill);
+}
+
+/* In Quaderno l'evidenziatore è un tratto di pennarello sulla metà bassa della riga. */
+:root[data-theme="quaderno"] .nq-doc [data-mark] {
+  border-radius: 0;
+}
+
+:root[data-theme="quaderno"] .nq-doc [data-mark],
+:root[data-theme="quaderno"] .nq-doc [data-mark] [data-size],
+:root[data-theme="quaderno"] .nq-doc [data-mark] [style*="font-size"] {
+  background: linear-gradient(transparent 50%, var(--nq-mark-fill) 50%, var(--nq-mark-fill) 92%, transparent 92%);
+}
+
+/* Pagine della palette: fondo e inchiostro dai token; testo, bordi e inchiostro a mano seguono la pagina. */
+.nq-paper[data-page-color="crema"],
+.nq-psw[data-k="crema"] {
+  --note-page-bg: var(--nq-page-crema-bg);
+  --note-page-ink: var(--nq-page-crema-ink);
+}
+
+.nq-paper[data-page-color="salvia"],
+.nq-psw[data-k="salvia"] {
+  --note-page-bg: var(--nq-page-salvia-bg);
+  --note-page-ink: var(--nq-page-salvia-ink);
+}
+
+.nq-paper[data-page-color="cielo"],
+.nq-psw[data-k="cielo"] {
+  --note-page-bg: var(--nq-page-cielo-bg);
+  --note-page-ink: var(--nq-page-cielo-ink);
+}
+
+.nq-paper[data-page-color="rosa"],
+.nq-psw[data-k="rosa"] {
+  --note-page-bg: var(--nq-page-rosa-bg);
+  --note-page-ink: var(--nq-page-rosa-ink);
+}
+
+.nq-paper[data-page-color="grafite"],
+.nq-psw[data-k="grafite"] {
+  --note-page-bg: var(--nq-page-grafite-bg);
+  --note-page-ink: var(--nq-page-grafite-ink);
+}
+
+.nq-paper[data-page-color] {
+  --text-primary: var(--note-page-ink);
+  --text-secondary: color-mix(in srgb, var(--note-page-ink) 78%, transparent);
+  --text-muted: color-mix(in srgb, var(--note-page-ink) 58%, transparent);
+  --border-subtle: color-mix(in srgb, var(--note-page-ink) 16%, transparent);
+  --surface-1: color-mix(in srgb, var(--note-page-ink) 5%, transparent);
+  --surface-2: color-mix(in srgb, var(--note-page-ink) 9%, transparent);
+}
+
+/* ---------- Barra: campioni del colore pagina, palette dei menu ---------- */
+
+.nq-swatches {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 4px;
+}
+
+.nq-psw {
+  all: unset;
+  position: relative;
+  box-sizing: border-box;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 50%;
+  background: var(--note-page-bg);
+  cursor: pointer;
+}
+
+.nq-psw[aria-pressed="true"],
+.nq-psw--custom[data-on] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.nq-psw:focus-visible,
+.nq-psw--custom:focus-within {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Colore del tema: metà pagina, metà accent (come nel mockup). */
+.nq-psw--theme {
+  background: conic-gradient(var(--note-page-bg) 0 50%, var(--accent) 0);
+}
+
+/* Colore libero: il ventaglio è l'icona del selettore. */
+.nq-psw--custom {
+  overflow: hidden;
+  background: conic-gradient(var(--tint-senape), var(--tint-salvia), var(--tint-blu), var(--tint-malva), var(--tint-senape));
+}
+
+.nq-psw--custom input {
+  position: absolute;
+  inset: -6px;
+  width: 32px;
+  height: 32px;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.nq-menu button.nq-sw[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.nq-menu button.nq-sw--theme {
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+.nq-menu-reset--after {
+  margin: 8px 0 0;
+}
+
+.nq-tsel--font {
+  max-width: 170px;
+}
+
+.nq-menu-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 10px 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.nq-menu-field .nq-tsel {
+  max-width: none;
+}
+
+:root[data-theme="opaco"] .nq-swatches {
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+
+:root[data-theme="fosforo"] .nq-swatches {
+  height: 42px;
+  padding: 0 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+}
+
+:root[data-theme="fosforo"] .nq-psw {
+  border-radius: 3px;
+}
+
+/* ---------- Tabelle (lib/tables.ts, components/TableTools.tsx) ----------
+   Misure del mockup in em (13.5px su 15px di corpo). Margine sotto più largo: lì sta "+ riga". */
+
+.nq-doc table {
+  width: 100%;
+  margin: 0.9em 0 1.6em;
+  border-collapse: collapse;
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Larghezze fisse: le colonne partono uguali e cambiano solo trascinando i confini (colgroup),
+   mai da sole con il testo. Bordo esterno marcato, in tutti i temi. */
+.nq-doc table {
+  table-layout: fixed;
+  border: 2px solid color-mix(in srgb, var(--note-page-ink) 70%, transparent);
+}
+
+.nq-doc th,
+.nq-doc td {
+  min-width: 2.5em;
+  padding: 0.59em 0.89em;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.nq-doc th {
+  font-weight: 600;
+}
+
+.nq-doc :is(th, td)[data-align="center"] {
+  text-align: center;
+}
+
+.nq-doc :is(th, td)[data-align="right"] {
+  text-align: right;
+}
+
+.nq-doc :is(th, td) > :is(p, div, ul, ol):last-child {
+  margin-bottom: 0;
+}
+
+/* Notte (e base): righe morbide */
+.nq-doc th {
+  color: color-mix(in srgb, var(--note-page-ink) 60%, transparent);
+  font-weight: 500;
+  border-bottom: 1px solid color-mix(in srgb, var(--note-page-ink) 18%, transparent);
+}
+
+.nq-doc td {
+  border-bottom: 1px solid color-mix(in srgb, var(--note-page-ink) 10%, transparent);
+}
+
+/* Linee tra le colonne */
+.nq-doc th,
+.nq-doc td {
+  border-left: 1px solid color-mix(in srgb, var(--note-page-ink) 22%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--note-page-ink) 22%, transparent);
+}
+
+.nq-doc tr[data-cur] > td {
+  background: var(--accent-soft);
+}
+
+/* Opaco: intestazione piena a pillola, righe a fasce */
+:root[data-theme="opaco"] .nq-doc th {
+  border-top: 0;
+  border-bottom: 0;
+  border-left-color: color-mix(in srgb, var(--on-accent) 35%, transparent);
+  border-right-color: color-mix(in srgb, var(--on-accent) 35%, transparent);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+:root[data-theme="opaco"] .nq-doc td {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+:root[data-theme="opaco"] .nq-doc tbody tr:nth-child(odd) > td {
+  background: color-mix(in srgb, var(--note-page-ink) 7%, transparent);
+}
+
+:root[data-theme="opaco"] .nq-doc tr[data-cur] > td {
+  background: var(--tint-senape);
+  color: var(--tint-senape-ink);
+}
+
+/* Quaderno: griglia d'inchiostro, bordo esterno più spesso, intestazione a mano */
+:root[data-theme="quaderno"] .nq-doc table {
+  border: 2.5px solid var(--note-page-ink);
+}
+
+:root[data-theme="quaderno"] .nq-doc th,
+:root[data-theme="quaderno"] .nq-doc td {
+  border: 1.5px solid var(--note-page-ink);
+}
+
+:root[data-theme="quaderno"] .nq-doc th {
+  padding: 0.2em 0.6em;
+  font-family: var(--font-title);
+  font-size: 1.48em;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .nq-doc tr[data-cur] > td {
+  background: color-mix(in srgb, var(--note-postit-bg) 70%, transparent);
+}
+
+/* Fosforo: separatori a punti, cifre allineate */
+:root[data-theme="fosforo"] .nq-doc th {
+  color: color-mix(in srgb, var(--note-page-ink) 55%, transparent);
+  font-weight: 500;
+  border-bottom: 1px dashed var(--border-subtle);
+}
+
+:root[data-theme="fosforo"] .nq-doc td {
+  border-bottom: 1px dotted var(--border-subtle);
+}
+
+:root[data-theme="fosforo"] .nq-doc th,
+:root[data-theme="fosforo"] .nq-doc td {
+  border-left: 1px dotted color-mix(in srgb, var(--note-page-ink) 40%, transparent);
+  border-right: 1px dotted color-mix(in srgb, var(--note-page-ink) 40%, transparent);
+}
+
+:root[data-theme="fosforo"] .nq-doc tr[data-cur] > td {
+  background: transparent;
+}
+
+:root[data-theme="fosforo"] .nq-doc tr[data-cur] > td:first-child {
+  box-shadow: inset 2px 0 0 var(--led);
+}
+
+/* ---------- Tabelle personalizzate (menu "Aspetto della tabella") ----------
+   I valori arrivano da lib/tableDom.ts: attributi sulla tabella e sulle celle, colori come
+   variabili in linea. Spessore o stile scelti = griglia completa (tutti i lati delle celle). */
+
+.nq-doc table[data-border-width="sottile"] { --nq-tb-w: 1px; --nq-tb-wo: 1.5px; }
+.nq-doc table[data-border-width="medio"] { --nq-tb-w: 2px; --nq-tb-wo: 3px; }
+.nq-doc table[data-border-width="spesso"] { --nq-tb-w: 3px; --nq-tb-wo: 4.5px; }
+.nq-doc table[data-border-style="continuo"] { --nq-tb-s: solid; }
+.nq-doc table[data-border-style="tratteggiato"] { --nq-tb-s: dashed; }
+.nq-doc table[data-border-style="puntini"] { --nq-tb-s: dotted; }
+
+:root .nq-doc table:is([data-border-width], [data-border-style]) {
+  border-width: var(--nq-tb-wo, 2px);
+  border-style: var(--nq-tb-s, solid);
+}
+
+:root .nq-doc table:is([data-border-width], [data-border-style]) :is(th, td) {
+  border-width: var(--nq-tb-w, 1px);
+  border-style: var(--nq-tb-s, solid);
+  border-color: color-mix(in srgb, var(--note-page-ink) 45%, transparent);
+}
+
+/* Colore dei bordi (dopo: vince sul colore predefinito della griglia) */
+:root .nq-doc table[data-border-color],
+:root .nq-doc table[data-border-color] :is(th, td) {
+  border-color: var(--nq-tb-c);
+}
+
+/* Intestazione colorata */
+:root .nq-doc table[data-head-color] th {
+  background: var(--nq-tb-head-bg);
+  color: var(--nq-tb-head-ink);
+}
+
+/* Sfondo di righe e colonne: vince su fasce e riga del cursore (è una scelta dell'utente). */
+:root .nq-doc :is(th, td)[data-bg] {
+  background: var(--nq-cell-bg) !important;
+}
+
+:root .nq-doc :is(th, td)[data-bg^="#"] {
+  color: var(--nq-cell-ink);
+}
+
+
+/* Riferimento @ a una riga eliminata: avviso in basso con "Ripristina". */
+.nq-ref-gone {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: var(--modal-border);
+  border-radius: 12px;
+  background: var(--modal-bg);
+  box-shadow: var(--shadow-pop);
+  color: var(--text-primary);
+  font-size: 13px;
+  transform: translateX(-50%);
 }
