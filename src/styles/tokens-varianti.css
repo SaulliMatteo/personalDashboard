@@ -212,6 +212,26 @@
   --scene-pill-work-fg: #3049B8;
   --scene-pill-break-bg: rgba(194,118,40,0.12);
   --scene-pill-break-fg: #9A5B12;
+
+  /* Notes (notes-redesign.html): la pagina, il margine del quaderno, il post-it e i tasti. */
+  --note-page-bg: #FFFFFF;
+  --note-page-ink: #141A2E;
+  --note-page-pattern: none;
+  --note-page-border: 1px solid #DCE2EE;
+  --note-page-shadow: inset 0 1px 0 rgba(200, 215, 255, 0.06);
+  --note-margin: transparent;
+  --note-postit-bg: #FFF1A8;
+  --note-postit-ink: #5C4E12;
+  --note-key-shadow: none;
+  /* Tinte pigmentate per blocchi, scelte delle colonne e chip (anche fuori da Opaco). */
+  --tint-salvia: #A9B59C;
+  --tint-salvia-ink: #1F2B1C;
+  --tint-blu: #9DB0C0;
+  --tint-blu-ink: #1B2A36;
+  --tint-senape: #D2B26A;
+  --tint-senape-ink: #3A2C0A;
+  --tint-malva: #B8A1B4;
+  --tint-malva-ink: #33213A;
 }
 
 /* ---------- OPACO, versione notte: pigmenti profondi su carbone, inchiostro chiaro ---------- */
@@ -366,6 +386,26 @@
   --group-subject-2: #D2B26A;
   --group-subject-3: #B8A1B4;
   --group-subject-other: #4A4B44;
+
+  /* Notes (notes-redesign.html): la pagina, il margine del quaderno, il post-it e i tasti. */
+  --note-page-bg: #2A2B26;
+  --note-page-ink: #ECE9E2;
+  --note-page-pattern: none;
+  --note-page-border: 0;
+  --note-page-shadow: none;
+  --note-margin: transparent;
+  --note-postit-bg: #FFF1A8;
+  --note-postit-ink: #5C4E12;
+  --note-key-shadow: none;
+  /* Tinte pigmentate per blocchi, scelte delle colonne e chip (anche fuori da Opaco). */
+  --tint-salvia: #3C4935;
+  --tint-salvia-ink: #DCE6D0;
+  --tint-blu: #34475A;
+  --tint-blu-ink: #E1EAF2;
+  --tint-senape: #6B5523;
+  --tint-senape-ink: #F3E3BA;
+  --tint-malva: #4E3C52;
+  --tint-malva-ink: #F1E3EE;
 }
 
 /* Pigmenti in versione notte: fondo / inchiostro / tono scuro / tono medio / chiaro (testo su inchiostro) / metà. */
@@ -657,6 +697,26 @@
   --scene-pill-work-fg: #9FB6FF;
   --scene-pill-break-bg: rgba(224,162,90,0.14);
   --scene-pill-break-fg: #E0A25A;
+
+  /* Notes (notes-redesign.html): la pagina, il margine del quaderno, il post-it e i tasti. */
+  --note-page-bg: #1A1F2B;
+  --note-page-ink: #E6EAF2;
+  --note-page-pattern: linear-gradient(#232B3A 1px, transparent 1px) 0 0 / 22px 22px, linear-gradient(90deg, #232B3A 1px, transparent 1px) 0 0 / 22px 22px;
+  --note-page-border: 1px solid #2E3747;
+  --note-page-shadow: 0 3px 0 #2E3747;
+  --note-margin: #7A3B44;
+  --note-postit-bg: #E3D58C;
+  --note-postit-ink: #1B2433;
+  --note-key-shadow: none;
+  /* Tinte pigmentate per blocchi, scelte delle colonne e chip (anche fuori da Opaco). */
+  --tint-salvia: #3C4935;
+  --tint-salvia-ink: #DCE6D0;
+  --tint-blu: #34475A;
+  --tint-blu-ink: #E1EAF2;
+  --tint-senape: #6B5523;
+  --tint-senape-ink: #F3E3BA;
+  --tint-malva: #4E3C52;
+  --tint-malva-ink: #F1E3EE;
 }
 
 /* Il post-it resta chiaro (smorzato): dentro, inchiostro e faccia tornano scuri. */
@@ -876,6 +936,26 @@
   --scene-pill-work-fg: #B8241B;
   --scene-pill-break-bg: rgba(70,24,28,0.07);
   --scene-pill-break-fg: #77605D;
+
+  /* Notes (notes-redesign.html): la pagina, il margine del quaderno, il post-it e i tasti. */
+  --note-page-bg: #E5DDD7;
+  --note-page-ink: #2A1517;
+  --note-page-pattern: radial-gradient(rgba(70, 24, 28, 0.08) 1px, transparent 1.3px) 0 0 / 7px 7px;
+  --note-page-border: 1px solid rgba(70, 24, 28, 0.1);
+  --note-page-shadow: none;
+  --note-margin: transparent;
+  --note-postit-bg: #FFF1A8;
+  --note-postit-ink: #5C4E12;
+  --note-key-shadow: inset 0 -3px 0 rgba(70, 24, 28, 0.12);
+  /* Tinte pigmentate per blocchi, scelte delle colonne e chip (anche fuori da Opaco). */
+  --tint-salvia: #A9B59C;
+  --tint-salvia-ink: #1F2B1C;
+  --tint-blu: #9DB0C0;
+  --tint-blu-ink: #1B2A36;
+  --tint-senape: #D2B26A;
+  --tint-senape-ink: #3A2C0A;
+  --tint-malva: #B8A1B4;
+  --tint-malva-ink: #33213A;
 }
 
 /* Anteprime delle varianti nella scheda Aspetto (bg = foglio, a = card grande, b = card piccole). */
