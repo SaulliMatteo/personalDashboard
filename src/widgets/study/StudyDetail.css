@@ -29,26 +29,48 @@
   flex-shrink: 0;
 }
 
-.study-report-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
-  height: 36px;
-  border: var(--btn-ghost-border);
+/* Selettore delle schede (Timer · Report · Prospettiva): come il selettore periodo del Report. */
+.study-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-1);
   border-radius: var(--radius-item);
-  background: var(--btn-ghost-bg, transparent);
-
-  padding: 0 14px;
-
-  color: var(--btn-ghost-fg);
-  font-family: inherit;
-  font-size: 13.5px;
-  cursor: pointer;
+  padding: 3px;
 }
 
-.study-report-btn:hover {
+.study-tabs button {
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 6px;
+
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.study-tabs button:hover:not(.active) {
   color: var(--text-primary);
+}
+
+.study-tabs button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.study-tabs button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+:root[data-theme="opaco"] .study-tabs,
+:root[data-theme="opaco"] .study-tabs button {
+  border-radius: 999px;
 }
 
 .study-stat {
