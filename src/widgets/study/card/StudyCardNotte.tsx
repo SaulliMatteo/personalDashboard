@@ -2,9 +2,11 @@ import type { CSSProperties, MouseEvent } from "react";
 import type { SizeKey } from "../../../core/widgets/sizes";
 import { MODE_LABEL, formatHoursMinutes } from "../lib/format";
 import { DialFit, TickDial } from "../components/dial/Dials";
+import DoneCheck from "./DoneCheck";
+import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
-import { useStudyCard, visibleRows, type StudyCardData } from "./useStudyCard";
+import { useStudyCard, type StudyCardData } from "./useStudyCard";
 import "./StudyCardNotte.css";
 
 /** Tema Notte: ghiera di tacche, righe delle materie con barra sottile, grafico in un pannello. */
@@ -92,19 +94,24 @@ function StudyCardNotte({ size }: { size: SizeKey }) {
 }
 
 function Subjects({ data, max, withTotal, withNextPhase }: { data: StudyCardData; max: number; withTotal: boolean; withNextPhase: boolean }) {
-  const rows = visibleRows(data.rows, max);
+  const rows = data.fitRows(max);
   return (
     <div className="sn-subjects">
       <div className="sn-subjects-head">
-        <span>Materie di oggi</span>
-        {withTotal && <span className="sn-subjects-total">{data.todayText}</span>}
+        <span>Materie di {data.todayName}</span>
+        {withTotal && (
+          <span className="sn-subjects-total">
+            {data.todayText}
+            {data.goalText && <span className="sn-muted"> / {data.goalText}</span>}
+          </span>
+        )}
       </div>
-      {rows.length === 0 && <p className="sn-empty">{data.ready ? "Aggiungi materie dai dettagli del widget." : ""}</p>}
+      {rows.length === 0 && <p className="sn-empty">{data.emptyText}</p>}
       {rows.map((row) => (
         <button
           key={row.subject.id}
           type="button"
-          className={`sn-row${row.isActive ? " is-active" : ""}`}
+          className={`sn-row${row.isActive ? " is-active" : ""}${row.isDone ? " is-done" : ""}`}
           style={{ "--subject-color": row.color } as CSSProperties}
           disabled={row.isActive && data.isWork}
           title={row.isActive && data.isWork ? "Materia in corso" : `Studia ${row.subject.name}`}
@@ -118,13 +125,43 @@ function Subjects({ data, max, withTotal, withNextPhase }: { data: StudyCardData
               <span className="sn-row-dot" aria-hidden="true" />
               {row.subject.name}
             </span>
-            <span className="sn-row-time">{formatHoursMinutes(row.seconds)}</span>
+            <span className="sn-row-time">
+              {row.isDone && <DoneCheck className="sn-check" />}
+              {formatHoursMinutes(row.seconds)}
+              {row.goalSeconds > 0 && <span className="sn-muted"> / {formatHoursMinutes(row.goalSeconds)}</span>}
+            </span>
           </span>
           <span className="sn-row-bar" aria-hidden="true">
             <span style={{ width: `${row.share * 100}%` }} />
           </span>
         </button>
       ))}
+      <OthersToggle data={data} className="sn-others-toggle" label={`Altre materie · ${data.otherRows.length}`} />
+      {data.othersOpen && data.otherRows.length > 0 && (
+        <div className="sn-others">
+          {data.otherRows.map((row) => (
+            <button
+              key={row.subject.id}
+              type="button"
+              className="sn-row sn-row--other"
+              style={{ "--subject-color": row.color } as CSSProperties}
+              title={`Studia ${row.subject.name}`}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                void data.switchSubject(row.subject.id);
+              }}
+            >
+              <span className="sn-row-line">
+                <span className="sn-row-name">
+                  <span className="sn-row-dot" aria-hidden="true" />
+                  {row.subject.name}
+                </span>
+                <span className="sn-row-time">di {row.daysText}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
       {withNextPhase && data.nextPhaseText && <div className="sn-next">{data.nextPhaseText}</div>}
     </div>
   );

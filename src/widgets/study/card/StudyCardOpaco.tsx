@@ -1,9 +1,11 @@
 import type { CSSProperties, MouseEvent } from "react";
 import type { SizeKey } from "../../../core/widgets/sizes";
-import { formatHoursMinutes } from "../lib/format";
+import { formatGoal, formatHoursMinutes, formatHoursMinutesCompact } from "../lib/format";
+import DoneCheck from "./DoneCheck";
+import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
-import { useStudyCard, type StudyCardData } from "./useStudyCard";
+import { useStudyCard, visibleRows, type StudyCardData, type SubjectRow } from "./useStudyCard";
 import "./StudyCardOpaco.css";
 
 /**
@@ -28,7 +30,12 @@ function StudyCardOpaco({ size }: { size: SizeKey }) {
     <div className="so-focus">
       <div className="so-focus-line">
         <span className="so-focus-label">{focusLabel(data)}</span>
-        {size === "L" && <span className="so-focus-label">Oggi {data.todayText}</span>}
+        {size !== "M" && (
+          <span className="so-focus-label so-focus-today">
+            Oggi {data.todayText}
+            {data.goalSeconds > 0 && ` di ${formatGoal(data.goalSeconds)}`}
+          </span>
+        )}
       </div>
       <div className="so-time" style={chars}>
         {data.clockText}
@@ -82,17 +89,29 @@ function focusLabel(data: StudyCardData) {
   return `${data.phaseLabel} su ${data.currentSubject.name}`;
 }
 
-function Chips({ data }: { data: StudyCardData }) {
-  if (data.rows.length === 0) {
-    return <p className="so-empty">{data.ready ? "Aggiungi materie dai dettagli del widget." : ""}</p>;
+/** "Nome · 1h05 di 1h30", "Nome · 1h30" se non ancora iniziata, "Nome · 30m" se completata o senza obiettivo. */
+function chipText(row: SubjectRow): string {
+  const name = row.subject.name;
+  if (row.goalSeconds > 0 && !row.isDone) {
+    const goal = formatHoursMinutesCompact(row.goalSeconds);
+    return row.seconds >= 60 ? `${name} · ${formatHoursMinutesCompact(row.seconds)} di ${goal}` : `${name} · ${goal}`;
   }
+  return row.seconds >= 60 ? `${name} · ${formatHoursMinutes(row.seconds)}` : name;
+}
+
+function Chips({ data }: { data: StudyCardData }) {
+  if (data.rows.length === 0 && data.otherRows.length === 0) {
+    return <p className="so-empty">{data.emptyText}</p>;
+  }
+  // Con "Altre" aperto restano due chip di oggi (la materia in corso compresa), così le altre ci stanno.
+  const rows = data.othersOpen ? visibleRows(data.rows, 2) : data.rows;
   return (
-    <div className="so-chips">
-      {data.rows.map((row) => (
+    <div className={`so-chips${data.othersOpen ? " is-open" : ""}`}>
+      {rows.map((row) => (
         <button
           key={row.subject.id}
           type="button"
-          className={`so-chip${row.isActive ? " is-active" : ""}`}
+          className={`so-chip${row.isActive ? " is-active" : ""}${row.isDone ? " is-done" : ""}`}
           disabled={row.isActive && data.isWork}
           title={row.isActive && data.isWork ? "Materia in corso" : `Studia ${row.subject.name}`}
           onClick={(e: MouseEvent) => {
@@ -100,9 +119,26 @@ function Chips({ data }: { data: StudyCardData }) {
             void data.switchSubject(row.subject.id);
           }}
         >
-          {row.seconds >= 60 ? `${row.subject.name} · ${formatHoursMinutes(row.seconds)}` : row.subject.name}
+          {row.isDone && <DoneCheck className="so-check" />}
+          {chipText(row)}
         </button>
       ))}
+      <OthersToggle data={data} className="so-chip so-chip--toggle" label={`+${data.otherRows.length} altre`} />
+      {data.othersOpen &&
+        data.otherRows.map((row) => (
+          <button
+            key={row.subject.id}
+            type="button"
+            className="so-chip so-chip--other"
+            title={`Studia ${row.subject.name}`}
+            onClick={(e: MouseEvent) => {
+              e.stopPropagation();
+              void data.switchSubject(row.subject.id);
+            }}
+          >
+            {row.subject.name} · di {row.daysText}
+          </button>
+        ))}
     </div>
   );
 }

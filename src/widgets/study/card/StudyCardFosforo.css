@@ -224,6 +224,46 @@
   color: var(--text-secondary);
 }
 
+.sf-muted {
+  color: var(--text-muted);
+}
+
+.sf-check {
+  margin-right: 5px;
+  vertical-align: -1px;
+  color: var(--success-text);
+}
+
+/* "Altre materie": pulsante a contorno come quelli del modulo; le righe sono attenuate e scorrono se non bastano. */
+.sf-others-toggle {
+  flex: 0 0 auto;
+  height: 30px;
+  padding: 0 10px;
+  border: var(--btn-ghost-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sf-others {
+  flex: 0 1 auto;
+  min-height: 0;
+  margin-top: 0;
+  overflow-y: auto;
+}
+
+.sf-row--other {
+  height: 34px;
+  opacity: 0.6;
+}
+
+.sf-row--other:hover {
+  opacity: 1;
+}
+
 .sf-cycles {
   margin-top: auto;
   font-size: 12px;
