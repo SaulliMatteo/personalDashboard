@@ -382,4 +382,15 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE notes ADD COLUMN title_color TEXT`,
     ],
   },
+  {
+    version: 18,
+    description: "Studio: giorni della settimana e obiettivo giornaliero per materia",
+    statements: [
+      // Bitmask dei giorni: bit 0 = lunedì … bit 6 = domenica (widgets/study/lib/schedule.ts); 0 = ogni giorno.
+      // Rieseguite su un DB che le ha già non fanno nulla (duplicate column ignorato in core/db/index.ts).
+      `ALTER TABLE subjects ADD COLUMN study_days INTEGER NOT NULL DEFAULT 0`,
+      // Minuti al giorno, uguali in ogni giorno della materia; 0 = nessun obiettivo.
+      `ALTER TABLE subjects ADD COLUMN daily_goal_minutes INTEGER NOT NULL DEFAULT 0`,
+    ],
+  },
 ];
