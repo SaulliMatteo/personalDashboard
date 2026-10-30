@@ -58,6 +58,8 @@ export interface ActivityStatus {
   studyTodaySeconds: number;
   /** Sessioni di studio concluse oggi, in ordine di tempo (linea "La tua giornata"). */
   studyTodaySpans: readonly StudySpan[];
+  /** Obiettivo di studio di oggi in secondi (materie di oggi o impostazione generale); 0 = nessun obiettivo. */
+  studyTodayGoalSeconds: number;
   /** Timer di Studio avviato (anche in pausa); null = fermo. */
   studyTimer: StudyTimerSnapshot | null;
 }
@@ -83,6 +85,7 @@ const IDLE: ActivityStatus = {
   weatherTemperature: null,
   studyTodaySeconds: 0,
   studyTodaySpans: [],
+  studyTodayGoalSeconds: 0,
   studyTimer: null,
 };
 

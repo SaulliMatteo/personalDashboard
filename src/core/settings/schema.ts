@@ -255,7 +255,7 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "studyVolume", group: "study", section: "Suoni e notifiche", type: "number", control: "slider", min: 5, max: 100, step: 5, unit: "%", dependsOn: "studySoundEnabled", label: "Volume" },
   { key: "studyNotificationsEnabled", group: "study", section: "Suoni e notifiche", type: "boolean", label: "Notifica di sistema a fine fase" },
 
-  { key: "studyDailyGoalMinutes", group: "study", section: "Obiettivi e registrazione", type: "number", control: "input", min: 0, max: 720, step: 5, label: "Obiettivo giornaliero (min)", description: "0 = nessun obiettivo. Se impostato compare una barra di avanzamento." },
+  { key: "studyDailyGoalMinutes", group: "study", section: "Obiettivi e registrazione", type: "number", control: "input", min: 0, max: 720, step: 5, label: "Obiettivo giornaliero (min)", description: "Usato solo quando nessuna materia di oggi ha un obiettivo. 0 = nessun obiettivo." },
   { key: "studyMinLoggableSeconds", group: "study", section: "Obiettivi e registrazione", type: "number", control: "input", min: 1, max: 300, step: 1, label: "Durata minima da registrare (sec)", description: "Le sessioni più brevi vengono scartate (avvii accidentali)." },
 
   { key: "studyBreakColor", group: "study", section: "Aspetto", type: "color", label: "Colore delle pause" },

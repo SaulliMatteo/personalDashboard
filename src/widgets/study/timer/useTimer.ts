@@ -27,6 +27,10 @@ export interface TimerContextValue {
   subjects: Subject[];
   /** subjectId -> secondi studiati oggi. */
   todayBySubject: Record<number, number>;
+  /** Inizio (ms) del giorno locale a cui si riferiscono `todayBySubject` e `todayGoalSeconds`: cambia a mezzanotte. */
+  dayStart: number;
+  /** Obiettivo di oggi in secondi (lib/schedule.ts: materie di oggi, altrimenti l'impostazione); 0 = nessuno. */
+  todayGoalSeconds: number;
   startWork: (subjectId: number) => Promise<void>;
   switchSubject: (subjectId: number) => Promise<void>;
   pause: () => void;

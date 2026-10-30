@@ -36,9 +36,9 @@ function hoursMinutes(seconds: number): string {
 }
 
 /** Obiettivo di studio di oggi: dati dall'activityBus, pubblicati dallo Studio. */
-function GoalCard({ goalMinutes }: { goalMinutes: number }) {
+function GoalCard({ goalSeconds }: { goalSeconds: number }) {
   const { studyTodaySeconds } = useActivityStatus();
-  const goalSeconds = goalMinutes * 60;
+  const goalMinutes = Math.round(goalSeconds / 60);
   const goalText = goalMinutes % 60 === 0 ? `${goalMinutes / 60}h` : hoursMinutes(goalSeconds);
   return (
     <div className="sidebar-goal">
@@ -57,7 +57,9 @@ function Sidebar({ extraNav }: { extraNav?: ReactNode }) {
   const { view, goToDashboard, openSettings } = useNav();
   const { settings } = useSettings();
   const logo = useThemeVariant(LOGOS);
-  const showGoal = useThemeVariant(SHOW_GOAL) && settings.studyDailyGoalMinutes > 0;
+  // L'obiettivo di oggi lo calcola lo Studio (materie di oggi o impostazione generale): 0 = nessun obiettivo.
+  const { studyTodayGoalSeconds } = useActivityStatus();
+  const showGoal = useThemeVariant(SHOW_GOAL) && studyTodayGoalSeconds > 0;
 
   const item = (label: string, active: boolean, onClick: () => void) => (
     <button
@@ -86,7 +88,7 @@ function Sidebar({ extraNav }: { extraNav?: ReactNode }) {
       </nav>
 
       <div className="sidebar-bottom">
-        {showGoal && <GoalCard goalMinutes={settings.studyDailyGoalMinutes} />}
+        {showGoal && <GoalCard goalSeconds={studyTodayGoalSeconds} />}
         <button
           type="button"
           className={`nav-item setting-button${view.type === "settings" ? " active" : ""}`}

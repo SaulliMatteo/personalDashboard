@@ -1,5 +1,4 @@
 import { createElement, useEffect, useState } from "react";
-import { useSettings } from "../../../core/settings/useSettings";
 import { useThemeVariant } from "../../../core/theme/variants";
 import ProgressBar from "../../../ui/ProgressBar";
 import { STUDY_CARDS } from "../card/cards";
@@ -10,8 +9,7 @@ import SubjectList from "./SubjectList";
 import "./timerTab.css";
 
 function TimerTab() {
-  const { subjects, todayBySubject } = useTimerView();
-  const { settings } = useSettings();
+  const { subjects, todayBySubject, todayGoalSeconds: goalSeconds } = useTimerView();
   const Card = useThemeVariant(STUDY_CARDS);
 
   const [todaySessionCount, setTodaySessionCount] = useState(0);
@@ -32,7 +30,6 @@ function TimerTab() {
   }, [todayBySubject]);
 
   const studiedTodaySeconds = Object.values(todayBySubject).reduce((sum, s) => sum + s, 0);
-  const goalSeconds = settings.studyDailyGoalMinutes * 60;
   const goalProgress = goalSeconds > 0 ? Math.min(1, studiedTodaySeconds / goalSeconds) : 0;
   const topToday = subjects
     .map((s) => ({ subject: s, seconds: todayBySubject[s.id] ?? 0 }))
