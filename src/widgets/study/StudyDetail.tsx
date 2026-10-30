@@ -5,12 +5,14 @@ import BackButton from "../../ui/BackButton";
 import { useTimer } from "./timer/useTimer";
 import TimerTab from "./detail/TimerTab";
 import ReportTab from "./detail/ReportTab";
+import PerspectiveTab from "./detail/PerspectiveTab";
 
-type DetailTab = "timer" | "report";
+type DetailTab = "timer" | "report" | "perspective";
 
 const TABS: { id: DetailTab; label: string }[] = [
   { id: "timer", label: "Timer" },
   { id: "report", label: "Report" },
+  { id: "perspective", label: "Prospettiva" },
 ];
 
 /** Pagina a schermo intero del widget Studio: una scheda per vista, scelta dal selettore nell'intestazione. */
@@ -64,7 +66,15 @@ function StudyDetail() {
         </div>
       </header>
 
-      {!ready ? <p className="study-detail-loading">Caricamento…</p> : tab === "timer" ? <TimerTab /> : <ReportTab />}
+      {!ready ? (
+        <p className="study-detail-loading">Caricamento…</p>
+      ) : tab === "timer" ? (
+        <TimerTab />
+      ) : tab === "report" ? (
+        <ReportTab />
+      ) : (
+        <PerspectiveTab />
+      )}
     </div>
   );
 }
