@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-secure-store-remove"
+description = "Enables the secure_store_remove command without any pre-configured scope."
+commands.allow = ["secure_store_remove"]
+
+[[permission]]
+identifier = "deny-secure-store-remove"
+description = "Denies the secure_store_remove command without any pre-configured scope."
+commands.deny = ["secure_store_remove"]

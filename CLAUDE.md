@@ -191,6 +191,9 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
 - Su macOS l'app installata serve il frontend da `http://localhost:14321` (`tauri-plugin-localhost`, `src/lib.rs`):
   da `tauri://localhost` YouTube rifiuta il player (errore 153, niente referrer). La porta è anche in
   `capabilities/default.json` (`remote.urls`, senza la pagina perde l'IPC): cambiarla in entrambi i posti.
+  Per Tauri quella è un'origine remota, quindi anche i comandi dell'app passano dall'ACL: un comando nuovo va in
+  `generate_handler!`, nel manifesto di `build.rs` e come `allow-<comando>` in `capabilities/default.json`
+  (altrimenti su Mac viene rifiutato, e il portachiavi risulta "non disponibile").
 - Le notifiche mostrano il nome dell'app solo nella versione installata; in `tauri dev` Windows le attribuisce a PowerShell.
 - La pagina web servita all'iPad (`src-tauri/filetransfer/public/`) è un build copiato da un progetto esterno:
   non modificarla a mano (vedi `docs/FILE_TRANSFER.md`).
