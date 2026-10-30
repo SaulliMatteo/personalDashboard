@@ -61,6 +61,69 @@
   cursor: pointer;
 }
 
+/* Piano settimanale: giorni e obiettivo al giorno. */
+.study-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-panel);
+  background: var(--surface-1);
+}
+
+.study-plan-days {
+  display: flex;
+  gap: 4px;
+}
+
+.study-plan-day {
+  all: unset;
+  box-sizing: border-box;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.study-plan-day:hover {
+  color: var(--text-primary);
+}
+
+.study-plan-day.is-on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.study-plan-day:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.study-plan-goal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.study-plan-goal input {
+  width: 56px;
+  background: var(--modal-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  padding: 5px 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+  text-align: center;
+}
+
 .study-mode-toggle {
   display: flex;
   gap: 4px;

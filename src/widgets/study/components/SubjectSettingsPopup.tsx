@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { MdClose } from "react-icons/md";
 import NumberField from "../../../ui/NumberField";
-import type { Subject, SubjectSettingsPatch } from "../data/studyRepository";
+import { DAILY_GOAL_MAX_MINUTES, type Subject, type SubjectSettingsPatch } from "../data/studyRepository";
 import { SUBJECT_COLORS } from "../lib/colors";
+import { formatGoal } from "../lib/format";
+import { WEEKDAYS, daysLabel, daysPerWeek } from "../lib/schedule";
 import type { AddSubjectResult } from "../timer/useTimer";
 import ModeToggle from "./ModeToggle";
 import "./subjectSettingsPopup.css";
@@ -25,7 +27,18 @@ const DURATION_FIELDS = [
   { key: "cyclesBeforeLongBreak", label: "Cicli per pausa lunga", max: 12 },
 ] as const;
 
-/** Mini finestra con le impostazioni di UNA materia: colore, modalità e durate. */
+/** "Compare nel widget solo lun, mer. 1h 30m al giorno, 3h a settimana." */
+function planNote(subject: Subject): string {
+  const days =
+    subject.studyDays === 0
+      ? "Nessun giorno scelto: la materia compare ogni giorno."
+      : `Compare nel widget solo ${daysLabel(subject.studyDays)}.`;
+  if (subject.dailyGoalMinutes <= 0) return days;
+  const perDay = subject.dailyGoalMinutes * 60;
+  return `${days} ${formatGoal(perDay)} al giorno, ${formatGoal(perDay * daysPerWeek(subject.studyDays))} a settimana.`;
+}
+
+/** Mini finestra con le impostazioni di UNA materia: colore, piano settimanale, modalità e durate. */
 const RENAME_ERRORS: Partial<Record<AddSubjectResult, string>> = {
   empty: "Il nome non può essere vuoto.",
   duplicate: "Esiste già una materia con questo nome.",
@@ -114,6 +127,45 @@ function SubjectSettingsPopup({ subject, color, locked, onChange, onRename, onCl
                 <input type="color" value={subject.color ?? color} onChange={(e) => onChange({ color: e.target.value })} />
               </label>
             </div>
+          </div>
+
+          {/* Giorni e obiettivo restano modificabili anche a materia in corso: `locked` riguarda solo la modalità. */}
+          <div className="study-plan">
+            <div className="study-setting-line">
+              <span className="study-setting-label">Giorni</span>
+              <div className="study-plan-days" role="group" aria-label="Giorni in cui studiarla">
+                {WEEKDAYS.map((day, i) => {
+                  const bit = 1 << i;
+                  const on = (subject.studyDays & bit) !== 0;
+                  return (
+                    <button
+                      key={day.name}
+                      type="button"
+                      className={`study-plan-day${on ? " is-on" : ""}`}
+                      aria-pressed={on}
+                      aria-label={day.name}
+                      title={day.name}
+                      onClick={() => onChange({ studyDays: subject.studyDays ^ bit })}
+                    >
+                      {day.initial}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <label className="study-setting-line">
+              <span className="study-setting-label">Obiettivo al giorno</span>
+              <span className="study-plan-goal">
+                <NumberField
+                  value={subject.dailyGoalMinutes}
+                  min={0}
+                  max={DAILY_GOAL_MAX_MINUTES}
+                  onCommit={(dailyGoalMinutes) => onChange({ dailyGoalMinutes })}
+                />
+                min
+              </span>
+            </label>
+            <p className="study-setting-note">{planNote(subject)}</p>
           </div>
 
           <div className="study-setting-line">
