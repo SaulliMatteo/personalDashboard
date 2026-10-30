@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ft-stop-server"
+description = "Enables the ft_stop_server command without any pre-configured scope."
+commands.allow = ["ft_stop_server"]
+
+[[permission]]
+identifier = "deny-ft-stop-server"
+description = "Denies the ft_stop_server command without any pre-configured scope."
+commands.deny = ["ft_stop_server"]

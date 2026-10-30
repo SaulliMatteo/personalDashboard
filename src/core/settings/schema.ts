@@ -127,11 +127,27 @@ export const DEFAULT_SETTINGS = {
   // ---- Widget: Meteo ----
   /** Vuota = meteo spento: nessuna richiesta in rete. */
   weatherCity: "",
+
+  // ---- Gruppi ----
+  /** Il nome della materia in corso arriva ai compagni di gruppo solo se attivo (spento di default). */
+  groupsShowSubject: false,
+  /** Il tempo delle materie abbinate e confermate entra nei report dei gruppi (spento di default). Senza effetto fino al report per materie. */
+  groupsReportSubjects: false,
+  /** Le pose vere di Pixy rivelano l'app in primo piano: ai compagni arrivano solo se attivo (spento di default). */
+  groupsSharePixy: false,
+  /** I fumetti di Pixy ai compagni (solo con le espressioni condivise). */
+  groupsSharePixyBubbles: false,
+  /** Chi guarda può non vedere i fumetti degli altri anche se li mandano. */
+  groupsShowOthersBubbles: true,
+  /** Il foglietto Da fare ai compagni, solo dal vivo (spento di default). */
+  groupsShareTodo: false,
+  /** Notifica di sistema per i messaggi nuovi dei gruppi. */
+  groupsNotifyMessages: true,
 };
 
 export type AppSettings = typeof DEFAULT_SETTINGS;
 export type SettingKey = keyof AppSettings;
-export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion" | "weather";
+export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion" | "weather" | "groups";
 
 interface BaseDef {
   key: SettingKey;
@@ -257,6 +273,37 @@ export const SETTING_DEFS: SettingDef[] = [
   {
     key: "weatherCity", group: "weather", section: "Località", type: "text", maxLength: 60, placeholder: "Es. Milano", label: "Città",
     description: "Il meteo usa internet (Open-Meteo, gratuito e senza account) solo se il widget o il suo mini sono in uso e la città è impostata.",
+  },
+
+  // ======================= GRUPPI =======================
+  {
+    key: "groupsShowSubject", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Mostra la materia che sto studiando",
+    description: "Spento: i compagni di gruppo vedono che stai studiando e da quanto, ma non cosa.",
+  },
+  {
+    key: "groupsReportSubjects", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Includi le mie materie nei report dei gruppi",
+    description: "Solo quelle che abbini nel report di ogni gruppo; spento, il tuo tempo conta in \"Altre materie\". Vale per il tuo account, su tutti i dispositivi.",
+  },
+  {
+    key: "groupsSharePixy", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Condividi le espressioni di Pixy",
+    description:
+      "Nella Stanza comune i compagni vedono il tuo Pixy con le stesse pose ed espressioni che vedi tu. Le pose rivelano che tipo di app hai in primo piano (un gioco, YouTube, Discord…). Spento: vedono solo se studi o sei in pausa.",
+  },
+  {
+    key: "groupsSharePixyBubbles", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", dependsOn: "groupsSharePixy", label: "Condividi anche i fumetti",
+    description: "Le frasi di Pixy arrivano ai compagni. Possono contenere il tuo nome (Impostazioni › Generale) e il nome delle app.",
+  },
+  {
+    key: "groupsShareTodo", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Mostra la mia lista Da fare",
+    description: "Ai compagni connessi, in sola lettura, nei dettagli della tua riga in Membri. Non viene salvata sul server.",
+  },
+  {
+    key: "groupsNotifyMessages", group: "groups", section: "Stanza comune", type: "boolean", label: "Notifica i messaggi nuovi",
+    description: "Quando l'app non è in primo piano o la scheda Messaggi è chiusa.",
+  },
+  {
+    key: "groupsShowOthersBubbles", group: "groups", section: "Stanza comune", type: "boolean", label: "Mostra i fumetti degli altri",
+    description: "Spento: non vedi le frasi dei Pixy dei compagni, anche se loro le condividono.",
   },
 
   // ======================= WIDGET: COMPANION =======================

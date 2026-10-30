@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-companion-snapshot"
+description = "Enables the companion_snapshot command without any pre-configured scope."
+commands.allow = ["companion_snapshot"]
+
+[[permission]]
+identifier = "deny-companion-snapshot"
+description = "Denies the companion_snapshot command without any pre-configured scope."
+commands.deny = ["companion_snapshot"]

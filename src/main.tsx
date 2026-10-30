@@ -8,6 +8,8 @@ import "@fontsource-variable/figtree";
 import "@fontsource-variable/caveat";
 import "@fontsource-variable/jetbrains-mono";
 import "@fontsource-variable/doto";
+// Font "serif" del selettore delle Note.
+import "@fontsource-variable/literata";
 
 import "./styles/tailwind.css";
 import "./styles/tokens.css";

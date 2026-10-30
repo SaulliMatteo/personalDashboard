@@ -17,12 +17,15 @@
 #define DEFAULT_WEB_DIR    "public"
 #define DEFAULT_UPLOAD_DIR "received"
 #define PATH_MAX_LEN       1024
+/* Connessioni servite insieme: oltre si risponde "occupato" invece di aprire altri thread. */
+#define MAX_CLIENTS        32
 
 static SOCKET g_listen_socket = INVALID_SOCKET;
 static thread_t g_accept_thread;
 static int g_accept_running = 0;
 static char g_web_dir[PATH_MAX_LEN] = DEFAULT_WEB_DIR;
 static char g_upload_dir[PATH_MAX_LEN] = DEFAULT_UPLOAD_DIR;
+static volatile long g_clients = 0;
 
 typedef struct {
     SOCKET client;
@@ -46,6 +49,7 @@ static THREAD_FUNC client_thread(void *arg) {
     SOCKET client = args->client;
     free(args);
     http_handle_client(client, g_web_dir, g_upload_dir);
+    atomic_add(&g_clients, -1);
     return 0;
 }
 
@@ -61,8 +65,14 @@ static THREAD_FUNC accept_loop(void *arg) {
             continue;
         }
 
+        if (atomic_add(&g_clients, 1) > MAX_CLIENTS) {
+            atomic_add(&g_clients, -1);
+            closesocket(c);
+            continue;
+        }
         client_args *args = malloc(sizeof(client_args));
         if (!args) {
+            atomic_add(&g_clients, -1);
             closesocket(c);
             continue;
         }
@@ -73,6 +83,7 @@ static THREAD_FUNC accept_loop(void *arg) {
         if (thread_start(&h, client_thread, args) == 0) {
             thread_detach(h);
         } else {
+            atomic_add(&g_clients, -1);
             free(args);
             closesocket(c);
         }

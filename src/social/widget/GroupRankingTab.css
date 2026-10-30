@@ -1,0 +1,126 @@
+/* Scheda "Classifica" della pagina Gruppi (impostazioni-stanza.html). I raggi --gp-* vengono da GroupsPage.css. */
+
+.gr {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.gr-periods {
+  align-self: flex-start;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: var(--panel-border);
+  border-radius: var(--radius-item);
+  background: var(--panel-bg);
+}
+
+.gr-periods button {
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--nav-fg);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.gr-periods button.is-on {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-fg);
+}
+
+.gr-periods button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.gr-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gr-row {
+  min-height: 40px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 160px) minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 10px;
+  border-radius: var(--gp-row-radius);
+}
+
+.gr-row.is-me {
+  background: var(--accent-soft);
+}
+
+.gr-rank {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--group-rank-n);
+}
+
+.gr-rank.is-first {
+  color: var(--group-rank-1);
+}
+
+.gr-name {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gr-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gr-since {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.gr-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--group-bar-track);
+}
+
+.gr-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+}
+
+.gr-time {
+  text-align: right;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: var(--display-weight);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* "nessun dato": testo, non un tempo */
+.gr-time.is-empty {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.gr-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}

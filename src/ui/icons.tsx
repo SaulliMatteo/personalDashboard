@@ -40,3 +40,51 @@ export function SkipIcon({ size, round = 1 }: IconProps) {
     </svg>
   );
 }
+
+/** "Ricevi": vassoio con freccia verso il basso, a tratto. `stroke` è lo spessore del tema. */
+export function ReceiveIcon({ size, stroke = 1.6 }: { size: number; stroke?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 3.5v10" />
+      <path d="M7.5 9.5 12 14l4.5-4.5" />
+      <path d="M4 14.5V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3.5" />
+    </svg>
+  );
+}
+
+/** "Ricevi" a matrice di punti 9×9 (Fosforo). */
+const RECEIVE_PIXELS = [
+  "....#....",
+  "....#....",
+  "..#.#.#..",
+  "...###...",
+  "....#....",
+  ".........",
+  "#.......#",
+  "#.......#",
+  "#########",
+];
+
+const RECEIVE_DOTS = RECEIVE_PIXELS.flatMap((row, y) =>
+  [...row].flatMap((c, x) => (c === "#" ? [{ x: x + 0.5, y: y + 0.5 }] : []))
+);
+
+export function ReceiveDotsIcon({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 9 9" fill="currentColor" aria-hidden="true">
+      {RECEIVE_DOTS.map((d) => (
+        <circle key={`${d.x}-${d.y}`} cx={d.x} cy={d.y} r={0.38} />
+      ))}
+    </svg>
+  );
+}

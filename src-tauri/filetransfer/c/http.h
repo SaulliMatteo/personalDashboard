@@ -12,8 +12,11 @@
 typedef struct {
     char method[8];               // "GET", "POST", "OPTIONS"
     char path[HTTP_MAX_PATH];     // es. "/", "/upload", "/assets/app.js"
-    long content_length;          // -1 se assente
+    long long content_length;     // -1 se assente o non valido
     char file_name[HTTP_MAX_NAME];// da X-File-Name, decodificato; "" se assente
+    int has_file_name;            // c'era l'header X-File-Name
+    char host[HTTP_MAX_NAME];     // header Host, "" se assente
+    char origin[HTTP_MAX_NAME];   // header Origin, "" se assente
 } http_request;
 
 // Legge riga di richiesta + header dal socket. 0 = ok, -1 = errore/connessione chiusa.

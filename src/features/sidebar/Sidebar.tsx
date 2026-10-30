@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { MdOutlineSettings } from "react-icons/md";
 import "./sidebar.css";
 import { useActivityStatus } from "../../core/activity/activityBus";
@@ -51,7 +52,8 @@ function GoalCard({ goalMinutes }: { goalMinutes: number }) {
   );
 }
 
-function Sidebar() {
+/** `extraNav`: voci in più sotto "Dashboard", passate da app/ (es. la Stanza comune dei Gruppi). */
+function Sidebar({ extraNav }: { extraNav?: ReactNode }) {
   const { view, goToDashboard, openSettings } = useNav();
   const { settings } = useSettings();
   const logo = useThemeVariant(LOGOS);
@@ -80,6 +82,7 @@ function Sidebar() {
 
       <nav className="sidebar-nav" aria-label="Navigazione principale">
         {item("Dashboard", view.type === "dashboard", goToDashboard)}
+        {extraNav}
       </nav>
 
       <div className="sidebar-bottom">

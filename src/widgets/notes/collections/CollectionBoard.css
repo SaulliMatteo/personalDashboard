@@ -1,0 +1,104 @@
+/* Bacheca (mockup: .board, .bcol). */
+
+.nq-board {
+  display: grid;
+  grid-auto-columns: minmax(200px, 1fr);
+  grid-auto-flow: column;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.nq-bcol {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-panel);
+  background: var(--surface-2);
+}
+
+.nq-bcol.is-over {
+  border-color: var(--accent);
+}
+
+.nq-bcol h4 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 2px 4px 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nq-bcol-count {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.nq-bcol-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.nq-bcol-list .nq-tile {
+  padding: 10px 12px;
+}
+
+.nq-bcol-add {
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nq-bcol-add:hover,
+.nq-bcol-add:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+
+.nq-board-empty {
+  margin: 12px 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.nq-board-ghost {
+  position: fixed;
+  z-index: 60;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+:root[data-theme="quaderno"] .nq-bcol {
+  border: 1.5px dashed var(--border-subtle);
+  background: transparent;
+}
+
+:root[data-theme="quaderno"] .nq-bcol.is-over {
+  border-color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .nq-bcol {
+  border: var(--panel-border);
+  background: transparent;
+}
+
+:root[data-theme="fosforo"] .nq-bcol.is-over {
+  border-color: var(--led);
+}

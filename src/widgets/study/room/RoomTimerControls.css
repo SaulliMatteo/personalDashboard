@@ -1,0 +1,65 @@
+/* Il timer nell'intestazione della Stanza comune: stessa altezza e stessi token dei pulsanti della stanza. */
+.rtc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rtc-btn,
+.rtc-select {
+  height: 42px;
+  box-sizing: border-box;
+  border: var(--btn-ghost-border);
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--btn-ghost-fg);
+  font: inherit;
+}
+
+.rtc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rtc-select {
+  max-width: 180px;
+  padding: 0 10px;
+  cursor: pointer;
+  color-scheme: inherit;
+}
+
+/* Il menu aperto lo disegna il sistema: serve uno sfondo pieno (--panel-bg in Fosforo è trasparente). */
+.rtc-select option {
+  background: var(--modal-bg);
+  color: var(--text-primary);
+}
+
+/* In Opaco i pulsanti secondari sono blocchi pieni, senza bordo (come .grp-btn--ghost). */
+:root[data-theme="opaco"] .rtc-btn,
+:root[data-theme="opaco"] .rtc-select {
+  border: 0;
+  background: var(--panel-bg);
+}
+
+.rtc-btn--start,
+:root[data-theme="opaco"] .rtc-btn--start {
+  border: 0;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.rtc-btn:focus-visible,
+.rtc-select:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.rtc-empty {
+  font-size: 13px;
+  color: var(--text-muted);
+}

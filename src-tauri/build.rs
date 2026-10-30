@@ -26,5 +26,24 @@ fn main() {
         }
     }
 
-    tauri_build::build()
+    // Su macOS l'app installata gira da http://localhost (tauri-plugin-localhost), che per Tauri è
+    // un'origine remota: da lì i comandi dell'app passano dall'ACL come quelli dei plugin. Il
+    // manifesto genera i permessi `allow-<comando>`, concessi in capabilities/default.json.
+    // Un comando nuovo va in generate_handler! (src/lib.rs), qui e in quella capability.
+    tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
+        tauri_build::AppManifest::new().commands(&[
+            "ft_start_server",
+            "ft_stop_server",
+            "ft_status",
+            "ft_list_files",
+            "ft_read_preview",
+            "ft_open_folder",
+            "companion_snapshot",
+            "notify_with_image",
+            "secure_store_get",
+            "secure_store_set",
+            "secure_store_remove",
+        ]),
+    ))
+    .expect("errore nel build di Tauri");
 }

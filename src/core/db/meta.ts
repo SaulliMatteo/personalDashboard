@@ -15,3 +15,17 @@ export async function setMeta(key: string, value: string): Promise<void> {
     [key, value]
   );
 }
+
+/**
+ * Identificativo casuale di questo computer per i Gruppi (uuid), uno per account: creato la prima volta e poi
+ * sempre lo stesso. Non dice nulla del computer; serve al server per sommare i totali di più dispositivi dello
+ * stesso utente. Per account perché sul server un dispositivo appartiene a un solo utente.
+ */
+export async function getDeviceId(userId: string): Promise<string> {
+  const key = `cloud_device_id:${userId}`;
+  const saved = await getMeta(key);
+  if (saved) return saved;
+  const id = crypto.randomUUID();
+  await setMeta(key, id);
+  return id;
+}

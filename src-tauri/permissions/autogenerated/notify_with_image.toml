@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-notify-with-image"
+description = "Enables the notify_with_image command without any pre-configured scope."
+commands.allow = ["notify_with_image"]
+
+[[permission]]
+identifier = "deny-notify-with-image"
+description = "Denies the notify_with_image command without any pre-configured scope."
+commands.deny = ["notify_with_image"]

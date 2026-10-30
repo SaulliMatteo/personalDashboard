@@ -1,0 +1,63 @@
+/* Segno della Lavagna (mockup docs/design/temi/lavagna.html, "GLIFO"). */
+
+.wb-glyph {
+  display: block;
+  overflow: visible;
+}
+
+.wb-ink {
+  fill: none;
+  stroke: var(--wb-ink, var(--accent));
+  stroke-width: var(--wb-ink-w, 2);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: var(--wb-ink-dash, none);
+}
+
+/* Nella maschera il bianco vuol dire "visibile": non è un colore del tema. */
+.wb-reveal {
+  fill: none;
+  stroke: white;
+  stroke-width: 18;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Al passaggio del mouse sulla cella (.wb-cell) il tratto si ridisegna. */
+@media (prefers-reduced-motion: no-preference) {
+  .wb-cell:hover .wb-reveal {
+    stroke-dasharray: 1;
+    animation: wb-draw 900ms var(--ease-out-back) both;
+  }
+}
+
+@keyframes wb-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Inchiostro per tema: sottile e luminoso, pennarello pieno, biro, punti del display. */
+:root[data-theme="notte"] .wb-glyph {
+  --wb-ink-w: 1.6;
+  --wb-ink: var(--accent);
+}
+
+:root[data-theme="opaco"] .wb-glyph {
+  --wb-ink-w: 8;
+  --wb-ink: var(--text-primary);
+}
+
+:root[data-theme="quaderno"] .wb-glyph {
+  --wb-ink-w: 2.6;
+  --wb-ink: var(--accent);
+}
+
+:root[data-theme="fosforo"] .wb-glyph {
+  --wb-ink-w: 4.2;
+  --wb-ink: var(--dot-on);
+  --wb-ink-dash: 0 6.4;
+}

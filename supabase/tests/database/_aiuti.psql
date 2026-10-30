@@ -1,0 +1,94 @@
+-- Aiuti comuni ai test (incluso con \ir da ogni file .sql). Tutto vive in pg_temp e sparisce col rollback.
+-- Gli utenti sono finti (dominio example.test): mai dati reali nei test.
+
+create extension if not exists pgtap with schema extensions;
+
+-- Valori da passare tra un passo e l'altro (id dei gruppi, codici…), leggibili anche dagli utenti di test.
+create temp table t_ctx (k text primary key, v text);
+grant select, insert, update on t_ctx to authenticated, anon;
+
+create function pg_temp.salva(p_k text, p_v text) returns text language sql as $$
+  insert into t_ctx (k, v) values (p_k, p_v) on conflict (k) do update set v = excluded.v returning v;
+$$;
+
+create function pg_temp.leggi(p_k text) returns text language sql stable as $$
+  select v from t_ctx where k = p_k;
+$$;
+
+create function pg_temp.uid(p_nome text) returns uuid language sql stable as $$
+  select v::uuid from t_ctx where k = 'utente:' || p_nome;
+$$;
+
+create function pg_temp.gid(p_nome text) returns uuid language sql stable as $$
+  select v::uuid from t_ctx where k = 'gruppo:' || p_nome;
+$$;
+
+-- Crea un utente di Auth (con email e nome finti, come farebbe Google) e, se richiesto, il suo profilo.
+create function pg_temp.utente(p_nome text, p_profilo boolean default true) returns uuid language plpgsql as $$
+declare
+  v_id uuid := gen_random_uuid();
+begin
+  insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at)
+  values (v_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+          p_nome || '@example.test', jsonb_build_object('full_name', 'Utente ' || p_nome), now(), now());
+  if p_profilo then
+    insert into public.profiles (id, username) values (v_id, p_nome);
+  end if;
+  perform pg_temp.salva('utente:' || p_nome, v_id::text);
+  return v_id;
+end;
+$$;
+
+-- Agisce come l'utente indicato (ruolo authenticated + JWT con il suo id).
+create function pg_temp.entra(p_nome text) returns void language plpgsql as $$
+declare
+  v_id uuid := pg_temp.uid(p_nome);
+begin
+  perform set_config('role', 'postgres', true);
+  perform set_config('request.jwt.claims', json_build_object('sub', v_id, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+end;
+$$;
+
+-- Agisce come visitatore non autenticato.
+create function pg_temp.anonimo() returns void language plpgsql as $$
+begin
+  perform set_config('role', 'postgres', true);
+  perform set_config('request.jwt.claims', '{"role":"anon"}', true);
+  perform set_config('role', 'anon', true);
+end;
+$$;
+
+-- Torna amministratore (per preparare i dati e controllare i risultati).
+create function pg_temp.esci() returns void language plpgsql as $$
+begin
+  perform set_config('role', 'postgres', true);
+  perform set_config('request.jwt.claims', '', true);
+end;
+$$;
+
+-- Crea un gruppo come l'utente indicato e ne salva id e codice.
+create function pg_temp.gruppo(p_nome text, p_owner text) returns uuid language plpgsql as $$
+declare
+  v_id uuid;
+begin
+  perform pg_temp.entra(p_owner);
+  v_id := public.create_group('Gruppo ' || p_nome, '');
+  perform pg_temp.esci();
+  perform pg_temp.salva('gruppo:' || p_nome, v_id::text);
+  perform pg_temp.salva('codice:' || p_nome, (select g.invite_code from public.groups g where g.id = v_id));
+  return v_id;
+end;
+$$;
+
+-- Entra in un gruppo con il codice, come l'utente indicato, e restituisce lo stato di join_group.
+create function pg_temp.unisci(p_utente text, p_gruppo text) returns text language plpgsql as $$
+declare
+  esito text;
+begin
+  perform pg_temp.entra(p_utente);
+  esito := public.join_group(pg_temp.leggi('codice:' || p_gruppo));
+  perform pg_temp.esci();
+  return esito;
+end;
+$$;

@@ -1,0 +1,105 @@
+/* Avviso "non viene salvata" (mockup docs/design/temi/lavagna.html, "Avviso"). */
+
+.wb-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+.wb-notice strong {
+  font-weight: 600;
+}
+
+.wb-notice-icon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+}
+
+/* Notte: riga di stato tinta di ambra, con icona. */
+:root[data-theme="notte"] .wb-notice {
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--warn) 32%, transparent);
+  border-radius: var(--radius-item);
+  background: color-mix(in srgb, var(--warn) 9%, transparent);
+  color: var(--text-soft);
+}
+
+:root[data-theme="notte"] .wb-notice-icon {
+  color: var(--warn);
+}
+
+:root[data-theme="notte"] .wb-notice strong {
+  color: var(--text-primary);
+}
+
+/* Opaco: pillola d'inchiostro sul passe-partout del pigmento (sta dentro la cornice). */
+:root[data-theme="opaco"] .wb-notice {
+  align-self: flex-start;
+  padding: 9px 18px 9px 14px;
+  border-radius: 999px;
+  background: var(--pg-ink);
+  color: var(--pg-light);
+  font-weight: 500;
+}
+
+:root[data-theme="opaco"] .wb-notice strong {
+  font-weight: 800;
+}
+
+/* Quaderno: nota a margine scritta a mano in rosso, frase forte con l'evidenziatore. */
+:root[data-theme="quaderno"] .wb-notice {
+  align-items: baseline;
+  gap: 14px;
+  color: var(--text-primary);
+}
+
+.wb-notice-hand {
+  flex: 0 0 auto;
+  font-family: var(--font-title);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--danger);
+  transform: rotate(-3deg);
+}
+
+:root[data-theme="quaderno"] .wb-notice strong {
+  background: var(--highlight-mark);
+}
+
+/* Fosforo: barra del modulo con LED che lampeggia (sta dentro la cornice). */
+:root[data-theme="fosforo"] .wb-notice {
+  padding: 9px 8px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="fosforo"] .wb-notice strong {
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.wb-notice-led {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--led);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--led) 70%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wb-notice-led {
+    animation: wb-led-blink 1.6s steps(2, jump-none) infinite;
+  }
+}
+
+@keyframes wb-led-blink {
+  50% {
+    opacity: 0.25;
+    box-shadow: none;
+  }
+}

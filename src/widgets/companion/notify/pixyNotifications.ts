@@ -1,7 +1,7 @@
 import type { AppNotification } from "../../../core/notify/notifier";
 import type { AppCategory } from "../../../core/system/appCategory";
-import type { EmotionId, GlyphId } from "../engine/face";
-import { PERSONALITIES, fillPhrase, type PersonalityId, type PhraseKey } from "../engine/personalities";
+import type { EmotionId, GlyphId } from "../../../core/pixy/engine/face";
+import { PERSONALITIES, fillPhrase, type PersonalityId, type PhraseKey } from "../../../core/pixy/engine/personalities";
 
 /**
  * Come Pixy "firma" una notifica dell'app: espressione della faccia, emoji nel
@@ -17,8 +17,11 @@ export interface PixyLook {
 
 const APP_EMOJI: Partial<Record<AppCategory, string>> = { game: "🎮", video: "📺", chat: "💬" };
 
-export function pixyLook(n: AppNotification): PixyLook {
+/** null: la notifica resta semplice (un messaggio di un compagno non va firmato da Pixy). */
+export function pixyLook(n: AppNotification): PixyLook | null {
   switch (n.kind) {
+    case "groupMessage":
+      return null;
     case "pomodoroDone":
       return { emotion: "proud", glyph: "star", emoji: "🍅", phrase: "pomodoro_done" };
     case "breakOver":

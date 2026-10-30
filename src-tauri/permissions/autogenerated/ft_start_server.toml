@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-ft-start-server"
+description = "Enables the ft_start_server command without any pre-configured scope."
+commands.allow = ["ft_start_server"]
+
+[[permission]]
+identifier = "deny-ft-start-server"
+description = "Denies the ft_start_server command without any pre-configured scope."
+commands.deny = ["ft_start_server"]

@@ -4,6 +4,7 @@ import StudyWidget from "./StudyWidget";
 import StudyDetail from "./StudyDetail";
 import { TimerProvider } from "./timer/TimerContext";
 import StudyMini from "./mini/StudyMini";
+import RoomTimerControls from "./room/RoomTimerControls";
 
 export const studyWidget: WidgetDefinition = {
   id: "study",
@@ -15,6 +16,8 @@ export const studyWidget: WidgetDefinition = {
   detailComponent: StudyDetail,
   settingsGroup: "study",
   mini: StudyMini,
+  // nella Stanza comune: avviare e fermare il timer senza uscire
+  roomControls: RoomTimerControls,
   // Il timer deve continuare a girare anche se il widget non è in dashboard.
   provider: TimerProvider,
 };

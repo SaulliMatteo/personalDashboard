@@ -1,0 +1,100 @@
+/* Scheda di un file nella pagina (notes-redesign.html, "Scheda file"). */
+
+.nq-doc [data-block="file"] {
+  max-width: 440px;
+  margin: 1.2em 0 0.6em;
+  border-radius: var(--radius-panel);
+  outline: none;
+}
+
+.nq-doc [data-block="file"]:focus-visible,
+.nq-doc [data-block="file"][data-selected] {
+  outline: var(--focus-ring);
+  outline-offset: 3px;
+}
+
+.nq-file {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: color-mix(in srgb, var(--note-page-bg) 60%, var(--bg-card));
+  color: var(--note-page-ink);
+  font-family: var(--font-family);
+  font-size: 13px;
+  line-height: 1.3;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.nq-file-ico {
+  flex: none;
+  display: grid;
+  place-items: end center;
+  box-sizing: border-box;
+  width: 38px;
+  height: 46px;
+  padding-bottom: 6px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.nq-file[data-pdf] .nq-file-ico {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.nq-file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nq-file-info b {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.nq-file-info small {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--note-page-ink) 60%, transparent);
+}
+
+:root[data-theme="opaco"] .nq-file {
+  padding-right: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--tint-malva);
+  color: var(--tint-malva-ink);
+}
+
+:root[data-theme="opaco"] .nq-file-info small {
+  color: inherit;
+  opacity: 0.75;
+}
+
+:root[data-theme="quaderno"] .nq-file {
+  border: 1.5px dashed var(--accent);
+  border-radius: 4px;
+  background: transparent;
+}
+
+:root[data-theme="fosforo"] .nq-file-ico,
+:root[data-theme="fosforo"] .nq-file[data-pdf] .nq-file-ico {
+  border: 1px solid var(--led);
+  background: transparent;
+  color: var(--led);
+}
+
+/* Miniature: solo il riquadro. */
+.nq-thumb-paper [data-block="file"] {
+  height: 4em;
+  border: 1px solid var(--border-subtle);
+}

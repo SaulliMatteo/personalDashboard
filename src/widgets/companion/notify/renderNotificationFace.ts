@@ -1,8 +1,8 @@
-import type { FaceFrame } from "../engine/animator";
-import { tweakFace } from "../engine/animator";
-import { emotionFace } from "../engine/face";
-import type { FaceTweak } from "../engine/personalities";
-import type { CompanionStyle } from "../render/styles";
+import type { FaceFrame } from "../../../core/pixy/engine/animator";
+import { tweakFace } from "../../../core/pixy/engine/animator";
+import { emotionFace } from "../../../core/pixy/engine/face";
+import type { FaceTweak } from "../../../core/pixy/engine/personalities";
+import type { CompanionStyle } from "../../../core/pixy/render/styles";
 import type { PixyLook } from "./pixyNotifications";
 
 /** Lato dell'immagine della notifica, in pixel. Windows la rimpicciolisce da sé. */

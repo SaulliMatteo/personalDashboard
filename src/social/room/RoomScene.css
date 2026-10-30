@@ -1,0 +1,359 @@
+/* La sala della Stanza comune (docs/mockup-gruppi/gruppi/stanza-comune.html). Colori e spessori: token --scene-*. */
+
+/* Il riquadro della scena già scalata (--rs-scale, dallo spazio disponibile): lo posiziona la pagina. */
+.rs-fit {
+  overflow: hidden;
+}
+
+.rs-stage {
+  --rs-pill-size: 13px;
+  --rs-pill-weight: 500;
+
+  position: relative;
+  width: 720px;
+  height: 470px;
+  background: var(--scene-wall);
+  transform: scale(var(--rs-scale, 1));
+  transform-origin: top left;
+}
+
+:root[data-theme="opaco"] .rs-stage {
+  --rs-pill-weight: 700;
+}
+
+:root[data-theme="quaderno"] .rs-stage {
+  --rs-pill-size: 17px;
+  --rs-pill-weight: 700;
+}
+
+:root[data-theme="fosforo"] .rs-stage {
+  --rs-pill-size: 15px;
+  --rs-pill-weight: 900;
+}
+
+.rs-defs {
+  position: absolute;
+}
+
+.rs-dot-a {
+  fill: var(--scene-dot-a);
+}
+.rs-dot-b {
+  fill: var(--scene-dot-b);
+}
+.rs-dot-r {
+  fill: var(--scene-dot-r);
+}
+
+.rs-floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 150px;
+  background: var(--scene-floor);
+  border-top: 1.5px solid var(--scene-floor-line);
+}
+
+.rs-wall {
+  position: absolute;
+  top: 26px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 28px;
+}
+
+/* ---------- Pezzi del disegno ---------- */
+.rs-line {
+  stroke: var(--scene-line);
+  stroke-width: var(--scene-sw);
+}
+
+.rs-shelf {
+  fill: var(--scene-shelf);
+}
+.rs-board {
+  fill: var(--scene-board);
+}
+.rs-b1 {
+  fill: var(--scene-b1);
+}
+.rs-b2 {
+  fill: var(--scene-b2);
+}
+.rs-b3 {
+  fill: var(--scene-b3);
+}
+
+.rs-win {
+  fill: var(--scene-win);
+  stroke: var(--scene-win-frame);
+  stroke-width: var(--scene-win-sw);
+}
+.rs-mullion {
+  fill: none;
+  stroke: var(--scene-win-frame);
+  stroke-width: var(--scene-mullion);
+}
+.rs-moon {
+  fill: var(--scene-moon);
+}
+.rs-star {
+  fill: var(--scene-star);
+}
+
+.rs-chair {
+  fill: var(--scene-chair);
+}
+.rs-cone {
+  fill: var(--scene-cone);
+  fill-opacity: var(--scene-cone-op);
+}
+.rs-head {
+  fill: var(--scene-head);
+  stroke: var(--scene-head-stroke);
+  stroke-width: var(--scene-head-sw);
+}
+.rs-body {
+  fill: var(--scene-body);
+}
+.rs-warm {
+  fill: var(--scene-warm);
+}
+.rs-mug {
+  fill: var(--scene-mug);
+}
+.rs-steam {
+  fill: none;
+  stroke: var(--scene-steam);
+}
+.rs-top {
+  fill: var(--scene-top);
+}
+.rs-top-hi {
+  fill: var(--scene-top-hi);
+}
+.rs-front {
+  fill: var(--scene-front);
+}
+.rs-pool {
+  fill: var(--scene-pool);
+}
+.rs-page {
+  fill: var(--scene-page);
+}
+.rs-lamp-base {
+  fill: var(--scene-lamp);
+}
+.rs-lamp-arm {
+  fill: none;
+  stroke: var(--scene-lamp);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.rs-shade {
+  fill: var(--scene-lamp-off);
+  stroke-linejoin: round;
+}
+.rs-shade.is-on {
+  fill: var(--scene-lamp-on);
+}
+.rs-bulb--empty {
+  fill: var(--scene-lamp-off);
+}
+.rs-bulb--work {
+  fill: var(--scene-bulb-on);
+}
+.rs-bulb--break {
+  fill: var(--scene-bulb-brk);
+}
+
+/* ---------- Tavoli e posti ---------- */
+.rs-row {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 64px;
+  transform-origin: top center;
+}
+
+.rs-row--back {
+  top: 118px;
+  transform: scale(0.8);
+}
+
+.rs-row--front {
+  top: 286px;
+}
+
+.rs-table {
+  display: flex;
+}
+
+.rs-seat {
+  position: relative;
+  width: 150px;
+  height: 170px;
+}
+
+.rs-seat-art {
+  position: absolute;
+  inset: 0;
+}
+
+.rs-seat-art.is-flipped {
+  transform: scaleX(-1);
+}
+
+/* Un posto libero: tutto il posto è il pulsante per sedersi, la scritta sta sul davanti del tavolo. */
+.rs-free {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  color: var(--scene-free-fg);
+  cursor: pointer;
+}
+
+.rs-free-idle,
+.rs-free-hover {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  text-align: center;
+}
+
+.rs-free-hover {
+  visibility: hidden;
+}
+
+.rs-free:hover .rs-free-idle,
+.rs-free:focus-visible .rs-free-idle {
+  visibility: hidden;
+}
+
+.rs-free:hover .rs-free-hover,
+.rs-free:focus-visible .rs-free-hover {
+  visibility: visible;
+}
+
+.rs-free:hover,
+.rs-free:focus-visible,
+.rs-free.is-mine {
+  color: var(--text-primary);
+}
+
+.rs-free.is-mine .rs-free-idle {
+  font-weight: 600;
+}
+
+.rs-free:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.rs-seat-btn {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.rs-seat-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* La faccia vera di Pixy dentro la testa del disegno (testa: 54×40, più in alto quando è in pausa). */
+.rs-face-slot {
+  position: absolute;
+  left: 48px;
+  top: 42px;
+  width: 54px;
+  height: 40px;
+  --face-on: var(--scene-face);
+}
+
+.rs-seat--break .rs-face-slot {
+  top: 38px;
+}
+
+/* Il disegno esce dalla testa (stesso centro, faccia grande uguale, vedi SeatPixy): simboli e costumi stanno attorno
+   alla faccia e spuntano sopra e di lato, sullo sfondo della sala. */
+.rs-face-slot .room-seat-face {
+  position: absolute;
+  inset: -14px -12px;
+  width: auto;
+  height: auto;
+  pointer-events: none;
+}
+
+/* 16px sopra il disegno = 30px sopra la testa */
+.rs-face-slot .pixy-bubble {
+  top: auto;
+  bottom: calc(100% + 16px);
+  max-width: 140px;
+}
+
+.rs-pill {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 10px;
+  border-radius: var(--radius-item);
+  font-family: var(--font-display);
+  font-weight: var(--rs-pill-weight);
+  font-size: var(--rs-pill-size);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rs-pill--work {
+  background: var(--scene-pill-work-bg);
+  color: var(--scene-pill-work-fg);
+}
+
+.rs-pill--break {
+  background: var(--scene-pill-break-bg);
+  color: var(--scene-pill-break-fg);
+}
+
+.rs-plate {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  max-width: 128px;
+  box-sizing: border-box;
+  padding: 3px 10px;
+  border-radius: var(--radius-item);
+  border: 1.5px solid var(--scene-plate-border);
+  background: var(--scene-plate-bg);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rs-seat-btn.is-selected .rs-plate {
+  border-color: var(--accent);
+}

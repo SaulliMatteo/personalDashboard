@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gruppi: Finestre: nome utente, crea, entra con codice (mockup)</title>
+<!-- Mockup approvato della funzione Gruppi. Riferimento visivo per l'implementazione:
+     4 temi × versione chiara e scura, scegli dal selettore in basso a destra o con #tema=opaco&modo=notte.
+     I font qui arrivano da Google Fonts solo per comodità: nell'app si usano i pacchetti @fontsource locali. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..700&amp;family=Bricolage+Grotesque:opsz,wght@12..96,300..800&amp;family=Figtree:wght@300..800&amp;family=Caveat:wght@400..700&amp;family=JetBrains+Mono:wght@300..700&amp;family=Doto:wght@400..900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button,input,textarea{font:inherit}
+</style>
+<style>
+#mockup-bar{position:fixed;right:12px;bottom:12px;z-index:9999;display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:10px;background:#111;color:#eee;font:13px/1.2 system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+#mockup-bar select{font:inherit;padding:3px 6px;border-radius:6px}
+#mockup-bar span{opacity:.75}
+</style>
+</head>
+<body>
+<div id="mockup-root"></div>
+<div id="mockup-bar" role="group" aria-label="Versione del mockup">
+  <span>Mockup approvato</span>
+  <label>Tema <select name="tema"><option value="notte">Notte</option><option value="opaco">Opaco</option><option value="quaderno">Quaderno</option><option value="fosforo">Fosforo</option></select></label>
+  <label>Versione <select name="modo"><option value="giorno">Chiara</option><option value="notte">Scura</option></select></label>
+</div>
+<template id="mockup-markup">
+<div style="width: 1280px; height: 640px; box-sizing: border-box; padding: 56px 40px; display: flex; align-items: flex-start; justify-content: center; gap: 24px; background: {{t.overlay}}; color: {{t.text}}; font-family: {{t.font}}; font-size: {{t.size}}; line-height: 1.5;">
+
+  <div role="dialog" aria-labelledby="d1" style="width: 380px; box-sizing: border-box; padding: 26px; border-radius: {{t.rCard}}; background: {{t.modalBg}}; border: {{t.modalBorder}}; box-shadow: {{t.shadowPop}}; display: flex; flex-direction: column; gap: 18px;">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <h2 id="d1" style="margin: 0; font-size: 20px; font-weight: {{t.titleW}};">Scegli il tuo nome</h2>
+      <p style="margin: 0; color: {{t.text2}};">È l'unica cosa di te che vedranno gli altri. Email e nome Google restano privati.</p>
+    </div>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: {{t.text2}};">Nome utente
+      <input type="text" value="matteo_s" maxlength="20" style="height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: {{t.rField}}; border: {{t.fieldFocus}}; background: {{t.fieldBg}}; color: {{t.text}}; font-size: 15px;">
+    </label>
+    <div style="display: flex; justify-content: space-between; gap: 10px; font-size: 12px;">
+      <span style="color: {{t.muted}};">3–20 caratteri: lettere minuscole, numeri, _ e .</span>
+      <span style="display: flex; align-items: center; gap: 4px; color: {{t.success}}; white-space: nowrap;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>Disponibile</span>
+    </div>
+    <button type="button" style="height: 44px; border: 0; border-radius: {{t.rItem}}; background: {{t.accent}}; color: {{t.onAccent}}; font-weight: 600; cursor: pointer;">Continua</button>
+  </div>
+
+  <div role="dialog" aria-labelledby="d2" style="width: 380px; box-sizing: border-box; padding: 26px; border-radius: {{t.rCard}}; background: {{t.modalBg}}; border: {{t.modalBorder}}; box-shadow: {{t.shadowPop}}; display: flex; flex-direction: column; gap: 18px;">
+    <h2 id="d2" style="margin: 0; font-size: 20px; font-weight: {{t.titleW}};">Crea un gruppo</h2>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: {{t.text2}};">
+      <span style="display: flex; justify-content: space-between;"><span>Nome</span><span style="color: {{t.muted}};">10 / 40</span></span>
+      <input type="text" value="Ingegneria" maxlength="40" style="height: 44px; box-sizing: border-box; padding: 0 14px; border-radius: {{t.rField}}; border: {{t.fieldBorder}}; background: {{t.fieldBg}}; color: {{t.text}}; font-size: 15px;">
+    </label>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: {{t.text2}};">
+      <span style="display: flex; justify-content: space-between;"><span>Descrizione (facoltativa)</span><span style="color: {{t.muted}};">0 / 200</span></span>
+      <textarea rows="3" maxlength="200" placeholder="Per cosa studiate insieme?" style="box-sizing: border-box; padding: 10px 14px; border-radius: {{t.rField}}; border: {{t.fieldBorder}}; background: {{t.fieldBg}}; color: {{t.text}}; font-size: 14px; resize: none;"></textarea>
+    </label>
+    <p style="margin: 0; font-size: 12px; color: {{t.muted}};">Riceverai un codice invito da mandare agli amici. Massimo 30 membri.</p>
+    <div style="display: flex; justify-content: flex-end; gap: 8px;">
+      <button type="button" style="height: 44px; padding: 0 16px; border: {{t.ghostBorder}}; border-radius: {{t.rItem}}; background: {{t.ghostBg}}; color: {{t.ghostFg}}; cursor: pointer;">Annulla</button>
+      <button type="button" style="height: 44px; padding: 0 18px; border: 0; border-radius: {{t.rItem}}; background: {{t.accent}}; color: {{t.onAccent}}; font-weight: 600; cursor: pointer;">Crea gruppo</button>
+    </div>
+  </div>
+
+  <div role="dialog" aria-labelledby="d3" style="width: 380px; box-sizing: border-box; padding: 26px; border-radius: {{t.rCard}}; background: {{t.modalBg}}; border: {{t.modalBorder}}; box-shadow: {{t.shadowPop}}; display: flex; flex-direction: column; gap: 18px;">
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <h2 id="d3" style="margin: 0; font-size: 20px; font-weight: {{t.titleW}};">Entra con un codice</h2>
+      <p style="margin: 0; color: {{t.text2}};">Chiedilo a un membro del gruppo.</p>
+    </div>
+    <label style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: {{t.text2}};">Codice invito
+      <input type="text" value="K7QM-3XRQ" aria-invalid="true" aria-describedby="err" style="height: 56px; box-sizing: border-box; padding: 0 14px; border-radius: {{t.rField}}; border: {{t.fieldError}}; background: {{t.fieldBg}}; color: {{t.text}}; font-family: {{t.disp}}; font-size: {{t.codeSize}}; font-weight: {{t.dispW}}; letter-spacing: 0.12em; text-align: center;">
+    </label>
+    <div id="err" style="display: flex; gap: 8px; padding: 10px 12px; border-radius: {{t.rField}}; background: {{t.dangerSoft}}; color: {{t.danger}}; font-size: 13px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="flex: 0 0 auto; margin-top: 2px;" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h0"></path></svg>
+      <span>Codice non valido o scaduto. Dopo troppi tentativi dovrai aspettare qualche minuto.</span>
+    </div>
+    <div style="display: flex; justify-content: flex-end; gap: 8px;">
+      <button type="button" style="height: 44px; padding: 0 16px; border: {{t.ghostBorder}}; border-radius: {{t.rItem}}; background: {{t.ghostBg}}; color: {{t.ghostFg}}; cursor: pointer;">Annulla</button>
+      <button type="button" style="height: 44px; padding: 0 18px; border: 0; border-radius: {{t.rItem}}; background: {{t.accent}}; color: {{t.onAccent}}; font-weight: 600; cursor: pointer;">Entra</button>
+    </div>
+  </div>
+</div>
+</template>
+<script type="text/plain" id="mockup-logic">
+class Component extends DCLogic {
+  // Token dei temi presi da src/styles/tokens.css (variante nativa) e tokens-varianti.css (l'altra).
+  static NATIVE = { notte: 'notte', opaco: 'giorno', quaderno: 'giorno', fosforo: 'notte' };
+  static BASE = {
+    notte: { font: "'Manrope', system-ui, sans-serif", disp: "'Manrope', system-ui, sans-serif", dispW: 200, titleW: 400, size: '14px', codeSize: '24px',
+      overlay: '#06080F', modalBg: '#121726', modalBorder: '1px solid #1E2538', shadowPop: '0 18px 48px rgba(0,0,0,0.5)', rCard: '22px', rField: '12px', rItem: '12px',
+      text: '#E9ECF5', text2: '#9AA2BA', muted: '#8890A8', accent: '#8EA6FF', onAccent: '#090C15',
+      ghostBorder: '1px solid #2A3350', ghostBg: 'transparent', ghostFg: '#C9CFE0',
+      fieldBg: '#0B0F1C', fieldBorder: '1px solid #182036', fieldFocus: '1px solid rgba(142,166,255,0.55)', fieldError: '1px solid rgba(240,138,138,0.55)',
+      success: '#7DD3B0', danger: '#F08A8A', dangerSoft: 'rgba(240,138,138,0.16)' },
+    opaco: { font: "'Bricolage Grotesque', system-ui, sans-serif", disp: "'Bricolage Grotesque', system-ui, sans-serif", dispW: 800, titleW: 800, size: '14px', codeSize: '24px',
+      overlay: '#A8A49A', modalBg: '#EFECE5', modalBorder: '0', shadowPop: 'none', rCard: '28px', rField: '14px', rItem: '999px',
+      text: '#22251F', text2: '#4D5047', muted: '#4D5047', accent: '#22251F', onAccent: '#ECE9E2',
+      ghostBorder: '0', ghostBg: '#E2DED5', ghostFg: '#22251F',
+      fieldBg: '#E2DED5', fieldBorder: '0', fieldFocus: '2px solid #22251F', fieldError: '2px solid #8A2A1E',
+      success: '#3F6B3A', danger: '#8A2A1E', dangerSoft: 'rgba(138,42,30,0.10)' },
+    quaderno: { font: "'Figtree', system-ui, sans-serif", disp: "'Caveat', cursive", dispW: 600, titleW: 600, size: '14px', codeSize: '32px',
+      overlay: '#DCE3EE', modalBg: '#FFFFFF', modalBorder: '1px solid #C9D3E3', shadowPop: '0 3px 0 #DCE4F0', rCard: '8px', rField: '6px', rItem: '8px',
+      text: '#1B2433', text2: '#556178', muted: '#556178', accent: '#2340A0', onAccent: '#FFFFFF',
+      ghostBorder: '1.5px solid #2340A0', ghostBg: 'transparent', ghostFg: '#2340A0',
+      fieldBg: '#FFFFFF', fieldBorder: '1.5px solid #C9D3E3', fieldFocus: '1.5px solid #2340A0', fieldError: '1.5px solid #B3261E',
+      success: '#1F7A52', danger: '#B3261E', dangerSoft: 'rgba(179,38,30,0.08)' },
+    fosforo: { font: "'JetBrains Mono', ui-monospace, monospace", disp: "'Doto', monospace", dispW: 900, titleW: 400, size: '13px', codeSize: '26px',
+      overlay: '#080304', modalBg: '#1A0D0F', modalBorder: '1px solid rgba(255,214,206,0.12)', shadowPop: 'none', rCard: '14px', rField: '8px', rItem: '999px',
+      text: '#F2E6E1', text2: '#B39C97', muted: '#B39C97', accent: '#F4E9E4', onAccent: '#110709',
+      ghostBorder: '1px solid rgba(255,214,206,0.16)', ghostBg: 'transparent', ghostFg: '#B39C97',
+      fieldBg: '#0B0405', fieldBorder: '1px solid rgba(255,214,206,0.12)', fieldFocus: '1px solid rgba(255,214,206,0.5)', fieldError: '1px solid #FF4A3D',
+      success: '#F4E9E4', danger: '#FF4A3D', dangerSoft: 'rgba(255,74,61,0.12)' }
+  };
+  static OTHER = {
+    notte: { overlay: '#C9D0DE', modalBg: '#FFFFFF', modalBorder: '1px solid #E3E8F1', shadowPop: '0 18px 48px rgba(20,26,46,0.18)',
+      text: '#141A2E', text2: '#5B6480', muted: '#646C89', accent: '#3B57D6', onAccent: '#FFFFFF',
+      ghostBorder: '1px solid #CBD3E4', ghostFg: '#2A3350',
+      fieldBg: '#F4F6FB', fieldBorder: '1px solid #DCE2EE', fieldFocus: '1px solid #3B57D6', fieldError: '1px solid #C2413A',
+      success: '#187A56', danger: '#C2413A', dangerSoft: 'rgba(194,65,58,0.10)' },
+    opaco: { overlay: '#121310', modalBg: '#2A2B26', text: '#ECE9E2', text2: '#A9A79E', muted: '#A9A79E', accent: '#ECE9E2', onAccent: '#1E1F1B',
+      ghostBg: '#34352F', ghostFg: '#ECE9E2', fieldBg: '#34352F', fieldFocus: '2px solid #ECE9E2', fieldError: '2px solid #E38B7C',
+      success: '#9DC28F', danger: '#E38B7C', dangerSoft: 'rgba(227,139,124,0.14)' },
+    quaderno: { overlay: '#0B0E14', modalBg: '#1A1F2B', modalBorder: '1px solid #2C3446', shadowPop: '0 3px 0 #0C0F16',
+      text: '#E6EAF2', text2: '#98A3B8', muted: '#98A3B8', accent: '#9FB6FF', onAccent: '#121620',
+      ghostBorder: '1.5px solid #9FB6FF', ghostFg: '#9FB6FF',
+      fieldBg: '#121620', fieldBorder: '1.5px solid #2C3446', fieldFocus: '1.5px solid #9FB6FF', fieldError: '1.5px solid #F08A80',
+      success: '#4CC38A', danger: '#F08A80', dangerSoft: 'rgba(240,138,128,0.12)' },
+    fosforo: { overlay: '#D9CFC9', modalBg: '#FDFAF8', modalBorder: '1px solid rgba(70,24,28,0.12)',
+      text: '#2A1517', text2: '#77605D', muted: '#77605D', accent: '#2A1215', onAccent: '#EFE9E5',
+      ghostBorder: '1px solid rgba(70,24,28,0.16)', ghostFg: '#77605D',
+      fieldBg: '#FDFAF8', fieldBorder: '1px solid rgba(70,24,28,0.16)', fieldFocus: '1px solid #2A1215', fieldError: '1px solid #E0352B',
+      success: '#2A1215', danger: '#C42A21', dangerSoft: 'rgba(224,53,43,0.10)' }
+  };
+
+  renderVals() {
+    const tema = Component.BASE[this.props.tema] ? this.props.tema : 'notte';
+    const modo = this.props.modo === 'giorno' || this.props.modo === 'notte' ? this.props.modo : Component.NATIVE[tema];
+    return { t: Object.assign({}, Component.BASE[tema], modo === Component.NATIVE[tema] ? {} : Component.OTHER[tema]) };
+  }
+}
+</script>
+<script>
+/* Mini-motore per vedere i mockup fuori dall'editor: legge il markup del mockup
+   (segnaposto {{...}}, <sc-for>, <sc-if>, onClick/onChange) e lo ridisegna a ogni setState.
+   Serve solo come riferimento visivo: NON è codice da riusare nell'app. */
+(function () {
+  const tpl = document.getElementById('mockup-markup');
+  const src = document.getElementById('mockup-logic').textContent;
+  const root = document.getElementById('mockup-root');
+
+  class DCLogic {
+    constructor(props) { this.props = props || {}; }
+    setState(patch) { this.state = Object.assign({}, this.state, typeof patch === 'function' ? patch(this.state) : patch); schedule(); }
+    forceUpdate() { schedule(); }
+  }
+  const Component = new Function('DCLogic', src + '\n;return Component;')(DCLogic);
+
+  const params = new URLSearchParams(location.hash.slice(1));
+  const props = { tema: params.get('tema') || 'notte', modo: params.get('modo') || '' };
+  const NATIVE = { notte: 'notte', opaco: 'giorno', quaderno: 'giorno', fosforo: 'notte' };
+  if (!props.modo) props.modo = NATIVE[props.tema] || 'notte';
+
+  let inst = new Component(props);
+  inst.state = inst.state || {};
+  if (inst.componentDidMount) inst.componentDidMount();
+
+  function lookup(path, scope) {
+    path = path.trim();
+    if (path === 'true') return true;
+    if (path === 'false') return false;
+    let o = scope;
+    for (const k of path.split('.')) { if (o == null) return undefined; o = o[k]; }
+    return o;
+  }
+  const WHOLE = /^\s*\{\{\s*([\w.$]+)\s*\}\}\s*$/;
+  const ANY = /\{\{\s*([\w.$]+)\s*\}\}/g;
+  const interp = (s, scope) => s.replace(ANY, (_, p) => { const v = lookup(p, scope); return v == null ? '' : String(v); });
+
+  function process(node, scope) {
+    if (node.nodeType === 3) { if (node.nodeValue.includes('{{')) node.nodeValue = interp(node.nodeValue, scope); return; }
+    if (node.nodeType !== 1) return;
+    const tag = node.localName;
+    if (tag === 'sc-for') {
+      const list = lookup((node.getAttribute('list').match(WHOLE) || [])[1] || '', scope) || [];
+      const as = node.getAttribute('as') || 'item';
+      const frag = document.createDocumentFragment();
+      list.forEach((item, i) => {
+        for (const child of Array.from(node.childNodes)) {
+          const c = child.cloneNode(true);
+          const s = Object.assign({}, scope, { [as]: item, $index: i });
+          const holder = document.createElement('div'); holder.appendChild(c);
+          process(c, s);
+          while (holder.firstChild) frag.appendChild(holder.firstChild);
+        }
+      });
+      node.replaceWith(frag);
+      return;
+    }
+    if (tag === 'sc-if') {
+      const v = lookup((node.getAttribute('value').match(WHOLE) || [])[1] || '', scope);
+      if (!v) { node.remove(); return; }
+      const kids = Array.from(node.childNodes);
+      kids.forEach((k) => process(k, scope));
+      node.replaceWith(...Array.from(node.childNodes));
+      return;
+    }
+    for (const attr of Array.from(node.attributes)) {
+      const name = attr.name, val = attr.value;
+      if (name.startsWith('hint-')) { node.removeAttribute(name); continue; }
+      if (name.startsWith('on')) {
+        node.removeAttribute(name);
+        const m = val.match(WHOLE); const fn = m && lookup(m[1], scope);
+        const ev = name.slice(2).toLowerCase() === 'change' ? 'change' : name.slice(2).toLowerCase();
+        if (typeof fn === 'function') node.addEventListener(ev, fn);
+        continue;
+      }
+      if (!val.includes('{{')) continue;
+      const m = val.match(WHOLE);
+      if (m) {
+        const v = lookup(m[1], scope);
+        if (typeof v === 'boolean' && !name.startsWith('aria-')) {
+          if (v) node.setAttribute(name, ''); else node.removeAttribute(name);
+          if (name === 'checked' || name === 'disabled') node[name] = v;
+        } else node.setAttribute(name, v == null ? '' : String(v));
+      } else node.setAttribute(name, interp(val, scope));
+    }
+    for (const child of Array.from(node.childNodes)) process(child, scope);
+  }
+
+  let pending = false;
+  function schedule() { if (!pending) { pending = true; requestAnimationFrame(() => { pending = false; render(); }); } }
+  function render() {
+    const vals = inst.renderVals();
+    const frag = tpl.content.cloneNode(true);
+    const holder = document.createElement('div');
+    holder.appendChild(frag);
+    for (const c of Array.from(holder.childNodes)) process(c, vals);
+    root.replaceChildren(...Array.from(holder.childNodes));
+  }
+  render();
+
+  // Selettore tema / chiaro-scuro.
+  const bar = document.getElementById('mockup-bar');
+  const selT = bar.querySelector('[name=tema]'), selM = bar.querySelector('[name=modo]');
+  selT.value = props.tema; selM.value = props.modo;
+  function change() {
+    location.hash = 'tema=' + selT.value + '&modo=' + selM.value;
+    if (inst.componentWillUnmount) inst.componentWillUnmount();
+    inst = new Component({ tema: selT.value, modo: selM.value });
+    inst.state = inst.state || {};
+    if (inst.componentDidMount) inst.componentDidMount();
+    render();
+  }
+  selT.addEventListener('change', change);
+  selM.addEventListener('change', change);
+})();
+
+</script>
+</body>
+</html>

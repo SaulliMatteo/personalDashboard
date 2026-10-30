@@ -1,0 +1,456 @@
+/* UI comune dei Gruppi: finestre (finestre.html), pannelli di stato (stati.html, primo-accesso.html), pulsanti. */
+
+/* ---------- Finestra ---------- */
+.grp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--overlay);
+}
+
+.grp-dialog {
+  width: 380px;
+  max-width: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 26px;
+  border: var(--modal-border);
+  border-radius: var(--radius-card);
+  background: var(--modal-bg);
+  box-shadow: var(--shadow-pop);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: var(--body-size);
+  line-height: 1.5;
+}
+
+.grp-dialog-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grp-dialog-head h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: var(--modal-title-weight);
+}
+
+.grp-dialog-head p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.grp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---------- Campi ---------- */
+.grp-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.grp-label-row,
+.grp-hint-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.grp-hint-row {
+  margin-top: -10px;
+  font-size: 12px;
+}
+
+.grp-field {
+  height: 44px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border: var(--field-border);
+  border-radius: var(--radius-item);
+  background: var(--field-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 15px;
+}
+
+:root[data-theme="opaco"] .grp-field {
+  border-radius: 14px;
+}
+
+.grp-field:focus {
+  outline: none;
+  border: var(--field-focus);
+}
+
+.grp-field.is-error {
+  border: var(--field-error);
+}
+
+.grp-field--area {
+  height: auto;
+  padding: 10px 14px;
+  font-size: 14px;
+  resize: none;
+}
+
+.grp-field--code {
+  height: 56px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: var(--display-weight);
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+:root[data-theme="quaderno"] .grp-field--code {
+  font-size: 32px;
+}
+
+:root[data-theme="fosforo"] .grp-field--code {
+  font-size: 26px;
+}
+
+.grp-muted {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.grp-ok {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  color: var(--success);
+}
+
+.grp-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.grp-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.grp-error-box {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-item);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.grp-error-box svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+/* ---------- Pulsanti ---------- */
+.grp-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.grp-actions--center {
+  justify-content: center;
+}
+
+.grp-btn {
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.grp-btn--wide {
+  width: 100%;
+}
+
+.grp-btn--sm {
+  height: 40px;
+  padding: 0 14px;
+  font-weight: 400;
+}
+
+.grp-btn--ghost {
+  padding: 0 16px;
+  border: var(--btn-ghost-border);
+  background: transparent;
+  color: var(--btn-ghost-fg);
+  font-weight: 400;
+}
+
+/* In Opaco il pulsante secondario è un blocco pieno, senza bordo. */
+:root[data-theme="opaco"] .grp-btn--ghost {
+  border: 0;
+  background: var(--panel-bg);
+}
+
+.grp-btn--plain {
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.grp-btn--danger {
+  border: var(--group-danger-border);
+  background: var(--group-danger-soft);
+  color: var(--danger);
+}
+
+.grp-btn--sign-in {
+  height: 48px;
+  padding: 0 22px;
+  font-size: 15px;
+}
+
+.grp-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.grp-btn:focus-visible,
+.grp-choice:focus-visible,
+.grp-compact:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ---------- Pannelli di stato ---------- */
+.grp-state {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  color: var(--text-primary);
+}
+
+.grp-state--center {
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.grp-state-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.grp-state-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: var(--modal-title-weight);
+}
+
+.grp-state-text {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.grp-sign-in-note {
+  margin-top: -12px;
+}
+
+.grp-spinner {
+  animation: grp-spin 1.2s linear infinite;
+}
+
+@keyframes grp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grp-spinner {
+    animation: none;
+  }
+}
+
+.grp-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.grp-choice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.grp-choice-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-item);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:root[data-theme="quaderno"] .grp-choice-icon {
+  border-radius: 6px;
+}
+
+.grp-choice-icon--soft {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+/* In Opaco il tono tenue è un blocco del pigmento, non una trasparenza. */
+:root[data-theme="opaco"] .grp-choice-icon--soft {
+  background: var(--chip-bg);
+}
+
+.grp-choice-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.grp-choice-title {
+  font-weight: 600;
+}
+
+.grp-warn {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border: var(--group-warn-border);
+  border-radius: var(--radius-panel);
+  background: var(--group-warn-bg);
+  color: var(--group-warn-fg);
+  font-size: 13px;
+}
+
+.grp-warn svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.grp-warn strong {
+  font-weight: 600;
+}
+
+.grp-stale-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0.6;
+}
+
+.grp-stale-row {
+  height: 44px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+}
+
+.grp-stale-name {
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grp-retry {
+  margin-top: auto;
+  align-self: flex-start;
+}
+
+/* Pallino di stato: mai da solo, accanto c'è sempre un testo (o un aria-label). */
+.grp-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--group-off);
+}
+
+.grp-dot--studying {
+  background: var(--group-work);
+}
+
+.grp-dot--paused,
+.grp-dot--online {
+  background: color-mix(in srgb, var(--group-work) 45%, transparent);
+}
+
+.grp-dot--break {
+  background: var(--group-break);
+}
+
+/* Taglia 1×1 in uno stato: una didascalia al centro, la cella intera è il pulsante. */
+.grp-compact {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12px;
+  text-align: center;
+}
+
+button.grp-compact {
+  cursor: pointer;
+}

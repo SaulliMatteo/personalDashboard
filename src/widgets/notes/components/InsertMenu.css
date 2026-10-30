@@ -1,0 +1,80 @@
+/* Menu "/" (notes-redesign.html, "Menu /"). */
+
+.nq-slash {
+  position: fixed;
+  z-index: 60;
+  width: 290px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px;
+  border: var(--modal-border);
+  border-radius: 14px;
+  background: var(--modal-bg);
+  box-shadow: var(--shadow-pop);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 13px;
+}
+
+.nq-slash-opt {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.nq-slash-opt svg {
+  flex: none;
+  font-size: 18px;
+}
+
+.nq-slash-opt span {
+  flex: 1;
+}
+
+.nq-slash-opt small {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.nq-slash-opt[aria-selected="true"] {
+  background: var(--surface-2);
+}
+
+.nq-slash-opt[aria-selected="true"] small {
+  color: inherit;
+  opacity: 0.7;
+}
+
+.nq-slash-empty {
+  margin: 6px 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+:root[data-theme="opaco"] .nq-slash {
+  padding: 8px;
+  border-radius: 22px;
+}
+
+:root[data-theme="opaco"] .nq-slash-opt {
+  border-radius: 999px;
+}
+
+:root[data-theme="opaco"] .nq-slash-opt[aria-selected="true"],
+:root[data-theme="fosforo"] .nq-slash-opt[aria-selected="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:root[data-theme="quaderno"] .nq-slash {
+  border: 1.5px solid var(--accent);
+  border-radius: 6px;
+}

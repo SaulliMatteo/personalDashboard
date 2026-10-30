@@ -15,6 +15,7 @@ import type { NoteSummary } from "../data/notesRepository";
 import type { DragItem } from "../lib/drag";
 import { formatWhen, relativeDay, sanitizeHtml } from "../lib/html";
 import { TEMPLATES } from "../lib/templates";
+import NoteTitle from "./NoteTitle";
 
 export type SortKey = "updated" | "created" | "title";
 export type LayoutMode = "grid" | "list";
@@ -236,7 +237,9 @@ function NoteCollection(props: NoteCollectionProps) {
                   onPointerDown={(e) => startNoteDrag(e, note)}
                 >
                   <div className="nq-row-main">
-                    <h3>{note.title || "Senza titolo"}</h3>
+                    <NoteTitle as="h3" color={note.titleColor}>
+                      {note.title || "Senza titolo"}
+                    </NoteTitle>
                     <span className="nq-row-kicker">{kicker || "Senza cartella"}</span>
                   </div>
                   {note.tags[0] && <span className="nq-chip">{note.tags[0]}</span>}
@@ -261,7 +264,9 @@ function NoteCollection(props: NoteCollectionProps) {
                 </div>
                 <footer className="nq-card-foot">
                   <div className="nq-card-row">
-                    <h3>{note.title || "Senza titolo"}</h3>
+                    <NoteTitle as="h3" color={note.titleColor}>
+                      {note.title || "Senza titolo"}
+                    </NoteTitle>
                     {actions}
                   </div>
                   <div className="nq-card-row nq-card-meta">

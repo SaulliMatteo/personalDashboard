@@ -1,17 +1,19 @@
 import { createElement, type ComponentType } from "react";
 import { useNav } from "../../core/nav/useNav";
+import AccountTab from "./tabs/AccountTab";
 import AppearanceTab from "./tabs/AppearanceTab";
 import DashboardTab from "./tabs/DashboardTab";
 import GeneralTab from "./tabs/GeneralTab";
 import WidgetsTab from "./tabs/WidgetsTab";
 import "./settingsPage.css";
 
-/** Sezioni fisse, nell'ordine del mockup impostazioni-aspetto.html. */
+/** Sezioni fisse, nell'ordine del mockup impostazioni-aspetto.html (Account, dei Gruppi, in fondo). */
 const SECTIONS: { id: string; label: string; component: ComponentType }[] = [
   { id: "appearance", label: "Aspetto", component: AppearanceTab },
   { id: "dashboard", label: "Dashboard", component: DashboardTab },
   { id: "widgets", label: "Widget", component: WidgetsTab },
   { id: "general", label: "Generale", component: GeneralTab },
+  { id: "account", label: "Account", component: AccountTab },
 ];
 
 /**

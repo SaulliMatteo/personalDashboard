@@ -2,6 +2,7 @@ import { useState } from "react";
 import SettingsSection from "../../../core/settings/components/SettingsSection";
 import { useSettings } from "../../../core/settings/useSettings";
 import ConfirmButton from "../../../ui/ConfirmButton";
+import ExpandableText from "../../../ui/ExpandableText";
 
 /** Esporta/importa tutte le impostazioni come testo JSON (backup, trasferimento tra computer). */
 function BackupSection() {
@@ -80,7 +81,7 @@ function GeneralTab() {
           <div className="settings-field">
             <div className="settings-field-text">
               <span className="settings-field-label">Torna alle impostazioni iniziali</span>
-              <p className="settings-field-description">Tutte le impostazioni tornano ai valori di default. La posizione dei widget non cambia.</p>
+              <ExpandableText className="settings-field-description">Tutte le impostazioni tornano ai valori di default. La posizione dei widget non cambia.</ExpandableText>
             </div>
             <div className="settings-field-control">
               <ConfirmButton className="sp-btn sp-btn--danger" label="Ripristina" onConfirm={resetSettings} />

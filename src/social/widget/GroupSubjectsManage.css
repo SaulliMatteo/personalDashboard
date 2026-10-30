@@ -1,0 +1,108 @@
+/* "Materie del gruppo" nella scheda Report, solo per il proprietario. I raggi --gp-* vengono da GroupsPage.css. */
+
+.gsm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gsm-head {
+  display: flex;
+  flex-direction: column;
+}
+
+.gsm-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--title-weight);
+}
+
+.gsm-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gsm-row {
+  min-height: 44px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border: var(--panel-border);
+  border-radius: var(--gp-row-radius);
+  background: var(--panel-bg);
+}
+
+.gsm-swatch {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.gsm-name {
+  flex: 1 1 120px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gsm-edit {
+  flex: 1 1 260px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.gsm-input,
+.gsm-select {
+  height: 34px;
+  min-width: 0;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.gsm-input {
+  flex: 1 1 160px;
+}
+
+.gsm-merge {
+  display: flex;
+}
+
+.gsm-select {
+  max-width: 180px;
+}
+
+.gsm-row .grp-btn--sm {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.gsm-input:focus-visible,
+.gsm-select:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.gsm-error {
+  flex-basis: 100%;
+}
+
+.gsm-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

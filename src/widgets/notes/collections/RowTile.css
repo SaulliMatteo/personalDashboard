@@ -1,0 +1,114 @@
+/* Scheda di una riga (mockup: .ccard), per tema. */
+
+.nq-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.nq-tile:hover,
+.nq-tile:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.nq-tile b {
+  font-weight: 650;
+}
+
+.nq-tile small {
+  color: var(--text-secondary);
+}
+
+.nq-tile-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.nq-tile.is-dragging {
+  opacity: 0.4;
+}
+
+/* Opaco: pigmenti che si alternano */
+:root[data-theme="opaco"] .nq-tile {
+  border: 0;
+  border-radius: 22px;
+  background: var(--tint-blu);
+  color: var(--tint-blu-ink);
+}
+
+:root[data-theme="opaco"] .nq-tiles > :nth-child(3n + 2) .nq-tile,
+:root[data-theme="opaco"] .nq-bcol-list > :nth-child(3n + 2) .nq-tile {
+  background: var(--tint-salvia);
+  color: var(--tint-salvia-ink);
+}
+
+:root[data-theme="opaco"] .nq-tiles > :nth-child(3n) .nq-tile,
+:root[data-theme="opaco"] .nq-bcol-list > :nth-child(3n) .nq-tile {
+  background: var(--tint-malva);
+  color: var(--tint-malva-ink);
+}
+
+:root[data-theme="opaco"] .nq-tile small {
+  color: inherit;
+  opacity: 0.75;
+}
+
+:root[data-theme="opaco"] .nq-tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Quaderno: post-it un po' storti */
+:root[data-theme="quaderno"] .nq-tile {
+  border: 0;
+  border-radius: 3px;
+  background: var(--note-postit-bg);
+  color: var(--note-postit-ink);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--note-postit-ink) 12%, transparent);
+}
+
+:root[data-theme="quaderno"] .nq-tiles > :nth-child(odd) .nq-tile,
+:root[data-theme="quaderno"] .nq-bcol-list > :nth-child(odd) .nq-tile {
+  transform: rotate(-1deg);
+}
+
+:root[data-theme="quaderno"] .nq-tiles > :nth-child(even) .nq-tile,
+:root[data-theme="quaderno"] .nq-bcol-list > :nth-child(even) .nq-tile {
+  transform: rotate(0.8deg);
+}
+
+:root[data-theme="quaderno"] .nq-tile b {
+  font-family: var(--font-title);
+  font-size: 24px;
+  line-height: 1;
+}
+
+:root[data-theme="quaderno"] .nq-tile small {
+  color: inherit;
+  opacity: 0.75;
+}
+
+:root[data-theme="quaderno"] .nq-tile:focus-visible {
+  outline: 2px dashed var(--accent);
+  outline-offset: 3px;
+}
+
+/* Fosforo: il foglio a puntini */
+:root[data-theme="fosforo"] .nq-tile {
+  background: var(--note-page-pattern), var(--note-page-bg);
+}

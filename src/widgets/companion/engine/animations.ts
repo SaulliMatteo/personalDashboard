@@ -1,5 +1,5 @@
-import type { EmotionId } from "./face";
-import type { PoseId } from "./poses";
+import type { EmotionId } from "../../../core/pixy/engine/face";
+import type { PoseId } from "../../../core/pixy/engine/poses";
 
 /**
  * Catalogo delle animazioni che l'utente può accendere o spegnere dalla
