@@ -22,12 +22,15 @@ cd src-tauri && cargo check   # dopo modifiche a Rust o C
 
 Servono Node (LTS), Rust e i prerequisiti di Tauri v2 per il sistema.
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
-prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`.
+prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, e quella dei consigli YouTube
+(`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts`.
 
 ```bash
-# Prove pure dei Gruppi (scripts/gruppi/<nome>.test.mts, nessun server); una alla volta:
+# Prove pure (scripts/gruppi/<nome>.test.mts e scripts/youtube/<nome>.test.mts, nessun server); una alla volta:
 npx rolldown scripts/gruppi/chat.test.mts --file node_modules/.tmp/gruppi-chat.test.mjs --platform node
 node node_modules/.tmp/gruppi-chat.test.mjs
+npx rolldown scripts/youtube/recommender.test.mts --file node_modules/.tmp/youtube-recommender.test.mjs --platform node
+node node_modules/.tmp/youtube-recommender.test.mjs
 # Server dei Gruppi (Supabase locale, serve Docker): migrazioni in supabase/migrations/, test pgTAP in
 # supabase/tests/database/ (helper condivisi in _aiuti.psql)
 npx supabase start
