@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { MdAdd, MdSearch } from "react-icons/md";
 import { useNav } from "../../core/nav/useNav";
 import BackButton from "../../ui/BackButton";
 import AddVideoDialog from "./components/AddVideoDialog";
 import { findVideoByYoutubeId, type SavedVideo } from "./data/youtubeRepository";
 import { useYoutubeData } from "./hooks/useYoutubeData";
+import { pendingDiscards, subscribeDiscards, undoDiscard } from "./lib/discard";
 import { takePendingVideo } from "./lib/launch";
 import { searchVideos } from "./lib/library";
 import { formatTimestamp } from "./lib/youtube";
@@ -41,6 +42,16 @@ function YoutubeDetail() {
   const pendingRef = useRef<string | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const firstScreen = useRef(true);
+  // Video scartati in attesa di eliminazione (lib/discard.ts): il banner offre "Annulla".
+  const discarding = useSyncExternalStore(subscribeDiscards, pendingDiscards);
+  const lastDiscarded = discarding.length > 0 ? discarding[discarding.length - 1] : null;
+  // Quando l'eliminazione va a segno la libreria va riletta (il video sparisce anche dalla Libreria).
+  const discardCount = discarding.length;
+  const previousDiscardCount = useRef(discardCount);
+  useEffect(() => {
+    if (discardCount < previousDiscardCount.current) reload();
+    previousDiscardCount.current = discardCount;
+  }, [discardCount, reload]);
 
   // Aperta dal pulsante del widget: legge UNA volta il video richiesto.
   // Nessun flag `cancelled`: in StrictMode l'effetto gira due volte e la prima lettura consuma la richiesta.
@@ -179,7 +190,17 @@ function YoutubeDetail() {
           </button>
         </div>
       )}
-      {info && !error && (
+      {lastDiscarded && !error && (
+        <div className="yt-banner" role="status">
+          <span>
+            Scartato «{lastDiscarded.title}»{discarding.length > 1 ? ` (e altri ${discarding.length - 1})` : ""}: lo elimino tra pochi secondi.
+          </span>
+          <button type="button" onClick={() => undoDiscard(lastDiscarded.id)}>
+            Annulla
+          </button>
+        </div>
+      )}
+      {info && !error && !lastDiscarded && (
         <div className="yt-banner" role="status">
           <span>{info}</span>
           <button type="button" onClick={() => setInfo(null)} aria-label="Chiudi messaggio">
@@ -198,6 +219,8 @@ function YoutubeDetail() {
               videos={videos}
               onOpenVideo={openVideo}
               onAddVideo={() => setAddOpen(true)}
+              onChanged={reload}
+              onError={setError}
             />
           )}
           {current.name === "library" && (

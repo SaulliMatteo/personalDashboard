@@ -382,4 +382,26 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE notes ADD COLUMN title_color TEXT`,
     ],
   },
+  // La 18 è dello Studio (giorni e obiettivi per materia, branch non ancora in dev): qui si salta apposta, così un
+  // DB già passato dalla 18 riceve comunque questa. Il runner applica le versioni > user_version, i buchi non contano.
+  {
+    version: 19,
+    description: "YouTube: rinvii dei video consigliati e scarti per canale",
+    statements: [
+      // Una riga per video, creata al primo rinvio o alla prima proposta. Niente FK: deleteVideo la cancella a mano.
+      // snoozed_until e last_suggested_at sono timestamp in ms; NULL = mai rinviato / mai proposto.
+      `CREATE TABLE IF NOT EXISTS video_feedback (
+         video_id INTEGER PRIMARY KEY,
+         snooze_count INTEGER NOT NULL DEFAULT 0,
+         snoozed_until INTEGER,
+         last_suggested_at INTEGER
+       )`,
+      // Quanti video di un canale sono stati scartati: resta anche dopo che i video sono stati eliminati.
+      `CREATE TABLE IF NOT EXISTS video_channel_feedback (
+         channel TEXT PRIMARY KEY,
+         dismissed_count INTEGER NOT NULL DEFAULT 0,
+         updated_at INTEGER NOT NULL
+       )`,
+    ],
+  },
 ];
