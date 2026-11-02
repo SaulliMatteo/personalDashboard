@@ -3,6 +3,7 @@ import { useSettings } from "../../../core/settings/useSettings";
 import { listSubjects, loadTimerState, logSession } from "../../study/data/studyRepository";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import { emitActivityEvent, getActivity, publishActivity } from "../../../core/activity/activityBus";
+import { claimPlayer } from "../lib/durationFill";
 import { StudyLinkRecorder } from "../lib/studyLink";
 import { MdChevronRight, MdOutlineCheckCircle, MdOutlineDriveFileMove, MdCheckCircle } from "react-icons/md";
 import ConfirmButton from "../../../ui/ConfirmButton";
@@ -69,6 +70,8 @@ function WatchScreen({ video, folders, videos, onOpenVideo, onNavigateLibrary, o
     () => () => publishActivity({ watchingVideo: false, videoPaused: false, videoProgress: null, videoDurationSeconds: null }),
     []
   );
+  // Mentre questa pagina è aperta il riempimento delle durate in sottofondo aspetta.
+  useEffect(() => claimPlayer(), []);
   // Video nuovo: durata nota (se c'è) e avanzamento da rileggere.
   useEffect(() => {
     publishActivity({ videoDurationSeconds: video.durationSeconds, videoProgress: null });
