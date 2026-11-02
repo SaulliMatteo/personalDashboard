@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from "react";
+import { useSyncExternalStore, type MouseEvent } from "react";
 import { useNav } from "../../core/nav/useNav";
 import { useSingleClick } from "../../core/hooks/useSingleClick";
 import { useThemeVariant } from "../../core/theme/variants";
@@ -7,9 +7,13 @@ import type { WidgetProps } from "../../core/widgets/types";
 import { sizeKey } from "../../core/widgets/sizes";
 import ProgressBar from "../../ui/ProgressBar";
 import { PlayIcon } from "../../ui/icons";
-import { listAllVideos, type SavedVideo } from "./data/youtubeRepository";
+import ConfirmButton from "../../ui/ConfirmButton";
+import type { SavedVideo } from "./data/youtubeRepository";
+import { useSuggestion } from "./hooks/useSuggestion";
+import { pendingDiscards, requestDiscard, subscribeDiscards, undoDiscard } from "./lib/discard";
 import { requestOpenVideo } from "./lib/launch";
-import { pickVideoToContinue, videoProgress, videoQueue } from "./lib/library";
+import { videoProgress } from "./lib/library";
+import { snoozeSuggested } from "./lib/suggestion";
 import { formatTimestamp } from "./lib/youtube";
 import "./YoutubeWidget.css";
 
@@ -49,10 +53,13 @@ const LARGE_LAYOUT = {
   fosforo: { titleLeft: true, showCount: true, nextAsList: true },
 };
 
+/** I pulsanti dentro la cella non devono arrivare alla cella (click, doppio click). */
+const stop = (e: MouseEvent) => e.stopPropagation();
+
 /**
- * Widget in dashboard: il video da riprendere e, nelle taglie grandi, i
- * successivi. Il player vive solo nella pagina di dettaglio (un iframe qui
- * romperebbe il drag della griglia). I dati si rileggono a ogni montaggio.
+ * Widget in dashboard: il video consigliato (lib/suggestion.ts, lo stesso del mini e della Home) e, nelle
+ * taglie grandi, i successivi della classifica. Solo la 3×2 ha "Non ora" / "Scarta" e il motivo. Il player
+ * vive solo nella pagina di dettaglio (un iframe qui romperebbe il drag della griglia).
  */
 function YoutubeWidget({ w, h }: WidgetProps) {
   const { openWidgetDetail } = useNav();
@@ -60,26 +67,13 @@ function YoutubeWidget({ w, h }: WidgetProps) {
   const positionText = useThemeVariant(POSITION_TEXT);
   const layout = useThemeVariant(LARGE_LAYOUT);
   // undefined = in caricamento.
-  const [videos, setVideos] = useState<SavedVideo[] | undefined>(undefined);
+  const suggestion = useSuggestion();
+  const discarding = useSyncExternalStore(subscribeDiscards, pendingDiscards);
+  const lastDiscarded = discarding.length > 0 ? discarding[discarding.length - 1] : null;
 
-  useEffect(() => {
-    let cancelled = false;
-    listAllVideos()
-      .then((result) => {
-        if (!cancelled) setVideos(result);
-      })
-      .catch((error) => {
-        console.error("Errore nel caricamento dei video:", error);
-        if (!cancelled) setVideos([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const hero = videos ? pickVideoToContinue(videos) : null;
-  const queue = videos ? videoQueue(videos) : [];
-  const next = queue.filter((v) => v.id !== hero?.id).slice(0, NEXT_COUNT);
+  const hero = suggestion?.pick ?? null;
+  const queue = suggestion?.queue ?? [];
+  const next = queue.slice(0, NEXT_COUNT);
 
   function watch() {
     if (!hero) return;
@@ -123,7 +117,9 @@ function YoutubeWidget({ w, h }: WidgetProps) {
     );
   }
 
-  if (videos !== undefined && !hero) {
+  // Nella 3×2 un video appena scartato tiene il posto per "Annulla" anche se non resta altro da proporre.
+  const keepsUndo = size !== "W" && size !== "T" && lastDiscarded !== null;
+  if (suggestion !== undefined && !hero && !keepsUndo) {
     return (
       <WidgetFrame>
         <article className={`widget ytw ytw--${size} ytw--empty`}>
@@ -173,11 +169,66 @@ function YoutubeWidget({ w, h }: WidgetProps) {
           {bar}
           {layout.titleLeft && title}
           {position}
+          {hero && suggestion?.reason && <span className="ytw-reason">{suggestion.reason}</span>}
+          {lastDiscarded ? (
+            <span className="ytw-actions" role="status">
+              <span className="ytw-actions-note">Scartato</span>
+              <button
+                type="button"
+                className="ytw-action"
+                onClick={(e) => {
+                  stop(e);
+                  undoDiscard(lastDiscarded.id);
+                }}
+              >
+                Annulla
+              </button>
+            </span>
+          ) : (
+            hero && (
+              <span className="ytw-actions">
+                <button
+                  type="button"
+                  className="ytw-action"
+                  onClick={(e) => {
+                    stop(e);
+                    void snoozeSuggested(hero.id).catch((error) => console.error("Rinvio non salvato:", error));
+                  }}
+                  title="Nascondi questo video dai consigli per qualche giorno"
+                >
+                  Non ora
+                </button>
+                <span className="ytw-actions-sep" aria-hidden="true">·</span>
+                {suggestion && suggestion.pickNotes > 0 ? (
+                  <span onClick={stop}>
+                    <ConfirmButton
+                      className="ytw-action ytw-action--danger"
+                      label="Scarta"
+                      confirmLabel={`Perdi ${suggestion.pickNotes === 1 ? "1 nota" : `${suggestion.pickNotes} note`}?`}
+                      onConfirm={() => requestDiscard(hero)}
+                    />
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className="ytw-action ytw-action--danger"
+                    onClick={(e) => {
+                      stop(e);
+                      requestDiscard(hero);
+                    }}
+                    title="Elimina il video dalla libreria (puoi annullare per qualche secondo)"
+                  >
+                    Scarta
+                  </button>
+                )}
+              </span>
+            )
+          )}
         </div>
         <div className="ytw-col ytw-col--right">
           <div className="ytw-head">
             <h2 className="ytw-heading">YouTube</h2>
-            {layout.showCount && <span className="ytw-count">{queue.length} in coda</span>}
+            {layout.showCount && <span className="ytw-count">{suggestion?.pendingCount ?? 0} in coda</span>}
           </div>
           {!layout.titleLeft && title}
           {layout.nextAsList ? (

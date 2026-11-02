@@ -953,6 +953,22 @@ textarea.yt-input {
   flex-shrink: 0;
 }
 
+/* Perché è proposto (lib/recommender.ts, describeReason). */
+.yt-hero-reason {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* Guarda + Non ora + Scarta: vanno a capo se manca spazio, senza schiacciare il titolo. */
+.yt-hero-actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .yt-welcome {
   display: flex;
   flex-direction: column;

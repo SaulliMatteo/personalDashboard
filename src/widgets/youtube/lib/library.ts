@@ -2,7 +2,8 @@ import type { SavedVideo, VideoFolder } from "../data/youtubeRepository";
 
 /**
  * Logica pura della libreria (niente DB, niente React): albero delle cartelle,
- * riepiloghi, scelta del video da riprendere, ricerca. Testabile da sola.
+ * riepiloghi, autoplay nella cartella, ricerca. Testabile da sola. Il video da proporre lo sceglie
+ * lib/recommender.ts.
  */
 
 // ---------------------------------------------------------------------
@@ -167,42 +168,6 @@ export function videosDirectlyIn(videos: readonly SavedVideo[], folderId: number
 // ---------------------------------------------------------------------
 // Cosa guardare
 // ---------------------------------------------------------------------
-
-/**
- * Il video da riprendere. STESSA regola di `getVideoToContinue` nel repository (SQL):
- * l'ultimo aperto tra quelli iniziati e non finiti; altrimenti il più vecchio non guardato.
- * Un test casuale controlla che le due versioni non divergano.
- */
-export function pickVideoToContinue(videos: readonly SavedVideo[]): SavedVideo | null {
-  let started: SavedVideo | null = null;
-  for (const v of videos) {
-    if (v.watched || v.positionSeconds <= 0) continue;
-    if (!started) {
-      started = v;
-      continue;
-    }
-    const a = v.lastWatchedAt ?? Number.NEGATIVE_INFINITY; // in SQLite i NULL vengono dopo, con DESC
-    const b = started.lastWatchedAt ?? Number.NEGATIVE_INFINITY;
-    if (a > b || (a === b && v.id > started.id)) started = v;
-  }
-  if (started) return started;
-  let next: SavedVideo | null = null;
-  for (const v of videos) {
-    if (v.watched) continue;
-    if (!next || v.createdAt < next.createdAt || (v.createdAt === next.createdAt && v.id < next.id)) next = v;
-  }
-  return next;
-}
-
-/** "Da guardare": prima i video iniziati (l'ultimo aperto per primo), poi i mai aperti dal più vecchio. */
-export function videoQueue(videos: readonly SavedVideo[]): SavedVideo[] {
-  const pending = videos.filter((v) => !v.watched);
-  const started = pending
-    .filter((v) => v.positionSeconds > 0)
-    .sort((a, b) => (b.lastWatchedAt ?? 0) - (a.lastWatchedAt ?? 0) || b.id - a.id);
-  const fresh = pending.filter((v) => v.positionSeconds <= 0).sort((a, b) => a.createdAt - b.createdAt || a.id - b.id);
-  return [...started, ...fresh];
-}
 
 /**
  * Il video successivo per la riproduzione automatica: nella stessa cartella, dopo quello
