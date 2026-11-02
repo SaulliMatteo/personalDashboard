@@ -155,25 +155,14 @@
   color: currentColor;
 }
 
-/* "+N altre" e le materie non di oggi: solo contorno; aperto, l'elenco scorre se non basta. */
+/* "+N altre": solo contorno; apre il pop-up con le materie non di oggi. */
 .so-chip--toggle {
   background: transparent;
   box-shadow: inset 0 0 0 1.5px var(--pg-dark);
 }
 
-.so-chip--other {
-  background: transparent;
-  box-shadow: inset 0 0 0 1.5px var(--pg-mid);
-  opacity: 0.75;
-}
 
-.so-chip--other:hover {
-  opacity: 1;
-}
 
-.so-chips.is-open {
-  overflow-y: auto;
-}
 
 .so-focus-today {
   flex: 0 0 auto;

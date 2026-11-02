@@ -60,3 +60,11 @@ export function daysLabel(studyDays: number): string {
 export function dayName(date: Date): string {
   return WEEKDAYS[weekdayIndex(date)].name;
 }
+
+/**
+ * Vero se la materia sta tra quelle "di oggi" (card e dettaglio): prevista quel giorno, oppure già studiata
+ * (il totale deve tornare con le righe) o in corso. Le altre finiscono sotto "Altre materie".
+ */
+export function isTodaySubject(subject: Plan, date: Date, seconds: number, isActive: boolean): boolean {
+  return isScheduledOn(subject, date) || seconds > 0 || isActive;
+}

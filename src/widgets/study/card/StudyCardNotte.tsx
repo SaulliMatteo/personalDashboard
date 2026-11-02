@@ -137,31 +137,6 @@ function Subjects({ data, max, withTotal, withNextPhase }: { data: StudyCardData
         </button>
       ))}
       <OthersToggle data={data} className="sn-others-toggle" label={`Altre materie · ${data.otherRows.length}`} />
-      {data.othersOpen && data.otherRows.length > 0 && (
-        <div className="sn-others">
-          {data.otherRows.map((row) => (
-            <button
-              key={row.subject.id}
-              type="button"
-              className="sn-row sn-row--other"
-              style={{ "--subject-color": row.color } as CSSProperties}
-              title={`Studia ${row.subject.name}`}
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                void data.switchSubject(row.subject.id);
-              }}
-            >
-              <span className="sn-row-line">
-                <span className="sn-row-name">
-                  <span className="sn-row-dot" aria-hidden="true" />
-                  {row.subject.name}
-                </span>
-                <span className="sn-row-time">di {row.daysText}</span>
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
       {withNextPhase && data.nextPhaseText && <div className="sn-next">{data.nextPhaseText}</div>}
     </div>
   );

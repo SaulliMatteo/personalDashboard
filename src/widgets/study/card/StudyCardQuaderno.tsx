@@ -116,27 +116,6 @@ function Subjects({ data }: { data: StudyCardData }) {
         ))}
       </div>
       <OthersToggle data={data} className="sq-others-toggle" label={`+ altre ${data.otherRows.length} materie`} />
-      {data.othersOpen && data.otherRows.length > 0 && (
-        <div className="sq-rows sq-others">
-          {data.otherRows.map((row) => (
-            <button
-              key={row.subject.id}
-              type="button"
-              className="sq-row sq-row--other"
-              title={`Studia ${row.subject.name}`}
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                void data.switchSubject(row.subject.id);
-              }}
-            >
-              <span className="sq-row-name">
-                <span>{row.subject.name}</span>
-              </span>
-              <span className="sq-row-time">di {row.daysText}</span>
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

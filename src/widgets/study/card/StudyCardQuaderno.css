@@ -232,7 +232,7 @@
   color: var(--success-text);
 }
 
-/* "Altre materie": scritto a mano, come un appunto; le righe sono attenuate e scorrono se non bastano. */
+/* "Altre materie": scritto a mano, come un appunto; apre il pop-up con le materie non di oggi. */
 .sq-others-toggle {
   flex: 0 0 auto;
   align-self: flex-start;
@@ -246,20 +246,8 @@
   cursor: pointer;
 }
 
-.sq-others {
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-}
 
-.sq-row--other {
-  height: 36px;
-  opacity: 0.6;
-}
 
-.sq-row--other:hover {
-  opacity: 1;
-}
 
 /* ---------- 3×3 ---------- */
 .sq-head {

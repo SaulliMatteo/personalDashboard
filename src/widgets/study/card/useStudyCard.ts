@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getDailyTotals, type Subject } from "../data/studyRepository";
 import { colorForSubject } from "../lib/colors";
 import { formatHoursMinutes } from "../lib/format";
-import { dayName, daysLabel, isScheduledOn } from "../lib/schedule";
+import { dayName, daysLabel, isScheduledOn, isTodaySubject } from "../lib/schedule";
 import { useTimerView } from "../timer/useTimerView";
 
 /** Iniziale del giorno della settimana, indicizzata come Date.getDay() (0 = domenica). */
@@ -65,7 +65,7 @@ export function useStudyCard({ withWeek = false }: { withWeek?: boolean } = {}) 
     subjects, todayBySubject, dayStart, todayGoalSeconds, subjectId, activeSubject, isIdle, isWork, isBreak, isRunning,
     isStopwatch, cycleCount, displaySeconds, phase, startWork, pause, resume, stopOrSkip, switchSubject,
   } = view;
-  // "Altre materie" aperto o chiuso: solo in memoria, ogni card ha il suo.
+  // Pop-up "Altre materie" aperto o chiuso: solo in memoria, ogni card ha il suo.
   const [othersOpen, setOthersOpen] = useState(false);
 
   const todaySeconds = Object.values(todayBySubject).reduce((sum, v) => sum + v, 0);
@@ -83,7 +83,7 @@ export function useStudyCard({ withWeek = false }: { withWeek?: boolean } = {}) 
     const seconds = todayBySubject[subject.id] ?? 0;
     const color = colorForSubject(subject, index);
     const isActive = subject.id === subjectId;
-    if (!isScheduledOn(subject, today) && seconds <= 0 && !isActive) {
+    if (!isTodaySubject(subject, today, seconds, isActive)) {
       otherRows.push({ subject, color, daysText: daysLabel(subject.studyDays), isActive });
       return;
     }
@@ -106,13 +106,9 @@ export function useStudyCard({ withWeek = false }: { withWeek?: boolean } = {}) 
   // Materia di riferimento: quella del timer o, da fermo, la prima di oggi (poi la prima delle altre).
   const currentSubject = activeSubject ?? rows[0]?.subject ?? otherRows[0]?.subject ?? null;
 
-  /**
-   * Le righe di oggi che ci stanno in una card da `max` righe: il pulsante "Altre" ne prende una
-   * e, quando è aperto, ne restano 2 per lasciare spazio alle altre (che scorrono se non bastano).
-   */
+  /** Le righe di oggi che ci stanno in una card da `max` righe: il pulsante "Altre" (se c'è) ne prende una. */
   function fitRows(max: number): SubjectRow[] {
-    if (otherRows.length === 0) return visibleRows(rows, max);
-    return visibleRows(rows, othersOpen ? Math.min(2, max - 1) : max - 1);
+    return visibleRows(rows, otherRows.length > 0 ? max - 1 : max);
   }
 
   let cycles: CycleInfo | null = null;
@@ -192,7 +188,8 @@ export function useStudyCard({ withWeek = false }: { withWeek?: boolean } = {}) 
     /** Testo dell'elenco vuoto: nessuna materia, oppure nessuna prevista oggi (le altre restano sotto "Altre"). */
     emptyText: !view.ready ? "" : otherRows.length > 0 ? "Nessuna materia prevista oggi." : "Aggiungi materie dai dettagli del widget.",
     othersOpen,
-    toggleOthers: () => setOthersOpen((open) => !open),
+    openOthers: () => setOthersOpen(true),
+    closeOthers: () => setOthersOpen(false),
     cycles,
     nextPhaseText,
     nextPhaseShort,

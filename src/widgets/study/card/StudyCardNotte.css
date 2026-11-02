@@ -257,7 +257,7 @@
   background: var(--success);
 }
 
-/* "Altre materie": pulsante in fondo e righe attenuate, senza barra; se non bastano le righe, scorrono. */
+/* "Altre materie": pulsante in fondo; apre il pop-up con le materie non di oggi. */
 .sn-others-toggle {
   flex: 0 0 auto;
   width: 100%;
@@ -275,27 +275,9 @@
   background: var(--surface-1);
 }
 
-.sn-others {
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
 
-.sn-row--other {
-  padding: 7px 12px;
-  opacity: 0.6;
-}
 
-.sn-row--other:hover {
-  opacity: 1;
-}
 
-.sn-row--other .sn-row-time {
-  font-size: 12px;
-}
 
 .sn-next {
   margin-top: 4px;

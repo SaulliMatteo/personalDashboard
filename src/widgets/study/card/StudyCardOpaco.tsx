@@ -5,7 +5,7 @@ import DoneCheck from "./DoneCheck";
 import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
-import { useStudyCard, visibleRows, type StudyCardData, type SubjectRow } from "./useStudyCard";
+import { useStudyCard, type StudyCardData, type SubjectRow } from "./useStudyCard";
 import "./StudyCardOpaco.css";
 
 /**
@@ -103,11 +103,9 @@ function Chips({ data }: { data: StudyCardData }) {
   if (data.rows.length === 0 && data.otherRows.length === 0) {
     return <p className="so-empty">{data.emptyText}</p>;
   }
-  // Con "Altre" aperto restano due chip di oggi (la materia in corso compresa), così le altre ci stanno.
-  const rows = data.othersOpen ? visibleRows(data.rows, 2) : data.rows;
   return (
-    <div className={`so-chips${data.othersOpen ? " is-open" : ""}`}>
-      {rows.map((row) => (
+    <div className="so-chips">
+      {data.rows.map((row) => (
         <button
           key={row.subject.id}
           type="button"
@@ -124,21 +122,6 @@ function Chips({ data }: { data: StudyCardData }) {
         </button>
       ))}
       <OthersToggle data={data} className="so-chip so-chip--toggle" label={`+${data.otherRows.length} altre`} />
-      {data.othersOpen &&
-        data.otherRows.map((row) => (
-          <button
-            key={row.subject.id}
-            type="button"
-            className="so-chip so-chip--other"
-            title={`Studia ${row.subject.name}`}
-            onClick={(e: MouseEvent) => {
-              e.stopPropagation();
-              void data.switchSubject(row.subject.id);
-            }}
-          >
-            {row.subject.name} · di {row.daysText}
-          </button>
-        ))}
     </div>
   );
 }

@@ -145,25 +145,6 @@ function Side({ data, withCycles }: { data: StudyCardData; withCycles: boolean }
         ))}
       </div>
       <OthersToggle data={data} className="sf-others-toggle" label={`Altre materie · ${data.otherRows.length}`} />
-      {data.othersOpen && data.otherRows.length > 0 && (
-        <div className="sf-rows sf-others">
-          {data.otherRows.map((row) => (
-            <button
-              key={row.subject.id}
-              type="button"
-              className="sf-row sf-row--other"
-              title={`Studia ${row.subject.name}`}
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                void data.switchSubject(row.subject.id);
-              }}
-            >
-              <span className="sf-row-name">{row.subject.name}</span>
-              <span className="sf-row-time">di {row.daysText}</span>
-            </button>
-          ))}
-        </div>
-      )}
       {withCycles && data.cycles && (
         <div className="sf-sec sf-cycles">
           {data.cycles.label}.{data.nextPhaseShort ? ` ${data.nextPhaseShort}` : ""}
