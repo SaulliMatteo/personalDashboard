@@ -196,25 +196,6 @@ export async function findVideoByYoutubeId(youtubeId: string): Promise<SavedVide
   return rows[0] ? mapVideoRow(rows[0]) : null;
 }
 
-/**
- * Il video che il widget propone: l'ultimo iniziato e non finito (posizione salvata
- * e non segnato come guardato); se non ce n'è, il primo salvato che non hai ancora
- * guardato (il più vecchio). Null se non c'è nulla da guardare.
- */
-export async function getVideoToContinue(): Promise<SavedVideo | null> {
-  const db = await getDatabase();
-  const started = await db.select<VideoRow[]>(
-    `SELECT ${VIDEO_COLUMNS} FROM saved_videos
-     WHERE watched = 0 AND position_seconds > 0
-     ORDER BY last_watched_at DESC, id DESC LIMIT 1`
-  );
-  if (started[0]) return mapVideoRow(started[0]);
-  const next = await db.select<VideoRow[]>(
-    `SELECT ${VIDEO_COLUMNS} FROM saved_videos WHERE watched = 0 ORDER BY created_at ASC, id ASC LIMIT 1`
-  );
-  return next[0] ? mapVideoRow(next[0]) : null;
-}
-
 /** Lancia un errore UNIQUE se quel video è già salvato. Va in fondo alla cartella. */
 export async function addVideo(input: NewVideoInput): Promise<void> {
   const db = await getDatabase();
@@ -255,11 +236,120 @@ export async function setWatched(id: number, watched: boolean): Promise<void> {
   await db.execute(`UPDATE saved_videos SET watched = ? WHERE id = ?`, [watched ? 1 : 0, id]);
 }
 
-// Cancellazione esplicita (niente ON DELETE CASCADE, come in studyRepository).
+// Cancellazione esplicita (niente ON DELETE CASCADE, come in studyRepository). Le sessioni di visione restano
+// apposta (migrazione v6): il tempo già guardato non si perde.
 export async function deleteVideo(id: number): Promise<void> {
   const db = await getDatabase();
   await db.execute(`DELETE FROM video_notes WHERE video_id = ?`, [id]);
+  await db.execute(`DELETE FROM video_feedback WHERE video_id = ?`, [id]);
   await db.execute(`DELETE FROM saved_videos WHERE id = ?`, [id]);
+}
+
+// ---------------------------------------------------------------------
+// Sessioni di visione (segmenti di WatchTracker, al massimo ~30 s l'uno)
+// ---------------------------------------------------------------------
+
+export interface WatchSegment {
+  videoId: number;
+  startedAt: number;
+  endedAt: number;
+  seconds: number;
+}
+
+export async function addWatchSession(videoId: number, startedAt: number, endedAt: number, seconds: number): Promise<void> {
+  const db = await getDatabase();
+  await db.execute(
+    `INSERT INTO video_watch_sessions (video_id, started_at, ended_at, duration_seconds) VALUES (?, ?, ?, ?)`,
+    [videoId, Math.floor(startedAt), Math.floor(endedAt), Math.max(0, Math.round(seconds))]
+  );
+}
+
+/** I segmenti finiti da `since` (ms) in poi, in ordine di inizio. */
+export async function listWatchSessions(since: number): Promise<WatchSegment[]> {
+  const db = await getDatabase();
+  const rows = await db.select<{ video_id: number; started_at: number; ended_at: number; duration_seconds: number }[]>(
+    `SELECT video_id, started_at, ended_at, duration_seconds FROM video_watch_sessions
+     WHERE ended_at >= ? ORDER BY started_at, id`,
+    [since]
+  );
+  return rows.map((r) => ({ videoId: r.video_id, startedAt: r.started_at, endedAt: r.ended_at, seconds: r.duration_seconds }));
+}
+
+/** Secondi realmente guardati, per video (solo quelli con almeno un segmento). */
+export async function watchedSecondsByVideo(): Promise<Map<number, number>> {
+  const db = await getDatabase();
+  const rows = await db.select<{ video_id: number; total: number }[]>(
+    `SELECT video_id, SUM(duration_seconds) AS total FROM video_watch_sessions GROUP BY video_id`
+  );
+  return new Map(rows.map((r) => [r.video_id, r.total]));
+}
+
+// ---------------------------------------------------------------------
+// Risposte ai consigli: "Non ora" (per video) e "Scarta" (contato per canale)
+// ---------------------------------------------------------------------
+
+export interface VideoFeedback {
+  videoId: number;
+  snoozeCount: number;
+  /** ms; null = mai rinviato. */
+  snoozedUntil: number | null;
+  /** ms; null = mai proposto. */
+  lastSuggestedAt: number | null;
+}
+
+export async function listVideoFeedback(): Promise<Map<number, VideoFeedback>> {
+  const db = await getDatabase();
+  const rows = await db.select<
+    { video_id: number; snooze_count: number; snoozed_until: number | null; last_suggested_at: number | null }[]
+  >(`SELECT video_id, snooze_count, snoozed_until, last_suggested_at FROM video_feedback`);
+  return new Map(
+    rows.map((r) => [
+      r.video_id,
+      { videoId: r.video_id, snoozeCount: r.snooze_count, snoozedUntil: r.snoozed_until, lastSuggestedAt: r.last_suggested_at },
+    ])
+  );
+}
+
+/**
+ * Un rinvio in più. `untilFor(n)` dà la scadenza (ms) per il nuovo numero di rinvii: la regola sta in
+ * lib/recommender.ts (snoozeUntil). Lettura e scrittura in due passi: i rinvii arrivano da un click alla volta.
+ */
+export async function snoozeVideo(videoId: number, untilFor: (snoozeCount: number) => number): Promise<void> {
+  const db = await getDatabase();
+  const rows = await db.select<{ snooze_count: number }[]>(`SELECT snooze_count FROM video_feedback WHERE video_id = ?`, [videoId]);
+  const count = (rows[0]?.snooze_count ?? 0) + 1;
+  await db.execute(
+    `INSERT INTO video_feedback (video_id, snooze_count, snoozed_until) VALUES (?, ?, ?)
+     ON CONFLICT(video_id) DO UPDATE SET snooze_count = excluded.snooze_count, snoozed_until = excluded.snoozed_until`,
+    [videoId, count, Math.floor(untilFor(count))]
+  );
+}
+
+export async function setLastSuggested(videoId: number, at: number): Promise<void> {
+  const db = await getDatabase();
+  await db.execute(
+    `INSERT INTO video_feedback (video_id, last_suggested_at) VALUES (?, ?)
+     ON CONFLICT(video_id) DO UPDATE SET last_suggested_at = excluded.last_suggested_at`,
+    [videoId, Math.floor(at)]
+  );
+}
+
+/** Video scartati per canale (contano anche quelli ormai eliminati). */
+export async function listChannelDismissals(): Promise<Map<string, number>> {
+  const db = await getDatabase();
+  const rows = await db.select<{ channel: string; dismissed_count: number }[]>(
+    `SELECT channel, dismissed_count FROM video_channel_feedback`
+  );
+  return new Map(rows.map((r) => [r.channel, r.dismissed_count]));
+}
+
+export async function addChannelDismissal(channel: string, at: number): Promise<void> {
+  const db = await getDatabase();
+  await db.execute(
+    `INSERT INTO video_channel_feedback (channel, dismissed_count, updated_at) VALUES (?, 1, ?)
+     ON CONFLICT(channel) DO UPDATE SET dismissed_count = dismissed_count + 1, updated_at = excluded.updated_at`,
+    [channel, Math.floor(at)]
+  );
 }
 
 // ---------------------------------------------------------------------
@@ -282,6 +372,15 @@ export async function listNotes(videoId: number): Promise<VideoNote[]> {
     text: r.text,
     createdAt: r.created_at,
   }));
+}
+
+/** Quante note ha ogni video (solo quelli che ne hanno). */
+export async function noteCountsByVideo(): Promise<Map<number, number>> {
+  const db = await getDatabase();
+  const rows = await db.select<{ video_id: number; n: number }[]>(
+    `SELECT video_id, COUNT(*) AS n FROM video_notes GROUP BY video_id`
+  );
+  return new Map(rows.map((r) => [r.video_id, r.n]));
 }
 
 export async function addNote(videoId: number, timestampSeconds: number, text: string): Promise<void> {

@@ -11,6 +11,7 @@ import NotesPanel from "../components/NotesPanel";
 import VideoPlayer, { type PlayerHandle } from "../components/VideoPlayer";
 import VideoRow from "../components/VideoRow";
 import {
+  addWatchSession,
   deleteVideo,
   saveProgress,
   setDuration,
@@ -205,7 +206,11 @@ function WatchScreen({ video, folders, videos, onOpenVideo, onNavigateLibrary, o
                 if (duration) publishActivity({ videoProgress: Math.min(1, seconds / duration) });
                 void saveProgress(video.id, seconds).catch((e) => console.error(e));
               }}
-              onWatchSegment={(_startedAt, endedAt, seconds) => recorder.add(endedAt, seconds, (e) => console.error("Tempo di studio non salvato:", e))}
+              onWatchSegment={(startedAt, endedAt, seconds) => {
+                // Storico di visione per i consigli: un errore si registra soltanto, il player va avanti.
+                void addWatchSession(video.id, startedAt, endedAt, seconds).catch((e) => console.error("Sessione di visione non salvata:", e));
+                recorder.add(endedAt, seconds, (e) => console.error("Tempo di studio non salvato:", e));
+              }}
               onPlayingChange={(playing) => {
                 // Per il Companion (e chiunque ascolti): "sto guardando un video".
                 publishActivity({ watchingVideo: playing, videoPaused: !playing });
