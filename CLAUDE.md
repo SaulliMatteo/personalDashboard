@@ -21,6 +21,9 @@ cd src-tauri && cargo check   # dopo modifiche a Rust o C
 ```
 
 Servono Node (LTS), Rust e i prerequisiti di Tauri v2 per il sistema.
+Android (`npx tauri android dev` / `npx tauri android build --debug --apk --target x86_64` per l'emulatore): servono
+`ANDROID_HOME`, `NDK_HOME` e un `JAVA_HOME` su una JDK che Gradle 8.14.3 supporti (21 o 23), **non** la JBR 25 di
+Android Studio: con quella Gradle si ferma su `A problem occurred configuring project ':buildSrc'. > 25.0.4`.
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
 prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, e quella dei consigli YouTube
 (`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts`.
