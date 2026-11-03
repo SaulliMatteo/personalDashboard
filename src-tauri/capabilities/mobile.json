@@ -1,0 +1,27 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "mobile",
+  "description": "Permessi dell'app Android. I comandi dell'app sono concessi tutti: dove non sono supportati rispondono da soli con un errore chiaro (o false), invece di un rifiuto dell'ACL. Lo scope fs del Quaderno arriva con la Fase 3.",
+  "platforms": ["android"],
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "sql:default",
+    "sql:allow-execute",
+    "notification:default",
+    "dialog:default",
+    "opener:default",
+    "deep-link:default",
+    "allow-ft-start-server",
+    "allow-ft-stop-server",
+    "allow-ft-status",
+    "allow-ft-list-files",
+    "allow-ft-read-preview",
+    "allow-ft-open-folder",
+    "allow-companion-snapshot",
+    "allow-notify-with-image",
+    "allow-secure-store-get",
+    "allow-secure-store-set",
+    "allow-secure-store-remove"
+  ]
+}
