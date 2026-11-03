@@ -4,3 +4,5 @@
 /tauri.build.gradle.kts
 /proguard-tauri.pro
 /tauri.properties
+# Risorse del bundle desktop copiate da Tauri: su Android il server di File Transfer non c'è
+/src/main/assets/filetransfer-public
