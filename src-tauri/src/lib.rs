@@ -80,7 +80,8 @@ pub fn run() {
         ])
         .on_window_event(|window, event| {
             // Chiudendo la finestra il server C va fermato, altrimenti la
-            // porta resta occupata fino alla morte del processo.
+            // porta resta occupata fino alla morte del processo. Su Android
+            // CloseRequested non arriva, ma lì il server C non c'è.
             if let tauri::WindowEvent::CloseRequested { .. } = event {
                 file_transfer::shutdown(window.app_handle());
             }
