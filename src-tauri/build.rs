@@ -38,6 +38,8 @@ fn main() {
             "ft_list_files",
             "ft_read_preview",
             "ft_open_folder",
+            "ft_check_target",
+            "ft_send_file",
             "companion_snapshot",
             "notify_with_image",
             "secure_store_get",

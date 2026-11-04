@@ -18,6 +18,8 @@
     "allow-ft-list-files",
     "allow-ft-read-preview",
     "allow-ft-open-folder",
+    "allow-ft-check-target",
+    "allow-ft-send-file",
     "allow-companion-snapshot",
     "allow-notify-with-image",
     "allow-secure-store-get",

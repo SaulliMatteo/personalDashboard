@@ -1,0 +1,181 @@
+/* Pagina di invio (Android): le tre card della pagina web dell'iPad, con i pezzi di FileTransferDetail.css. */
+
+.fs-detail {
+  max-width: 720px;
+}
+
+.fs-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fs-card h2 {
+  margin: 0;
+}
+
+.fs-eyebrow {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.fs-card.is-online .ft-status {
+  color: var(--success-text);
+}
+
+.fs-card.is-online .ft-dot {
+  background: var(--led);
+}
+
+.fs-card .ft-card-heading {
+  margin-bottom: 0;
+}
+
+/* ---------- Indirizzo ---------- */
+
+.fs-address {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fs-field {
+  flex: 1 1 140px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.fs-field input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: var(--field-border);
+  border-radius: min(var(--radius-item), 12px);
+  background: var(--field-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+
+.fs-field input:focus {
+  border: var(--field-focus);
+}
+
+/* ---------- Scelta dei file ---------- */
+
+.fs-drop {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 26px 16px;
+  border: 1.5px dashed var(--text-muted);
+  border-radius: min(var(--radius-item), 14px);
+  text-align: center;
+  cursor: pointer;
+}
+
+.fs-drop:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.fs-drop:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.fs-drop-icon {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+
+.fs-drop strong {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.fs-drop span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.fs-send-row {
+  justify-content: flex-end;
+}
+
+/* ---------- Trasferimenti ---------- */
+
+.fs-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fs-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.fs-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fs-bar {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.fs-bar i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s linear;
+}
+
+.fs-item.is-done .fs-bar i {
+  background: var(--led);
+}
+
+.fs-item.is-error .fs-bar {
+  background: var(--danger-soft);
+}
+
+.fs-item.is-error .ft-file-meta {
+  color: var(--danger);
+}
+
+@media (pointer: coarse) {
+  .fs-field input {
+    height: 44px;
+  }
+}

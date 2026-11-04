@@ -1,5 +1,6 @@
 mod companion;
 mod file_open;
+mod file_send;
 mod file_transfer;
 mod notify;
 mod secure_store;
@@ -79,6 +80,8 @@ pub fn run() {
             file_transfer::ft_list_files,
             file_transfer::ft_read_preview,
             file_transfer::ft_open_folder,
+            file_send::ft_check_target,
+            file_send::ft_send_file,
             companion::companion_snapshot,
             notify::notify_with_image,
             secure_store::secure_store_get,
