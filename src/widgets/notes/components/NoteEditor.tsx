@@ -50,7 +50,6 @@ import {
 } from "react-icons/md";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { openPath } from "@tauri-apps/plugin-opener";
 import ConfirmButton from "../../../ui/ConfirmButton";
 import {
   addPage,
@@ -75,6 +74,7 @@ import {
   type PageBackground,
 } from "../data/notesRepository";
 import { noteToMarkdown, renderNoteImage, renderNotePdf, saveBytes, saveText } from "../lib/exportNote";
+import { fileErrorMessage, openFile } from "../data/filesApi";
 import { attachmentAbsolutePath, removeAttachmentFile, slugify } from "../lib/vault";
 import { BACKGROUND_OPTIONS } from "../lib/templates";
 import { THEME_INK } from "../lib/ink";
@@ -1584,10 +1584,10 @@ async function changePageColor(color: string | null) {
       return;
     }
     try {
-      await openPath(await attachmentAbsolutePath(note.diskPath, attachment.name));
+      await openFile(await attachmentAbsolutePath(note.diskPath, attachment.name));
     } catch (error) {
       console.error("Impossibile aprire l'allegato:", error);
-      showToast("Impossibile aprire il file");
+      showToast(fileErrorMessage(error, "Impossibile aprire il file"));
     }
   }
 

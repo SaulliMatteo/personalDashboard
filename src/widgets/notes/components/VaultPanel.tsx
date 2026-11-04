@@ -8,7 +8,8 @@ interface VaultPanelProps {
   onToggle: (enabled: boolean) => void;
   onSyncAll: () => void;
   onImport: () => void;
-  onOpenFolder: () => void;
+  /** Assente dove la cartella non si può aprire (Android): il pulsante non c'è. */
+  onOpenFolder?: () => void;
   onClose: () => void;
 }
 
@@ -52,9 +53,11 @@ function VaultPanel({ enabled, busy, pathLabel, onToggle, onSyncAll, onImport, o
           </p>
 
           <div className="nq-modal-actions">
-            <button type="button" className="nq-btn" disabled={busy} onClick={onOpenFolder}>
-              Apri la cartella
-            </button>
+            {onOpenFolder && (
+              <button type="button" className="nq-btn" disabled={busy} onClick={onOpenFolder}>
+                Apri la cartella
+              </button>
+            )}
             <button type="button" className="nq-btn" disabled={busy || !enabled} onClick={onSyncAll}>
               Riscrivi tutto
             </button>

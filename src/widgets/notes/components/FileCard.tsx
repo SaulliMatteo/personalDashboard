@@ -1,5 +1,5 @@
-import { openPath, revealItemInDir } from "@tauri-apps/plugin-opener";
-import { MdDeleteOutline, MdOutlineFolderOpen } from "react-icons/md";
+import { MdDeleteOutline, MdOutlineFolderOpen, MdOutlineShare } from "react-icons/md";
+import { fileErrorMessage, fileSideAction, openFile, runFileSideAction } from "../data/filesApi";
 import { extensionOf } from "../lib/attachmentUrls";
 import { formatBytes } from "../lib/insertFiles";
 import { attachmentAbsolutePath } from "../lib/vault";
@@ -14,7 +14,7 @@ interface FileCardProps {
   onError: (message: string) => void;
 }
 
-/** Un file nella pagina (<div data-block="file">): si apre col programma del sistema. */
+/** Un file nella pagina (<div data-block="file">): si apre col programma del sistema (su Android con l'app scelta). */
 function FileCard({ block, noteDir, selected, onSelect, onDelete, onError }: FileCardProps) {
   const name = block.dataset.attachment ?? "";
   const bytes = Number(block.dataset.bytes ?? 0);
@@ -29,7 +29,7 @@ function FileCard({ block, noteDir, selected, onSelect, onDelete, onError }: Fil
       await action(await attachmentAbsolutePath(noteDir, name));
     } catch (error) {
       console.error(`${failure}:`, error);
-      onError(failure);
+      onError(fileErrorMessage(error, failure));
     }
   }
 
@@ -48,18 +48,30 @@ function FileCard({ block, noteDir, selected, onSelect, onDelete, onError }: Fil
         <b title={name}>{name}</b>
         <small>{bytes > 0 ? formatBytes(bytes) : "File allegato"}</small>
       </div>
-      <button type="button" className="nq-btn nq-btn--small" onClick={() => void withPath(openPath, "Impossibile aprire il file")}>
+      <button type="button" className="nq-btn nq-btn--small" onClick={() => void withPath(openFile, "Impossibile aprire il file")}>
         Apri
       </button>
-      <button
-        type="button"
-        className="nq-icon-btn"
-        onClick={() => void withPath((p) => revealItemInDir(p), "Impossibile mostrare il file nella cartella")}
-        aria-label={`Mostra ${name} nella cartella`}
-        title="Mostra nella cartella"
-      >
-        <MdOutlineFolderOpen />
-      </button>
+      {fileSideAction === "share" ? (
+        <button
+          type="button"
+          className="nq-icon-btn"
+          onClick={() => void withPath(runFileSideAction, "Impossibile condividere il file")}
+          aria-label={`Condividi ${name}`}
+          title="Condividi"
+        >
+          <MdOutlineShare />
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="nq-icon-btn"
+          onClick={() => void withPath(runFileSideAction, "Impossibile mostrare il file nella cartella")}
+          aria-label={`Mostra ${name} nella cartella`}
+          title="Mostra nella cartella"
+        >
+          <MdOutlineFolderOpen />
+        </button>
+      )}
       {selected && (
         <button type="button" className="nq-icon-btn" onClick={onDelete} aria-label={`Togli ${name} dalla pagina`} title="Togli dalla pagina (resta negli allegati)">
           <MdDeleteOutline />

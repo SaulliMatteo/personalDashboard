@@ -1,5 +1,6 @@
 import { requireCloudClient } from "./client";
 import { throwIfFailed } from "./errors";
+import { isAndroid } from "../system/platform";
 
 /* Profilo e account: tabelle e RPC del nucleo (supabase/migrations/…_nucleo.sql). */
 
@@ -26,9 +27,9 @@ export type DevicePlatform = "windows" | "macos" | "linux" | "android";
 
 /** Sistema di questo dispositivo, come lo vuole la tabella `devices`. */
 function devicePlatform(): DevicePlatform {
-  const agent = navigator.userAgent;
   // prima di "linux": lo user agent di Android contiene anche "Linux"
-  if (/android/i.test(agent)) return "android";
+  if (isAndroid()) return "android";
+  const agent = navigator.userAgent;
   if (/windows/i.test(agent)) return "windows";
   if (/mac os|macintosh/i.test(agent)) return "macos";
   return "linux";

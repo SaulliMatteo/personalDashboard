@@ -1,7 +1,6 @@
 import { createElement, useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
 import { getCurrentWebview } from "@tauri-apps/api/webview";
-import { openPath } from "@tauri-apps/plugin-opener";
 import {
   MdOutlineCreateNewFolder,
   MdDeleteOutline,
@@ -19,6 +18,7 @@ import {
 import { useLatestRef } from "../../core/hooks/useLatestRef";
 import FolderPanel from "./components/FolderPanel";
 import VaultPanel from "./components/VaultPanel";
+import { canOpenVaultFolder, openVaultFolder } from "./data/filesApi";
 import FolderTree from "./components/FolderTree";
 import NoteCollection, { type LayoutMode, type SortKey } from "./components/NoteCollection";
 import NoteEditor from "./components/NoteEditor";
@@ -1216,12 +1216,15 @@ function NotesDetail() {
               return count > 0 ? `Importate ${count} note dalla cartella.` : "Nessuna nota nuova da importare.";
             })
           }
-          onOpenFolder={() =>
-            void runVaultTask(async () => {
-              await ensureVaultDir();
-              await openPath(await vaultAbsolutePath());
-              return "";
-            })
+          onOpenFolder={
+            canOpenVaultFolder
+              ? () =>
+                  void runVaultTask(async () => {
+                    await ensureVaultDir();
+                    await openVaultFolder(await vaultAbsolutePath());
+                    return "";
+                  })
+              : undefined
           }
           onClose={() => setVaultPanel(false)}
         />
