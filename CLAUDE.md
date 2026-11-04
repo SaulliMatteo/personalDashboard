@@ -24,6 +24,10 @@ Servono Node (LTS), Rust e i prerequisiti di Tauri v2 per il sistema.
 Android (`npx tauri android dev` / `npx tauri android build --debug --apk --target x86_64` per l'emulatore): servono
 `ANDROID_HOME`, `NDK_HOME` e un `JAVA_HOME` su una JDK che Gradle 8.14.3 supporti (21 o 23), **non** la JBR 25 di
 Android Studio: con quella Gradle si ferma su `A problem occurred configuring project ':buildSrc'. > 25.0.4`.
+Il progetto `src-tauri/gen/android` è versionato (manifest, Gradle e icone si modificano lì); ciò che Tauri rigenera a
+ogni build lo escludono i suoi `.gitignore`. Capability: `capabilities/default.json` solo desktop, `mobile.json` per
+Android. Su Android la pagina gira da `http://tauri.localhost` e il DB sta in `/data/data/<id>/dashboard.db`
+(app debug: `it.matteo.personalDashboard.debug`, un'app separata con i suoi dati; si legge con `adb exec-out run-as`).
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
 prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, e quella dei consigli YouTube
 (`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts`.
