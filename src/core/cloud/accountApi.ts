@@ -22,17 +22,19 @@ export async function deleteAccountOnServer(): Promise<void> {
   throwIfFailed(await requireCloudClient().rpc("delete_account"));
 }
 
-export type DevicePlatform = "windows" | "macos" | "linux";
+export type DevicePlatform = "windows" | "macos" | "linux" | "android";
 
-/** Sistema di questo computer, come lo vuole la tabella `devices`. */
+/** Sistema di questo dispositivo, come lo vuole la tabella `devices`. */
 function devicePlatform(): DevicePlatform {
   const agent = navigator.userAgent;
+  // prima di "linux": lo user agent di Android contiene anche "Linux"
+  if (/android/i.test(agent)) return "android";
   if (/windows/i.test(agent)) return "windows";
   if (/mac os|macintosh/i.test(agent)) return "macos";
   return "linux";
 }
 
-/** Registra (o aggiorna) questo computer tra i dispositivi dell'account: serve prima di inviare dati. */
+/** Registra (o aggiorna) questo dispositivo tra i dispositivi dell'account: serve prima di inviare dati. */
 export async function touchDevice(deviceId: string): Promise<void> {
   throwIfFailed(
     await requireCloudClient().rpc("touch_device", { p_device_id: deviceId, p_platform: devicePlatform() })
