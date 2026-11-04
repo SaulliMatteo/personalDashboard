@@ -1,9 +1,16 @@
 package it.matteo.personalDashboard
 
+import android.app.KeyguardManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
+import android.os.PowerManager
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import androidx.activity.enableEdgeToEdge
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import kotlin.math.max
@@ -14,17 +21,76 @@ import kotlin.math.max
  * in dp (= px CSS), e le legge src/core/system/androidInsets.ts.
  * - all'avvio: `window.__pdInsets.get()` (JSON);
  * - a ogni cambio (rotazione, tastiera che si apre): evento `pd-insets` sulla finestra.
+ *
+ * Uscite dall'app (stop automatico dello Studio, src/core/system/androidAway.ts): mentre l'app non è in primo piano
+ * si conta il tempo a schermo acceso e sbloccato, cioè passato a usare il telefono in altre app. Al rientro arriva
+ * l'evento `pd-away` con {leftAt, backAt, usedMs}. Niente permessi: solo i broadcast di schermo spento e sblocco.
  * Solo numeri: la pagina non può chiedere né cambiare altro.
  */
 class MainActivity : TauriActivity() {
   @Volatile private var lastJson = """{"top":0,"right":0,"bottom":0,"left":0,"ime":0}"""
+  private var webView: WebView? = null
+
+  /** Quando l'app è uscita dal primo piano (0 = è in primo piano). */
+  private var leftAt = 0L
+  /** Da quando, fuori dall'app, lo schermo è acceso e sbloccato (0 = non lo è). */
+  private var usingSince = 0L
+  /** Tempo già contato a usare il telefono durante questa uscita. */
+  private var usedMs = 0L
+
+  private val screenReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+      if (leftAt == 0L) return
+      val now = System.currentTimeMillis()
+      when (intent.action) {
+        Intent.ACTION_USER_PRESENT -> if (usingSince == 0L) usingSince = now
+        Intent.ACTION_SCREEN_OFF -> if (usingSince != 0L) {
+          usedMs += now - usingSince
+          usingSince = 0L
+        }
+      }
+    }
+  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
     super.onCreate(savedInstanceState)
+    val filter = IntentFilter().apply {
+      addAction(Intent.ACTION_SCREEN_OFF)
+      addAction(Intent.ACTION_USER_PRESENT)
+    }
+    ContextCompat.registerReceiver(this, screenReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+  }
+
+  override fun onDestroy() {
+    unregisterReceiver(screenReceiver)
+    super.onDestroy()
+  }
+
+  override fun onStop() {
+    super.onStop()
+    val now = System.currentTimeMillis()
+    leftAt = now
+    usedMs = 0L
+    // uscita verso un'altra app (schermo acceso e sbloccato) o schermo spento dentro l'app
+    val power = getSystemService(Context.POWER_SERVICE) as PowerManager
+    val keyguard = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+    usingSince = if (power.isInteractive && !keyguard.isKeyguardLocked) now else 0L
+  }
+
+  override fun onStart() {
+    super.onStart()
+    if (leftAt == 0L) return
+    val now = System.currentTimeMillis()
+    if (usingSince != 0L) usedMs += now - usingSince
+    val json = """{"leftAt":$leftAt,"backAt":$now,"usedMs":$usedMs}"""
+    leftAt = 0L
+    usingSince = 0L
+    webView?.evaluateJavascript("window.dispatchEvent(new CustomEvent('pd-away',{detail:$json}))", null)
   }
 
   override fun onWebViewCreate(webView: WebView) {
+    this.webView = webView
     webView.addJavascriptInterface(InsetsBridge(), "__pdInsets")
     ViewCompat.setOnApplyWindowInsetsListener(webView) { view, insets ->
       val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())

@@ -29,7 +29,7 @@ export function pixyLook(n: AppNotification): PixyLook | null {
     case "autoStopWarning":
       return { emotion: "surprised", glyph: "exclaim", emoji: "⏳", phrase: "autostop_warning" };
     case "autoStopped":
-      if (n.reason === "app") {
+      if (n.reason === "app" || n.reason === "away") {
         return { emotion: "serious", glyph: null, emoji: (n.category && APP_EMOJI[n.category]) || "⏹", phrase: "autostop_app" };
       }
       return { emotion: "sleepy", glyph: "z", emoji: "😴", phrase: "autostop_idle" };

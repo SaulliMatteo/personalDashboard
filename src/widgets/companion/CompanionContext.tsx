@@ -151,6 +151,15 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
     window.addEventListener("wheel", onInput, { passive: true });
     window.addEventListener("focus", onFocus);
     window.addEventListener("blur", onBlur);
+    // sul telefono uscire dall'app (o spegnere lo schermo) non sempre toglie il focus: conta anche la visibilità
+    const onVisibility = () => {
+      if (document.hidden) onBlur();
+      else {
+        lastLocalInputRef.current = Date.now();
+        onFocus();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("keydown", onInput);
@@ -158,6 +167,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("wheel", onInput);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [pushInput]);
 

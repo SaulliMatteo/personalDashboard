@@ -31,7 +31,8 @@ export interface AutoStopConfig {
 export type AutoStopResult =
   | {
       type: "stop";
-      reason: "idle" | "app";
+      /** "away": su Android, troppo tempo in altre app (core/system/androidAway.ts, non passa dal tracker). */
+      reason: "idle" | "app" | "away";
       /** Solo per reason "app": la categoria che l'ha fatto scattare. */
       category: AppCategory | null;
       /** Istante (ms) in cui lo studio vero è finito. */

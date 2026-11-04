@@ -22,6 +22,7 @@ import { useSettings } from "../../../core/settings/useSettings";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import { emitActivityEvent, publishActivity } from "../../../core/activity/activityBus";
 import { readSystemSnapshot } from "../../../core/system/systemApi";
+import { onAppReturn } from "../../../core/system/androidAway";
 import { sendAppNotification, type AppNotification } from "../../../core/notify/notifier";
 import { classifyApp, parseAppCategories, type AppCategory } from "../../../core/system/appCategory";
 import type { AppSettings } from "../../../core/settings/schema";
@@ -74,6 +75,12 @@ const AUTO_STOP_REASON: Partial<Record<AppCategory, string>> = {
   video: "Stai guardando video",
   chat: "Sei in chat",
 };
+
+/** Il perché dello stop automatico, per avviso e notifica. */
+function autoStopWhat(reason: AutoStopResult["reason"], category: AppCategory | null): string {
+  if (reason === "away") return "Sei in altre app";
+  return (reason === "app" && category !== null && AUTO_STOP_REASON[category]) || "Sei inattivo";
+}
 
 function computeDisplaySeconds(s: TimerState): number {
   if (isStopwatchState(s)) {
@@ -388,7 +395,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   // il tempo accumulato prima di una pausa è studio vero); in pausa pomodoro si torna a zero.
   // Preavviso: manca il 10% della soglia. Solo un avviso, il timer continua.
   function warnAutoStop({ reason, category, awaySeconds, secondsLeft }: Extract<AutoStopResult, { type: "warn" }>) {
-    const what = (reason === "app" && category !== null && AUTO_STOP_REASON[category]) || "Sei inattivo";
+    const what = autoStopWhat(reason, category);
     const left = secondsLeft < 60 ? `${secondsLeft} secondi` : formatHoursMinutes(secondsLeft);
     alertPhaseChange({
       kind: "autoStopWarning",
@@ -406,7 +413,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     try {
       const now = Date.now();
       const awaySeconds = Math.max(0, Math.floor((now - stoppedAt) / 1000));
-      const what = (reason === "app" && category !== null && AUTO_STOP_REASON[category]) || "Sei inattivo";
+      const what = autoStopWhat(reason, category);
       const why = `${what} da ${formatHoursMinutes(awaySeconds)}`;
       if (s.phase === "work") {
         const subjectName = subjectsRef.current.find((x) => x.id === s.subjectId)?.name ?? null;
@@ -459,6 +466,18 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     }, AUTO_STOP_POLL_MS);
     return () => clearInterval(interval);
   }, [settings.studyAutoStopEnabled, state.runningSince, state.phase]);
+
+  // Android (niente segnali di sistema): al rientro nell'app, se mentre si studiava il telefono è stato usato in altre
+  // app per più della soglia, il timer si ferma all'uscita. Lo schermo spento conta come studio.
+  useEffect(() => {
+    if (!settings.studyAutoStopEnabled) return;
+    return onAppReturn(({ leftAt, usedMs }) => {
+      const s = stateRef.current;
+      if (s.phase !== "work" || s.runningSince === null || s.runningSince > leftAt) return;
+      if (usedMs < settingsRef.current.studyAutoStopMinutes * 60_000) return;
+      void autoStopRef.current({ type: "stop", reason: "away", category: null, stoppedAt: leftAt });
+    });
+  }, [settings.studyAutoStopEnabled, stateRef, settingsRef, autoStopRef]);
 
   async function addSubjectHandler(name: string, mode?: SubjectMode): Promise<AddSubjectResult> {
     const trimmed = name.trim();

@@ -17,7 +17,7 @@ export interface AppNotification {
   title: string;
   body: string;
   /** Solo per lo stop automatico e il suo preavviso: cosa l'ha fatto scattare. */
-  reason?: "idle" | "app";
+  reason?: "idle" | "app" | "away";
   category?: AppCategory | null;
 }
 
