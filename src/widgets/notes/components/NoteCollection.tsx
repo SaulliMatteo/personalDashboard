@@ -11,6 +11,7 @@ import {
   MdStar,
 } from "react-icons/md";
 import ConfirmButton from "../../../ui/ConfirmButton";
+import { useTouchOnly } from "../../../core/layout/useCompact";
 import type { NoteSummary } from "../data/notesRepository";
 import type { DragItem } from "../lib/drag";
 import { formatWhen, relativeDay, sanitizeHtml } from "../lib/html";
@@ -63,6 +64,8 @@ function sortNotes(notes: NoteSummary[], sort: SortKey): NoteSummary[] {
 }
 
 function NoteCollection(props: NoteCollectionProps) {
+  // col dito la scorciatoia N non c'è: niente suggerimenti da tastiera
+  const touchOnly = useTouchOnly();
   const { notes, isTrash, mode } = props;
   const [tab, setTab] = useState<"all" | "starred">("all");
   const [templateMenu, setTemplateMenu] = useState(false);
@@ -191,7 +194,9 @@ function NoteCollection(props: NoteCollectionProps) {
             ? "Il cestino è vuoto."
             : tab === "starred"
               ? "Nessuna nota tra i preferiti."
-              : "Nessuna nota qui. Premi N o «Nuova nota» per catturare un'idea."}
+              : touchOnly
+                ? "Nessuna nota qui. Tocca «Nuova nota» per catturare un'idea."
+                : "Nessuna nota qui. Premi N o «Nuova nota» per catturare un'idea."}
         </p>
       ) : (
         <div className={mode === "grid" ? "nq-grid" : "nq-list"}>
@@ -284,7 +289,7 @@ function NoteCollection(props: NoteCollectionProps) {
 
       <footer className="nq-col-foot">
         <span>{notes.length} documenti · Il tuo spazio, le tue idee.</span>
-        <span>Premi N per catturare una nuova idea</span>
+        {!touchOnly && <span>Premi N per catturare una nuova idea</span>}
       </footer>
     </div>
   );
