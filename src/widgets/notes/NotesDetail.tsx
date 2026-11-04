@@ -81,6 +81,8 @@ import {
   vaultAbsolutePath,
   writeCollectionFiles,
 } from "./lib/vault";
+import { useCompact } from "../../core/layout/useCompact";
+import { useBackHandler } from "../../core/nav/backHandlers";
 import "./NotesDetail.css";
 
 type View =
@@ -103,7 +105,11 @@ function NotesDetail() {
   const [view, setView] = useState<View>({ kind: "all" });
   const [openId, setOpenId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
-  const [sideOpen, setSideOpen] = useState(true);
+  // sul telefono la barra laterale è un pannello sopra le note: parte chiusa, si chiude scegliendo una voce
+  // o con l'indietro di Android
+  const compact = useCompact();
+  const [sideOpen, setSideOpen] = useState(!compact);
+  useBackHandler(compact && sideOpen, () => setSideOpen(false));
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [newFolder, setNewFolder] = useState<{ parentId: number | null } | null>(null);
   const [customizeId, setCustomizeId] = useState<number | null>(null);
@@ -404,6 +410,7 @@ function NotesDetail() {
   }
 
   function goTo(next: View) {
+    if (compact) setSideOpen(false);
     setView(next);
     setOpenId(null);
     setQuery("");
@@ -1014,6 +1021,7 @@ function NotesDetail() {
               onSelect={selectFolder}
               onToggle={toggleExpanded}
               onOpenNote={(id) => {
+                if (compact) setSideOpen(false);
                 setQuery("");
                 setOpenId(id);
               }}

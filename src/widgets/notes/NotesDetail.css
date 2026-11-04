@@ -1466,3 +1466,43 @@ button.nq-crumb:hover {
   text-transform: uppercase;
   color: var(--text-muted);
 }
+
+/* ---------- Telefono: la barra laterale è un pannello sopra le note (si apre dal pulsante in alto) ---------- */
+:root[data-compact] .nq {
+  position: relative;
+  min-height: 70vh;
+}
+
+:root[data-compact] .nq-side {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: auto;
+  padding-top: 12px;
+}
+
+:root[data-compact] .nq-topbar {
+  padding: 10px 12px 4px;
+}
+
+/* intestazione della raccolta: icona e titolo sopra, il pulsante sotto */
+:root[data-compact] .nq-collection {
+  padding: 14px 12px 12px;
+}
+
+:root[data-compact] .nq-col-head {
+  flex-wrap: wrap;
+}
+
+:root[data-compact] .nq-col-titles {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+:root[data-compact] .nq-tabs button {
+  white-space: nowrap;
+}
+
+:root[data-compact] .nq-toolrow {
+  flex-wrap: wrap;
+}
