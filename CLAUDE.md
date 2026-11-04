@@ -36,9 +36,22 @@ cancella con la disinstallazione); il selettore file e l'esportazione danno URI 
 solo, il nome vero con `basename()`); aprire/condividere un file passa dal plugin locale `src-tauri/plugins/file-open`
 (FileProvider) con i comandi `file_open`/`file_share`, solo per file dentro il vault. Le differenze di piattaforma stanno
 in `widgets/notes/data/filesApi.ts` (con `core/system/platform.ts`), non nei componenti.
+Layout del telefono (mockup `docs/design/mobile/viste.html`): è "compatto" quando il lato corto della finestra è sotto i
+600 dp (`core/layout/useCompact.ts`, l'unica definizione; AppShell mette `data-compact` su `<html>` e i CSS usano
+`:root[data-compact]`). Tablet e desktop restano nel layout desktop. Sul telefono: sidebar come menu a scomparsa, barra in
+alto `ui/CompactBar` (titolo e ← della pagina; i `.dashboard-header` dei dettagli nascondono titolo e BackButton),
+dashboard `features/dashboard/MobileDashboard.tsx` a pagine 2×4 (4×2 in orizzontale) con i widget scalati con `zoom`.
+Il suo layout è separato: tabella `dashboard_layout_mobile` (`core/layout/mobileLayout.ts` puro, prova
+`scripts/layout/mobileLayout.test.mts`), mai scritto su `dashboard_layout`; il catalogo passa da
+`features/settings/catalog/useCatalogLayout.ts`. Impostazioni solo desktop: `desktopOnly` in `SETTING_DEFS`.
+Barre di sistema e tastiera: la WebView in `env(safe-area-inset-*)` dà solo il foro della fotocamera, quindi
+`MainActivity.kt` le manda a `core/system/androidInsets.ts`; nei CSS si usano `--safe-top|right|bottom|left` e
+`--keyboard` (`styles/base.css`). Indietro di Android: `NavProvider` (vista → dashboard) e `useBackHandler` di
+`core/nav/backHandlers.ts` per chi ha qualcosa da chiudere (menu, modifica, pannello del Quaderno).
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
-prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, e quella dei consigli YouTube
-(`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts`.
+prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, quella dei consigli YouTube
+(`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts` e
+`node scripts/layout/mobileLayout.test.mts` quando si tocca `core/layout/mobileLayout.ts`.
 
 ```bash
 # Prove pure (scripts/gruppi/<nome>.test.mts e scripts/youtube/<nome>.test.mts, nessun server); una alla volta:
