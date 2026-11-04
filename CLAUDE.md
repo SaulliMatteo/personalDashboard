@@ -43,11 +43,16 @@ alto `ui/CompactBar` (titolo e ← della pagina; i `.dashboard-header` dei detta
 dashboard `features/dashboard/MobileDashboard.tsx` a pagine 2×4 (4×2 in orizzontale) con i widget scalati con `zoom`.
 Il suo layout è separato: tabella `dashboard_layout_mobile` (`core/layout/mobileLayout.ts` puro, prova
 `scripts/layout/mobileLayout.test.mts`), mai scritto su `dashboard_layout`; il catalogo passa da
-`features/settings/catalog/useCatalogLayout.ts`. Impostazioni solo desktop: `desktopOnly` in `SETTING_DEFS`.
+`features/settings/catalog/useCatalogLayout.ts`. Impostazioni solo desktop: `desktopOnly` in `SETTING_DEFS`;
+solo dove ci sono i segnali di sistema (app in primo piano, Windows e macOS): `systemSignals`; testi diversi su Android:
+`android: { label, description }`. Uscite dall'app su Android (stop automatico dello Studio): `MainActivity.kt` manda
+`pd-away` (uscita, rientro, tempo a schermo acceso fuori dall'app), letto solo da `core/system/androidAway.ts`.
 Barre di sistema e tastiera: la WebView in `env(safe-area-inset-*)` dà solo il foro della fotocamera, quindi
 `MainActivity.kt` le manda a `core/system/androidInsets.ts`; nei CSS si usano `--safe-top|right|bottom|left` e
 `--keyboard` (`styles/base.css`), e `:root[data-keyboard]` quando la tastiera è aperta. Indietro di Android: `NavProvider` (vista → dashboard) e `useBackHandler` di
-`core/nav/backHandlers.ts` per chi ha qualcosa da chiudere (menu, modifica, pannello del Quaderno).
+`core/nav/backHandlers.ts` per chi ha qualcosa da chiudere (menu, modifica, pannello del Quaderno, conferma della Lavagna).
+Prima ancora, `core/nav/overlays.ts` chiude lo schermo intero o il dialogo/menu in cima mandandogli Esc: un dialogo o
+menu nuovo deve avere `role="dialog"`/`aria-modal`/`role="menu"` e chiudersi con Esc, altrimenti l'indietro cambia vista.
 Tocco (anche tablet): ciò che compare solo passando col mouse va mostrato anche in `@media (hover: none)`; le aree
 toccabili sotto i 44px si allargano con un `::after` invisibile e `inset: var(--hit)` dentro `@media (pointer: coarse)`
 (niente cambi d'aspetto); le scorciatoie da tastiera non si suggeriscono con `useTouchOnly()` (`core/layout/useCompact.ts`).
@@ -131,6 +136,10 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
   browser non può caricare file), `Host` solo IPv4 o `localhost` (DNS rebinding), `X-File-Name` obbligatorio (niente
   richieste "semplici" senza preflight), nomi di file sicuri (anche quelli riservati di Windows), mai sovrascrivere
   (`"wbx"`, poi "nome (1).ext"), file a metà cancellati, al massimo 64 GB, 32 connessioni e 30 s di silenzio.
+  Su Android il server non c'è e il widget **invia** al PC (`src/file_send.rs`, `ft_check_target`/`ft_send_file`;
+  frontend `FileSendContext.tsx`/`FileSendDetail.tsx`, ruolo scelto in `data/fileSendApi.ts`): stessa richiesta della
+  pagina dell'iPad, senza `Origin`. Il comando accetta solo URI `content://` del selettore e IPv4 privati: non deve
+  poter mandare file dell'app né uscire su internet scavalcando la CSP.
 - Companion (Pixy): `companion_snapshot` in `src/companion.rs` (inattività, app in primo piano e descrizione
   dell'eseguibile via `windows-sys`; su macOS inattività da CoreGraphics e app via `NSWorkspace`, con il bundle `.app`
   come "processo" e titolo vuoto). Lato frontend la catena è `core/system/appCategory.ts` (classifica l'app; con
