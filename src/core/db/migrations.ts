@@ -404,4 +404,21 @@ export const MIGRATIONS: Migration[] = [
        )`,
     ],
   },
+  {
+    version: 20,
+    description: "Layout della dashboard sul telefono, separato da quello del desktop",
+    statements: [
+      // Pagine 2×4 (core/layout/mobileLayout.ts): page da 0, x 0-1, y 0-3, taglie fino a 2×2.
+      // dashboard_layout (desktop) non si tocca: i due layout vivono in parallelo.
+      `CREATE TABLE IF NOT EXISTS dashboard_layout_mobile (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         widget_id TEXT NOT NULL UNIQUE,
+         page INTEGER NOT NULL,
+         x INTEGER NOT NULL,
+         y INTEGER NOT NULL,
+         w INTEGER NOT NULL,
+         h INTEGER NOT NULL
+       )`,
+    ],
+  },
 ];
