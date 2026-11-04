@@ -263,3 +263,16 @@
   background: var(--danger);
   color: var(--on-danger);
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .gi-remove {
+    position: relative;
+  }
+
+  .gi-remove::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

@@ -227,3 +227,18 @@
 :root[data-compact] .widget-catalog-actions {
   flex-wrap: wrap;
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .widget-catalog-btn,
+  .widget-catalog-size-btn {
+    position: relative;
+  }
+
+  .widget-catalog-btn::after,
+  .widget-catalog-size-btn::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

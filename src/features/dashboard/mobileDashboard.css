@@ -240,3 +240,16 @@
   padding: 24px;
   color: var(--text-secondary);
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .md-dots button {
+    position: relative;
+  }
+
+  .md-dots button::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

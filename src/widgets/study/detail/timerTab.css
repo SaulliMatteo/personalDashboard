@@ -358,3 +358,16 @@
 :root[data-compact] .study-subjects-card {
   min-height: 320px;
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .study-icon-btn {
+    position: relative;
+  }
+
+  .study-icon-btn::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

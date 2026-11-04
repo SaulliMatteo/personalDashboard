@@ -127,3 +127,16 @@
   line-height: 1;
   color: var(--accent);
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .study-report-btn {
+    position: relative;
+  }
+
+  .study-report-btn::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

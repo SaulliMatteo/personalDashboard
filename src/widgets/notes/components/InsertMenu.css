@@ -78,3 +78,10 @@
   border: 1.5px solid var(--accent);
   border-radius: 6px;
 }
+
+/* senza tastiera fisica i suggerimenti delle scorciatoie non servono */
+@media (hover: none) and (pointer: coarse) {
+  .nq-slash-opt small {
+    display: none;
+  }
+}

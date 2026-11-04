@@ -194,3 +194,12 @@
   flex: 1 1 auto;
   min-width: 0;
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css; ::after è il pallino) */
+@media (pointer: coarse) {
+  .settings-switch::before {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

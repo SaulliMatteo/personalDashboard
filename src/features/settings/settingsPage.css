@@ -507,3 +507,30 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .sp-nav-item,
+  .sp-segmented button,
+  .sp-link,
+  .sp-btn {
+    position: relative;
+  }
+
+  .sp-nav-item::after,
+  .sp-segmented button::after,
+  .sp-link::after,
+  .sp-swatch:not(.sp-swatch--custom)::after,
+  .sp-btn::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+
+  /* il selettore nativo invisibile si allarga lui */
+  .sp-swatch--custom input {
+    inset: var(--hit);
+    width: auto;
+    height: auto;
+  }
+}

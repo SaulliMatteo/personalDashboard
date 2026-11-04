@@ -107,6 +107,13 @@
   opacity: 1;
 }
 
+/* col dito non c'è il "passare sopra": sempre visibili */
+@media (hover: none) {
+  .nq-ctable-rowbtns {
+    opacity: 1;
+  }
+}
+
 .nq-ctable-types {
   width: 200px;
 }

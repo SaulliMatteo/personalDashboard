@@ -15,6 +15,9 @@
   --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--android-inset-bottom, 0px));
   --safe-left: max(env(safe-area-inset-left, 0px), var(--android-inset-left, 0px));
   --keyboard: var(--android-ime, 0px);
+  /* Area toccabile minima col dito: un ::after con inset: var(--hit) allarga a 44px un controllo più piccolo senza
+     cambiarne l'aspetto (le percentuali si risolvono sul controllo: in alto/basso sull'altezza, ai lati sulla larghezza). */
+  --hit: min(0px, (100% - 44px) / 2);
 }
 
 html,

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { MdAdd, MdSearch } from "react-icons/md";
 import { useNav } from "../../core/nav/useNav";
+import { useTouchOnly } from "../../core/layout/useCompact";
 import BackButton from "../../ui/BackButton";
 import AddVideoDialog from "./components/AddVideoDialog";
 import { findVideoByYoutubeId, type SavedVideo } from "./data/youtubeRepository";
@@ -33,6 +34,8 @@ const SEARCH_LIMIT = 8;
  */
 function YoutubeDetail() {
   const { goToDashboard } = useNav();
+  // senza tastiera fisica niente suggerimenti di scorciatoie
+  const touchOnly = useTouchOnly();
   const { folders, videos, loaded, error, setError, reload } = useYoutubeData();
 
   const [screen, setScreen] = useState<Screen>({ name: "home" });
@@ -153,7 +156,7 @@ function YoutubeDetail() {
                 searchRef.current?.blur();
               }
             }}
-            placeholder="Cerca video o cartelle…  (Ctrl+K)"
+            placeholder={touchOnly ? "Cerca video o cartelle…" : "Cerca video o cartelle…  (Ctrl+K)"}
             aria-label="Cerca nella libreria"
           />
           {query.trim() && (

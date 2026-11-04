@@ -771,6 +771,14 @@
   opacity: 1;
 }
 
+/* col dito non c'è il "passare sopra": azioni delle note e "+" delle cartelle sempre visibili */
+@media (hover: none) {
+  .nq-hover-only,
+  .nq-tree-add {
+    opacity: 1;
+  }
+}
+
 /* Elenco */
 
 .nq-list {
@@ -1505,4 +1513,28 @@ button.nq-crumb:hover {
 
 :root[data-compact] .nq-toolrow {
   flex-wrap: wrap;
+}
+
+/* senza tastiera fisica i suggerimenti delle scorciatoie non servono */
+@media (hover: none) and (pointer: coarse) {
+  .nq-search kbd {
+    display: none;
+  }
+}
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .nq-icon-btn,
+  .nq-btn,
+  .nq-tabs button {
+    position: relative;
+  }
+
+  .nq-icon-btn::after,
+  .nq-btn::after,
+  .nq-tabs button::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
 }

@@ -241,3 +241,18 @@
   padding: 18px 22px 22px;
 }
 
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .gp-nav-item,
+  .gp-tab {
+    position: relative;
+  }
+
+  .gp-nav-item::after,
+  .gp-tab::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}
