@@ -18,6 +18,10 @@ import "./styles/tokens-varianti.css";
 import "./styles/base.css";
 
 import App from "./app/App";
+import { installAndroidInsets } from "./core/system/androidInsets";
+
+// Su Android: barre di sistema e tastiera nelle variabili CSS (--safe-*, --keyboard), prima del primo render.
+installAndroidInsets();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
