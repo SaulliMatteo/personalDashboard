@@ -3,7 +3,7 @@ import Sidebar from "../features/sidebar/Sidebar";
 import RoomNavItem from "../social/room/RoomNavItem";
 import CompactBar from "../ui/CompactBar";
 import { useCompact } from "../core/layout/useCompact";
-import { useBackHandler } from "../core/nav/backHandlers";
+import { runBackHandler, useBackHandler } from "../core/nav/backHandlers";
 import { DrawerContext } from "../core/nav/useDrawer";
 import { useNav } from "../core/nav/useNav";
 import "./shell.css";
@@ -88,7 +88,8 @@ function AppShell({ children, scroll = true, compactBar }: { children: ReactNode
           {compactBar && (
             <CompactBar
               lead={compactBar.lead}
-              onLead={compactBar.lead === "menu" ? () => setDrawerOpen(true) : goToDashboard}
+              // ← fa come l'indietro di Android: prima chiude ciò che la pagina ha aperto (backHandlers.ts)
+              onLead={compactBar.lead === "menu" ? () => setDrawerOpen(true) : () => runBackHandler() || goToDashboard()}
               title={compactBar.title}
               subtitle={compactBar.subtitle}
             />
