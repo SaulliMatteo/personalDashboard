@@ -56,6 +56,9 @@ pub fn run() {
     }));
     #[cfg(all(target_os = "macos", not(dev)))]
     let builder = builder.plugin(tauri_plugin_localhost::Builder::new(LOCALHOST_PORT).build());
+    // Sessione dei Gruppi su Android (src/secure_store.rs): il portachiavi è l'Android Keystore.
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(tauri_plugin_secure_store::init());
 
     builder
         .plugin(tauri_plugin_fs::init())

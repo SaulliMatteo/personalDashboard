@@ -82,3 +82,8 @@ features = ["windows-native"]
 [target.'cfg(target_os = "macos")'.dependencies.keyring]
 version = "=3.6.3"
 features = ["apple-native"]
+
+# Gruppi su Android: sessione nell'Android Keystore con il plugin locale plugins/secure-store
+# (Kotlin, solo SDK di Android). Al posto del portachiavi, che `keyring` 3.x su Android non ha.
+[target.'cfg(target_os = "android")'.dependencies]
+tauri-plugin-secure-store = { path = "plugins/secure-store" }

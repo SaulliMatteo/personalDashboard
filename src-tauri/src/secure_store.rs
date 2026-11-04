@@ -1,5 +1,6 @@
 //! Archivio sicuro della sessione dei Gruppi: il portachiavi del sistema (Credential Manager su
-//! Windows, Keychain su macOS) tramite `keyring`. Lato frontend lo usa solo l'adattatore di
+//! Windows, Keychain su macOS) tramite `keyring`; su Android l'Android Keystore tramite il plugin
+//! `plugins/secure-store` (stessa interfaccia, senza pezzi). Lato frontend lo usa solo l'adattatore di
 //! `core/cloud/secureStorage.ts` come storage di supabase-js. Mai SQLite, localStorage o file.
 //!
 //! Il Credential Manager accetta al massimo 2560 byte per voce (1280 caratteri UTF-16), meno di
@@ -13,7 +14,7 @@
 #[cfg(any(windows, target_os = "macos"))]
 const CHUNK_CHARS: usize = 1000;
 /// Limite al valore intero (una sessione ne occupa pochi KB).
-#[cfg(any(windows, target_os = "macos"))]
+#[cfg(any(windows, target_os = "macos", target_os = "android"))]
 const MAX_CHARS: usize = 64 * 1024;
 #[cfg(any(windows, target_os = "macos"))]
 const MAX_CHUNKS: usize = MAX_CHARS / CHUNK_CHARS + 1;
@@ -23,12 +24,24 @@ fn valid_key(key: &str) -> bool {
     !key.is_empty() && key.len() <= 64 && key.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
 }
 
+/// Dove vanno le voci: sul desktop il "servizio" del portachiavi è l'identificatore dell'app,
+/// su Android serve l'app stessa per raggiungere il plugin.
+#[cfg(not(target_os = "android"))]
+fn target(app: &tauri::AppHandle) -> &str {
+    &app.config().identifier
+}
+
+#[cfg(target_os = "android")]
+fn target(app: &tauri::AppHandle) -> &tauri::AppHandle {
+    app
+}
+
 #[tauri::command]
 pub async fn secure_store_get(app: tauri::AppHandle, key: String) -> Result<Option<String>, String> {
     if !valid_key(&key) {
         return Err("Chiave non valida".into());
     }
-    imp::get(&app.config().identifier, &key)
+    imp::get(target(&app), &key)
 }
 
 #[tauri::command]
@@ -36,7 +49,7 @@ pub async fn secure_store_set(app: tauri::AppHandle, key: String, value: String)
     if !valid_key(&key) {
         return Err("Chiave non valida".into());
     }
-    imp::set(&app.config().identifier, &key, &value)
+    imp::set(target(&app), &key, &value)
 }
 
 #[tauri::command]
@@ -44,7 +57,7 @@ pub async fn secure_store_remove(app: tauri::AppHandle, key: String) -> Result<(
     if !valid_key(&key) {
         return Err("Chiave non valida".into());
     }
-    imp::remove(&app.config().identifier, &key)
+    imp::remove(target(&app), &key)
 }
 
 #[cfg(any(windows, target_os = "macos"))]
@@ -133,9 +146,34 @@ mod imp {
     }
 }
 
+/// Android: chiave nell'Android Keystore e valori cifrati nei file privati dell'app (vedi
+/// `plugins/secure-store`). Nessun limite di lunghezza per voce, quindi niente pezzi.
+#[cfg(target_os = "android")]
+mod imp {
+    use super::MAX_CHARS;
+    use tauri_plugin_secure_store::SecureStoreExt;
+
+    const ERR: &str = "Archivio sicuro di Android non disponibile";
+
+    pub fn get(app: &tauri::AppHandle, key: &str) -> Result<Option<String>, String> {
+        app.secure_store().get(key).map_err(|_| ERR.into())
+    }
+
+    pub fn set(app: &tauri::AppHandle, key: &str, value: &str) -> Result<(), String> {
+        if value.chars().count() > MAX_CHARS {
+            return Err("Valore troppo grande per l'archivio sicuro".into());
+        }
+        app.secure_store().set(key, value).map_err(|_| ERR.into())
+    }
+
+    pub fn remove(app: &tauri::AppHandle, key: &str) -> Result<(), String> {
+        app.secure_store().remove(key).map_err(|_| ERR.into())
+    }
+}
+
 /// Altri sistemi (oggi Linux): niente portachiavi, quindi niente accesso ai Gruppi.
 /// L'app compila e il frontend mostra l'errore.
-#[cfg(not(any(windows, target_os = "macos")))]
+#[cfg(not(any(windows, target_os = "macos", target_os = "android")))]
 mod imp {
     const ERR: &str = "Portachiavi non supportato su questo sistema";
 
