@@ -29,6 +29,10 @@ const MOVE_SLOP = 10;
 /** In modifica, tenendo la cella sul bordo per questo tempo si passa alla pagina accanto. */
 const EDGE_ZONE = 32;
 const EDGE_DELAY_MS = 550;
+/** Tenendo premuto un widget per questo tempo si entra nella modifica (e lo si può già trascinare). */
+const LONG_PRESS_MS = 500;
+/** Durante il trascinamento partito da una pressione lunga la pagina non deve scorrere (vedi onCellPointerDown). */
+const blockScroll = (ev: TouchEvent) => ev.preventDefault();
 /** Dopo uno scorrimento o un trascinamento i click si ignorano per un attimo. */
 const CLICK_GUARD_MS = 350;
 
@@ -80,6 +84,8 @@ interface Drag {
   width: number;
   height: number;
   active: boolean;
+  /** Nato da una pressione lunga fuori dalla modifica: al rilascio il click non deve arrivare al widget. */
+  fromPress?: boolean;
 }
 
 interface Swipe {
@@ -120,8 +126,23 @@ function MobileDashboard() {
   const dragRef = useRef<Drag | null>(null);
   const edgeTimer = useRef<number | undefined>(undefined);
   const guardUntil = useRef(0);
+  const pressRef = useRef<{ timer: number; pointerId: number; x: number; y: number } | null>(null);
+  const cancelPress = () => {
+    if (pressRef.current) window.clearTimeout(pressRef.current.timer);
+    pressRef.current = null;
+  };
+  // Dopo la pressione lunga il gesto è già iniziato con lo scorrimento permesso (touch-action si decide al tocco):
+  // finché il dito resta giù i movimenti non devono far scorrere la pagina, o Android annulla il trascinamento.
+  const releaseScroll = () => window.removeEventListener("touchmove", blockScroll);
 
-  useEffect(() => () => window.clearTimeout(edgeTimer.current), []);
+  useEffect(
+    () => () => {
+      window.clearTimeout(edgeTimer.current);
+      if (pressRef.current) window.clearTimeout(pressRef.current.timer);
+      window.removeEventListener("touchmove", blockScroll);
+    },
+    []
+  );
 
   const stopEditing = () => {
     setEditing(false);
@@ -158,10 +179,12 @@ function MobileDashboard() {
     if (!swipe.active) {
       if (Math.abs(dy) > MOVE_SLOP && Math.abs(dy) > Math.abs(dx)) {
         swipeRef.current = null; // è uno scorrimento verticale dentro un widget
+        cancelPress();
         return;
       }
       if (Math.abs(dx) < MOVE_SLOP) return;
       swipe.active = true;
+      cancelPress(); // scorrendo la pagina non parte la pressione lunga
       e.currentTarget.setPointerCapture(e.pointerId);
     }
     // ai bordi (prima e ultima pagina) lo scorrimento oppone resistenza
@@ -184,7 +207,47 @@ function MobileDashboard() {
 
   // ---------- trascinamento in modifica ----------
   const onCellPointerDown = (e: ReactPointerEvent<HTMLDivElement>, item: MobileItem) => {
-    if (!editing || !e.isPrimary || (e.target as HTMLElement).closest("button")) return;
+    if (!e.isPrimary) return;
+    if (!editing) {
+      // pressione lunga: si entra nella modifica e, senza staccare il dito, si trascina già il widget
+      const el = e.currentTarget;
+      const { pointerId, clientX, clientY } = e;
+      cancelPress();
+      pressRef.current = {
+        pointerId,
+        x: clientX,
+        y: clientY,
+        timer: window.setTimeout(() => {
+          pressRef.current = null;
+          swipeRef.current = null;
+          setSwipeDx(0);
+          setEditing(true);
+          window.addEventListener("touchmove", blockScroll, { passive: false });
+          const rect = el.getBoundingClientRect();
+          dragRef.current = {
+            id: item.i,
+            pointerId,
+            startX: clientX,
+            startY: clientY,
+            x: clientX,
+            y: clientY,
+            offsetX: clientX - rect.left,
+            offsetY: clientY - rect.top,
+            width: rect.width,
+            height: rect.height,
+            active: false,
+            fromPress: true,
+          };
+          try {
+            el.setPointerCapture(pointerId);
+          } catch {
+            // il dito è già stato alzato
+          }
+        }, LONG_PRESS_MS),
+      };
+      return;
+    }
+    if ((e.target as HTMLElement).closest("button")) return;
     e.stopPropagation(); // niente scorrimento della pagina
     const rect = e.currentTarget.getBoundingClientRect();
     const next: Drag = {
@@ -205,6 +268,8 @@ function MobileDashboard() {
   };
 
   const onCellPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const press = pressRef.current;
+    if (press && press.pointerId === e.pointerId && Math.hypot(e.clientX - press.x, e.clientY - press.y) > MOVE_SLOP) cancelPress();
     const current = dragRef.current;
     if (!current || current.pointerId !== e.pointerId) return;
     const moved = Math.hypot(e.clientX - current.startX, e.clientY - current.startY);
@@ -238,13 +303,18 @@ function MobileDashboard() {
   });
 
   const endDrag = (e: ReactPointerEvent<HTMLDivElement>, commit: boolean) => {
+    if (pressRef.current?.pointerId === e.pointerId) cancelPress();
+    releaseScroll();
     const current = dragRef.current;
     if (!current || current.pointerId !== e.pointerId) return;
     dragRef.current = null;
     setDrag(null);
     window.clearTimeout(edgeTimer.current);
     edgeTimer.current = undefined;
-    if (!current.active) return;
+    if (!current.active) {
+      if (current.fromPress) guardClicks(guardUntil);
+      return;
+    }
     guardClicks(guardUntil);
     if (!commit) return;
     // la cella va dove sta il suo angolo in alto a sinistra (mezza cella di tolleranza)

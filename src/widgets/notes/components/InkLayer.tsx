@@ -213,7 +213,8 @@ function InkLayer({ strokes, active, tool, color, size, shapes = false, onChange
   }
 
   function handleDown(e: PointerEvent<HTMLCanvasElement>) {
-    if (!active) return;
+    // un dito alla volta: un secondo dito (o il palmo) non apre un altro tratto
+    if (!active || !e.isPrimary) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     const p = pointOf(e);
     if (tool === "eraser") {

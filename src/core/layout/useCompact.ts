@@ -32,3 +32,19 @@ function subscribeLandscape(onChange: () => void) {
 export function useLandscape(): boolean {
   return useSyncExternalStore(subscribeLandscape, () => window.matchMedia(LANDSCAPE_QUERY).matches, () => false);
 }
+
+/**
+ * Solo dita, niente mouse né trackpad (telefoni e tablet senza tastiera): niente suggerimenti di scorciatoie.
+ * Nei CSS la stessa condizione è `@media (hover: none) and (pointer: coarse)`.
+ */
+const TOUCH_ONLY_QUERY = "(hover: none) and (pointer: coarse)";
+
+function subscribeTouchOnly(onChange: () => void) {
+  const query = window.matchMedia(TOUCH_ONLY_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+export function useTouchOnly(): boolean {
+  return useSyncExternalStore(subscribeTouchOnly, () => window.matchMedia(TOUCH_ONLY_QUERY).matches, () => false);
+}

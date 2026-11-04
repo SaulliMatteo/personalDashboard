@@ -81,7 +81,7 @@ import {
   vaultAbsolutePath,
   writeCollectionFiles,
 } from "./lib/vault";
-import { useCompact } from "../../core/layout/useCompact";
+import { useCompact, useTouchOnly } from "../../core/layout/useCompact";
 import { useBackHandler } from "../../core/nav/backHandlers";
 import "./NotesDetail.css";
 
@@ -96,6 +96,11 @@ type View =
 
 const RECENT_LIMIT = 12;
 
+/** Col dito, quanto tenere premuto su una nota o una cartella prima che si trascini. */
+const LONG_PRESS_MS = 400;
+/** Col dito, movimento oltre cui la pressione diventa uno scorrimento. */
+const TOUCH_SLOP = 8;
+
 /** Pagina "Notes": cartelle, raccolta di note ed editor. */
 function NotesDetail() {
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -108,6 +113,8 @@ function NotesDetail() {
   // sul telefono la barra laterale è un pannello sopra le note: parte chiusa, si chiude scegliendo una voce
   // o con l'indietro di Android
   const compact = useCompact();
+  // senza tastiera fisica il pannello delle scorciatoie non serve
+  const touchOnly = useTouchOnly();
   const [sideOpen, setSideOpen] = useState(!compact);
   useBackHandler(compact && sideOpen, () => setSideOpen(false));
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
@@ -516,9 +523,28 @@ function NotesDetail() {
       if (e.button !== 0) return;
       const startX = e.clientX;
       const startY = e.clientY;
+      // Col dito si trascina solo dopo una pressione lunga: un tocco apre, uno scorrimento scorre la lista.
+      const touch = e.pointerType !== "mouse";
+      let pressed = !touch;
       let active = false;
       let hoverKey: string | null = null;
       let hoverTimer: number | null = null;
+      const pressTimer = touch
+        ? window.setTimeout(() => {
+            pressed = true;
+            activate();
+            setDrag({ item, x: startX, y: startY });
+          }, LONG_PRESS_MS)
+        : null;
+      // da trascinamento iniziato, il dito non deve più far scorrere la pagina
+      const blockScroll = (ev: TouchEvent) => {
+        if (active) ev.preventDefault();
+      };
+
+      function activate() {
+        active = true;
+        document.body.classList.add("nq-dragging");
+      }
 
       const keyAt = (x: number, y: number): string | null =>
         document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-drop-folder]")?.dataset.dropFolder ?? null;
@@ -527,15 +553,22 @@ function NotesDetail() {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
         window.removeEventListener("pointercancel", onCancel);
+        window.removeEventListener("touchmove", blockScroll);
         document.body.classList.remove("nq-dragging");
         if (hoverTimer !== null) window.clearTimeout(hoverTimer);
+        if (pressTimer !== null) window.clearTimeout(pressTimer);
       };
 
       function onMove(ev: PointerEvent) {
         if (!active) {
-          if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 6) return;
-          active = true;
-          document.body.classList.add("nq-dragging");
+          const moved = Math.hypot(ev.clientX - startX, ev.clientY - startY);
+          // col dito, muoversi prima della pressione lunga è uno scorrimento: niente trascinamento
+          if (!pressed) {
+            if (moved > TOUCH_SLOP) cleanup();
+            return;
+          }
+          if (moved < 6) return;
+          activate();
         }
         setDrag({ item, x: ev.clientX, y: ev.clientY });
         const key = keyAt(ev.clientX, ev.clientY);
@@ -577,6 +610,7 @@ function NotesDetail() {
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
       window.addEventListener("pointercancel", onCancel);
+      if (touch) window.addEventListener("touchmove", blockScroll, { passive: false });
     },
     [canDropRef, moveRef]
   );
@@ -870,7 +904,7 @@ function NotesDetail() {
       <NoteEditor
         registerEditor={onClosePane ? registerSide : registerMain}
         onStoreFiles={storeFiles}
-        onOpenShortcuts={() => setKeysOpen(true)}
+        onOpenShortcuts={touchOnly ? undefined : () => setKeysOpen(true)}
         key={`${onClosePane ? "side" : "main"}-${note.id}`}
         note={note}
         pathLabel={pathOf(note.folderId)}

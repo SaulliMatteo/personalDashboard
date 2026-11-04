@@ -16,6 +16,8 @@ import { useGhostPreview, useForceEndDragOnBlur } from "./useGhostPreview";
 import DashboardHeader from "./DashboardHeader";
 import AddWidgetSlot from "./AddWidgetSlot";
 import { fromInnerControl } from "./fromInnerControl";
+import { useLongPressGridDrag } from "./useLongPressGridDrag";
+import { useTouchOnly } from "../../core/layout/useCompact";
 
 // La griglia non ha margine esterno: riempie l'area di .main come nei mockup.
 const NO_PADDING = [0, 0] as const;
@@ -63,6 +65,9 @@ function Dashboard() {
 
   const [gridElement, setGridElement] = useState<HTMLDivElement | null>(null);
   const { height, gap } = useGridMetrics(gridElement, theme.id);
+  // tablet senza mouse: si trascina dopo una pressione lunga, così tocchi e doppi tocchi arrivano ai widget
+  const touchOnly = useTouchOnly();
+  useLongPressGridDrag(gridElement, touchOnly && !settings.lockLayout);
   const marginTuple = [gap, gap] as const;
 
   // La griglia sta sempre nello spazio sotto l'intestazione: le righe si dividono l'altezza
@@ -128,8 +133,13 @@ function Dashboard() {
       }, STUCK_DRAG_CHECK_MS);
     };
     window.addEventListener("mouseup", onMouseUp, true);
+    // col dito (tablet, che usano questa griglia) la libreria rilascia su touchend: stesso aggancio
+    window.addEventListener("touchend", onMouseUp, true);
+    window.addEventListener("touchcancel", onMouseUp, true);
     return () => {
       window.removeEventListener("mouseup", onMouseUp, true);
+      window.removeEventListener("touchend", onMouseUp, true);
+      window.removeEventListener("touchcancel", onMouseUp, true);
       window.clearTimeout(timer);
     };
   }, [dragCompactor, recoverStuckDrag]);
@@ -187,7 +197,8 @@ function Dashboard() {
               // col mouse fermo sopra un widget si rimanda lo stesso movimento dopo il ritardo.
               // Solo per i movimenti veri, così il movimento rimandato non si ripete all'infinito.
               window.clearTimeout(pushTimerRef.current);
-              if (!mouse.isTrusted) return;
+              // col dito (tablet) l'evento non è un MouseEvent e non ha clientX: niente movimento rimandato
+              if (!mouse.isTrusted || !(event instanceof MouseEvent)) return;
               pushTimerRef.current = window.setTimeout(() => {
                 const last = lastDragRef.current;
                 if (!last || !dragCompactor.isActive()) return;
