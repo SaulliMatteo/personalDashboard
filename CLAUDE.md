@@ -48,6 +48,11 @@ Barre di sistema e tastiera: la WebView in `env(safe-area-inset-*)` dà solo il 
 `MainActivity.kt` le manda a `core/system/androidInsets.ts`; nei CSS si usano `--safe-top|right|bottom|left` e
 `--keyboard` (`styles/base.css`), e `:root[data-keyboard]` quando la tastiera è aperta. Indietro di Android: `NavProvider` (vista → dashboard) e `useBackHandler` di
 `core/nav/backHandlers.ts` per chi ha qualcosa da chiudere (menu, modifica, pannello del Quaderno).
+Tocco (anche tablet): ciò che compare solo passando col mouse va mostrato anche in `@media (hover: none)`; le aree
+toccabili sotto i 44px si allargano con un `::after` invisibile e `inset: var(--hit)` dentro `@media (pointer: coarse)`
+(niente cambi d'aspetto); le scorciatoie da tastiera non si suggeriscono con `useTouchOnly()` (`core/layout/useCompact.ts`).
+Col dito si trascina solo dopo una pressione lunga (dashboard del telefono, Note, tabellone, griglia desktop sul tablet
+con `features/dashboard/useLongPressGridDrag.ts`): un tocco apre, uno scorrimento scorre.
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
 prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, quella dei consigli YouTube
 (`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts` e
@@ -206,6 +211,8 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
   riceve, non calcolarne uno diverso (la libreria non si riallinea a props uguali alle precedenti).
 - Dopo un drag i click sulla cella si ignorano per un attimo: il rilascio genera un click sul pulsante trascinato
   (es. aprirebbe un video o una nota).
+- react-grid-layout (react-draggable) annulla ogni `touchstart` sulle celle e col dito non arriverebbe nessun click:
+  sui tablet senza mouse `useLongPressGridDrag` lo ferma prima e glielo ripassa dopo la pressione lunga. Non toglierlo.
 - `<select>` nativi: il menu aperto lo disegna il sistema, quindi `color-scheme: inherit` sul select e sfondo pieno
   sulle `option` (`--modal-bg`); `--panel-bg` non va bene, in Fosforo è trasparente e il menu esce bianco.
 - Valori "ultimi" in interval/listener di lunga durata → `core/hooks/useLatestRef.ts`.
