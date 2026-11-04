@@ -35,6 +35,13 @@
   gap: 14px;
 }
 
+/* in una colonna il palco non resta fermo in alto: il resto gli scorrerebbe sotto */
+@media (max-width: 900px) {
+  .companion-detail-side {
+    position: static;
+  }
+}
+
 .companion-detail-main {
   display: flex;
   flex-direction: column;

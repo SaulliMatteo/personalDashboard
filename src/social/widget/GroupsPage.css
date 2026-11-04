@@ -256,3 +256,13 @@
     inset: var(--hit);
   }
 }
+
+/* Telefono: il titolo e l'indietro stanno nella barra in alto; la colonna dei gruppi va a tutta larghezza. */
+:root[data-compact] .gp-header {
+  display: none;
+}
+
+:root[data-compact] .gp-nav {
+  flex-basis: 100%;
+  max-width: none;
+}

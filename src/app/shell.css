@@ -139,7 +139,20 @@
   gap: 0;
   /* sul telefono la barra di scorrimento compare da sola mentre si scorre */
   scrollbar-width: none;
-  padding: var(--safe-top) var(--safe-right) calc(var(--safe-bottom) + var(--keyboard)) var(--safe-left);
+  /* la pagina scorre sotto la barra di stato, mai dietro: la barra resta pulita (sfondo in ::before) */
+  margin-top: var(--safe-top);
+  padding: 0 var(--safe-right) calc(var(--safe-bottom) + var(--keyboard)) var(--safe-left);
+}
+
+.app--compact::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--safe-top);
+  background: var(--main-bg);
+  pointer-events: none;
 }
 
 /* la riga del margine del Quaderno resta sul bordo, dentro la safe area */
