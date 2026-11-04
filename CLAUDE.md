@@ -31,6 +31,11 @@ Android. Su Android la pagina gira da `http://tauri.localhost` e il DB sta in `/
 Sessione dei Gruppi su Android: i comandi `secure_store_*` passano al plugin locale `src-tauri/plugins/secure-store`
 (Kotlin: chiave AES-256-GCM nell'Android Keystore, valori cifrati in `noBackupFilesDir`), mai in SQLite o
 `localStorage`. Il deep link per Android è in `tauri.android.conf.json` (`plugins.deep-link.mobile`).
+Quaderno su Android: il vault (`documentDir()/Notes`) è `Android/data/<id>/files/Documents/Notes` (niente permessi, si
+cancella con la disinstallazione); il selettore file e l'esportazione danno URI `content://` (il plugin fs li apre da
+solo, il nome vero con `basename()`); aprire/condividere un file passa dal plugin locale `src-tauri/plugins/file-open`
+(FileProvider) con i comandi `file_open`/`file_share`, solo per file dentro il vault. Le differenze di piattaforma stanno
+in `widgets/notes/data/filesApi.ts` (con `core/system/platform.ts`), non nei componenti.
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
 prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, e quella dei consigli YouTube
 (`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts`.
