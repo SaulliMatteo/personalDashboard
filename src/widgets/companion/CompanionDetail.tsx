@@ -229,7 +229,7 @@ function CompanionDetail() {
             {tab === "animations" && (
               <section className="companion-card">
                 <p className="companion-note companion-note-top">
-                  Scegli un gruppo, tocca una posa per vederla sulla faccia qui accanto o premi "Guarda tutte". Le pose cambiano con la
+                  Scegli un gruppo, tocca una posa per vederla sulla faccia di Pixy o premi "Guarda tutte". Le pose cambiano con la
                   personalità ({PERSONALITIES[settings.companionPersonality].label}).
                 </p>
 
