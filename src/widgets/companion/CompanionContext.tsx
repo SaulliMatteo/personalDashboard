@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getActivity, subscribeActivity, subscribeActivityEvents } from "../../core/activity/activityBus";
-import { useLayout } from "../../core/layout/useLayout";
+import { useWidgetPlaced } from "../../core/layout/useWidgetPlaced";
 import { useSettings } from "../../core/settings/useSettings";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
 import { useThemeVariant } from "../../core/theme/variants";
@@ -49,7 +49,6 @@ function clamp(v: number, min: number, max: number) {
 
 export function CompanionProvider({ children }: { children: ReactNode }) {
   const { settings, updateSetting } = useSettings();
-  const { layout } = useLayout();
 
   const disabled = useMemo(() => parseDisabled(settings.companionDisabledAnimations), [settings.companionDisabledAnimations]);
 
@@ -96,7 +95,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   const appChoices = useMemo(() => parseAppCategories(settings.companionAppCategories), [settings.companionAppCategories]);
   const appChoicesRef = useLatestRef(appChoices);
 
-  const placed = layout.some((item) => item.i === COMPANION_WIDGET_ID);
+  const placed = useWidgetPlaced(COMPANION_WIDGET_ID);
   // Con le espressioni condivise nei Gruppi il cervello lavora anche se Pixy non è in dashboard.
   const active = placed || retainCount > 0 || settings.groupsSharePixy;
 
