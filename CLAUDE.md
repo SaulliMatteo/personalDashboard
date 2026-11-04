@@ -46,7 +46,7 @@ Il suo layout è separato: tabella `dashboard_layout_mobile` (`core/layout/mobil
 `features/settings/catalog/useCatalogLayout.ts`. Impostazioni solo desktop: `desktopOnly` in `SETTING_DEFS`.
 Barre di sistema e tastiera: la WebView in `env(safe-area-inset-*)` dà solo il foro della fotocamera, quindi
 `MainActivity.kt` le manda a `core/system/androidInsets.ts`; nei CSS si usano `--safe-top|right|bottom|left` e
-`--keyboard` (`styles/base.css`). Indietro di Android: `NavProvider` (vista → dashboard) e `useBackHandler` di
+`--keyboard` (`styles/base.css`), e `:root[data-keyboard]` quando la tastiera è aperta. Indietro di Android: `NavProvider` (vista → dashboard) e `useBackHandler` di
 `core/nav/backHandlers.ts` per chi ha qualcosa da chiudere (menu, modifica, pannello del Quaderno).
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
 prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, quella dei consigli YouTube
