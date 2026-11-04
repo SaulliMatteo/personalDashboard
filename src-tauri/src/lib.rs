@@ -1,4 +1,5 @@
 mod companion;
+mod file_open;
 mod file_transfer;
 mod notify;
 mod secure_store;
@@ -59,6 +60,9 @@ pub fn run() {
     // Sessione dei Gruppi su Android (src/secure_store.rs): il portachiavi è l'Android Keystore.
     #[cfg(target_os = "android")]
     let builder = builder.plugin(tauri_plugin_secure_store::init());
+    // Aprire e condividere i file del Quaderno su Android (src/file_open.rs).
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(tauri_plugin_file_open::init());
 
     builder
         .plugin(tauri_plugin_fs::init())
@@ -80,6 +84,8 @@ pub fn run() {
             secure_store::secure_store_get,
             secure_store::secure_store_set,
             secure_store::secure_store_remove,
+            file_open::file_open,
+            file_open::file_share,
         ])
         .on_window_event(|window, event| {
             // Chiudendo la finestra il server C va fermato, altrimenti la

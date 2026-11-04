@@ -43,6 +43,8 @@ fn main() {
             "secure_store_get",
             "secure_store_set",
             "secure_store_remove",
+            "file_open",
+            "file_share",
         ]),
     ))
     .expect("errore nel build di Tauri");

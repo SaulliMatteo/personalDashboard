@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/mobile-schema.json",
   "identifier": "mobile",
-  "description": "Permessi dell'app Android. I comandi dell'app sono concessi tutti: dove non sono supportati rispondono da soli con un errore chiaro (o false), invece di un rifiuto dell'ACL. Lo scope fs del Quaderno arriva con la Fase 3.",
+  "description": "Permessi dell'app Android. I comandi dell'app sono concessi tutti: dove non sono supportati rispondono da soli con un errore chiaro (o false), invece di un rifiuto dell'ACL. Il Quaderno legge e scrive solo in $DOCUMENT/Notes (su Android la cartella dell'app in Android/data): i file scelti con il selettore o salvati con l'esportazione sono URI content://, che il plugin fs apre senza scope.",
   "platforms": ["android"],
   "windows": ["main"],
   "permissions": [
@@ -22,6 +22,17 @@
     "allow-notify-with-image",
     "allow-secure-store-get",
     "allow-secure-store-set",
-    "allow-secure-store-remove"
+    "allow-secure-store-remove",
+    "allow-file-open",
+    "allow-file-share",
+    { "identifier": "fs:allow-read-file", "allow": [{ "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-read-text-file", "allow": [{ "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-read-dir", "allow": [{ "path": "$DOCUMENT/Notes" }, { "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-exists", "allow": [{ "path": "$DOCUMENT/Notes" }, { "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-mkdir", "allow": [{ "path": "$DOCUMENT/Notes" }, { "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-write-file", "allow": [{ "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-write-text-file", "allow": [{ "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-rename", "allow": [{ "path": "$DOCUMENT/Notes/**" }] },
+    { "identifier": "fs:allow-remove", "allow": [{ "path": "$DOCUMENT/Notes/**" }] }
   ]
 }

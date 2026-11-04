@@ -87,3 +87,4 @@ features = ["apple-native"]
 # (Kotlin, solo SDK di Android). Al posto del portachiavi, che `keyring` 3.x su Android non ha.
 [target.'cfg(target_os = "android")'.dependencies]
 tauri-plugin-secure-store = { path = "plugins/secure-store" }
+tauri-plugin-file-open = { path = "plugins/file-open" }
