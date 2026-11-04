@@ -28,6 +28,9 @@ Il progetto `src-tauri/gen/android` è versionato (manifest, Gradle e icone si m
 ogni build lo escludono i suoi `.gitignore`. Capability: `capabilities/default.json` solo desktop, `mobile.json` per
 Android. Su Android la pagina gira da `http://tauri.localhost` e il DB sta in `/data/data/<id>/dashboard.db`
 (app debug: `it.matteo.personalDashboard.debug`, un'app separata con i suoi dati; si legge con `adb exec-out run-as`).
+Sessione dei Gruppi su Android: i comandi `secure_store_*` passano al plugin locale `src-tauri/plugins/secure-store`
+(Kotlin: chiave AES-256-GCM nell'Android Keystore, valori cifrati in `noBackupFilesDir`), mai in SQLite o
+`localStorage`. Il deep link per Android è in `tauri.android.conf.json` (`plugins.deep-link.mobile`).
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
 prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, e quella dei consigli YouTube
 (`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts`.
