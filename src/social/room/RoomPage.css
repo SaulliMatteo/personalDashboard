@@ -201,3 +201,117 @@
   min-height: 0;
   overflow-y: auto;
 }
+
+/* ---------- Telefono (docs/design/mobile/viste.html, viste 8 e 9) ----------
+   Barra in alto (CompactBar), sotto gruppi e frecce, poi posto e timer; la sala a tutta larghezza e le schede, dove
+   scorre solo la lista. Con la tastiera aperta (data-keyboard, core/system/androidInsets.ts) restano solo le schede. */
+:root[data-compact] .roomp {
+  gap: 10px;
+  padding-bottom: 10px;
+}
+
+:root[data-compact] .roomp > :not(.cbar) {
+  margin-inline: var(--compact-side);
+}
+
+.roomp-header--compact {
+  gap: 8px;
+}
+
+.roomp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* i gruppi scorrono in orizzontale se sono tanti; le frecce restano a destra */
+.roomp-row .roomp-groups {
+  flex: 0 1 auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.roomp-row .roomp-groups button {
+  flex: none;
+  height: 40px;
+  white-space: nowrap;
+}
+
+.roomp-row .roomp-rooms {
+  flex: none;
+  margin-left: auto;
+}
+
+.roomp-header--compact .roomp-arrow {
+  width: 44px;
+  height: 44px;
+}
+
+.roomp-seat {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.roomp-header--compact .grp-btn {
+  height: 44px;
+}
+
+:root[data-compact] .roomp-main {
+  flex-direction: column;
+  gap: 10px;
+}
+
+:root[data-compact] .roomp-room {
+  flex: 0 0 auto;
+  height: clamp(170px, 30vh, 280px);
+}
+
+:root[data-compact] .rsp {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* in orizzontale sala e schede tornano affiancate */
+@media (orientation: landscape) {
+  :root[data-compact] .roomp-main {
+    flex-direction: row;
+  }
+
+  :root[data-compact] .roomp-room {
+    flex: 1 1 0;
+    height: auto;
+  }
+
+  :root[data-compact] .rsp {
+    flex: 0 0 min(316px, 48%);
+  }
+}
+
+:root[data-compact][data-keyboard] .roomp-header--compact,
+:root[data-compact][data-keyboard] .roomp-room {
+  display: none;
+}
+
+/* posto e timer: se non stanno sulla stessa riga, il timer va sotto, a destra */
+.roomp-header--compact .roomp-row + .roomp-row {
+  flex-wrap: wrap;
+}
+
+.roomp-header--compact .roomp-seat {
+  flex: 0 1 auto;
+}
+
+.roomp-header--compact .roomp-controls {
+  flex: 1 1 150px;
+  min-width: 0;
+  margin-left: 0;
+  justify-content: flex-end;
+  text-align: right;
+}

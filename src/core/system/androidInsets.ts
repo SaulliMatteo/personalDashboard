@@ -2,7 +2,7 @@
  * Barre di sistema e tastiera su Android come variabili CSS su <html>: `--android-inset-top|right|bottom|left`
  * e `--android-ime` (px CSS). Le misure le manda MainActivity.kt (src-tauri/gen/android), perché la WebView in
  * `env(safe-area-inset-*)` riporta solo il foro della fotocamera. I componenti non le leggono direttamente:
- * usano `--safe-*` e `--keyboard` di styles/base.css. Sul desktop non arriva niente e restano a 0.
+ * usano `--safe-*` e `--keyboard` di styles/base.css (e `:root[data-keyboard]` con la tastiera aperta). Sul desktop non arriva niente e restano a 0.
  */
 interface AndroidInsets {
   top: number;
@@ -33,6 +33,9 @@ function apply(insets: unknown) {
   style.setProperty("--android-inset-bottom", `${insets.bottom}px`);
   style.setProperty("--android-inset-left", `${insets.left}px`);
   style.setProperty("--android-ime", `${insets.ime}px`);
+  // data-keyboard: tastiera aperta, per le viste che cambiano forma (es. la Stanza comune lascia solo la chat)
+  if (insets.ime > 0) document.documentElement.dataset.keyboard = "";
+  else delete document.documentElement.dataset.keyboard;
 }
 
 /** Da chiamare una volta all'avvio, prima del primo render. */

@@ -37,7 +37,7 @@ function CurrentView() {
     bar = { lead: "back", title: "Impostazioni" };
     content = <SettingsPage section={view.section} />;
   } else if (view.type === "room") {
-    bar = { lead: "menu", title: "Stanza comune" };
+    // sul telefono la barra la disegna RoomPage (nome del gruppo e sala guardata)
     // in Opaco la sala usa il pigmento del widget Gruppi
     content = (
       <RoomPage

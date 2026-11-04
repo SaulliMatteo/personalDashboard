@@ -129,7 +129,7 @@
 }
 
 /* le viste senza una forma propria per il telefono (Stanza comune, dettagli) stanno dentro i margini */
-.app--compact > .main > :not(.cbar, .md, .sp, .widget-catalog),
+.app--compact > .main > :not(.cbar, .md, .sp, .widget-catalog, .roomp),
 .app--compact > .main > .detail-scope > * {
   margin-inline: var(--compact-side);
   margin-bottom: 12px;
