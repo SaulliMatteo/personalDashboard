@@ -1,0 +1,97 @@
+/* Barra in alto del telefono, nelle forme dei quattro temi (docs/design/mobile/viste.html). */
+
+.cbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 60px;
+  padding: 8px 16px 10px;
+}
+
+.cbar-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.cbar-title h1 {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-title);
+  font-size: clamp(22px, 7.4vw, 32px);
+  font-weight: var(--heading-weight);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--text-primary);
+}
+
+.cbar-title small {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ☰, ← e le azioni: aree di tocco da 44px. */
+.cbar-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: var(--btn-ghost-border);
+  border-radius: var(--radius-item);
+  background: var(--btn-ghost-bg, var(--surface-2));
+  color: var(--text-primary);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.cbar-btn[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+:root[data-theme="opaco"] .cbar-title h1 {
+  letter-spacing: -0.05em;
+}
+
+:root[data-theme="quaderno"] .cbar-title h1 {
+  letter-spacing: 0;
+  color: var(--accent);
+  font-size: clamp(28px, 9vw, 38px);
+}
+
+:root[data-theme="quaderno"] .cbar-btn {
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  background: var(--bg-card);
+}
+
+:root[data-theme="fosforo"] .cbar-title h1 {
+  font-weight: 400;
+  letter-spacing: 0;
+  font-size: clamp(18px, 6vw, 26px);
+}
+
+/* in orizzontale l'altezza è poca: barra più bassa (viste.html, vista 10) */
+@media (orientation: landscape) {
+  .cbar {
+    min-height: 48px;
+    padding: 4px 16px 6px;
+  }
+
+  .cbar-title h1 {
+    font-size: 22px;
+  }
+
+  .cbar-title small {
+    display: none;
+  }
+}

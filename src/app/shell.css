@@ -116,3 +116,84 @@
     linear-gradient(90deg, transparent 42px, var(--paper-margin) 42px 44px, transparent 44px),
     var(--main-bg);
 }
+
+/* ==========================================================================
+   Telefono (useCompact, :root[data-compact]): docs/design/mobile/viste.html.
+   La sidebar è il menu a scomparsa; .main tiene fuori barra di stato, foro della fotocamera,
+   barra dei gesti e tastiera (--safe-*, --keyboard in styles/base.css).
+   ========================================================================== */
+.app--compact {
+  min-width: 0;
+  /* margine ai lati delle pagine, che cresce un po' con lo schermo */
+  --compact-side: clamp(12px, 4vw, 20px);
+}
+
+/* le viste senza una forma propria per il telefono (Stanza comune, dettagli) stanno dentro i margini */
+.app--compact > .main > :not(.cbar, .md, .sp, .widget-catalog),
+.app--compact > .main > .detail-scope > * {
+  margin-inline: var(--compact-side);
+  margin-bottom: 12px;
+}
+
+.app--compact > .main {
+  gap: 0;
+  /* sul telefono la barra di scorrimento compare da sola mentre si scorre */
+  scrollbar-width: none;
+  padding: var(--safe-top) var(--safe-right) calc(var(--safe-bottom) + var(--keyboard)) var(--safe-left);
+}
+
+/* la riga del margine del Quaderno resta sul bordo, dentro la safe area */
+:root[data-theme="quaderno"] .app--compact > .main {
+  background:
+    linear-gradient(90deg, transparent calc(var(--safe-left) + 8px), var(--paper-margin) calc(var(--safe-left) + 8px) calc(var(--safe-left) + 9.5px), transparent calc(var(--safe-left) + 9.5px)),
+    var(--main-bg);
+}
+
+.app-drawer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--overlay);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.app-drawer-scrim.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.app-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 41;
+  width: min(300px, 82vw);
+  transform: translateX(-102%);
+  transition: transform 0.22s ease;
+}
+
+.app-drawer.open {
+  transform: none;
+}
+
+:root[data-animations="off"] .app-drawer,
+:root[data-animations="off"] .app-drawer-scrim {
+  transition: none;
+}
+
+/* la sidebar riempie il menu, con lo sfondo pieno dei pannelli (in Fosforo la sidebar è trasparente) */
+.app--compact .app-drawer > .sidebar {
+  width: 100%;
+  height: 100%;
+  padding: calc(var(--safe-top) + 18px) 14px calc(var(--safe-bottom) + 18px) calc(var(--safe-left) + 14px);
+  background: var(--modal-bg);
+  border-right: var(--panel-border);
+}
+
+/* aree di tocco da 48dp */
+.app-drawer .nav-item {
+  height: 48px;
+}

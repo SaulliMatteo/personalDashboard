@@ -463,3 +463,47 @@
   line-height: 1.1;
   color: var(--accent);
 }
+
+/* ---------- Telefono (docs/design/mobile/viste.html, vista 6): sezioni come chip in orizzontale ---------- */
+:root[data-compact] .sp {
+  flex-direction: column;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+:root[data-compact] .sp-nav {
+  position: static;
+  align-self: stretch;
+  flex: none;
+  flex-direction: row;
+  gap: 6px;
+  padding: 2px var(--compact-side) 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+/* il titolo sta nella barra in alto */
+:root[data-compact] .sp-title {
+  display: none;
+}
+
+:root[data-compact] .sp-nav-item {
+  flex: none;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+:root[data-compact] .sp-content {
+  gap: 20px;
+  padding: 4px var(--compact-side) 24px;
+  border-left: 0;
+}
+
+:root[data-compact] .sp-themes {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}

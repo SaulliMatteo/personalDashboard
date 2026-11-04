@@ -162,3 +162,68 @@
   background: var(--danger-soft);
   color: var(--danger);
 }
+
+/* ---------- Telefono (docs/design/mobile/viste.html, vista 5): una colonna, anteprima a sinistra ---------- */
+.widget-catalog-preview {
+  display: none;
+}
+
+:root[data-compact] .widget-catalog-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+:root[data-compact] .widget-catalog-card {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 8px;
+  align-items: start;
+  padding: 10px;
+}
+
+:root[data-compact] .widget-catalog-card > :not(.widget-catalog-preview) {
+  grid-column: 2;
+  min-width: 0;
+}
+
+/* le impostazioni aperte prendono tutta la larghezza */
+:root[data-compact] .widget-catalog-card > .widget-catalog-settings {
+  grid-column: 1 / -1;
+}
+
+:root[data-compact] .widget-catalog-description,
+:root[data-compact] .widget-catalog-status {
+  display: none;
+}
+
+/* il widget vero a 1×1, disegnato a 172×162 e rimpicciolito in 96×90 */
+:root[data-compact] .widget-catalog-preview {
+  display: block;
+  grid-column: 1;
+  grid-row: 1 / span 4;
+  width: 96px;
+  height: 90px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.widget-catalog-preview-zoom {
+  width: 172px;
+  height: 162px;
+  zoom: 0.558;
+}
+
+.widget-catalog-preview-zoom > * {
+  width: 100%;
+  height: 100%;
+}
+
+:root[data-compact] .widget-catalog-size-btn,
+:root[data-compact] .widget-catalog-btn {
+  min-height: 40px;
+}
+
+:root[data-compact] .widget-catalog-actions {
+  flex-wrap: wrap;
+}

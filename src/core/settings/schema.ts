@@ -158,6 +158,8 @@ interface BaseDef {
   description?: string;
   /** Chiave booleana da cui dipende: se è false il campo resta visibile ma disattivato. */
   dependsOn?: SettingKey;
+  /** Solo nel layout del desktop: sul telefono (useCompact) il campo non compare, il valore resta. */
+  desktopOnly?: true;
 }
 
 export type SettingDef = BaseDef &
@@ -193,7 +195,7 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "accentOverrideNotte", group: "appearance", section: "Tema e colori", type: "boolean", label: "Accent personalizzato (notte)", description: "Spento: si usa l'accent del tema." },
   { key: "accentColorNotte", group: "appearance", section: "Tema e colori", type: "color", dependsOn: "accentOverrideNotte", label: "Colore accent (notte)" },
 
-  { key: "sidebarPosition", group: "appearance", section: "Barra laterale", type: "select", label: "Posizione", options: [{ value: "left", label: "Sinistra" }, { value: "right", label: "Destra" }] },
+  { key: "sidebarPosition", desktopOnly: true, group: "appearance", section: "Barra laterale", type: "select", label: "Posizione", options: [{ value: "left", label: "Sinistra" }, { value: "right", label: "Destra" }] },
   { key: "sidebarShowTitle", group: "appearance", section: "Barra laterale", type: "boolean", label: "Mostra il titolo dell'app" },
 
   { key: "animationsEnabled", group: "appearance", section: "Movimento", type: "boolean", label: "Animazioni", description: "Disattivandole si spengono transizioni e sweep del glow." },
@@ -219,19 +221,19 @@ export const SETTING_DEFS: SettingDef[] = [
   },
   // Le opzioni vengono dal registry dei widget (che core non conosce): la scheda Dashboard
   // le mostra come select con SettingsField; qui basta la validazione da testo.
-  { key: "headerSlot1", group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Spazio in alto a destra", description: "Un mini widget accanto al saluto." },
-  { key: "headerSlot2", group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Secondo spazio", description: "Un altro mini widget, affiancato al primo." },
+  { key: "headerSlot1", desktopOnly: true, group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Spazio in alto a destra", description: "Un mini widget accanto al saluto." },
+  { key: "headerSlot2", desktopOnly: true, group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Secondo spazio", description: "Un altro mini widget, affiancato al primo." },
 
-  { key: "gridRows", group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 4, max: 8, step: 1, label: "Righe disponibili", description: "Più righe = più spazio per i widget, che diventano più bassi: la dashboard resta sempre dentro lo schermo. Non scende mai sotto le righe già occupate." },
+  { key: "gridRows", desktopOnly: true, group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 4, max: 8, step: 1, label: "Righe disponibili", description: "Più righe = più spazio per i widget, che diventano più bassi: la dashboard resta sempre dentro lo schermo. Non scende mai sotto le righe già occupate." },
 
-  { key: "lockLayout", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Blocca layout", description: "Impedisce di trascinare i widget." },
-  { key: "gridPushDelayMs", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 1500, step: 50, unit: "ms", label: "Ritardo spinta widget", description: "Quanto tieni un widget sopra un altro prima che lo sposti (se lo rilasci lì, lo sposta subito)." },
-  { key: "dragThreshold", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 20, step: 1, unit: "px", label: "Distanza prima che parta il trascinamento", description: "Evita trascinamenti involontari quando clicchi." },
-  { key: "openDetailOnClick", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Apri il dettaglio con un doppio click sul widget" },
+  { key: "lockLayout", desktopOnly: true, group: "dashboard", section: "Trascinamento", type: "boolean", label: "Blocca layout", description: "Impedisce di trascinare i widget." },
+  { key: "gridPushDelayMs", desktopOnly: true, group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 1500, step: 50, unit: "ms", label: "Ritardo spinta widget", description: "Quanto tieni un widget sopra un altro prima che lo sposti (se lo rilasci lì, lo sposta subito)." },
+  { key: "dragThreshold", desktopOnly: true, group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 20, step: 1, unit: "px", label: "Distanza prima che parta il trascinamento", description: "Evita trascinamenti involontari quando clicchi." },
+  { key: "openDetailOnClick", desktopOnly: true, group: "dashboard", section: "Trascinamento", type: "boolean", label: "Apri il dettaglio con un doppio click sul widget" },
 
-  { key: "showDragGhost", group: "dashboard", section: "Anteprima di spostamento", type: "boolean", label: "Mostra l'anteprima fantasma", description: "La copia sfocata che indica dove atterrerà il widget." },
-  { key: "ghostOpacity", group: "dashboard", section: "Anteprima di spostamento", type: "number", control: "slider", min: 0.15, max: 0.8, step: 0.05, dependsOn: "showDragGhost", label: "Opacità" },
-  { key: "ghostBlur", group: "dashboard", section: "Anteprima di spostamento", type: "number", control: "slider", min: 0, max: 6, step: 0.5, unit: "px", dependsOn: "showDragGhost", label: "Sfocatura" },
+  { key: "showDragGhost", desktopOnly: true, group: "dashboard", section: "Anteprima di spostamento", type: "boolean", label: "Mostra l'anteprima fantasma", description: "La copia sfocata che indica dove atterrerà il widget." },
+  { key: "ghostOpacity", desktopOnly: true, group: "dashboard", section: "Anteprima di spostamento", type: "number", control: "slider", min: 0.15, max: 0.8, step: 0.05, dependsOn: "showDragGhost", label: "Opacità" },
+  { key: "ghostBlur", desktopOnly: true, group: "dashboard", section: "Anteprima di spostamento", type: "number", control: "slider", min: 0, max: 6, step: 0.5, unit: "px", dependsOn: "showDragGhost", label: "Sfocatura" },
 
   // ======================= WIDGET: STUDIO =======================
   // Le durate qui sotto sono i valori PREDEFINITI delle nuove materie:

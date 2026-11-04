@@ -1,4 +1,6 @@
 import { useLayout } from "../../../core/layout/useLayout";
+import { useMobileLayout } from "../../../core/layout/useMobileLayout";
+import { useCompact } from "../../../core/layout/useCompact";
 import SettingsSection from "../../../core/settings/components/SettingsSection";
 import { HEADER_SLOT_AUTO, SETTING_DEFS, type SettingDef } from "../../../core/settings/schema";
 import { useSettings } from "../../../core/settings/useSettings";
@@ -50,7 +52,11 @@ function useSlotDefs(): SettingDef[] {
 
 /** Scheda Dashboard: intestazione, griglia, trascinamento e gestione del layout. */
 function DashboardTab() {
-  const { resetLayout } = useLayout();
+  const desktop = useLayout();
+  const mobile = useMobileLayout();
+  // sul telefono si ripristina il suo layout, mai quello del desktop
+  const compact = useCompact();
+  const resetLayout = compact ? mobile.resetLayout : desktop.resetLayout;
   const slotDefs = useSlotDefs();
 
   return (
