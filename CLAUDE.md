@@ -66,7 +66,8 @@ con `features/dashboard/useLongPressGridDrag.ts`): un tocco apre, uno scorriment
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
 prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, quella dei consigli YouTube
 (`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts` e
-`node scripts/layout/mobileLayout.test.mts` quando si tocca `core/layout/mobileLayout.ts`.
+`node scripts/layout/mobileLayout.test.mts` quando si tocca `core/layout/mobileLayout.ts`, `node scripts/study/phases.test.mts`
+quando si tocca `widgets/study/timer/phases.ts`.
 
 ```bash
 # Prove pure (scripts/gruppi/<nome>.test.mts e scripts/youtube/<nome>.test.mts, nessun server); una alla volta:
@@ -157,6 +158,15 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
   Il Companion registra un decoratore che le firma Pixy (faccia nello stile del tema, emoji, frase della personalità,
   `widgets/companion/notify/`); su Windows il toast con l'immagine lo mostra il comando `notify_with_image`
   (`src/notify.rs`, `tauri-winrt-notification`), altrove si ripiega sul plugin senza immagine.
+  Su Android: un canale per tipo (`CHANNEL_OF`), il tocco apre la vista di `open` (scritta nell'ultima cifra dell'id:
+  il plugin al tocco non riporta altro; `MainActivity.kt` legge l'id dall'intent e lo passa a
+  `core/system/androidTaps.ts`, anche all'avvio a freddo; una vista nuova va in fondo a `OPEN_TARGETS`), e ciò che deve
+  arrivare ad app congelata o chiusa si pianifica con `scheduleAppNotifications(gruppo, elenco)` (AlarmManager esatto,
+  `USE_EXACT_ALARM` nel manifest; la chiusura forzata e il riavvio del telefono cancellano gli allarmi, li rimette la
+  prossima apertura). Sul desktop la pianificazione non c'è (il plugin mostrerebbe subito). Timer dello Studio: lo stato
+  è fatto di istanti (`runningSince`), le fine fase le calcola `widgets/study/timer/phases.ts` (puro, prova
+  `node scripts/study/phases.test.mts`): al rientro si chiudono tutte le fasi finite nel frattempo, all'ora vera, e su
+  Android le prossime sono già pianificate come notifiche (il tick JS è congelato a schermo spento).
 - La finestra principale naviga solo dentro l'app (`on_navigation` + `is_app_url` in `src/lib.rs`): un link esterno
   (es. in una nota) si apre nel browser di sistema, mai nella webview che ha accesso ai comandi.
 - Lato frontend, ogni widget chiama `invoke()` da un solo file `data/*Api.ts` (i segnali di sistema condivisi da
@@ -231,7 +241,9 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
   sulle `option` (`--modal-bg`); `--panel-bg` non va bene, in Fosforo è trasparente e il menu esce bianco.
 - Valori "ultimi" in interval/listener di lunga durata → `core/hooks/useLatestRef.ts`.
 - Presenza Realtime dei Gruppi: il server chiude un canale con più di 5 `track` in 30 s. Ogni modulo passa da
-  `social/presence/presenceHub.ts` (limite rispettato + via rapida in broadcast), mai `track` diretti.
+  `social/presence/presenceHub.ts` (limite rispettato + via rapida in broadcast), mai `track` diretti. Un hub nuovo
+  si apre con `openChannels` e `retryOnReturn` (`social/presence/openChannels.ts`: al ritorno in primo piano i canali
+  caduti rientrano subito invece di aspettare l'attesa crescente).
 - Contesti: `XContext.tsx` esporta solo il provider; contesto, tipo e hook in `useX.ts` (es. `useSettings.ts`).
 - `tauri-plugin-notification` è pinnato `=2.4.0` (e `tauri-winrt-notification` `=0.8.1`, la versione che usa) perché la 2.5 richiede `tauri ^2.12` (il progetto usa `2.11.3`):
   non aggiornarlo senza controllare il manifesto su crates.io. Idem `tauri-plugin-localhost` (`=2.3.1`, la 2.4 vuole `^2.12`),
