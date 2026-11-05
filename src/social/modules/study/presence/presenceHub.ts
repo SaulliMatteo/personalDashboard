@@ -76,6 +76,10 @@ export class StudyPresenceHub {
     this.hub.setLocal({ ...local, idleSince });
   }
 
+  retryNow(): void {
+    this.hub.retryNow();
+  }
+
   stop(): void {
     this.hub.stop();
   }
