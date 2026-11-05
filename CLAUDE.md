@@ -24,6 +24,17 @@ Servono Node (LTS), Rust e i prerequisiti di Tauri v2 per il sistema.
 Android (`npx tauri android dev` / `npx tauri android build --debug --apk --target x86_64` per l'emulatore): servono
 `ANDROID_HOME`, `NDK_HOME` e un `JAVA_HOME` su una JDK che Gradle 8.14.3 supporti (21 o 23), **non** la JBR 25 di
 Android Studio: con quella Gradle si ferma su `A problem occurred configuring project ':buildSrc'. > 25.0.4`.
+APK vero (`it.matteo.personalDashboard`, senza `.debug`): `npm run android:release` (arm64, R8 attivo), firmato con la
+chiave dell'utente che sta fuori dal repo e indicata da `gen/android/keystore.properties` (ignorato da git; password
+anche in `PD_STORE_PASSWORD`/`PD_KEY_PASSWORD`, vedi `app/build.gradle.kts`): mai creare, leggere o stampare chiave e
+password. `versionCode` lo calcola Tauri da `version` di `tauri.conf.json` (1.0.3 -> 1000003): alzarla a ogni APK.
+Icona: `res/mipmap-*` dall'icona del desktop (`tauri icon` per le legacy; il primo piano adattivo è `icon.png` al 60%
+su sfondo `#120E1B`, fatto a mano). Permessi nel manifest con il loro perché; `RECEIVE_BOOT_COMPLETED` e `WAKE_LOCK` del
+plugin delle notifiche sono tolti (`tools:node="remove"`): il ripristino dopo il riavvio della 2.4.0 non funziona
+(`batch` salva `sourceJson` vuoto). Backup automatico di Android: solo `dashboard.db` (`res/xml/backup_rules.xml` e
+`data_extraction_rules.xml`); la copia completa è Impostazioni > Generale > Dati (`core/db/backup.ts` +
+`src/db_backup.rs`: `VACUUM INTO`, import con controllo di intestazione e `user_version`, DB chiuso e pagina
+ricaricata; restano i `cloud_device_id:*` del dispositivo). Il FileProvider espone solo la cartella del Quaderno.
 Il progetto `src-tauri/gen/android` è versionato (manifest, Gradle e icone si modificano lì); ciò che Tauri rigenera a
 ogni build lo escludono i suoi `.gitignore`. Capability: `capabilities/default.json` solo desktop, `mobile.json` per
 Android. Su Android la pagina gira da `http://tauri.localhost` e il DB sta in `/data/data/<id>/dashboard.db`
