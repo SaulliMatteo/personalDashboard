@@ -36,6 +36,11 @@ cancella con la disinstallazione); il selettore file e l'esportazione danno URI 
 solo, il nome vero con `basename()`); aprire/condividere un file passa dal plugin locale `src-tauri/plugins/file-open`
 (FileProvider) con i comandi `file_open`/`file_share`, solo per file dentro il vault. Le differenze di piattaforma stanno
 in `widgets/notes/data/filesApi.ts` (con `core/system/platform.ts`), non nei componenti.
+Editor del Quaderno sul telefono (mockup `docs/design/mobile/quaderno.html`): `NoteEditor` con `useCompact()` disegna
+un'altra disposizione (nota fissa sopra la pagina, ← titolo ☆ ⋯, una riga di strumenti sopra la tastiera, il resto in
+`components/BottomSheet.tsx`); i pezzi in comune col desktop (esporta, pagine, colori…) sono variabili usate da
+entrambe, e un comando nuovo va messo in tutte e due. Con un foglio aperto il testo ha `inputmode="none"`, altrimenti
+Android riapre la tastiera al tocco su un pulsante.
 Layout del telefono (mockup `docs/design/mobile/viste.html`): è "compatto" quando il lato corto della finestra è sotto i
 600 dp (`core/layout/useCompact.ts`, l'unica definizione; AppShell mette `data-compact` su `<html>` e i CSS usano
 `:root[data-compact]`). Tablet e desktop restano nel layout desktop. Sul telefono: sidebar come menu a scomparsa, barra in
