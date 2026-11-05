@@ -26,8 +26,8 @@ Android (`npx tauri android dev` / `npx tauri android build --debug --apk --targ
 Android Studio: con quella Gradle si ferma su `A problem occurred configuring project ':buildSrc'. > 25.0.4`.
 APK vero (`it.matteo.personalDashboard`, senza `.debug`): `npm run android:release` (arm64, R8 attivo), firmato con la
 chiave dell'utente che sta fuori dal repo e indicata da `gen/android/keystore.properties` (ignorato da git; password
-anche in `PD_STORE_PASSWORD`/`PD_KEY_PASSWORD`, vedi `app/build.gradle.kts`): mai creare, leggere o stampare chiave e
-password. `versionCode` lo calcola Tauri da `version` di `tauri.conf.json` (1.0.3 -> 1000003): alzarla a ogni APK.
+anche in `PD_STORE_PASSWORD`/`PD_KEY_PASSWORD`, vedi `app/build.gradle.kts`). La chiave c'è già (`%USERPROFILE%\.android-keys`, con
+una copia di `keystore.properties`): mai ricrearla né leggerne o stamparne la password. `versionCode` lo calcola Tauri da `version` di `tauri.conf.json` (1.0.3 -> 1000003): alzarla a ogni APK.
 Icona: `res/mipmap-*` dall'icona del desktop (`tauri icon` per le legacy; il primo piano adattivo è `icon.png` al 60%
 su sfondo `#120E1B`, fatto a mano). Permessi nel manifest con il loro perché; `RECEIVE_BOOT_COMPLETED` e `WAKE_LOCK` del
 plugin delle notifiche sono tolti (`tools:node="remove"`): il ripristino dopo il riavvio della 2.4.0 non funziona
