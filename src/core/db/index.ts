@@ -1,4 +1,5 @@
 import { getDatabase } from "./client";
+import { restoreKeptMeta } from "./backup";
 import { MIGRATIONS } from "./migrations";
 
 export { getDatabase } from "./client";
@@ -36,4 +37,5 @@ async function runMigrations() {
     // PRAGMA non accetta parametri: il valore è una costante nostra, non input utente.
     await db.execute(`PRAGMA user_version = ${migration.version}`);
   }
+  await restoreKeptMeta(db);
 }

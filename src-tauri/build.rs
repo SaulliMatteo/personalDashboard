@@ -47,6 +47,10 @@ fn main() {
             "secure_store_remove",
             "file_open",
             "file_share",
+            "db_export_prepare",
+            "db_export_save",
+            "db_import_stage",
+            "db_import_apply",
         ]),
     ))
     .expect("errore nel build di Tauri");

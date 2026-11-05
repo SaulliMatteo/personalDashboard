@@ -1,4 +1,5 @@
 mod companion;
+mod db_backup;
 mod file_open;
 mod file_send;
 mod file_transfer;
@@ -89,6 +90,10 @@ pub fn run() {
             secure_store::secure_store_remove,
             file_open::file_open,
             file_open::file_share,
+            db_backup::db_export_prepare,
+            db_backup::db_export_save,
+            db_backup::db_import_stage,
+            db_backup::db_import_apply,
         ])
         .on_window_event(|window, event| {
             // Chiudendo la finestra il server C va fermato, altrimenti la
