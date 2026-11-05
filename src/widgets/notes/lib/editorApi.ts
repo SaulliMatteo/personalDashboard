@@ -1,4 +1,5 @@
 import type { ShortcutAction } from "./shortcuts";
+import type { BookmarkPatch } from "./bookmarks";
 
 export interface ScreenPoint {
   x: number;
@@ -16,6 +17,13 @@ export interface EditorApi {
   dragOver: (point: ScreenPoint | null, count: number) => void;
   /** File rilasciati: true se il punto era sulla pagina di questo editor (e li ha gestiti). */
   drop: (paths: string[], point: ScreenPoint) => Promise<boolean>;
+  /** La nota aperta in questo riquadro. */
+  noteId: number;
+  /**
+   * Rinomina, cambia o elimina un segno di questa nota (pannello dei segni): passa dall'editor, così
+   * entra in annulla/ripeti e si salva con il resto. false = il segno non è in questa nota.
+   */
+  editBookmark: (id: string, change: BookmarkPatch | "delete") => boolean;
 }
 
 /** File salvati nella cartella della nota: nome finale (può avere " (2)") e dimensione. */

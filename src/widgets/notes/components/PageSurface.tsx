@@ -12,6 +12,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import type { InkStroke, NotePage, PageBackground } from "../data/notesRepository";
+import { MARKER_SELECTOR, MARKER_TEXT, prepareMarkers, rememberCopy, type PagePin } from "../lib/bookmarks";
 import { BLOCK_SELECTOR, createCodeBlock, hydrateBlocks, serializeEditor, type BlockKind } from "../lib/blocks";
 import { parseFence } from "../lib/codeLanguages";
 import { currentBlock, topBlock } from "../lib/editorDom";
@@ -27,6 +28,7 @@ import CodeBlock from "./CodeBlock";
 import FileCard from "./FileCard";
 import ImageBlock from "./ImageBlock";
 import InkLayer, { type InkTool } from "./InkLayer";
+import InkPins from "./InkPins";
 import TableTools from "./TableTools";
 
 interface PageSurfaceProps {
@@ -63,6 +65,14 @@ interface PageSurfaceProps {
   collections: CollectionLinks;
   /** Clic su un riferimento a una riga (@). */
   onRefClick?: (rowId: number) => void;
+  /** Clic su un segno nel testo (si apre il suo popover). */
+  onMarkerClick?: (marker: HTMLElement) => void;
+  /** Tasto destro nel testo: il menu della pagina (marker = il segno sotto il puntatore). */
+  onPageMenu?: (point: { x: number; y: number }, marker: HTMLElement | null) => void;
+  /** Segni sulla pagina: appoggiato con lo strumento "segno", aperto con un clic, spostato trascinandolo. */
+  onPlacePin?: (point: [number, number], client: { x: number; y: number }) => void;
+  onOpenPin?: (pin: PagePin, anchor: DOMRect) => void;
+  onMovePin?: (id: string, x: number, y: number) => void;
 }
 
 /** Testo dei riferimenti @ allineato ai dati della raccolta (e segno sulle righe eliminate). */
@@ -270,6 +280,33 @@ function PageSurface(props: PageSurfaceProps) {
     onBlockChange();
   }
 
+  /**
+   * Copia o taglia una selezione con dei segni: negli appunti va il nostro HTML (con i segni), e lo si
+   * ricorda per riconoscerlo all'incolla (lib/bookmarks.ts). Senza segni resta il comportamento del browser.
+   */
+  function handleCopy(e: ClipboardEvent<HTMLDivElement>, cut: boolean) {
+    const root = editorRef.current;
+    const sel = window.getSelection();
+    if (!root || !sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    if (!root.contains(range.commonAncestorContainer)) return;
+    const box = document.createElement("div");
+    box.appendChild(range.cloneContents());
+    if (!box.querySelector(MARKER_SELECTOR)) return;
+    e.preventDefault();
+    const html = serializeEditor(box);
+    // Il carattere a larghezza zero dei segni non serve fuori dalla nota.
+    const plain = sel.toString().replaceAll(MARKER_TEXT, "");
+    e.clipboardData.setData("text/html", html);
+    e.clipboardData.setData("text/plain", plain);
+    rememberCopy(plain, html);
+    // Taglia dal menu: un comando dentro un altro il browser non lo esegue, si cancella a mano.
+    if (cut && !document.execCommand("delete")) {
+      range.deleteContents();
+      emit();
+    }
+  }
+
   function handlePaste(e: ClipboardEvent<HTMLDivElement>) {
     if (props.onPaste?.(e)) return;
     // Se nessuno lo gestisce si incolla testo semplice.
@@ -280,6 +317,11 @@ function PageSurface(props: PageSurfaceProps) {
   // Click sul "cerchietto" di una voce di checklist = la spunta/toglie.
   function handleClick(e: MouseEvent<HTMLDivElement>) {
     const root = editorRef.current;
+    const marker = (e.target as HTMLElement).closest<HTMLElement>(MARKER_SELECTOR);
+    if (root && marker && root.contains(marker)) {
+      props.onMarkerClick?.(marker);
+      return;
+    }
     const ref = (e.target as HTMLElement).closest<HTMLElement>("[data-ref-row]");
     if (root && ref && root.contains(ref)) {
       props.onRefClick?.(Number(ref.dataset.refRow));
@@ -407,10 +449,23 @@ function PageSurface(props: PageSurfaceProps) {
           suppressContentEditableWarning
           spellCheck
           onInput={() => {
+            // Segni arrivati nel testo (incolla, testo trascinato): un pezzo unico, con il nome al passaggio.
+            if (editorRef.current) prepareMarkers(editorRef.current);
             emit();
             props.onAfterInput?.();
           }}
           onPaste={handlePaste}
+          onCopy={(e) => handleCopy(e, false)}
+          onCut={(e) => handleCopy(e, true)}
+          onContextMenu={(e) => {
+            if (props.mode !== "text" || !props.onPageMenu) return;
+            const target = e.target as HTMLElement;
+            const marker = target.closest<HTMLElement>(MARKER_SELECTOR);
+            // Dentro i blocchi (codice, immagini, file, viste) resta il loro comportamento.
+            if (!marker && target.closest("[data-block]")) return;
+            e.preventDefault();
+            props.onPageMenu({ x: e.clientX, y: e.clientY }, marker);
+          }}
           onDrop={(e) => e.preventDefault()}
           // I blocchi si spostano col loro trascinamento (ImageBlock), mai con quello nativo del browser.
           onDragStart={(e) => {
@@ -432,7 +487,17 @@ function PageSurface(props: PageSurfaceProps) {
           size={props.size}
           shapes={props.shapes}
           onChange={props.onInk}
+          onPlacePin={props.onPlacePin}
         />
+
+        {page.pins.length > 0 && (
+          <InkPins
+            pins={page.pins}
+            movable={props.mode === "ink" && props.tool === "pin"}
+            onOpen={(pin, anchor) => props.onOpenPin?.(pin, anchor)}
+            onMove={(id, x, y) => props.onMovePin?.(id, x, y)}
+          />
+        )}
 
         {paper && props.mode === "text" && (
           <TableTools paper={paper} editorRef={editorRef} onChange={onBlockChange} onNotice={(message) => props.onNotice?.(message)} />

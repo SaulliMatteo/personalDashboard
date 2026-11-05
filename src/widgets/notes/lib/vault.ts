@@ -25,6 +25,7 @@ import {
   type PageBackground,
 } from "../data/notesRepository";
 import { htmlToMarkdown } from "./html";
+import { asPins, pinsMarkdown } from "./bookmarks";
 import { markdownToHtml, parseFrontmatter, parseMetaString, parseMetaTags } from "./markdown";
 
 import { asPageColor } from "./pageColor";
@@ -39,7 +40,7 @@ import { expandCollectionBlocks } from "./viewExport";
  *
  *   Notes/<cartelle>/<titolo>--<id>/
  *     nota.md        testo in Markdown con intestazione (titolo, tag, date)
- *     canvas.json    per pagina: tratti a mano, sfondo e HTML (per il ripristino fedele)
+ *     canvas.json    per pagina: tratti a mano, segni sulla pagina, sfondo e HTML (per il ripristino fedele)
  *     allegati/      file allegati
  *   Notes/_cestino/…   note nel cestino
  *   Notes/<cartelle>/cartella.json   nome, colore e icona della cartella
@@ -123,14 +124,21 @@ function buildMarkdown(note: NoteSummary, pages: NotePage[]): string {
     "",
   ].join("\n");
   // In nota.md le viste collegate sono tabelle con i dati del momento; canvas.json tiene l'HTML vero.
-  const body = pages.map((p) => htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }))).join(`\n\n${PAGE_MARKER}\n\n`);
+  // I segni nel testo sono ancore HTML; quelli sulla pagina, commenti in fondo (si rileggono da canvas.json).
+  const body = pages
+    .map((p) => {
+      const text = htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }));
+      const pins = pinsMarkdown(p.pins);
+      return pins ? `${text}\n\n${pins}` : text;
+    })
+    .join(`\n\n${PAGE_MARKER}\n\n`);
   return `${front}\n${body}\n`;
 }
 
 function buildCanvasJson(pages: NotePage[]): string {
   return JSON.stringify({
     version: 1,
-    pages: pages.map((p) => ({ background: p.background, color: p.color, strokes: p.ink, html: p.content })),
+    pages: pages.map((p) => ({ background: p.background, color: p.color, strokes: p.ink, pins: p.pins, html: p.content })),
   });
 }
 
@@ -251,6 +259,8 @@ async function findNoteDirs(relative: string, found: string[]): Promise<void> {
 interface CanvasFilePage {
   background?: string;
   strokes?: InkStroke[];
+  /** Segni sulla pagina (lib/bookmarks.ts); i file scritti prima non li hanno. */
+  pins?: unknown;
   html?: string;
   color?: string | null;
 }
@@ -333,6 +343,7 @@ export async function importVault(knownPaths: Set<string>, folders: Folder[]): P
         color: asPageColor(fromCanvas?.color),
         content: fromCanvas?.html ? fromCanvas.html : markdownToHtml(mdPages[i] ?? ""),
         ink: Array.isArray(fromCanvas?.strokes) ? fromCanvas.strokes : [],
+        pins: asPins(fromCanvas?.pins),
         background: asBackground(fromCanvas?.background),
       });
     }

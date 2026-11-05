@@ -28,7 +28,14 @@ import {
   MdMoreHoriz,
   MdOutlineAddPhotoAlternate,
   MdOutlineAttachFile,
+  MdOutlineBookmarkAdd,
   MdOutlineImage,
+  MdOutlinePushPin,
+  MdContentCopy,
+  MdContentCut,
+  MdContentPaste,
+  MdDeleteOutline,
+  MdEdit,
   MdOutlineBackspace,
   MdOutlineShapeLine,
   MdOutlineBorderColor,
@@ -109,6 +116,23 @@ import {
 } from "../lib/editorDom";
 import { formatWhen, monthYear, sanitizeHtml, wordCount } from "../lib/html";
 import { createHistory, type RecordMeta } from "../lib/history";
+import {
+  MARKER_SELECTOR,
+  copiedHtmlFor,
+  createMarker,
+  defaultBookmarkName,
+  editMarkerInHtml,
+  editPin,
+  freshMarkerIds,
+  newBookmarkId,
+  prepareMarkers,
+  readBookmarks,
+  readMarker,
+  writeMarker,
+  type BookmarkData,
+  type BookmarkPatch,
+  type PagePin,
+} from "../lib/bookmarks";
 import { getTextOffsets, setTextOffsets, type TextOffsets } from "../lib/selectionOffsets";
 import { duplicateBlock, moveBlock } from "../lib/blockActions";
 import { caretCell, createTableElement, placeCaret } from "../lib/tableDom";
@@ -129,6 +153,8 @@ import FindBar from "./FindBar";
 import InsertMenu from "./InsertMenu";
 import type { InkTool } from "./InkLayer";
 import PageSurface from "./PageSurface";
+import BookmarkPopover from "./BookmarkPopover";
+import PageMenu, { type PageMenuItem } from "./PageMenu";
 import Crumbs, { type Crumb } from "./Crumbs";
 import ToolButton from "./ToolButton";
 import "./noteEditor.css";
@@ -161,6 +187,23 @@ interface NoteEditorProps {
   onOpenShortcuts?: () => void;
   /** Note e navigazione per raccolte, viste collegate e riferimenti @. */
   collections: CollectionLinks;
+  /** Segno da raggiungere (pannello dei segni): un oggetto nuovo per ogni richiesta. */
+  jumpTo?: { id: string; nonce: number } | null;
+  /** Il segno di jumpTo è stato raggiunto (chi chiama può dimenticare la richiesta). */
+  onJumped?: () => void;
+}
+
+/** Popover di un segno: nel testo o sulla pagina, con i suoi dati come sono adesso. */
+interface BookmarkPop {
+  place: "testo" | "pagina";
+  pageId: number;
+  data: BookmarkData;
+  anchor: DOMRect;
+  fresh: boolean;
+}
+
+function sameOffsets(a: TextOffsets | null, b: TextOffsets | null): boolean {
+  return a === b || (a !== null && b !== null && a.start === b.start && a.end === b.end);
 }
 
 /** Stato di una pagina per la cronologia (lib/history.ts). */
@@ -168,6 +211,7 @@ interface PageSnapshot {
   pageId: number;
   html: string;
   ink: InkStroke[];
+  pins: PagePin[];
   color: string | null;
   background: PageBackground;
   selection: TextOffsets | null;
@@ -216,6 +260,8 @@ function NoteEditor({
   onStoreFiles,
   onOpenShortcuts,
   collections,
+  jumpTo = null,
+  onJumped,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(note.title);
   const [pages, setPages] = useState<NotePage[]>([]);
@@ -268,6 +314,8 @@ function NoteEditor({
   const [refRow, setRefRow] = useState<number | null>(null);
   const zoomRef = useLatestRef(zoom);
   const [lightExport, setLightExport] = useState(true);
+  /** Esportazione: i segni si vedono sulle pagine (nel PDF diventano comunque i suoi segnalibri). */
+  const [exportMarks, setExportMarks] = useState(false);
   const [busy, setBusy] = useState(false);
   const [splitQuery, setSplitQuery] = useState("");
   const [findOpen, setFindOpen] = useState(false);
@@ -391,7 +439,7 @@ function NoteEditor({
       }
       for (const id of ids) {
         const page = pagesRef.current.find((p) => p.id === id);
-        if (page) await savePage(page.id, note.id, page.content, page.ink);
+        if (page) await savePage(page.id, note.id, page.content, page.ink, page.pins);
       }
       setSavedAt(Date.now());
       setSaving(false);
@@ -427,6 +475,7 @@ function NoteEditor({
       pageId: p.id,
       html: p.content,
       ink: p.ink,
+      pins: p.pins,
       color: p.color,
       background: p.background,
       selection: p.id === pagesRef.current[index]?.id ? lastSelection.current : null,
@@ -442,10 +491,13 @@ function NoteEditor({
   }
 
   /** Modifica di testo o inchiostro: prima entra nella cronologia lo stato di adesso. */
-  function patchPage(id: number, patch: Partial<Pick<NotePage, "content" | "ink">>, meta: RecordMeta = { kind: "other" }) {
+  function patchPage(id: number, patch: Partial<Pick<NotePage, "content" | "ink" | "pins">>, meta: RecordMeta = { kind: "other" }) {
     const prev = pagesRef.current.find((p) => p.id === id);
     if (!prev) return;
-    const changed = (patch.content !== undefined && patch.content !== prev.content) || (patch.ink !== undefined && patch.ink !== prev.ink);
+    const changed =
+      (patch.content !== undefined && patch.content !== prev.content) ||
+      (patch.ink !== undefined && patch.ink !== prev.ink) ||
+      (patch.pins !== undefined && patch.pins !== prev.pins);
     if (!changed) return;
     history.record(snapshotOf(prev), meta);
     const next = pagesRef.current.map((p) => (p.id === id ? { ...p, ...patch } : p));
@@ -674,7 +726,7 @@ async function changePageColor(color: string | null) {
     const prev = pagesRef.current.find((p) => p.id === snap.pageId);
     if (!prev) return;
     const next = pagesRef.current.map((p) =>
-      p.id === snap.pageId ? { ...p, content: snap.html, ink: snap.ink, color: snap.color, background: snap.background } : p
+      p.id === snap.pageId ? { ...p, content: snap.html, ink: snap.ink, pins: snap.pins, color: snap.color, background: snap.background } : p
     );
     pagesRef.current = next;
     setPages(next);
@@ -834,6 +886,404 @@ async function changePageColor(color: string | null) {
     return true;
   }
 
+  // ---------------- Segni (lib/bookmarks.ts) ----------------
+
+  const [bmPop, setBmPop] = useState<BookmarkPop | null>(null);
+  /** Menu del tasto destro: dove, e il segno sotto il puntatore (id) se c'era. */
+  const [pageMenu, setPageMenu] = useState<{ x: number; y: number; marker: string | null; hasSelection: boolean } | null>(null);
+  /** Segno da mostrare appena la sua pagina è aperta (pannello, segno dopo/prima). */
+  const pendingJump = useRef<string | null>(null);
+  /** Ultimo segno raggiunto e il cursore di allora: "segno dopo/prima" riparte da lì. */
+  const lastJump = useRef<{ id: string; pageId: number; at: TextOffsets | null } | null>(null);
+
+  function markerEl(id: string): HTMLElement | null {
+    return editorRef.current?.querySelector<HTMLElement>(`span[data-bm="${id}"]`) ?? null;
+  }
+
+  /** Il testo è cambiato per un segno. `live` = colore libero trascinato: una voce sola nella cronologia. */
+  function commitBookmark(live: string | null = null) {
+    const el = editorRef.current;
+    if (el && page) patchPage(page.id, { content: serializeEditor(el) }, live ? { kind: "typing", blockKey: `bm-${live}` } : { kind: "other" });
+  }
+
+  function caretAfterMarker(el: HTMLElement) {
+    const root = editorRef.current;
+    const sel = window.getSelection();
+    if (!root || !sel) return;
+    root.focus({ preventScroll: true });
+    const range = document.createRange();
+    range.setStartAfter(el);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  function openMarkerPopover(el: HTMLElement, fresh: boolean) {
+    const data = readMarker(el);
+    if (!data || !page) return;
+    setPageMenu(null);
+    setBmPop({ place: "testo", pageId: page.id, data, anchor: el.getBoundingClientRect(), fresh });
+  }
+
+  /** La riga di testo che contiene il segno (paragrafo, titolo, voce di lista, cella). */
+  function lineOf(el: HTMLElement): HTMLElement {
+    return el.parentElement?.closest<HTMLElement>("p, h1, h2, h3, li, td, th") ?? el.parentElement ?? editorRef.current ?? el;
+  }
+
+  /**
+   * Un segno dove sta il cursore. Nel codice e nelle didascalie no (il codice è solo testo):
+   * va in una riga nuova subito sopra il blocco. In modalità penna si passa allo strumento "segno".
+   */
+  function insertBookmark() {
+    if (mode === "ink") {
+      setTool("pin");
+      showToast("Clicca sulla pagina dove vuoi il segno");
+      return;
+    }
+    const root = editorRef.current;
+    if (!root || !page) return;
+    const at = insertionPoint();
+    root.focus({ preventScroll: true });
+    const marker = createMarker({ id: newBookmarkId(), name: "Segno", kind: "bookmark", color: null });
+    const node = at ? at.startContainer : null;
+    const inside = node ? (node instanceof Element ? node : node.parentElement) : null;
+    const blocked = inside?.closest<HTMLElement>("[data-block], figcaption") ?? null;
+    if (blocked && root.contains(blocked)) {
+      let top: HTMLElement = blocked;
+      while (top.parentElement && top.parentElement !== root) top = top.parentElement;
+      const line = document.createElement("p");
+      line.append(marker, document.createElement("br"));
+      top.before(line);
+      showToast(top.matches('[data-block="code"]') ? "Nel codice non si possono mettere segni: l'ho messo sopra il blocco" : "Il segno è sopra il blocco");
+    } else if (at) {
+      at.collapse(true);
+      at.insertNode(marker);
+    } else {
+      // Nessun cursore nella pagina: all'inizio della prima riga.
+      const first = root.firstElementChild ?? root;
+      first.insertBefore(marker, first.firstChild);
+    }
+    const line = lineOf(marker);
+    const after = document.createRange();
+    after.setStartAfter(marker);
+    after.setEnd(line, line.childNodes.length);
+    const before = document.createRange();
+    before.setStart(line, 0);
+    before.setEndBefore(marker);
+    writeMarker(marker, { name: defaultBookmarkName(after.toString(), before.toString()), kind: "bookmark", color: null });
+    caretAfterMarker(marker);
+    commitBookmark();
+    openMarkerPopover(marker, true);
+  }
+
+  /** Nome, tipo o colore cambiati nel popover. */
+  function changeBookmark(patch: BookmarkPatch, live = false) {
+    if (!bmPop || !page || bmPop.pageId !== page.id) return;
+    const id = bmPop.data.id;
+    if (bmPop.place === "testo") {
+      const el = markerEl(id);
+      if (!el) {
+        setBmPop(null);
+        return;
+      }
+      writeMarker(el, { ...bmPop.data, ...patch });
+      commitBookmark(live ? id : null);
+      const data = readMarker(el);
+      if (data) setBmPop({ ...bmPop, data, fresh: false });
+      return;
+    }
+    const current = pagesRef.current.find((p) => p.id === page.id);
+    const pins = current ? editPin(current.pins, id, patch) : null;
+    if (!pins) return;
+    patchPage(page.id, { pins }, live ? { kind: "typing", blockKey: `bm-${id}` } : { kind: "other" });
+    const data = pins.find((p) => p.id === id);
+    if (data) setBmPop({ ...bmPop, data, fresh: false });
+  }
+
+  function deleteBookmark(place: "testo" | "pagina", id: string) {
+    if (!page) return;
+    if (place === "testo") {
+      const el = markerEl(id);
+      if (!el) return;
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.setStartBefore(el);
+      range.collapse(true);
+      el.remove();
+      editorRef.current?.focus({ preventScroll: true });
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+      commitBookmark();
+    } else {
+      const current = pagesRef.current.find((p) => p.id === page.id);
+      const pins = current ? editPin(current.pins, id, "delete") : null;
+      if (pins) patchPage(page.id, { pins });
+    }
+  }
+
+  function closeBookmarkPopover(restoreFocus: boolean) {
+    const pop = bmPop;
+    setBmPop(null);
+    if (restoreFocus && pop?.place === "testo" && mode === "text") {
+      const el = markerEl(pop.data.id);
+      if (el) caretAfterMarker(el);
+    }
+  }
+
+  /** Segno appoggiato sulla pagina con lo strumento "segno". */
+  function placePin(point: [number, number], client: { x: number; y: number }) {
+    const current = page ? pagesRef.current.find((p) => p.id === page.id) : undefined;
+    if (!current) return;
+    const n = current.pins.length + 1;
+    const pin: PagePin = {
+      id: newBookmarkId(),
+      name: n === 1 ? "Segno sulla pagina" : `Segno sulla pagina ${n}`,
+      kind: "bookmark",
+      color: null,
+      x: point[0],
+      y: point[1],
+    };
+    patchPage(current.id, { pins: [...current.pins, pin] });
+    setBmPop({ place: "pagina", pageId: current.id, data: pin, anchor: new DOMRect(client.x - 10, client.y - 10, 20, 20), fresh: true });
+  }
+
+  function movePin(id: string, x: number, y: number) {
+    const current = page ? pagesRef.current.find((p) => p.id === page.id) : undefined;
+    if (current) patchPage(current.id, { pins: current.pins.map((p) => (p.id === id ? { ...p, x, y } : p)) });
+  }
+
+  function flashBookmark(el: HTMLElement) {
+    el.removeAttribute("data-bm-flash");
+    void el.offsetWidth; // fa ripartire l'animazione
+    el.setAttribute("data-bm-flash", "");
+    window.setTimeout(() => el.removeAttribute("data-bm-flash"), 1600);
+  }
+
+  /** Il segno è nella pagina aperta: ci si scorre, il cursore va subito dopo e il segno lampeggia. */
+  function revealBookmark(id: string): boolean {
+    const root = editorRef.current;
+    const pageId = pagesRef.current[index]?.id;
+    if (!root || pageId === undefined) return false;
+    const el = markerEl(id);
+    if (el) {
+      if (mode !== "text") {
+        // Il cursore va solo nel testo: si torna al testo e si riprova appena è modificabile.
+        pendingJump.current = id;
+        setMode("text");
+        return true;
+      }
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      caretAfterMarker(el);
+      flashBookmark(el);
+      lastJump.current = { id, pageId, at: getTextOffsets(root) };
+      return true;
+    }
+    const pin = scrollWrapRef.current?.querySelector<HTMLElement>(`[data-pin="${id}"]`);
+    if (pin) {
+      pin.scrollIntoView({ block: "center", behavior: "smooth" });
+      flashBookmark(pin);
+      lastJump.current = { id, pageId, at: getTextOffsets(root) };
+      return true;
+    }
+    return false;
+  }
+
+  /** Va a un segno della nota, anche su un'altra pagina. */
+  function goToBookmark(id: string) {
+    const target = pagesRef.current.findIndex((p) => readBookmarks(p.content, p.pins).some((b) => b.id === id));
+    if (target < 0) {
+      showToast("Il segno non c'è più");
+      return;
+    }
+    setBmPop(null);
+    setPageMenu(null);
+    if (target !== index) {
+      pendingJump.current = id;
+      setIndex(target);
+      return;
+    }
+    if (!revealBookmark(id)) pendingJump.current = id;
+  }
+
+  /** Segno dopo (1) o prima (−1) del cursore, passando di pagina in pagina e ricominciando dall'inizio. */
+  function stepBookmark(delta: 1 | -1) {
+    const seq = pagesRef.current.flatMap((p, i) => readBookmarks(p.content, p.pins).map((b) => ({ id: b.id, page: i })));
+    if (seq.length === 0) {
+      showToast("Nessun segno in questa nota");
+      return;
+    }
+    const root = editorRef.current;
+    const pageId = pagesRef.current[index]?.id;
+    const now = root ? getTextOffsets(root) : null;
+    const last = lastJump.current;
+    const from = last && last.pageId === pageId && sameOffsets(last.at, now) ? seq.findIndex((b) => b.id === last.id) : -1;
+    let target: number;
+    if (from >= 0) target = from + delta;
+    else {
+      // Dal cursore: quanti segni della pagina aperta stanno prima di lui.
+      const start = seq.findIndex((b) => b.page >= index);
+      const first = start < 0 ? seq.length : start;
+      let before = 0;
+      const sel = window.getSelection();
+      const range = root && sel && sel.rangeCount > 0 && root.contains(sel.getRangeAt(0).startContainer) ? sel.getRangeAt(0) : null;
+      if (range && root) {
+        root.querySelectorAll(MARKER_SELECTOR).forEach((m) => {
+          const parent = m.parentNode;
+          if (!parent) return;
+          const at = Array.prototype.indexOf.call(parent.childNodes, m) as number;
+          if (range.comparePoint(parent, at + 1) <= 0) before++;
+        });
+      }
+      target = delta > 0 ? first + before : first + before - 1;
+    }
+    target = ((target % seq.length) + seq.length) % seq.length;
+    goToBookmark(seq[target].id);
+  }
+
+  /**
+   * Rinomina, cambia o elimina un segno di questa nota su qualunque pagina (dal pannello dei segni).
+   * Sulla pagina aperta si modifica il DOM; sulle altre l'HTML salvato. false = non è in questa nota.
+   */
+  function editBookmark(id: string, change: BookmarkPatch | "delete"): boolean {
+    const target = pagesRef.current.findIndex((p) => readBookmarks(p.content, p.pins).some((b) => b.id === id));
+    if (target < 0) return false;
+    const p = pagesRef.current[target];
+    if (bmPop?.data.id === id) setBmPop(null);
+    const pins = editPin(p.pins, id, change);
+    if (pins) {
+      patchPage(p.id, { pins });
+      return true;
+    }
+    if (target === index) {
+      const el = markerEl(id);
+      const data = el ? readMarker(el) : null;
+      if (el && data) {
+        if (change === "delete") el.remove();
+        else writeMarker(el, { ...data, ...change });
+        commitBookmark();
+        return true;
+      }
+    }
+    const html = editMarkerInHtml(p.content, id, change);
+    if (html === null) return false;
+    patchPage(p.id, { content: html });
+    return true;
+  }
+
+  const revealRef = useLatestRef(revealBookmark);
+  const goToRef = useLatestRef(goToBookmark);
+  const onJumpedRef = useLatestRef(onJumped);
+  const toastRef = useLatestRef(showToast);
+
+  // Pagina (o modalità) appena cambiata per raggiungere un segno: lo si mostra quando è nel DOM.
+  useEffect(() => {
+    const id = pendingJump.current;
+    if (!id || !ready) return;
+    pendingJump.current = null;
+    // Un fotogramma dopo: la pagina appena montata deve avere la sua altezza prima di scorrere.
+    window.requestAnimationFrame(() => {
+      if (!revealRef.current(id)) toastRef.current("Il segno non c'è più");
+    });
+  }, [index, ready, mode, revealRef, toastRef]);
+
+  // Richiesta dal pannello dei segni (anche appena aperta la nota).
+  useEffect(() => {
+    if (!jumpTo || !ready) return;
+    goToRef.current(jumpTo.id);
+    // Fatto: riaprendo la nota più tardi non si torna di nuovo a questo segno.
+    onJumpedRef.current?.();
+  }, [jumpTo, ready, goToRef, onJumpedRef]);
+
+  /** Tasto destro nel testo: il cursore va dove si è cliccato (se non è dentro la selezione). */
+  function openPageMenu(point: { x: number; y: number }, marker: HTMLElement | null) {
+    const root = editorRef.current;
+    const sel = window.getSelection();
+    if (!root || !sel) return;
+    if (!marker) {
+      const range = sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+      const inSelection =
+        range &&
+        !range.collapsed &&
+        root.contains(range.commonAncestorContainer) &&
+        Array.from(range.getClientRects()).some((r) => point.x >= r.left && point.x <= r.right && point.y >= r.top && point.y <= r.bottom);
+      if (!inSelection) {
+        const caret = caretAt(root, point.x, point.y);
+        if (caret) {
+          root.focus({ preventScroll: true });
+          sel.removeAllRanges();
+          sel.addRange(caret);
+        }
+      }
+    }
+    setBmPop(null);
+    const after = window.getSelection();
+    const hasSelection = Boolean(after && !after.isCollapsed && root.contains(after.anchorNode));
+    setPageMenu({ ...point, marker: marker?.dataset.bm ?? null, hasSelection });
+  }
+
+  /** HTML copiato da una nota (con i suoi segni): i segni incollati sono segni nuovi. */
+  function insertOwnHtml(html: string) {
+    const root = editorRef.current;
+    if (!root) return;
+    const box = document.createElement("template");
+    box.innerHTML = sanitizeHtml(html, { source: "esterno", bookmarks: true });
+    freshMarkerIds(box.content);
+    const out = document.createElement("div");
+    out.appendChild(box.content);
+    commandActive.current = true;
+    try {
+      document.execCommand("insertHTML", false, out.innerHTML);
+    } finally {
+      commandActive.current = false;
+    }
+    prepareMarkers(root);
+    commitEditor();
+  }
+
+  /** Taglia/Copia dal menu: gli stessi eventi di Ctrl+X/C (i segni passano da PageSurface). */
+  function clipboardCommand(command: "cut" | "copy") {
+    editorRef.current?.focus({ preventScroll: true });
+    if (!document.execCommand(command)) showToast(command === "cut" ? "Usa Ctrl+X per tagliare" : "Usa Ctrl+C per copiare");
+  }
+
+  /** Incolla dal menu: dagli appunti di sistema (se il sistema lo permette), altrimenti si chiede Ctrl+V. */
+  async function pasteFromMenu() {
+    const root = editorRef.current;
+    if (!root) return;
+    try {
+      const text = await navigator.clipboard.readText();
+      root.focus({ preventScroll: true });
+      const own = copiedHtmlFor(text);
+      if (own) {
+        insertOwnHtml(own);
+        return;
+      }
+      let html = "";
+      try {
+        for (const item of await navigator.clipboard.read()) {
+          if (item.types.includes("text/html")) {
+            html = await (await item.getType("text/html")).text();
+            break;
+          }
+        }
+      } catch {
+        /* solo testo */
+      }
+      const clean = html ? sanitizeHtml(html, { source: "esterno" }) : "";
+      commandActive.current = true;
+      try {
+        if (clean) document.execCommand("insertHTML", false, clean);
+        else document.execCommand("insertText", false, text);
+      } finally {
+        commandActive.current = false;
+      }
+      commitEditor();
+    } catch (error) {
+      console.error("Incolla dal menu non riuscito:", error);
+      showToast("Qui l'incolla dal menu non è permesso: usa Ctrl+V");
+    }
+  }
+
   // ---------------- Scorciatoie (lib/shortcuts.ts) ----------------
 
   /** Esegue l'azione di una scorciatoia; false = non riguarda questo editor (il tasto fa il suo lavoro). */
@@ -913,9 +1363,24 @@ async function changePageColor(color: string | null) {
         if (mode !== "ink") return false;
         setMode("text");
         return true;
+      case "pinTool":
+        if (mode !== "ink") return false;
+        setTool("pin");
+        return true;
+      case "bookmark":
+        insertBookmark();
+        return true;
+      case "nextBookmark":
+        stepBookmark(1);
+        return true;
+      case "prevBookmark":
+        stepBookmark(-1);
+        return true;
       case "escape": {
         // Chiude quello che è aperto; se non c'è niente esce dal disegno o deseleziona.
-        const open = Boolean(slash || mention || menu || linkOpen || findOpen);
+        const open = Boolean(slash || mention || menu || linkOpen || findOpen || bmPop || pageMenu);
+        setBmPop(null);
+        setPageMenu(null);
         setSlash(null);
         setMention(null);
         setMenu(null);
@@ -943,15 +1408,18 @@ async function changePageColor(color: string | null) {
   const actionRef = useLatestRef(handleAction);
   const dragOverRef = useLatestRef(dragOver);
   const dropRef = useLatestRef(dropFiles);
+  const editBookmarkRef = useLatestRef(editBookmark);
   useEffect(() => {
     if (!registerEditor) return;
     registerEditor({
       action: (action) => actionRef.current(action),
       dragOver: (point, count) => dragOverRef.current(point, count),
       drop: (paths, point) => dropRef.current(paths, point),
+      noteId: note.id,
+      editBookmark: (id, change) => editBookmarkRef.current(id, change),
     });
     return () => registerEditor(null);
-  }, [registerEditor, actionRef, dragOverRef, dropRef]);
+  }, [registerEditor, actionRef, dragOverRef, dropRef, editBookmarkRef, note.id]);
 
   // ---------------- Menu "/" ----------------
 
@@ -1331,10 +1799,10 @@ async function changePageColor(color: string | null) {
       } else if (kind === "md") {
         if (await saveText(`${base}.md`, "md", "Markdown", noteToMarkdown(title, list, titleColor))) showToast("Markdown salvato");
       } else if (kind === "pdf") {
-        const bytes = await renderNotePdf(list, meta, { scale: 2, light: lightExport });
+        const bytes = await renderNotePdf(list, meta, { scale: 2, light: lightExport, marks: exportMarks });
         if (await saveBytes(`${base}.pdf`, "pdf", "PDF", bytes)) showToast("PDF salvato");
       } else {
-        const bytes = await renderNoteImage(list, meta, kind === "png" ? "png" : "jpeg", { scale: 3, light: lightExport });
+        const bytes = await renderNoteImage(list, meta, kind === "png" ? "png" : "jpeg", { scale: 3, light: lightExport, marks: exportMarks });
         if (await saveBytes(`${base}.${kind}`, kind, kind === "png" ? "Immagine PNG" : "Immagine JPG", bytes)) {
           showToast("Immagine salvata");
         }
@@ -1442,6 +1910,13 @@ async function changePageColor(color: string | null) {
     }
     const text = e.clipboardData.getData("text/plain");
     const el = editorRef.current;
+    // Copiato da una nota con dei segni (PageSurface): si incolla il nostro HTML, con segni nuovi.
+    const own = copiedHtmlFor(text);
+    if (own && e.clipboardData.getData("text/html")) {
+      e.preventDefault();
+      insertOwnHtml(own);
+      return true;
+    }
     const insertPlain = () => {
       commandActive.current = true;
       try {
@@ -1597,6 +2072,37 @@ async function changePageColor(color: string | null) {
       await deleteAttachment(attachment.id);
       setAttachments((list) => list.filter((a) => a.id !== attachment.id));
     });
+  }
+
+  /** Voci del menu del tasto destro: sul segno (modifica, elimina) o nel testo. */
+  function pageMenuGroups(markerId: string | null, hasSelection: boolean): PageMenuItem[][] {
+    if (markerId) {
+      return [
+        [
+          {
+            label: "Modifica il segno",
+            icon: <MdEdit />,
+            onSelect: () => {
+              const el = markerEl(markerId);
+              if (el) openMarkerPopover(el, false);
+            },
+          },
+          { label: "Elimina il segno", icon: <MdDeleteOutline />, danger: true, onSelect: () => deleteBookmark("testo", markerId) },
+        ],
+      ];
+    }
+    return [
+      [{ label: "Inserisci un segno qui", icon: <MdOutlineBookmarkAdd />, hint: shortcutLabel("bookmark"), onSelect: insertBookmark }],
+      [
+        { label: "Taglia", icon: <MdContentCut />, hint: "Ctrl X", disabled: !hasSelection, onSelect: () => clipboardCommand("cut") },
+        { label: "Copia", icon: <MdContentCopy />, hint: "Ctrl C", disabled: !hasSelection, onSelect: () => clipboardCommand("copy") },
+        { label: "Incolla", icon: <MdContentPaste />, hint: "Ctrl V", onSelect: () => void pasteFromMenu() },
+      ],
+      [
+        { label: "Annulla", icon: <MdUndo />, hint: shortcutLabel("undo"), onSelect: handleUndo },
+        { label: "Ripeti", icon: <MdRedo />, hint: shortcutLabel("redo"), onSelect: handleRedo },
+      ],
+    ];
   }
 
   const splitQ = splitQuery.trim().toLowerCase();
@@ -1789,6 +2295,10 @@ async function changePageColor(color: string | null) {
                 <label className="nq-menu-check">
                   <input type="checkbox" checked={lightExport} onChange={(e) => setLightExport(e.target.checked)} />
                   Sfondo chiaro (consigliato per stampare)
+                </label>
+                <label className="nq-menu-check">
+                  <input type="checkbox" checked={exportMarks} onChange={(e) => setExportMarks(e.target.checked)} />
+                  Mostra i segni nelle pagine (PDF e immagini)
                 </label>
               </div>
             </>
@@ -2029,6 +2539,7 @@ async function changePageColor(color: string | null) {
         <ToolButton label="Elenco puntato" shortcut="bullets" icon={<MdFormatListBulleted />} disabled={textOff} onClick={() => exec("insertUnorderedList")} />
         <ToolButton label="Checklist" shortcut="checklist" icon={<MdChecklist />} disabled={textOff} onClick={handleChecklist} />
         <ToolButton label="Link" shortcut="link" icon={<MdLink />} disabled={textOff} pressed={linkOpen} onClick={openLink} />
+        <ToolButton label="Inserisci un segno" shortcut="bookmark" icon={<MdOutlineBookmarkAdd />} onClick={insertBookmark} />
         {linkOpen && (
           <span className="nq-link-pop">
             <input
@@ -2152,13 +2663,14 @@ async function changePageColor(color: string | null) {
           <ToolButton label="Penna" shortcut="pen" text="Penna" icon={<MdOutlineEdit />} pressed={tool === "pen"} onClick={() => setTool("pen")} />
           <ToolButton label="Evidenziatore" shortcut="highlighter" text="Evidenziatore" icon={<MdOutlineBorderColor />} pressed={tool === "highlighter"} onClick={() => setTool("highlighter")} />
           <ToolButton label="Gomma" shortcut="eraser" text="Gomma" icon={<MdOutlineBackspace />} pressed={tool === "eraser"} onClick={() => setTool("eraser")} />
+          <ToolButton label="Segno sulla pagina (clicca dove vuoi metterlo)" shortcut="pinTool" text="Segno" icon={<MdOutlinePushPin />} pressed={tool === "pin"} onClick={() => setTool("pin")} />
           <ToolButton
             label={shapes ? "Forme automatiche: accese (tieni fermo a fine tratto)" : "Forme automatiche: spente"}
             legend="forme"
             text="Forme"
             icon={<MdOutlineShapeLine />}
             pressed={shapes}
-            disabled={tool === "eraser"}
+            disabled={tool === "eraser" || tool === "pin"}
             onClick={toggleShapes}
           />
           <span className="nq-tsep" />
@@ -2262,6 +2774,14 @@ async function changePageColor(color: string | null) {
               else setRefRow(rowId);
             }}
             onHistory={(direction) => (direction === "undo" ? handleUndo() : handleRedo())}
+            onMarkerClick={(el) => openMarkerPopover(el, false)}
+            onPageMenu={openPageMenu}
+            onPlacePin={placePin}
+            onOpenPin={(pin, anchor) => {
+              setPageMenu(null);
+              setBmPop({ place: "pagina", pageId: page.id, data: pin, anchor, fresh: false });
+            }}
+            onMovePin={movePin}
           />
         </div>
       </div>
@@ -2439,6 +2959,20 @@ async function changePageColor(color: string | null) {
             />
           );
         })()}
+
+      {bmPop && bmPop.pageId === page.id && (
+        <BookmarkPopover
+          key={bmPop.data.id}
+          data={bmPop.data}
+          anchor={bmPop.anchor}
+          fresh={bmPop.fresh}
+          onChange={changeBookmark}
+          onDelete={() => deleteBookmark(bmPop.place, bmPop.data.id)}
+          onClose={closeBookmarkPopover}
+        />
+      )}
+
+      {pageMenu && <PageMenu x={pageMenu.x} y={pageMenu.y} groups={pageMenuGroups(pageMenu.marker, pageMenu.hasSelection)} onClose={() => setPageMenu(null)} />}
 
       {toast && (
         <div className={`nq-toast${toastAction ? " nq-toast--action" : ""}`} role="status">

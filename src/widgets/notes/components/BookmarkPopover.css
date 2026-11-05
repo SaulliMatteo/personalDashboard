@@ -1,0 +1,128 @@
+/* Popover di un segno: nome, tipo, colore. È un .nq-menu (forma per tema già nei suoi stili), ma fisso
+   sullo schermo accanto al segno. */
+
+.nq-menu.nq-bm-pop {
+  position: fixed;
+  z-index: 70;
+  box-sizing: border-box;
+  min-width: 0;
+  max-height: none;
+  overflow: visible;
+  gap: 10px;
+  padding: 12px;
+}
+
+.nq-bm-pop-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.nq-bm-pop-name input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.nq-bm-pop-name input:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.nq-bm-pop-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.nq-menu button.nq-bm-kind {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  color: var(--text-secondary);
+  font-size: 18px;
+}
+
+.nq-menu button.nq-bm-kind[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.nq-bm-pop-colors {
+  gap: 7px;
+}
+
+.nq-menu .nq-bm-pop-colors .nq-sw {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+}
+
+.nq-menu .nq-bm-pop-colors .nq-sw[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.nq-menu .nq-bm-pop-colors .nq-sw--theme {
+  color: var(--text-secondary);
+  font-size: 15px;
+}
+
+.nq-bm-pop-colors .nq-ink-dot {
+  margin: 0;
+}
+
+.nq-menu button.nq-bm-pop-delete {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0 0 9px 9px;
+  color: var(--danger);
+  font-size: 12.5px;
+}
+
+.nq-menu button.nq-bm-pop-delete svg {
+  font-size: 16px;
+}
+
+/* Fosforo: tasti con il bordo come i suoi pulsanti, niente riempimenti morbidi. */
+:root[data-theme="fosforo"] .nq-bm-pop-name input {
+  background: transparent;
+  border: var(--panel-border);
+}
+
+:root[data-theme="opaco"] .nq-bm-pop-name input,
+:root[data-theme="opaco"] .nq-menu button.nq-bm-kind {
+  border-radius: 999px;
+}
+
+:root[data-theme="quaderno"] .nq-bm-pop-name input {
+  background: transparent;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+:root[data-theme="quaderno"] .nq-menu button.nq-bm-kind {
+  border-width: 1.5px;
+  border-radius: 4px;
+}

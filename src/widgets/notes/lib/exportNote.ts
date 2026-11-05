@@ -10,6 +10,7 @@ import { expandCollectionBlocks } from "./viewExport";
 import { THEME_INK, drawStrokes } from "./ink"; // al posto del solo drawStrokes
 import { CONTRAST_LARGE, asTitleColor } from "./titleColor";
 import { readableOn } from "./useTitleColor";
+import { MARKER_SELECTOR, kindGlyph, pinsMarkdown, readBookmarks, readMarker, type BookmarkData } from "./bookmarks";
 
 export interface ExportMeta {
   title: string;
@@ -31,6 +32,31 @@ export interface RenderOptions {
   scale: number;
   /** Sfondo chiaro anche se l'app è in tema scuro (adatto alla stampa). */
   light: boolean;
+  /** I segni si vedono sulle pagine (nel PDF diventano comunque i segnalibri del documento). */
+  marks?: boolean;
+}
+
+/** Un segno nella pagina esportata: titolo e altezza (frazione dell'altezza della pagina). */
+interface ExportMark {
+  title: string;
+  ratio: number;
+}
+
+interface RenderedPage {
+  canvas: HTMLCanvasElement;
+  marks: ExportMark[];
+}
+
+/** Il titolo del segno nei segnalibri del PDF: il nome, con il simbolo del tipo davanti (tranne il segnalibro). */
+function markTitle(b: Pick<BookmarkData, "name" | "kind">): string {
+  return b.kind === "bookmark" ? b.name : `${kindGlyph(b.kind)} ${b.name}`;
+}
+
+/** Il colore del segno sulla pagina esportata (token del tema, colore libero o accento). */
+function markColor(style: CSSStyleDeclaration, color: string | null, accent: string): string {
+  if (!color) return accent;
+  if (color.startsWith("#")) return color;
+  return style.getPropertyValue(`--nq-ink-${color}`).trim() || accent;
 }
 
 const PAPER_WIDTH = 870; // = 58em a 15px, la larghezza del foglio nell'editor
@@ -59,8 +85,14 @@ const LIGHT_VARS: Record<string, string> = {
  * (`titleColor: "#rrggbb"`, tra virgolette perché in YAML # apre un commento), come nota.md.
  */
 export function noteToMarkdown(title: string, pages: NotePage[], titleColor: string | null = null): string {
-  // Le viste collegate diventano tabelle con i dati del momento (lib/viewExport.ts).
-  const body = pages.map((p) => htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }))).join("\n\n---\n\n");
+  // Le viste collegate diventano tabelle con i dati del momento (lib/viewExport.ts); i segni sulla pagina, commenti.
+  const body = pages
+    .map((p) => {
+      const text = htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }));
+      const pins = pinsMarkdown(p.pins);
+      return pins ? `${text}\n\n${pins}` : text;
+    })
+    .join("\n\n---\n\n");
   const color = asTitleColor(titleColor);
   const front = color ? `---\ntitleColor: ${JSON.stringify(color)}\n---\n\n` : "";
   return `${front}# ${title || "Senza titolo"}\n\n${body}\n`;
@@ -174,12 +206,67 @@ function cloneWithStyles(source: Element): Element {
   return clone;
 }
 
+/**
+ * Segni della pagina esportata: con "mostra" quelli nel testo diventano pastiglie vere (lo ::before del
+ * CSS non passa nella copia degli stili), altrimenti spariscono. Restituisce dove stanno, per il PDF.
+ */
+function exportMarks(paper: HTMLElement, page: NotePage, show: boolean): ExportMark[] {
+  const style = getComputedStyle(paper);
+  const accent = style.getPropertyValue("--accent").trim() || "#6c8dff";
+  const markers = Array.from(paper.querySelectorAll<HTMLElement>(`.nq-doc ${MARKER_SELECTOR}`));
+  if (show) {
+    for (const el of markers) {
+      const data = readMarker(el);
+      if (!data) continue;
+      el.textContent = data.kind === "bookmark" ? "▾" : kindGlyph(data.kind);
+      el.style.cssText =
+        `display:inline-block;margin:0 0.15em;padding:0 0.35em;border-radius:0.5em;font-size:0.72em;line-height:1.45;` +
+        `font-weight:700;vertical-align:0.12em;color:#fff;background:${markColor(style, data.color, accent)};`;
+    }
+  }
+  const height = paper.getBoundingClientRect().height || 1;
+  const top = paper.getBoundingClientRect().top;
+  const byId = new Map(markers.map((el) => [el.dataset.bm, el]));
+  const out: ExportMark[] = [];
+  for (const b of readBookmarks(page.content, page.pins)) {
+    if (b.place === "testo") {
+      const el = byId.get(b.id);
+      if (el) out.push({ title: markTitle(b), ratio: Math.max(0, (el.getBoundingClientRect().top - top) / height) });
+    } else {
+      const pin = page.pins.find((p) => p.id === b.id);
+      if (pin) out.push({ title: markTitle(b), ratio: Math.max(0, (pin.y * PAPER_WIDTH) / height) });
+    }
+  }
+  if (!show) markers.forEach((el) => el.remove());
+  return out;
+}
+
+/** Segni sulla pagina, disegnati sopra l'inchiostro (solo con "mostra i segni"). */
+function drawPins(ctx: CanvasRenderingContext2D, width: number, page: NotePage, style: CSSStyleDeclaration) {
+  const accent = style.getPropertyValue("--accent").trim() || "#6c8dff";
+  for (const pin of page.pins) {
+    const x = pin.x * width;
+    const y = pin.y * width;
+    ctx.save();
+    ctx.fillStyle = markColor(style, pin.color, accent);
+    ctx.beginPath();
+    ctx.arc(x, y, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 11px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(pin.kind === "bookmark" ? "▾" : kindGlyph(pin.kind), x, y + 0.5);
+    ctx.restore();
+  }
+}
+
 async function renderPage(
   page: NotePage,
   number: number,
   meta: ExportMeta,
-  { scale, light }: RenderOptions
-): Promise<HTMLCanvasElement> {
+  { scale, light, marks = false }: RenderOptions
+): Promise<RenderedPage> {
   // L'altezza deve contenere anche i tratti disegnati in basso.
   const lowestStroke = page.ink.reduce((max, s) => s.points.reduce((m, [, y]) => Math.max(m, y), max), 0);
   const minHeight = Math.ceil(Math.max(840, lowestStroke * PAPER_WIDTH + 32));
@@ -188,6 +275,7 @@ async function renderPage(
   try {
     // Immagini e schede file come HTML statico (prima di misurare l'altezza).
     await renderStaticBlocks(paper, meta.noteDir ?? null);
+    const found = exportMarks(paper, page, marks);
     const width = PAPER_WIDTH;
     const height = Math.ceil(paper.getBoundingClientRect().height);
     const background = getComputedStyle(paper).backgroundColor;
@@ -217,7 +305,8 @@ async function renderPage(
         ? lightInk
         : undefined;
     drawStrokes(ctx, width, page.ink, mapInk);
-    return canvas;
+    if (marks) drawPins(ctx, width, page, getComputedStyle(paper));
+    return { canvas, marks: found };
   } finally {
     stage.remove();
   }
@@ -229,9 +318,9 @@ function safeScale(wanted: number, pages: NotePage[]): number {
   return Math.max(1, Math.min(wanted, 14000 / approxHeight));
 }
 
-async function renderAll(pages: NotePage[], meta: ExportMeta, options: RenderOptions): Promise<HTMLCanvasElement[]> {
+async function renderAll(pages: NotePage[], meta: ExportMeta, options: RenderOptions): Promise<RenderedPage[]> {
   const opts = { ...options, scale: safeScale(options.scale, pages) };
-  const canvases: HTMLCanvasElement[] = [];
+  const canvases: RenderedPage[] = [];
   const withCount = { ...meta, pageCount: pages.length };
   for (let i = 0; i < pages.length; i++) canvases.push(await renderPage(pages[i], i + 1, withCount, opts));
   return canvases;
@@ -257,7 +346,7 @@ export async function renderNoteImage(
   format: "png" | "jpeg",
   options: RenderOptions
 ): Promise<Uint8Array> {
-  const canvases = await renderAll(pages, meta, options);
+  const canvases = (await renderAll(pages, meta, options)).map((r) => r.canvas);
   const gap = Math.round(24 * canvases[0].width / PAPER_WIDTH);
   const total = canvases.reduce((sum, c) => sum + c.height, 0) + gap * (canvases.length - 1);
 
@@ -281,14 +370,39 @@ export async function renderNoteImage(
 // ---------------------------------------------------------------------
 
 export async function renderNotePdf(pages: NotePage[], meta: ExportMeta, options: RenderOptions): Promise<Uint8Array> {
-  const canvases = await renderAll(pages, meta, options);
+  const rendered = await renderAll(pages, meta, options);
   const jpegs = [];
-  for (const c of canvases) jpegs.push({ data: await blobBytes(await toBlob(c, "image/jpeg", 0.92)), w: c.width, h: c.height });
-  return buildPdf(jpegs);
+  for (const { canvas: c } of rendered) jpegs.push({ data: await blobBytes(await toBlob(c, "image/jpeg", 0.92)), w: c.width, h: c.height });
+  return buildPdf(jpegs, rendered.map((r) => r.marks));
 }
 
-/** PDF minimale: una pagina per immagine JPEG, larga come un A4 (595pt). */
-function buildPdf(images: { data: Uint8Array; w: number; h: number }[]): Uint8Array {
+/** Testo per il PDF in UTF-16BE (accenti e simboli compresi), come stringa esadecimale. */
+function pdfText(text: string): string {
+  let hex = "FEFF";
+  for (const ch of text) {
+    const cp = ch.codePointAt(0) ?? 63;
+    if (cp > 0xffff) {
+      const v = cp - 0x10000;
+      hex += (0xd800 + (v >> 10)).toString(16).padStart(4, "0") + (0xdc00 + (v & 0x3ff)).toString(16).padStart(4, "0");
+    } else hex += cp.toString(16).padStart(4, "0");
+  }
+  return `<${hex.toUpperCase()}>`;
+}
+
+/** Una voce dei segnalibri del PDF: titolo, pagina e altezza (frazione dall'alto); le voci "Pagina N" hanno figli. */
+interface OutlineNode {
+  id: number;
+  title: string;
+  page: number;
+  ratio: number;
+  kids: OutlineNode[];
+}
+
+/**
+ * PDF minimale: una pagina per immagine JPEG, larga come un A4 (595pt). Con dei segni, il PDF ha i suoi
+ * segnalibri (/Outlines): "Pagina N" e dentro i segni di quella pagina (con una pagina sola, i segni e basta).
+ */
+function buildPdf(images: { data: Uint8Array; w: number; h: number }[], marks: ExportMark[][] = []): Uint8Array {
   const encoder = new TextEncoder();
   const chunks: Uint8Array[] = [];
   const offsets: number[] = [];
@@ -311,7 +425,23 @@ function buildPdf(images: { data: Uint8Array; w: number; h: number }[]): Uint8Ar
 
   const firstPage = 3;
   const pageIds = images.map((_, i) => firstPage + i * 3);
-  object(1, () => push("<< /Type /Catalog /Pages 2 0 R >>"));
+
+  // Numeri degli oggetti dei segnalibri: dopo quelli delle pagine.
+  let nextId = firstPage + images.length * 3;
+  const withMarks = marks.map((list, page) => ({ page, list })).filter((g) => g.list.length > 0 && g.page < images.length);
+  const leaf = (m: ExportMark, page: number): OutlineNode => ({ id: nextId++, title: m.title, page, ratio: m.ratio, kids: [] });
+  const outlineRoot = withMarks.length > 0 ? nextId++ : 0;
+  const top: OutlineNode[] =
+    images.length === 1
+      ? withMarks.flatMap((g) => g.list.map((m) => leaf(m, g.page)))
+      : withMarks.map((g) => {
+          const id = nextId++;
+          return { id, title: `Pagina ${g.page + 1}`, page: g.page, ratio: 0, kids: g.list.map((m) => leaf(m, g.page)) };
+        });
+
+  object(1, () =>
+    push(`<< /Type /Catalog /Pages 2 0 R${outlineRoot ? ` /Outlines ${outlineRoot} 0 R /PageMode /UseOutlines` : ""} >>`)
+  );
   object(2, () =>
     push(`<< /Type /Pages /Kids [${pageIds.map((id) => `${id} 0 R`).join(" ")}] /Count ${images.length} >>`)
   );
@@ -337,7 +467,29 @@ function buildPdf(images: { data: Uint8Array; w: number; h: number }[]): Uint8Ar
     });
   });
 
-  const count = firstPage + images.length * 3;
+  if (outlineRoot) {
+    const total = top.reduce((n, node) => n + 1 + node.kids.length, 0);
+    object(outlineRoot, () => push(`<< /Type /Outlines /First ${top[0].id} 0 R /Last ${top[top.length - 1].id} 0 R /Count ${total} >>`));
+    const writeLevel = (nodes: OutlineNode[], parent: number) => {
+      nodes.forEach((node, i) => {
+        const image = images[node.page];
+        const height = (pageWidth * image.h) / image.w;
+        // Un po' sopra il segno, così si vede anche la riga prima.
+        const y = Math.min(height, height * (1 - node.ratio) + 24);
+        const links =
+          (i > 0 ? ` /Prev ${nodes[i - 1].id} 0 R` : "") +
+          (i < nodes.length - 1 ? ` /Next ${nodes[i + 1].id} 0 R` : "") +
+          (node.kids.length > 0 ? ` /First ${node.kids[0].id} 0 R /Last ${node.kids[node.kids.length - 1].id} 0 R /Count ${node.kids.length}` : "");
+        object(node.id, () =>
+          push(`<< /Title ${pdfText(node.title)} /Parent ${parent} 0 R${links} /Dest [${pageIds[node.page]} 0 R /XYZ 0 ${y.toFixed(2)} null] >>`)
+        );
+        writeLevel(node.kids, node.id);
+      });
+    };
+    writeLevel(top, outlineRoot);
+  }
+
+  const count = nextId;
   const xrefStart = position;
   push(`xref\n0 ${count}\n0000000000 65535 f \n`);
   for (let n = 1; n < count; n++) push(`${String(offsets[n]).padStart(10, "0")} 00000 n \n`);

@@ -404,4 +404,29 @@ export const MIGRATIONS: Migration[] = [
        )`,
     ],
   },
+  {
+    version: 20,
+    description: "Notes: segni (segnalibri) nel testo e sulla pagina",
+    statements: [
+      // Segni appoggiati sulla pagina (scrittura a mano): JSON [{id,name,kind,color,x,y}], coordinate come l'inchiostro.
+      // Rieseguita su un DB che la ha già non fa nulla (duplicate column ignorato in core/db/index.ts).
+      `ALTER TABLE note_pages ADD COLUMN pins TEXT NOT NULL DEFAULT '[]'`,
+      // Indice dei segni per il pannello: si ricalcola a ogni salvataggio della pagina dal suo HTML
+      // (<span data-bm>) e da pins (widgets/notes/lib/bookmarks.ts). Niente FK, come le altre tabelle delle Note.
+      `CREATE TABLE IF NOT EXISTS note_bookmarks (
+         id TEXT PRIMARY KEY,
+         note_id INTEGER NOT NULL,
+         page_id INTEGER NOT NULL,
+         place TEXT NOT NULL,
+         name TEXT NOT NULL,
+         kind TEXT NOT NULL,
+         color TEXT,
+         position INTEGER NOT NULL,
+         created_at INTEGER NOT NULL,
+         updated_at INTEGER NOT NULL
+       )`,
+      `CREATE INDEX IF NOT EXISTS idx_note_bookmarks_note ON note_bookmarks(note_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_note_bookmarks_page ON note_bookmarks(page_id)`,
+    ],
+  },
 ];

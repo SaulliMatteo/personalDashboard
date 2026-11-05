@@ -5,7 +5,8 @@ import type { InkStroke } from "../data/notesRepository";
 import { REF_WIDTH, THEME_INK, drawStrokes } from "../lib/ink";
 import { adjustShape, createHoldDetector, recognizeShape, shapeToPoints, type HoldDetector, type Pt, type Shape } from "../lib/shapes";
 
-export type InkTool = "pen" | "highlighter" | "eraser";
+/** "pin" = segno sulla pagina: un clic lo appoggia lì (lo disegna InkPins, non il canvas). */
+export type InkTool = "pen" | "highlighter" | "eraser" | "pin";
 
 /** Tempo fermo (ms) e movimento ammesso (px sullo schermo) che fanno scattare la forma. */
 const HOLD_MS = 500;
@@ -81,11 +82,13 @@ interface InkLayerProps {
   /** Forme automatiche: tenendo fermo il puntatore a fine tratto, il tratto diventa una forma. */
   shapes?: boolean;
   onChange: (strokes: InkStroke[]) => void;
+  /** Strumento "pin": il punto toccato, nelle coordinate dei tratti. Senza, lo strumento non fa nulla. */
+  onPlacePin?: (point: [number, number], client: { x: number; y: number }) => void;
   /** Classe del canvas: "nq-ink" sulla pagina, un'altra dentro un'immagine. */
   className?: string;
 }
 
-function InkLayer({ strokes, active, tool, color, size, shapes = false, onChange, className = "nq-ink" }: InkLayerProps) {
+function InkLayer({ strokes, active, tool, color, size, shapes = false, onChange, onPlacePin, className = "nq-ink" }: InkLayerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const strokesRef = useLatestRef(strokes);
   const live = useRef<InkStroke | null>(null);
@@ -214,6 +217,10 @@ function InkLayer({ strokes, active, tool, color, size, shapes = false, onChange
 
   function handleDown(e: PointerEvent<HTMLCanvasElement>) {
     if (!active) return;
+    if (tool === "pin") {
+      if (e.button === 0) onPlacePin?.(pointOf(e), { x: e.clientX, y: e.clientY });
+      return;
+    }
     e.currentTarget.setPointerCapture(e.pointerId);
     const p = pointOf(e);
     if (tool === "eraser") {
@@ -221,7 +228,7 @@ function InkLayer({ strokes, active, tool, color, size, shapes = false, onChange
       eraseAt(p);
       return;
     }
-    live.current = { tool, color, size, points: [p] };
+    live.current = { tool: tool === "highlighter" ? "highlighter" : "pen", color, size, points: [p] };
     snap.current = null;
     pointer.current = p;
     shift.current = e.shiftKey;
@@ -279,7 +286,7 @@ function InkLayer({ strokes, active, tool, color, size, shapes = false, onChange
   return (
     <canvas
       ref={canvasRef}
-      className={`${className}${active ? " is-active" : ""}${active && tool === "eraser" ? " is-eraser" : ""}`}
+      className={`${className}${active ? " is-active" : ""}${active && tool === "eraser" ? " is-eraser" : ""}${active && tool === "pin" ? " is-pin" : ""}`}
       onPointerDown={handleDown}
       onPointerMove={handleMove}
       onPointerUp={handleUp}

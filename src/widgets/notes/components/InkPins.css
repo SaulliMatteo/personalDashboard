@@ -1,0 +1,106 @@
+/* Segni appoggiati sulla pagina: stessa origine e stesse coordinate dell'inchiostro (.nq-ink),
+   quindi seguono zoom e titolo. Il livello non intercetta i clic, i segni sì. */
+
+.nq-pins {
+  position: absolute;
+  z-index: 3; /* sopra l'inchiostro */
+  top: max(0px, calc(var(--nq-head-h, 2.82em) - 2.82em));
+  left: 0;
+  width: 100%;
+  height: 0;
+  pointer-events: none;
+}
+
+.nq-pin {
+  --nq-bm-c: var(--nq-bm, var(--accent));
+  all: unset;
+  position: absolute;
+  left: calc(var(--x) * 100%);
+  top: calc(var(--y) * var(--nq-paper-w, 870px));
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 1.7em;
+  height: 1.7em;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--nq-bm-c);
+  color: var(--on-accent);
+  font-size: 1em;
+  box-shadow: 0 0 0.6em color-mix(in srgb, var(--nq-bm-c) 55%, transparent);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 120ms ease;
+}
+
+.nq-pin svg {
+  font-size: 1em;
+}
+
+.nq-pin:hover {
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+.nq-pin:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.nq-pin.is-movable {
+  cursor: grab;
+}
+
+.nq-pin.is-dragging {
+  cursor: grabbing;
+  opacity: 0.85;
+  transition: none;
+}
+
+/* Opaco: una linguetta piena, senza alone. */
+:root[data-theme="opaco"] .nq-pin {
+  border-radius: 0.45em 0.45em 0.45em 0.15em;
+  box-shadow: none;
+}
+
+/* Quaderno: un fermaglio di carta, squadrato e con l'ombra del foglio. */
+:root[data-theme="quaderno"] .nq-pin {
+  border-radius: 3px;
+  box-shadow: var(--card-shadow);
+}
+
+/* Fosforo: un LED, solo il contorno e il simbolo accesi. */
+:root[data-theme="fosforo"] .nq-pin {
+  border: 1.5px solid var(--nq-bm-c);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--nq-bm-c);
+  box-shadow: 0 0 0.5em color-mix(in srgb, var(--nq-bm-c) 45%, transparent);
+}
+
+/* Lampeggio quando ci si arriva dal pannello. */
+.nq-pin[data-bm-flash] {
+  animation: nq-pin-flash 1.4s ease-out;
+}
+
+@keyframes nq-pin-flash {
+  0%,
+  40% {
+    box-shadow: 0 0 0 0.5em color-mix(in srgb, var(--nq-bm-c) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nq-pin,
+  .nq-pin[data-bm-flash] {
+    animation: none;
+    transition: none;
+  }
+
+  .nq-pin[data-bm-flash] {
+    outline: 2px solid var(--nq-bm-c);
+    outline-offset: 3px;
+  }
+}

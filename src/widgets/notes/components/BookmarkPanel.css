@@ -1,0 +1,199 @@
+/* Scheda "Segni" della barra laterale. L'albero usa le righe di FolderTree (.nq-tree-*), che hanno già
+   la loro forma per tema (NotesDetail.css); qui solo le parti nuove. */
+
+.nq-bm-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+/* Questa nota / Tutte le note */
+.nq-bm-scope {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+}
+
+.nq-bm-scope button {
+  all: unset;
+  box-sizing: border-box;
+  padding: 5px 6px;
+  border-radius: calc(var(--radius-item) - 2px);
+  font-size: 12px;
+  text-align: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.nq-bm-scope button[aria-selected="true"] {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: var(--card-shadow);
+}
+
+.nq-bm-scope button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.nq-bm-scope button:focus-visible {
+  outline: var(--focus-ring);
+}
+
+.nq-bm-search {
+  margin: 0;
+}
+
+.nq-bm-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 0 2px;
+}
+
+.nq-tag.nq-bm-chip {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  font-size: 15px;
+}
+
+.nq-bm-dot {
+  all: unset;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  background: var(--nq-bm, var(--accent));
+  cursor: pointer;
+}
+
+.nq-bm-dot--theme {
+  background: var(--accent);
+}
+
+.nq-bm-dot--free {
+  background: conic-gradient(var(--tint-senape), var(--tint-salvia), var(--tint-blu), var(--tint-malva), var(--tint-senape));
+}
+
+.nq-bm-dot[aria-pressed="true"] {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 1px;
+}
+
+.nq-bm-dot:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.nq-bm-clear {
+  all: unset;
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.nq-bm-clear:hover {
+  text-decoration: underline;
+}
+
+.nq-bm-tree {
+  margin-top: 2px;
+}
+
+/* Righe che non sono un pulsante (cartella, nota, pagina): stesso aspetto, nessun clic. */
+.nq-tree-main.nq-bm-static {
+  cursor: default;
+}
+
+.nq-bm-page .nq-tree-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.nq-bm-ico {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 16px;
+  color: var(--nq-bm, var(--accent));
+}
+
+.nq-bm-pin {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ---------- Per tema ---------- */
+
+:root[data-theme="opaco"] .nq-bm-scope {
+  border-radius: 999px;
+}
+
+:root[data-theme="opaco"] .nq-bm-scope button {
+  border-radius: 999px;
+}
+
+:root[data-theme="opaco"] .nq-bm-scope button[aria-selected="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: none;
+}
+
+:root[data-theme="quaderno"] .nq-bm-scope {
+  padding: 0;
+  background: transparent;
+  border-bottom: 1.5px solid var(--border-subtle);
+  border-radius: 0;
+}
+
+:root[data-theme="quaderno"] .nq-bm-scope button {
+  border-radius: 0;
+}
+
+:root[data-theme="quaderno"] .nq-bm-scope button[aria-selected="true"] {
+  background: transparent;
+  box-shadow: inset 0 -2px 0 var(--accent);
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .nq-bm-scope {
+  background: transparent;
+  border: var(--panel-border);
+  border-radius: 5px;
+}
+
+:root[data-theme="fosforo"] .nq-bm-scope button {
+  border-radius: 3px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+:root[data-theme="fosforo"] .nq-bm-scope button[aria-selected="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: none;
+}
+
+:root[data-theme="fosforo"] .nq-bm-dot,
+:root[data-theme="fosforo"] .nq-bm-ico {
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--nq-bm, var(--accent)) 55%, transparent));
+}
+
+:root[data-theme="fosforo"] .nq-bm-dot {
+  border-radius: 2px;
+}

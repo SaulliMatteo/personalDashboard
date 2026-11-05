@@ -2033,3 +2033,119 @@
   font-size: 13px;
   transform: translateX(-50%);
 }
+
+/* ---------- Segni nel testo (lib/bookmarks.ts) ----------
+   <span data-bm> vuoto (un carattere a larghezza zero): il disegno è tutto nel ::before, a forma di tema.
+   Colore: --nq-bm (libero, messo dall'editor) o la chiave della palette; altrimenti l'accento del tema. */
+
+.nq-doc span[data-bm] {
+  --nq-bm-c: var(--nq-bm, var(--accent));
+  position: relative;
+  display: inline-block;
+  width: 1.05em;
+  height: 1em;
+  margin: 0 0.1em;
+  vertical-align: -0.12em;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.nq-doc span[data-bm][data-bm-color="rosso"] { --nq-bm: var(--nq-ink-rosso); }
+.nq-doc span[data-bm][data-bm-color="arancio"] { --nq-bm: var(--nq-ink-arancio); }
+.nq-doc span[data-bm][data-bm-color="verde"] { --nq-bm: var(--nq-ink-verde); }
+.nq-doc span[data-bm][data-bm-color="blu"] { --nq-bm: var(--nq-ink-blu); }
+.nq-doc span[data-bm][data-bm-color="viola"] { --nq-bm: var(--nq-ink-viola); }
+.nq-doc span[data-bm][data-bm-color="grigio"] { --nq-bm: var(--nq-ink-grigio); }
+
+/* Notte (forma di base): un punto tondo luminoso con il simbolo del tipo. */
+.nq-doc span[data-bm]::before {
+  content: "";
+  position: absolute;
+  inset: 0.04em 0.06em;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--nq-bm-c);
+  box-shadow: 0 0 0.5em color-mix(in srgb, var(--nq-bm-c) 60%, transparent);
+  color: var(--on-accent);
+  font-size: 0.62em;
+  font-weight: 800;
+  font-style: normal;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.nq-doc span[data-bm][data-bm-kind="star"]::before { content: "★"; }
+.nq-doc span[data-bm][data-bm-kind="important"]::before { content: "!"; }
+.nq-doc span[data-bm][data-bm-kind="question"]::before { content: "?"; }
+.nq-doc span[data-bm][data-bm-kind="review"]::before { content: "↻"; }
+.nq-doc span[data-bm][data-bm-kind="todo"]::before { content: "✓"; }
+
+.nq-doc span[data-bm]:hover::before {
+  filter: brightness(1.12);
+}
+
+/* Opaco: una linguetta piena nel pigmento, senza alone. */
+:root[data-theme="opaco"] .nq-doc span[data-bm]::before {
+  border-radius: 0.35em 0.35em 0.35em 0.1em;
+  box-shadow: none;
+}
+
+/* Quaderno: un nastrino da segnalibro, con la coda a V. */
+:root[data-theme="quaderno"] .nq-doc span[data-bm] {
+  width: 0.85em;
+  height: 1.2em;
+  vertical-align: -0.25em;
+}
+
+:root[data-theme="quaderno"] .nq-doc span[data-bm]::before {
+  inset: 0;
+  place-items: start center;
+  padding-top: 0.18em;
+  border-radius: 0;
+  box-shadow: none;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 76%, 0 100%);
+}
+
+/* Fosforo: un LED acceso, solo contorno e simbolo. */
+:root[data-theme="fosforo"] .nq-doc span[data-bm]::before {
+  border: 1.5px solid var(--nq-bm-c);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--nq-bm-c);
+  box-shadow: 0 0 0.45em color-mix(in srgb, var(--nq-bm-c) 45%, transparent);
+  text-shadow: 0 0 0.4em var(--nq-bm-c);
+}
+
+:root[data-theme="fosforo"] .nq-doc span[data-bm][data-bm-kind="bookmark"]::before {
+  content: "▮";
+}
+
+/* Raggiunto dal pannello o con Alt+PagSu/PagGiù: un impulso breve. */
+.nq-doc span[data-bm][data-bm-flash]::before {
+  animation: nq-bm-flash 1.4s ease-out;
+}
+
+@keyframes nq-bm-flash {
+  0%,
+  35% {
+    box-shadow: 0 0 0 0.45em color-mix(in srgb, var(--nq-bm-c) 45%, transparent);
+    transform: scale(1.25);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nq-doc span[data-bm][data-bm-flash]::before {
+    animation: none;
+    outline: 2px solid var(--nq-bm-c);
+    outline-offset: 2px;
+  }
+}
+
+/* Strumento "segno" della scrittura a mano. */
+.nq-ink.is-pin {
+  cursor: copy;
+}
