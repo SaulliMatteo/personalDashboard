@@ -2038,7 +2038,11 @@ async function changePageColor(color: string | null) {
               aria-label="Indirizzo del link"
               onChange={(e) => setLinkUrl(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") applyLink();
+                // senza preventDefault l'Invio, finito applyLink, arriverebbe alla pagina e sostituirebbe il testo del link
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  applyLink();
+                }
                 if (e.key === "Escape") setLinkOpen(false);
               }}
             />
