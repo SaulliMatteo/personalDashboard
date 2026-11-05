@@ -13,6 +13,25 @@ val tauriProperties = Properties().apply {
     }
 }
 
+/*
+ * Firma dell'APK release (l'app vera, `it.matteo.personalDashboard`). La chiave sta FUORI dal repo e qui si legge
+ * solo il percorso: `gen/android/keystore.properties` (ignorato da git) con
+ *   storeFile=C:/Users/<utente>/.android-keys/personaldashboard.jks
+ *   keyAlias=personaldashboard
+ *   storePassword=...   keyPassword=...   (oppure nelle variabili PD_STORE_PASSWORD / PD_KEY_PASSWORD)
+ * Senza file l'APK release esce non firmato (non si installa). Ogni aggiornamento va firmato con la stessa chiave:
+ * persa la chiave, l'app installata non si aggiorna più (vedi README, "Android").
+ */
+val keystoreProperties = Properties().apply {
+    val propFile = rootProject.file("keystore.properties")
+    if (propFile.exists()) {
+        propFile.inputStream().use { load(it) }
+    }
+}
+
+fun signingValue(key: String, env: String): String? =
+    keystoreProperties.getProperty(key) ?: System.getenv(env)
+
 android {
     compileSdk = 36
     namespace = "it.matteo.personalDashboard"
@@ -23,6 +42,17 @@ android {
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
+    }
+    signingConfigs {
+        create("release") {
+            val path = keystoreProperties.getProperty("storeFile")
+            if (path != null) {
+                storeFile = file(path)
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                storePassword = signingValue("storePassword", "PD_STORE_PASSWORD")
+                keyPassword = signingValue("keyPassword", "PD_KEY_PASSWORD")
+            }
+        }
     }
     buildTypes {
         getByName("debug") {
@@ -38,6 +68,11 @@ android {
             }
         }
         getByName("release") {
+            if (keystoreProperties.getProperty("storeFile") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                logger.warn("keystore.properties assente: l'APK release non sarà firmato")
+            }
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }
@@ -46,8 +81,12 @@ android {
             )
         }
     }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = "17"
     }
     buildFeatures {
         buildConfig = true

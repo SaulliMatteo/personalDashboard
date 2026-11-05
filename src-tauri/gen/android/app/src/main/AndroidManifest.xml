@@ -1,17 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Permessi (ognuno con il suo perché; il manifest finale si legge con `aapt dump permissions` sull'APK):
+         INTERNET: Gruppi (Supabase), Meteo, YouTube, invio dei file al PC.
+         POST_NOTIFICATIONS: lo aggiunge il plugin delle notifiche (fine fase del timer, avvisi, messaggi dei Gruppi;
+         da Android 13 lo chiede l'app la prima volta che serve). -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Fine fase del timer dello Studio all'ora esatta anche in Doze (notifiche pianificate, src/core/notify/notifier.ts):
          USE_EXACT_ALARM da Android 13 (concesso all'installazione), SCHEDULE_EXACT_ALARM per Android 12 (31-32).
          Prima di Android 12 non serve nessun permesso. -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
+    <!-- Li aggiunge il plugin delle notifiche (2.4.0) ma non servono: il ripristino dopo il riavvio vale solo per le
+         notifiche salvate con `batch`, che in questa versione salva un testo vuoto (non ripristina nulla), e
+         AlarmManager sveglia il telefono senza WAKE_LOCK. Dopo un riavvio le fine fase le rimette l'apertura dell'app. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" tools:node="remove" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" tools:node="remove" />
 
     <!-- AndroidTV support -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
 
+    <!-- Backup automatico di Android: solo il database (res/xml/backup_rules.xml e data_extraction_rules.xml).
+         La copia completa a mano: Impostazioni > Generale > Dati. -->
     <application
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:theme="@style/Theme.app"
         android:usesCleartextTraffic="${usesCleartextTraffic}">

@@ -75,3 +75,7 @@ docs
 
 # Font della Lavagna copiati da node_modules (scripts/copy-excalidraw-assets.mjs)
 public/excalidraw-assets/
+
+# Chiavi di firma Android: stanno fuori dal repo (vedi src-tauri/gen/android/app/build.gradle.kts)
+*.jks
+*.keystore

@@ -10,7 +10,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "android:release": "tauri android build --apk --target aarch64"
   },
   "dependencies": {
     "@excalidraw/excalidraw": "0.18.1",

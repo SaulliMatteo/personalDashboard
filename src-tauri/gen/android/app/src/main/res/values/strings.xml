@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">"personaldashboard"</string>
-    <string name="main_activity_title">"personaldashboard"</string>
+    <string name="app_name">"personalDashboard"</string>
+    <string name="main_activity_title">"personalDashboard"</string>
 </resources>

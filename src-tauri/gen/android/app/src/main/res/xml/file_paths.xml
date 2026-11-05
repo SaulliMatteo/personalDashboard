@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- File che l'app può dare alle altre app (FileProvider, plugin file-open): solo la cartella del Quaderno,
+     Android/data/<id>/files/Documents/Notes (src-tauri/src/file_open.rs controlla già il percorso). -->
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-  <external-path name="my_images" path="." />
-  <cache-path name="my_cache_images" path="." />
+  <external-files-path name="notes" path="Documents/Notes/" />
 </paths>
