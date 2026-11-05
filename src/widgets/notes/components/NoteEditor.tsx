@@ -426,13 +426,21 @@ function NoteEditor({
 
   const flushRef = useLatestRef(flush);
 
-  // Uscendo dall'editor si scrive subito quello che è in sospeso.
-  useEffect(
-    () => () => {
+  // Uscendo dall'editor si scrive subito quello che è in sospeso. Anche quando l'app va in sfondo: su Android
+  // potrebbe non tornare più (processo chiuso per memoria), e i 700 ms del debounce non arriverebbero.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden) void flushRef.current();
+    };
+    const onPageHide = () => void flushRef.current();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
       void flushRef.current();
-    },
-    [flushRef]
-  );
+    };
+  }, [flushRef]);
 
   const schedule = useCallback(() => {
     setSaving(true);
