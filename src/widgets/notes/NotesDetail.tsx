@@ -309,6 +309,8 @@ function NotesDetail() {
   const splitNote =
     openNote && splitId !== null && splitId !== openId ? live.find((n) => n.id === splitId) ?? null : null;
   const customizeFolder = customizeId !== null ? folderById.get(customizeId) ?? null : null;
+  // sul telefono la nota aperta copre la pagina: l'indietro di Android (e il ← dell'editor) torna all'elenco
+  useBackHandler(compact && openNote !== null, () => setOpenId(null));
 
   // ---------------- Azioni ----------------
 
@@ -933,6 +935,7 @@ function NotesDetail() {
         splitCandidates={live}
         compact={compact}
         onClosePane={onClosePane}
+        onClose={onClosePane ? undefined : () => setOpenId(null)}
         collections={collectionLinks}
       />
     );

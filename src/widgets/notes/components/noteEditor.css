@@ -2033,3 +2033,561 @@
   font-size: 13px;
   transform: translateX(-50%);
 }
+
+/* ==========================================================================
+   Telefono (docs/design/mobile/quaderno.html): la nota copre la pagina, in alto ← titolo ☆ ⋯, la pagina larga
+   quanto lo schermo e una sola riga di strumenti in basso, che sta sopra la tastiera (--keyboard).
+   Il resto passa nei fogli dal basso (BottomSheet.tsx).
+   ========================================================================== */
+
+.nq-editor--phone {
+  position: fixed;
+  z-index: 30;
+  top: var(--safe-top);
+  right: var(--safe-right);
+  bottom: calc(var(--safe-bottom) + var(--keyboard));
+  left: var(--safe-left);
+  background: var(--bg);
+}
+
+.nq-ph-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px 6px;
+}
+
+.nq-ph-head .nq-icon-btn {
+  width: 44px;
+  height: 44px;
+  color: var(--text-primary);
+  font-size: 22px;
+}
+
+.nq-ph-title {
+  flex: 1;
+  min-width: 0;
+  padding-left: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* lo stato del salvataggio solo mentre si scrive (vista 2) */
+.nq-ph-saved {
+  display: none;
+  margin-right: 4px;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+:root[data-keyboard] .nq-ph-saved {
+  display: inline;
+}
+
+.nq-editor--phone .nq-scroll {
+  padding: 0 10px;
+  overscroll-behavior: contain;
+}
+
+/* la pagina continua sotto la riga di strumenti: niente angoli in basso */
+.nq-editor--phone .nq-paper {
+  padding: 1.5em 1.35em 2.4em;
+  border-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* indicatore della pagina, in basso a destra (si nasconde con la tastiera aperta) */
+.nq-ph-pages {
+  all: unset;
+  position: absolute;
+  right: 18px;
+  bottom: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  border: var(--modal-border);
+  border-radius: 999px;
+  background: var(--modal-bg);
+  box-shadow: var(--shadow-pop);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.nq-ph-pages b {
+  color: var(--text-primary);
+}
+
+:root[data-keyboard] .nq-ph-pages {
+  display: none;
+}
+
+/* ---------- Riga degli strumenti ---------- */
+
+.nq-ph-bar {
+  position: relative;
+  z-index: 3;
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 4px 6px;
+  background: var(--modal-bg);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* i tasti si dividono la riga (da 360 dp in su ci stanno tutti) */
+.nq-ph-bar .nq-tb {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 48px;
+  height: 44px;
+  padding: 0;
+  font-size: 20px;
+}
+
+.nq-ph-bar .nq-tsep {
+  flex: none;
+  height: 22px;
+  margin: 0 3px;
+}
+
+.nq-ph-aa {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* scrittura a mano: colori, spessore e forme scorrono se non ci stanno; «Fine» resta in vista */
+.nq-ph-scroll {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nq-ph-scroll .nq-ink-dot {
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+
+.nq-ph-scroll .nq-tb {
+  flex: none;
+  width: 44px;
+}
+
+.nq-ph-scroll .nq-tsel {
+  flex: none;
+  height: 36px;
+}
+
+.nq-ph-done {
+  all: unset;
+  flex: none;
+  margin-left: 6px;
+  padding: 0 16px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------- Contenuto dei fogli ---------- */
+
+.nq-ph-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nq-ph-chip {
+  all: unset;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nq-ph-chip[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.nq-ph-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nq-ph-row--wrap {
+  flex-wrap: wrap;
+}
+
+.nq-sheet .nq-tsel,
+.nq-sheet .nq-tsize {
+  height: 44px;
+}
+
+.nq-ph-row .nq-tsel--font {
+  flex: 1;
+  min-width: 0;
+  max-width: none;
+}
+
+.nq-sheet .nq-tsize-btn {
+  height: 40px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.nq-ph-seg {
+  display: flex;
+  gap: 6px;
+}
+
+.nq-ph-seg .nq-tb {
+  flex: 1;
+  height: 44px;
+  background: var(--surface-2);
+}
+
+.nq-ph-seg .nq-tb--wide {
+  flex: 1.6;
+}
+
+.nq-ph-tiles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.nq-ph-tiles button {
+  all: unset;
+  box-sizing: border-box;
+  height: 78px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--radius-panel);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nq-ph-tiles button svg {
+  font-size: 24px;
+  color: var(--accent);
+}
+
+.nq-ph-tiles button:disabled {
+  opacity: 0.4;
+}
+
+.nq-ph-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.nq-ph-list button {
+  all: unset;
+  box-sizing: border-box;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.nq-ph-list button:last-child {
+  border-bottom: 0;
+}
+
+.nq-ph-list button svg {
+  flex: none;
+  font-size: 20px;
+  color: var(--text-secondary);
+}
+
+.nq-ph-list small {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.nq-ph-list button:disabled {
+  opacity: 0.4;
+}
+
+.nq-sheet .nq-tag-row {
+  gap: 8px;
+}
+
+.nq-sheet .nq-chip {
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+.nq-sheet .nq-tag-input {
+  width: 110px;
+  min-height: 36px;
+  font-size: 14px;
+}
+
+.nq-ph-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nq-ph-attachments .nq-attach {
+  display: flex;
+  min-width: 0;
+}
+
+.nq-ph-attachments .nq-attach button {
+  min-height: 44px;
+  padding: 0 12px;
+}
+
+.nq-ph-attachments .nq-attach button:first-child {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 44px;
+}
+
+.nq-ph-thumbs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nq-ph-thumbs .nq-pdot {
+  width: 62px;
+  height: 84px;
+  border-radius: 8px;
+}
+
+.nq-ph-newpage {
+  all: unset;
+  flex: none;
+  box-sizing: border-box;
+  width: 62px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.nq-ph-pages-panel {
+  width: auto;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.nq-ph-pages-panel .nq-pages-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+}
+
+.nq-sheet .nq-link-pop {
+  display: flex;
+  min-height: 44px;
+}
+
+.nq-sheet .nq-link-pop input {
+  flex: 1;
+  width: auto;
+  font-size: 15px;
+}
+
+/* palette e voci dei menu del desktop dentro un foglio: stessi stili, senza il riquadro sospeso */
+.nq-sheet .nq-menu.nq-menu--sheet {
+  position: static;
+  min-width: 0;
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.nq-sheet .nq-menu--sheet .nq-swatch-grid {
+  grid-template-columns: repeat(auto-fill, 34px);
+  gap: 10px;
+}
+
+.nq-sheet .nq-menu--sheet button.nq-sw {
+  width: 34px;
+  height: 34px;
+}
+
+.nq-sheet .nq-menu--sheet > button {
+  min-height: 48px;
+  justify-content: center;
+}
+
+/* pallini dei colori (titolo, pagina) grandi per il dito */
+.nq-sheet .nq-title-colors {
+  max-width: none;
+  gap: 10px;
+}
+
+.nq-sheet .nq-title-colors .nq-ink-dot,
+.nq-sheet .nq-psw {
+  box-sizing: border-box;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+}
+
+.nq-sheet .nq-swatches {
+  height: 44px;
+  gap: 10px;
+  padding: 0 8px;
+}
+
+/* col dito l'hover resta acceso dopo il tocco: nella barra in alto non si mostra */
+@media (hover: none) {
+  .nq-ph-head .nq-icon-btn:hover:not(:disabled) {
+    background: transparent;
+    color: var(--text-primary);
+  }
+}
+
+/* l'avviso sta sopra la riga degli strumenti */
+.nq-editor--phone .nq-toast {
+  bottom: 64px;
+  max-width: calc(100% - 32px);
+}
+
+/* ---------- Forme per tema della riga ---------- */
+
+:root[data-theme="opaco"] .nq-ph-bar {
+  margin: 4px 8px 6px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .nq-ph-bar .nq-tb {
+  min-width: 0;
+  height: 44px;
+  background: transparent;
+  color: var(--bg);
+}
+
+:root[data-theme="opaco"] .nq-ph-bar .nq-tb[aria-pressed="true"] {
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .nq-ph-bar .nq-tsep {
+  display: block;
+  background: var(--bg);
+  opacity: 0.25;
+}
+
+:root[data-theme="opaco"] .nq-ph-bar .nq-tsel {
+  background: var(--bg);
+}
+
+:root[data-theme="opaco"] .nq-ph-bar .nq-ink-colors {
+  height: auto;
+  padding: 0;
+  background: none;
+}
+
+:root[data-theme="opaco"] .nq-ph-bar .nq-ink-dot[aria-pressed="true"],
+:root[data-theme="opaco"] .nq-ph-bar .nq-ink-custom.is-on {
+  outline-color: var(--bg);
+}
+
+:root[data-theme="opaco"] .nq-ph-done {
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+:root[data-theme="quaderno"] .nq-ph-bar {
+  background: var(--bg-card);
+  border-top: 1.5px solid var(--accent);
+}
+
+:root[data-theme="quaderno"] .nq-ph-title {
+  font-family: var(--font-title);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .nq-ph-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* in Fosforo i tasti restano tasti, ma senza legenda: sul telefono non c'è spazio */
+:root[data-theme="fosforo"] .nq-ph-bar {
+  gap: 3px;
+}
+
+:root[data-theme="fosforo"] .nq-ph-bar .nq-tb {
+  min-width: 0;
+  height: 40px;
+  padding: 0;
+}
+
+:root[data-theme="fosforo"] .nq-ph-bar .nq-kc,
+:root[data-theme="fosforo"] .nq-sheet .nq-kc {
+  display: none;
+}
+
+:root[data-theme="fosforo"] .nq-ph-bar .nq-ink-colors {
+  height: auto;
+  border: 0;
+}
