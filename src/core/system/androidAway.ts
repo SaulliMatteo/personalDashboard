@@ -1,3 +1,5 @@
+import { isAndroid } from "./platform";
+
 /**
  * Uscite dall'app su Android: al rientro MainActivity.kt (src-tauri/gen/android) manda l'evento `pd-away` con quando
  * si è usciti, quando si è tornati e per quanto il telefono è stato usato nel frattempo (schermo acceso e sbloccato
@@ -10,6 +12,11 @@ export interface AwayReport {
   backAt: number;
   /** Millisecondi passati a usare il telefono in altre app (lo schermo spento non conta). */
   usedMs: number;
+}
+
+/** true dove al rientro arriva `pd-away` (Android): chi deve aspettarlo prima di fare altro lo sa da qui. */
+export function reportsAppReturn(): boolean {
+  return isAndroid();
 }
 
 function valid(value: unknown): value is AwayReport {

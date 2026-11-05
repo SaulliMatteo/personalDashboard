@@ -26,10 +26,18 @@ import kotlin.math.max
  * si conta il tempo a schermo acceso e sbloccato, cioè passato a usare il telefono in altre app. Al rientro arriva
  * l'evento `pd-away` con {leftAt, backAt, usedMs}. Niente permessi: solo i broadcast di schermo spento e sblocco.
  * Solo numeri: la pagina non può chiedere né cambiare altro.
+ *
+ * Tocco su una notifica dell'app (src/core/system/androidTaps.ts): il plugin delle notifiche manda alla pagina solo
+ * "tap", senza dire quale notifica, e all'avvio a freddo l'evento arriva prima che la pagina ascolti. Qui si legge
+ * l'id della notifica dall'intent: a app aperta evento `pd-notification-tap` con {id}; all'avvio resta da leggere con
+ * `window.__pdLaunch.takeNotificationId()` (una volta, -1 se non c'è). La vista da aprire è scritta nell'id.
  */
 class MainActivity : TauriActivity() {
   @Volatile private var lastJson = """{"top":0,"right":0,"bottom":0,"left":0,"ime":0}"""
   private var webView: WebView? = null
+
+  /** Id della notifica toccata che ha avviato l'app, finché la pagina non lo legge (-1 = nessuna). */
+  @Volatile private var launchNotificationId = -1
 
   /** Quando l'app è uscita dal primo piano (0 = è in primo piano). */
   private var leftAt = 0L
@@ -55,11 +63,29 @@ class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
     super.onCreate(savedInstanceState)
+    // ricreata dopo una rotazione o con l'intent già usato: non riaprire di nuovo la vista
+    if (savedInstanceState == null) launchNotificationId = notificationIdOf(intent)
     val filter = IntentFilter().apply {
       addAction(Intent.ACTION_SCREEN_OFF)
       addAction(Intent.ACTION_USER_PRESENT)
     }
     ContextCompat.registerReceiver(this, screenReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+  }
+
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    val id = notificationIdOf(intent)
+    if (id < 0) return
+    val view = webView
+    if (view == null) launchNotificationId = id
+    else view.evaluateJavascript("window.dispatchEvent(new CustomEvent('pd-notification-tap',{detail:{id:$id}}))", null)
+  }
+
+  /** L'id che il plugin delle notifiche mette nell'intent del tocco ("NotificationId"); -1 se l'intent non viene da lì. */
+  private fun notificationIdOf(intent: Intent?): Int {
+    if (intent == null || intent.action != Intent.ACTION_MAIN) return -1
+    val id = intent.getIntExtra("NotificationId", Int.MIN_VALUE)
+    return if (id >= 0) id else -1
   }
 
   override fun onDestroy() {
@@ -92,6 +118,7 @@ class MainActivity : TauriActivity() {
   override fun onWebViewCreate(webView: WebView) {
     this.webView = webView
     webView.addJavascriptInterface(InsetsBridge(), "__pdInsets")
+    webView.addJavascriptInterface(LaunchBridge(), "__pdLaunch")
     ViewCompat.setOnApplyWindowInsetsListener(webView) { view, insets ->
       val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
       val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
@@ -109,5 +136,14 @@ class MainActivity : TauriActivity() {
   private inner class InsetsBridge {
     @JavascriptInterface
     fun get(): String = lastJson
+  }
+
+  private inner class LaunchBridge {
+    @JavascriptInterface
+    fun takeNotificationId(): Int {
+      val id = launchNotificationId
+      launchNotificationId = -1
+      return id
+    }
   }
 }

@@ -22,24 +22,37 @@ import { useSettings } from "../../../core/settings/useSettings";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import { emitActivityEvent, publishActivity } from "../../../core/activity/activityBus";
 import { readSystemSnapshot } from "../../../core/system/systemApi";
-import { onAppReturn } from "../../../core/system/androidAway";
-import { sendAppNotification, type AppNotification } from "../../../core/notify/notifier";
+import { onAppReturn, reportsAppReturn } from "../../../core/system/androidAway";
+import {
+  canScheduleNotifications,
+  scheduleAppNotifications,
+  sendAppNotification,
+  withdrawAppNotifications,
+  type AppNotification,
+  type NotificationOpen,
+} from "../../../core/notify/notifier";
 import { classifyApp, parseAppCategories, type AppCategory } from "../../../core/system/appCategory";
 import type { AppSettings } from "../../../core/settings/schema";
 import { colorForSubject, pickUnusedColor } from "../lib/colors";
 import { formatHoursMinutes } from "../lib/format";
 import { playChime } from "./alerts";
 import { AutoStopTracker, type AutoStopResult } from "./autoStop";
+import { IDLE_TIMER, advanceTo, isStopwatch, upcomingEnds, type PhaseEnd } from "./phases";
 import { TimerContext, type AddSubjectResult } from "./useTimer";
 
-const IDLE_STATE: TimerState = {
-  subjectId: null,
-  phase: "idle",
-  remainingSeconds: 0,
-  phaseTotalSeconds: 0,
-  runningSince: null,
-  cycleCount: 0,
-};
+const IDLE_STATE: TimerState = IDLE_TIMER;
+
+/** Il tocco su una notifica dello Studio apre la sua pagina. */
+const OPEN_STUDY: NotificationOpen = { type: "widget", widgetId: "study" };
+
+/** Quante fine fase pianificare in anticipo (Android), con le fasi che partono da sole: circa 4 pomodori. */
+const SCHEDULE_AHEAD = 8;
+
+/** Al rientro, quanto si aspetta l'evento dello stop automatico di Android prima di recuperare le fasi comunque. */
+const RETURN_WAIT_MS = 800;
+
+/** Il suono di fine fase solo se è finita da poco: al rientro dopo mezz'ora non serve più. */
+const CHIME_FRESH_MS = 60_000;
 
 /*
  * Come sono rappresentati i due modi nello stato salvato (timer_state):
@@ -51,7 +64,7 @@ const IDLE_STATE: TimerState = {
  * Nessuna colonna in più: il DB resta com'era.
  */
 function isStopwatchState(s: TimerState): boolean {
-  return s.phase === "work" && s.phaseTotalSeconds === 0;
+  return isStopwatch(s);
 }
 
 function elapsedSince(runningSince: number): number {
@@ -210,70 +223,63 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   function alertPhaseChange(notification: AppNotification) {
     const s = settingsRef.current;
     if (s.studySoundEnabled) playChime(s.studyVolume);
-    if (s.studyNotificationsEnabled) void sendAppNotification(notification);
+    if (s.studyNotificationsEnabled) void sendAppNotification({ open: OPEN_STUDY, ...notification });
   }
 
+  /** Testo della notifica di fine fase (subito o pianificata). */
+  function phaseEndNotification(end: PhaseEnd): AppNotification {
+    const subjectName = subjectsRef.current.find((x) => x.id === end.from.subjectId)?.name ?? null;
+    if (end.kind === "pomodoroDone") {
+      const breakLabel = end.to.phase === "long_break" ? "una pausa lunga" : "una pausa breve";
+      return {
+        kind: "pomodoroDone",
+        title: "Pomodoro completato",
+        body: subjectName ? `Hai studiato ${subjectName}. Inizia ${breakLabel}.` : `Inizia ${breakLabel}.`,
+        open: OPEN_STUDY,
+      };
+    }
+    return {
+      kind: "breakOver",
+      title: "Pausa finita",
+      body: subjectName ? `Si riprende a studiare ${subjectName}.` : "Si riprende a studiare.",
+      open: OPEN_STUDY,
+    };
+  }
+
+  /**
+   * Chiude le fasi finite fino ad adesso (phases.ts): dal tick, al rientro nell'app e all'avvio. Con l'app congelata
+   * (schermo spento, sospensione) possono essere più d'una: ogni pomodoro si registra all'ora in cui è finito e la fase
+   * nuova parte dalla fine di quella prima, non da adesso. Si avvisa solo per l'ultima; su Android la notifica di
+   * sistema è già pianificata (vedi l'effect più sotto), qui resta il suono se è appena finita.
+   */
   const completingRef = useRef(false);
-  async function completePhaseNaturally() {
-    if (completingRef.current) return;
+  /** Uscita dall'app in corso: al rientro prima lo stop automatico (`pd-away`), poi il recupero delle fasi. */
+  const awaitingReturnRef = useRef(false);
+  async function catchUp() {
+    if (completingRef.current || awaitingReturnRef.current) return;
     completingRef.current = true;
     try {
       const s = stateRef.current;
       const now = Date.now();
       const cfg = settingsRef.current;
-      const subjectName = subjectsRef.current.find((x) => x.id === s.subjectId)?.name ?? null;
-      const t = timingsOf(s.subjectId);
-
-      if (s.phase === "work" && s.subjectId !== null) {
-        if (s.phaseTotalSeconds >= cfg.studyMinLoggableSeconds) {
-          await logSession(s.subjectId, now, s.phaseTotalSeconds);
-          await refreshToday();
+      const { state: next, ends } = advanceTo(s, timingsOf(s.subjectId), cfg.studyAutoStartNext, now);
+      if (next === s) return;
+      let logged = false;
+      for (const end of ends) {
+        if (end.kind === "pomodoroDone" && end.from.subjectId !== null && end.from.phaseTotalSeconds >= cfg.studyMinLoggableSeconds) {
+          await logSession(end.from.subjectId, end.at, end.from.phaseTotalSeconds);
+          logged = true;
         }
-        const cycleCount = s.cycleCount + 1;
-        const isLong = cycleCount % t.cyclesBeforeLongBreak === 0;
-        const breakSeconds = isLong ? t.longBreakSeconds : t.shortBreakSeconds;
-        const newState: TimerState = {
-          subjectId: s.subjectId,
-          phase: isLong ? "long_break" : "short_break",
-          remainingSeconds: breakSeconds,
-          phaseTotalSeconds: breakSeconds,
-          runningSince: cfg.studyAutoStartNext ? now : null,
-          cycleCount,
-        };
-        setState(newState);
-        await saveTimerState(newState);
-        const breakLabel = isLong ? "una pausa lunga" : "una pausa breve";
-        emitActivityEvent({ type: "pomodoroDone" });
-        alertPhaseChange({
-          kind: "pomodoroDone",
-          title: "Pomodoro completato",
-          body: subjectName ? `Hai studiato ${subjectName}. Inizia ${breakLabel}.` : `Inizia ${breakLabel}.`,
-        });
-      } else if (s.phase === "short_break" || s.phase === "long_break") {
-        // Pausa finita da sola: si riprende a studiare la stessa materia.
-        const newState: TimerState = {
-          subjectId: s.subjectId,
-          phase: "work",
-          remainingSeconds: t.workSeconds,
-          phaseTotalSeconds: t.workSeconds,
-          runningSince: cfg.studyAutoStartNext ? now : null,
-          cycleCount: s.cycleCount,
-        };
-        setState(newState);
-        await saveTimerState(newState);
-        emitActivityEvent({ type: "breakOver" });
-        alertPhaseChange({
-          kind: "breakOver",
-          title: "Pausa finita",
-          body: subjectName ? `Si riprende a studiare ${subjectName}.` : "Si riprende a studiare.",
-        });
-      } else {
-        // Fase "work" senza materia (es. materia cancellata): niente da
-        // registrare. Senza questo ramo lo stato resterebbe "in corso" a 0
-        // secondi e l'avviso scatterebbe ogni secondo.
-        setState(IDLE_STATE);
-        await saveTimerState(IDLE_STATE);
       }
+      // Fase "work" senza materia (es. materia cancellata): si torna a riposo senza registrare né avvisare.
+      setState(next);
+      await saveTimerState(next);
+      if (logged) await refreshToday();
+      const last = ends.at(-1);
+      if (!last) return;
+      emitActivityEvent({ type: last.kind });
+      if (cfg.studySoundEnabled && now - last.at < CHIME_FRESH_MS) playChime(cfg.studyVolume);
+      if (cfg.studyNotificationsEnabled && !canScheduleNotifications()) void sendAppNotification(phaseEndNotification(last));
     } finally {
       completingRef.current = false;
     }
@@ -281,7 +287,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
 
   // L'interval chiama SEMPRE l'ultima versione della funzione (via ref):
   // le impostazioni cambiate a timer in corso valgono dalla fase successiva.
-  const completeRef = useLatestRef(completePhaseNaturally);
+  const completeRef = useLatestRef(catchUp);
 
   // Tick di visualizzazione (ogni secondo, solo mentre il timer corre) +
   // rilevamento del momento in cui una fase finisce da sola. Il cronometro
@@ -298,6 +304,64 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     }, 1000);
     return () => clearInterval(interval);
   }, [state.runningSince, state.phase]);
+
+  // Al rientro (app tornata in primo piano, schermo riacceso, portatile risvegliato) e all'avvio: subito, senza
+  // aspettare il prossimo tick, così il numero mostrato e le sessioni sono giusti dal primo fotogramma.
+  // Su Android al rientro arriva anche `pd-away` (stop automatico) e deve passare per primo: se mentre eri in altre app
+  // è finito un pomodoro, lo stop lo chiude all'uscita invece di registrarlo intero. Il recupero aspetta quell'evento
+  // (al massimo RETURN_WAIT_MS). Sul desktop non si aspetta nulla: lì il tick gira anche a finestra ridotta.
+  useEffect(() => {
+    if (!ready) return;
+    void completeRef.current();
+    let timeout = 0;
+    const resumeCatchUp = () => {
+      window.clearTimeout(timeout);
+      awaitingReturnRef.current = false;
+      void completeRef.current();
+      forceTick((t) => t + 1);
+    };
+    const onVisibility = () => {
+      if (document.hidden) {
+        window.clearTimeout(timeout);
+        awaitingReturnRef.current = reportsAppReturn() && settingsRef.current.studyAutoStopEnabled;
+      } else if (awaitingReturnRef.current) {
+        timeout = window.setTimeout(resumeCatchUp, RETURN_WAIT_MS);
+      } else resumeCatchUp();
+    };
+    const onFocus = () => {
+      if (!awaitingReturnRef.current) resumeCatchUp();
+    };
+    const offReturn = onAppReturn(() => {
+      // dopo il controllo dello stop automatico (effect più sotto, registrato prima di questo evento)
+      window.setTimeout(resumeCatchUp, 0);
+    });
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.clearTimeout(timeout);
+      offReturn();
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [ready, completeRef, settingsRef]);
+
+  // Android: le prossime fine fase si pianificano come notifiche di sistema, così arrivano all'ora giusta anche con
+  // l'app congelata o chiusa. Si ripianifica a ogni cambio (avvio, pausa, ripresa, stop, salto, fase nuova):
+  // fermo o in pausa = nessuna pianificata. Sul desktop non fa nulla (lì avvisa catchUp).
+  const rescheduleRef = useLatestRef(() => {
+    const s = stateRef.current;
+    const cfg = settingsRef.current;
+    const ends = cfg.studyNotificationsEnabled ? upcomingEnds(s, timingsOf(s.subjectId), cfg.studyAutoStartNext, SCHEDULE_AHEAD) : [];
+    void scheduleAppNotifications(
+      "study",
+      ends.map((end) => ({ at: end.at, notification: phaseEndNotification(end) }))
+    );
+  });
+  const { studyNotificationsEnabled, studyAutoStartNext } = settings;
+  useEffect(() => {
+    if (canScheduleNotifications() && ready) rescheduleRef.current();
+    // si ripianifica quando cambia ciò che decide le fine fase e i loro testi (le materie: durate e nomi)
+  }, [ready, state, subjects, studyNotificationsEnabled, studyAutoStartNext, rescheduleRef]);
 
   async function startWork(subjectId: number) {
     // Un solo timer alla volta: per cambiare materia a timer attivo c'è switchSubject.
@@ -348,16 +412,17 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     void saveTimerState(newState);
   }
 
-  // Chiude la fase "work" registrando lo studio. `trimSeconds` sono gli ultimi secondi da
-  // NON contare (stop automatico: il tempo di assenza). Ritorna i secondi registrati (0 = nessuna sessione).
-  async function finishWork(trimSeconds: number): Promise<number> {
+  // Chiude la fase "work" registrando lo studio fatto fino a `endAt` (stop automatico: l'inizio dell'assenza; mai prima
+  // dell'ultima ripresa, il tempo accumulato prima di una pausa è studio vero; un pomodoro conta al massimo la sua
+  // durata). Ritorna i secondi registrati (0 = nessuna sessione).
+  async function finishWork(endAt = Date.now()): Promise<number> {
     const s = stateRef.current;
-    const now = Date.now();
-    const display = computeDisplaySeconds(s);
-    const studied = Math.max(0, (isStopwatchState(s) ? display : s.phaseTotalSeconds - display) - trimSeconds);
+    const until = s.runningSince === null ? endAt : Math.max(s.runningSince, endAt);
+    const ran = s.runningSince === null ? 0 : Math.max(0, Math.floor((until - s.runningSince) / 1000));
+    const studied = isStopwatchState(s) ? s.remainingSeconds + ran : s.phaseTotalSeconds - Math.max(0, s.remainingSeconds - ran);
     let logged = 0;
     if (s.subjectId !== null && studied >= settingsRef.current.studyMinLoggableSeconds) {
-      await logSession(s.subjectId, now - trimSeconds * 1000, studied);
+      await logSession(s.subjectId, until, studied);
       await refreshToday();
       logged = studied;
     }
@@ -373,7 +438,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     const now = Date.now();
 
     if (s.phase === "work") {
-      await finishWork(0);
+      await finishWork();
     } else {
       // Salta pausa: nessun log (le pause non sono tempo di studio),
       // si riparte subito con un nuovo "work" sulla stessa materia.
@@ -415,9 +480,11 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       const awaySeconds = Math.max(0, Math.floor((now - stoppedAt) / 1000));
       const what = autoStopWhat(reason, category);
       const why = `${what} da ${formatHoursMinutes(awaySeconds)}`;
+      // le fine fase comparse mentre eri via non sono più vere: il timer si è fermato all'uscita
+      void withdrawAppNotifications("study", stoppedAt);
       if (s.phase === "work") {
         const subjectName = subjectsRef.current.find((x) => x.id === s.subjectId)?.name ?? null;
-        const logged = await finishWork(Math.min(awaySeconds, elapsedSince(s.runningSince)));
+        const logged = await finishWork(stoppedAt);
         const outcome =
           logged > 0
             ? `registrati ${formatHoursMinutes(logged)}${subjectName ? ` di ${subjectName}` : ""}`

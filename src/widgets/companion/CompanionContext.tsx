@@ -218,7 +218,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   // personalità). Il provider è sempre montato, quindi vale anche se Pixy non è in dashboard.
   const faceStyleRef = useLatestRef(useThemeVariant(FACE_STYLES));
   useEffect(() => {
-    setNotificationDecorator(async (n) => {
+    setNotificationDecorator(async (n, { image }) => {
       const cfg = settingsRef.current;
       const personality = PERSONALITIES[cfg.companionPersonality];
       const look = pixyLook(n);
@@ -229,6 +229,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
         userName: cfg.userName,
         random: Math.random,
       });
+      if (!image) return text;
       const imageDataUrl = renderNotificationFace(look, {
         style: faceStyleRef.current,
         tweak: personality.faceTweak,
