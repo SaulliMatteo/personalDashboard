@@ -1,27 +1,3 @@
-# Personal Dashboard
-
-Una dashboard personale per lo studio, per **Windows** e **macOS**. Raccoglie in un'unica finestra il timer di studio,
-le note, i video da guardare, il meteo e un piccolo compagno animato, tutto disposto come preferisci.
-
-**Local-first**: i tuoi dati restano sul tuo computer, in un database locale. Niente account obbligatori, niente
-pubblicità, niente tracciamento.
-
-## Cosa c'è dentro
-
-| Widget | A cosa serve |
-|---|---|
-| **Studio** | Timer pomodoro o cronometro, tempo di studio per materia e report per settimana, mese e anno |
-| **Notes** | Note in cartelle, con editor a pagine e scrittura a mano |
-| **YouTube** | Salva in cartelle i video da guardare per lo studio, riproducili e prendi appunti a tempo |
-| **Pixy** | Un compagno a LED che cambia espressione con quello che fai: studio, pause, video, ora del giorno |
-| **File Transfer** | Ricevi file dall'iPad via Wi-Fi: scansioni un QR e li mandi |
-| **Meteo** | Temperatura e cielo nella tua città |
-| **Orario** e **Giorno** | L'ora e la data, grandi e leggibili |
-| **Gruppi** (facoltativo) | Studia con gli amici: chi sta studiando adesso, una stanza comune e la classifica |
-
-Ogni widget si può aggiungere, spostare e ridimensionare sulla griglia; con un doppio clic si apre la sua pagina
-completa. Ci sono **4 temi** (Notte, Opaco, Quaderno, Fosforo), ognuno con la variante giorno e notte, che può seguire
-quella del sistema.
 
 ## Scaricare e installare
 
@@ -46,6 +22,13 @@ scarica il file per il tuo sistema.
    ```bash
    xattr -cr /Applications/personaldashboard.app
    ```
+
+**Gruppi su macOS dalla 1.0.7.** Fino alla 1.0.6, a ogni versione nuova macOS chiedeva la password del portachiavi
+("personaldashboard vuole usare i dati riservati… nel portachiavi"), e se la richiesta veniva annullata non ci si
+poteva sedere nella Stanza comune. Dalla 1.0.7 l'app ha una firma che resta uguale tra le versioni e la richiesta
+non compare più. Dopo il passaggio alla 1.0.7 bisogna **rientrare nei Gruppi con Google una volta**. Se vuoi, puoi
+eliminare le voci vecchie: apri **Accesso Portachiavi**, cerca `it.matteo.personalDashboard` ed elimina le voci
+`gruppi-auth…` (non quelle del servizio `it.matteo.personalDashboard.sessione`, che sono quelle nuove).
 
 Al primo avvio del File Transfer, consenti le connessioni in entrata quando il firewall lo chiede. Su macOS la porta
 5000 è occupata da AirPlay: l'app ne sceglie da sola un'altra e te la mostra nella pagina del widget.

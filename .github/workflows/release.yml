@@ -2,8 +2,10 @@
 # Windows, e allega gli installer a una Release in bozza su GitHub.
 # Si avvia con un tag "v*" (es. git tag v0.1.0 && git push --tags) oppure a
 # mano da Actions > Release > Run workflow.
-# Firma macOS ad-hoc (nessun account Apple Developer): chi scarica deve
-# sbloccare l'app una volta, vedi README.
+# Firma macOS con un certificato autofirmato (nessun account Apple Developer): chi scarica deve
+# sbloccare l'app una volta, vedi README. Il certificato è sempre lo stesso, così il portachiavi
+# riconosce ogni nuova versione come la stessa app e non chiede più il permesso per la sessione dei
+# Gruppi (src-tauri/src/secure_store.rs). Non tornare alla firma ad-hoc e non cambiare certificato.
 name: Release
 
 on:
@@ -25,6 +27,9 @@ jobs:
           - platform: windows-latest
             args: ""
     runs-on: ${{ matrix.platform }}
+    env:
+      # Nome (CN) del certificato autofirmato nei Secrets MACOS_CERTIFICATE*: non è un segreto.
+      MACOS_SIGNING_IDENTITY: personalDashboard Self-Signed
 
     steps:
       - uses: actions/checkout@v5
@@ -98,8 +103,46 @@ jobs:
             exit 1
           fi
 
+      # macOS: portachiavi temporaneo con il certificato, reso fidato per la firma del codice (codesign non
+      # usa un certificato autofirmato non fidato). Il .p12 decodificato si cancella subito.
+      - name: Prepara il certificato per la firma macOS
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ -z "$MACOS_CERTIFICATE" ] || [ -z "$MACOS_CERTIFICATE_PASSWORD" ]; then
+            echo "::error::Secret MACOS_CERTIFICATE o MACOS_CERTIFICATE_PASSWORD assente: senza firma stabile il portachiavi del Mac chiederebbe il permesso a ogni versione."
+            exit 1
+          fi
+          kc="$RUNNER_TEMP/firma.keychain-db"
+          kc_pass="$(openssl rand -hex 24)"
+          p12="$RUNNER_TEMP/firma.p12"
+          cer="$RUNNER_TEMP/firma.cer"
+          printf '%s' "$MACOS_CERTIFICATE" | base64 --decode > "$p12"
+          security create-keychain -p "$kc_pass" "$kc"
+          security set-keychain-settings -lut 21600 "$kc"
+          security unlock-keychain -p "$kc_pass" "$kc"
+          security import "$p12" -k "$kc" -f pkcs12 -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          rm -f "$p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$kc_pass" "$kc" > /dev/null
+          # shellcheck disable=SC2046
+          security list-keychains -d user -s "$kc" $(security list-keychains -d user | tr -d '"')
+          security find-certificate -c "$MACOS_SIGNING_IDENTITY" -p "$kc" > "$cer"
+          sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain "$cer"
+          rm -f "$cer"
+          if ! security find-identity -v -p codesigning "$kc" | grep -q "\"$MACOS_SIGNING_IDENTITY\""; then
+            echo "::error::Il certificato \"$MACOS_SIGNING_IDENTITY\" non è utilizzabile per firmare: controlla nome (CN) e password del .p12."
+            exit 1
+          fi
+          echo "FIRMA_KEYCHAIN=$kc" >> "$GITHUB_ENV"
+
       - uses: tauri-apps/tauri-action@v0
         env:
+          # macOS: firma con il certificato autofirmato al posto del "-" (ad-hoc) di tauri.conf.json, che resta
+          # per le build locali. Su Windows è vuota e non conta.
+          APPLE_SIGNING_IDENTITY: ${{ matrix.platform == 'macos-latest' && env.MACOS_SIGNING_IDENTITY || '' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Gruppi (opzionale): valori pubblici per progetto, letti dai Secrets del repo e mai
           # scritti nel repo. Se mancano, la build esce in solo locale ("Gruppi non configurati").
@@ -120,6 +163,28 @@ jobs:
           # Le note (notes) sono il releaseBody qui sopra: alla pubblicazione le riallinea release-notes.yml.
           includeUpdaterJson: true
           args: ${{ matrix.args }}
+
+      # La firma deve essere quella del certificato, non ad-hoc: con "cdhash" nel requisito il portachiavi
+      # tornerebbe a chiedere il permesso. tauri-action ha già caricato i file nella bozza: se questo passo
+      # fallisce, la bozza non va pubblicata.
+      - name: Controlla la firma macOS
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          app="$(ls -d src-tauri/target/universal-apple-darwin/release/bundle/macos/*.app | head -n1)"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          requirement="$(codesign -d -r- "$app" 2>&1)"
+          echo "$requirement"
+          if grep -q 'cdhash' <<< "$requirement" || ! grep -q 'certificate' <<< "$requirement"; then
+            echo "::error::L'app non è firmata con il certificato \"$MACOS_SIGNING_IDENTITY\": NON pubblicare questa bozza."
+            exit 1
+          fi
+
+      - name: Rimuove il portachiavi temporaneo
+        if: always() && matrix.platform == 'macos-latest'
+        shell: bash
+        run: |
+          if [ -n "$FIRMA_KEYCHAIN" ]; then security delete-keychain "$FIRMA_KEYCHAIN" || true; fi
 
   # Controlla latest.json dopo entrambe le build: se manca una piattaforma, chi la usa non si aggiornerebbe.
   updater-json:
