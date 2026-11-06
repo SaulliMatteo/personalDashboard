@@ -87,7 +87,7 @@ export function SyncProvider({ children }: { children: ReactNode }) {
           onSkipped: (kind, reason) => console.warn(`Sync: elemento non sincronizzato (${kind}, ${reason})`),
         });
         if (setup.adopt) await finishAdopt(repo, user);
-        emitSyncApplied(result.changed);
+        emitSyncApplied({ kinds: result.changed, written: result.written, deleted: result.deleted });
       },
       classifyError: (error) => (error instanceof NeedsChoice ? "other" : classifyError(error)),
       onAuthError: retry,
@@ -138,10 +138,13 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     async (choice: "merge" | "replace") => {
       if (!activeUser) return;
       const repo = await SyncRepository.open();
-      if (choice === "merge") await chooseMerge(repo, activeUser);
-      else await chooseReplace(repo, activeUser);
-      // materie e sessioni sono sparite (replace) o stanno per cambiare: chi le mostra le rilegge
-      if (choice === "replace") emitSyncApplied(new Set(["subject", "session"]));
+      if (choice === "merge") {
+        await chooseMerge(repo, activeUser);
+      } else {
+        // le righe di qui sono sparite: chi le mostra le rilegge (e le Note tolgono le loro cartelle su disco)
+        const deleted = await chooseReplace(repo, activeUser);
+        emitSyncApplied({ kinds: new Set(deleted.keys()), written: new Map(), deleted });
+      }
       setStatus({ kind: "syncing" });
       schedulerRef.current?.retryNow();
     },

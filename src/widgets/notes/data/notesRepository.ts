@@ -685,3 +685,38 @@ export async function loadCodeDetect(): Promise<boolean> {
 export async function saveCodeDetect(enabled: boolean): Promise<void> {
   await setMeta(CODE_DETECT_KEY, enabled ? "1" : "0");
 }
+
+// ---------------------------------------------------------------------
+// Dopo il sync (righe scritte o cancellate dai dati arrivati dagli altri dispositivi, core/sync/)
+// ---------------------------------------------------------------------
+
+/**
+ * Riallinea ciò che non viaggia: la copia su disco delle note toccate va riscritta, l'indice dei segni delle pagine
+ * arrivate si ricalcola, e segni e allegati di note o pagine cancellate se ne vanno. Restituisce le note toccate.
+ */
+export async function afterRemoteChanges(noteIds: number[], pageIds: number[]): Promise<number[]> {
+  const db = await getDatabase();
+  const touched = new Set(noteIds);
+  const pages: { id: number; note_id: number; content: string; pins: string | null }[] = [];
+  for (let i = 0; i < pageIds.length; i += 500) {
+    const chunk = pageIds.slice(i, i + 500);
+    pages.push(
+      ...(await db.select<typeof pages>(
+        `SELECT id, note_id, content, pins FROM note_pages WHERE id IN (${chunk.map(() => "?").join(", ")})`,
+        chunk
+      ))
+    );
+  }
+  for (const page of pages) touched.add(page.note_id);
+  const ids = [...touched];
+  for (let i = 0; i < ids.length; i += 500) {
+    const chunk = ids.slice(i, i + 500);
+    await db.execute(`UPDATE notes SET synced_at = NULL WHERE id IN (${chunk.map(() => "?").join(", ")})`, chunk);
+  }
+  for (const page of pages) await syncPageBookmarks(page.id, page.note_id, page.content, parsePins(page.pins));
+  await db.execute(
+    `DELETE FROM note_bookmarks WHERE page_id NOT IN (SELECT id FROM note_pages) OR note_id NOT IN (SELECT id FROM notes)`
+  );
+  await db.execute(`DELETE FROM note_attachments WHERE note_id NOT IN (SELECT id FROM notes)`);
+  return ids;
+}

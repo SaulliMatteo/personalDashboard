@@ -37,6 +37,7 @@ export type SyncStore = Pick<
   | "ackOutbox"
   | "dropOutbox"
   | "rows"
+  | "localRows"
   | "findBy"
   | "insert"
   | "update"
@@ -65,6 +66,10 @@ export interface RoundOptions {
 export interface RoundResult {
   /** Tipi con righe locali cambiate dai dati arrivati: chi li mostra deve ricaricarli. */
   changed: Set<SyncKind>;
+  /** Id locali delle righe scritte dal sync, per tipo. */
+  written: Map<SyncKind, LocalId[]>;
+  /** Righe cancellate dal sync (chiave + `localColumns`), per tipo. */
+  deleted: Map<SyncKind, Row[]>;
   pulled: number;
   pushed: number;
 }
@@ -76,6 +81,13 @@ export const LENIENT_AFTER = 3;
 const SAME_ELEMENT: Partial<Record<SyncKind, readonly string[]>> = {
   subject: ["name"],
   session: ["subject_id", "started_at", "ended_at"],
+  folder: ["parent_id", "name"],
+  note: ["folder_id", "title", "created_at"],
+  page: ["note_id", "position"],
+  collection: ["name", "created_at"],
+  field: ["collection_id", "name"],
+  row: ["collection_id", "created_at"],
+  view: ["collection_id", "name"],
 };
 
 /** Colonne UNIQUE: un nome già usato da un altro elemento qui diventa "Nome (2)". */
@@ -126,6 +138,13 @@ export async function syncRound(store: SyncStore, server: SyncServer, opts: Roun
   const maps = new IdMaps(await store.loadMap(tables));
   const fieldTypes = await store.fieldTypes();
   const changed = new Set<SyncKind>();
+  const written = new Map<SyncKind, Set<LocalId>>();
+  const deleted = new Map<SyncKind, Row[]>();
+  const noteWrite = (kind: SyncKind, id: LocalId) => {
+    const set = written.get(kind) ?? new Set<LocalId>();
+    set.add(id);
+    written.set(kind, set);
+  };
   /** righe locali già prese da un elemento del cloud in questo giro (adopt: una sola volta) */
   const claimed = new Set<string>();
   const batch = opts.batch ?? 500;
@@ -166,7 +185,10 @@ export async function syncRound(store: SyncStore, server: SyncServer, opts: Roun
 
     if (record.deleted || !record.data) {
       if (local === null) return "done";
+      const before = await store.localRows(spec, [local]);
       await store.remove(spec, local);
+      if (before.length > 0) deleted.set(record.kind, [...(deleted.get(record.kind) ?? []), ...before]);
+      written.get(record.kind)?.delete(local);
       await store.removeUid(spec.table, local);
       await forget(spec.table, local);
       maps.remove(spec.table, local);
@@ -198,6 +220,9 @@ export async function syncRound(store: SyncStore, server: SyncServer, opts: Roun
     // la scrittura ha acceso il trigger: non è una modifica di questo dispositivo
     await forget(spec.table, id);
     changed.add(record.kind);
+    noteWrite(record.kind, id);
+    // i campi arrivati in questo giro servono subito a tradurre le righe (campi "nota")
+    if (record.kind === "field" && typeof id === "number" && typeof row.type === "string") fieldTypes.set(id, row.type);
     return "done";
   }
 
@@ -326,5 +351,11 @@ export async function syncRound(store: SyncStore, server: SyncServer, opts: Roun
     if (entries.length < batch) break;
   }
 
-  return { changed, pulled, pushed };
+  return {
+    changed,
+    written: new Map([...written].map(([kind, ids]) => [kind, [...ids]])),
+    deleted,
+    pulled,
+    pushed,
+  };
 }

@@ -1,4 +1,5 @@
-import { specOf, type SyncKind } from "./tables";
+import { specOf, SYNC_TABLES, type SyncKind } from "./tables";
+import type { Row } from "./engine/records";
 import type { SyncRepository } from "./syncRepository";
 
 /*
@@ -6,11 +7,14 @@ import type { SyncRepository } from "./syncRepository";
  * sincronizzarsi: primo sync (cloud vuoto, "Unisci" o "Usa i dati del cloud") e tipi nuovi in una versione dopo.
  */
 
-/** I tipi che questa versione sincronizza (le Note e le Raccolte arrivano dopo). */
-export const SYNC_KINDS: readonly SyncKind[] = ["subject", "session", "setting"];
+/** I tipi che questa versione sincronizza (gli allegati delle note arrivano dopo, con i loro file). */
+export const SYNC_KINDS: readonly SyncKind[] = ["subject", "session", "folder", "note", "page", "collection", "field", "row", "view", "setting"];
 
-/** Tipi che "Usa i dati del cloud" cancella qui prima di scaricare. Le impostazioni restano: vince il cloud. */
-const REPLACED_KINDS: readonly SyncKind[] = ["subject", "session"];
+/**
+ * Tipi che "Usa i dati del cloud" cancella qui prima di scaricare, in ordine di dipendenza. Le impostazioni restano
+ * (vince il cloud); gli allegati se ne vanno con le loro note.
+ */
+const REPLACED_KINDS: readonly SyncKind[] = SYNC_TABLES.map((t) => t.kind).filter((k) => k !== "setting");
 
 const tablesOf = (kinds: readonly SyncKind[]) => kinds.map((k) => specOf(k).table);
 
@@ -75,15 +79,21 @@ export async function chooseMerge(repo: SyncRepository, userId: string): Promise
   await repo.setMeta(keys.kinds, JSON.stringify(SYNC_KINDS));
 }
 
-/** "Usa i dati del cloud": materie e sessioni di qui si cancellano (la copia di sicurezza la fa prima la pagina). */
-export async function chooseReplace(repo: SyncRepository, userId: string): Promise<void> {
+/**
+ * "Usa i dati del cloud": Studio, Note e Raccolte di qui si cancellano (la copia di sicurezza la fa prima la pagina).
+ * Restituisce le righe cancellate dei tipi con `localColumns` (es. le cartelle su disco delle note), per la pulizia.
+ */
+export async function chooseReplace(repo: SyncRepository, userId: string): Promise<Map<SyncKind, Row[]>> {
   const keys = syncKeys(userId);
+  const deleted = new Map<SyncKind, Row[]>();
+  for (const kind of REPLACED_KINDS) deleted.set(kind, specOf(kind).localColumns ? await repo.localRows(specOf(kind)) : []);
   await repo.whileApplying(() => repo.wipe(tablesOf(REPLACED_KINDS)));
   await repo.clearOutbox(tablesOf(SYNC_KINDS));
   await repo.setMeta(keys.cursor, null);
   await repo.setMeta(keys.pending, null);
   await repo.setMeta(keys.adopt, null);
   await repo.setMeta(keys.kinds, JSON.stringify(SYNC_KINDS));
+  return deleted;
 }
 
 /** Dopo un giro riuscito: il riconoscimento degli elementi uguali serve una volta sola. */

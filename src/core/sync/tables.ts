@@ -39,6 +39,11 @@ export interface TableSpec {
    * c'è più, la colonna diventa NULL (es. la cartella madre); altrimenti senza di lui la riga non ha senso.
    */
   refs: Readonly<Record<string, RefSpec>>;
+  /**
+   * Colonne di questo dispositivo da leggere prima che il sync cancelli una riga, per chi deve fare pulizia fuori dal
+   * DB (es. la cartella su disco di una nota): arrivano in `deleted` dell'evento di syncEvents.ts.
+   */
+  localColumns?: readonly string[];
 }
 
 /** In ordine di dipendenza: al pull un elemento si applica dopo quelli a cui punta. */
@@ -66,6 +71,7 @@ export const SYNC_TABLES: readonly TableSpec[] = [
     // disk_path e synced_at descrivono la copia su disco di questo dispositivo: non viaggiano.
     columns: ["folder_id", "title", "tags", "starred", "created_at", "updated_at", "deleted_at", "font", "title_color"],
     refs: { folder_id: { kind: "folder", nullable: true } },
+    localColumns: ["disk_path"],
   },
   {
     kind: "page",

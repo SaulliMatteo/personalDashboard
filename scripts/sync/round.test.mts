@@ -11,7 +11,8 @@ import { MIGRATIONS } from "../../src/core/db/migrations";
 import { SyncRepository, type SqlDb } from "../../src/core/sync/syncRepository";
 import { syncRound, type ServerRecord, type SyncServer } from "../../src/core/sync/engine/round";
 import { isNewer, type SyncRecord } from "../../src/core/sync/engine/records";
-import type { SyncKind } from "../../src/core/sync/tables";
+import { specOf, type SyncKind } from "../../src/core/sync/tables";
+import { chooseReplace, SYNC_KINDS } from "../../src/core/sync/syncSetup";
 
 let passed = 0;
 async function test(name: string, fn: () => Promise<void>) {
@@ -396,6 +397,146 @@ await test("una modifica fatta durante il giro non si perde", async () => {
     deviceId: PHONE, clockOffset: 0, kinds: KINDS, adopt: true, cursorKey: "sync_cursor:u", pendingKey: "sync_pending:u",
   });
   assert.ok(server.ofKind("subject").some((r) => r.data?.name === "Creata durante il giro"));
+});
+
+// ---------------------------------------------------------------- Note e Raccolte
+
+const ALL: SyncKind[] = [...SYNC_KINDS];
+const NOTE_TABLES = ALL.map((k) => specOf(k).table);
+
+/** Un quaderno con cartelle, una nota con una vista e un riferimento a una riga, e una raccolta con un campo nota. */
+function notebook(d: Device) {
+  const parent = Number(d.sql(`INSERT INTO note_folders (parent_id, name, created_at) VALUES (NULL, 'Scuola', 1)`).lastInsertRowid);
+  const child = Number(d.sql(`INSERT INTO note_folders (parent_id, name, created_at) VALUES (?, 'Fisica', 2)`, parent).lastInsertRowid);
+  const note = Number(
+    d.sql(`INSERT INTO notes (folder_id, title, created_at, updated_at, disk_path) VALUES (?, 'Leggi', 10, 10, 'scuola/fisica/leggi--1')`, child).lastInsertRowid
+  );
+  const coll = Number(d.sql(`INSERT INTO note_collections (name, created_at) VALUES ('Compiti', 20)`).lastInsertRowid);
+  const title = Number(d.sql(`INSERT INTO note_collection_fields (collection_id, name, type, position) VALUES (?, 'Titolo', 'text', 0)`, coll).lastInsertRowid);
+  const link = Number(d.sql(`INSERT INTO note_collection_fields (collection_id, name, type, position) VALUES (?, 'Nota', 'note', 1)`, coll).lastInsertRowid);
+  const row = Number(
+    d.sql(`INSERT INTO note_collection_rows (collection_id, data, created_at, updated_at) VALUES (?, ?, 30, 30)`, coll, JSON.stringify({ [title]: "Esercizi", [link]: note }))
+      .lastInsertRowid
+  );
+  const view = Number(
+    d.sql(
+      `INSERT INTO note_collection_views (collection_id, name, filter, sort, fields, group_field) VALUES (?, 'Tutti', ?, ?, ?, ?)`,
+      coll,
+      JSON.stringify([{ field: title, op: "contains", value: "E" }]),
+      JSON.stringify({ field: link, dir: "asc" }),
+      JSON.stringify([link]),
+      title
+    ).lastInsertRowid
+  );
+  d.sql(`INSERT INTO note_pages (note_id, position, content) VALUES (?, 0, ?)`, note, `<p>vedi</p><div data-view="${view}"></div><span data-ref-row="${row}">riga</span>`);
+  d.sql(`INSERT INTO note_pages (note_id, position, content) VALUES (?, 1, '<p>due</p>')`, note);
+  return { note, coll, row, view };
+}
+
+/** Il quaderno come lo vede l'utente, senza id locali (gli id dentro i contenuti risolti in nomi). */
+function readNotebook(d: Device) {
+  const folders = d.all<{ id: number; parent_id: number | null; name: string }>(`SELECT id, parent_id, name FROM note_folders`);
+  const fname = (id: unknown) => folders.find((f) => f.id === id)?.name ?? null;
+  const fields = d.all<{ id: number; name: string }>(`SELECT id, name FROM note_collection_fields`);
+  const field = (id: unknown) => fields.find((f) => f.id === Number(id))?.name ?? null;
+  const notes = d.all<{ id: number; title: string; folder_id: number }>(`SELECT id, title, folder_id FROM notes`);
+  const rows = d.all<{ id: number; data: string }>(`SELECT id, data FROM note_collection_rows`);
+  const views = d.all<{ id: number; name: string; filter: string; sort: string; fields: string; group_field: number }>(`SELECT * FROM note_collection_views`);
+  const pages = d.all<{ note_id: number; position: number; content: string }>(`SELECT note_id, position, content FROM note_pages ORDER BY position`);
+  return {
+    folders: folders.map((f) => [f.name, fname(f.parent_id)]).sort(),
+    notes: notes.map((n) => [n.title, fname(n.folder_id)]),
+    rows: rows.map((r) =>
+      Object.entries(JSON.parse(r.data) as Record<string, unknown>).map(([k, v]) => [field(k), field(k) === "Nota" ? notes.find((n) => n.id === v)?.title : v])
+    ),
+    views: views.map((v) => ({
+      name: v.name,
+      filter: (JSON.parse(v.filter) as { field: number }[]).map((f) => field(f.field)),
+      sort: field((JSON.parse(v.sort) as { field: number }).field),
+      fields: (JSON.parse(v.fields) as number[]).map(field),
+      group: field(v.group_field),
+      numeric: (JSON.parse(v.filter) as { field: unknown }[]).every((f) => typeof f.field === "number"),
+    })),
+    pages: pages.map((p) => [
+      notes.find((n) => n.id === p.note_id)?.title,
+      p.position,
+      p.content
+        .replace(/data-view="(\d+)"/, (_m, id) => `data-view="${views.find((v) => v.id === Number(id))?.name}"`)
+        .replace(/data-ref-row="(\d+)"/, (_m, id) => `data-ref-row="${rows.some((r) => r.id === Number(id)) ? "ok" : "manca"}"`),
+    ]),
+  };
+}
+
+await test("Note e Raccolte: struttura e id dentro i contenuti arrivano tradotti", async () => {
+  const { pc, phone } = pair();
+  // id diversi sul telefono
+  phone.sql(`INSERT INTO note_folders (parent_id, name, created_at) VALUES (NULL, 'Prima', 0)`);
+  phone.sql(`INSERT INTO note_collections (name, created_at) VALUES ('Prima', 0)`);
+  phone.sql(`DELETE FROM note_folders`);
+  phone.sql(`DELETE FROM note_collections`);
+  notebook(pc);
+  await pc.repo.enqueueAll(NOTE_TABLES, 1);
+  await pc.round(false, ALL);
+  await phone.repo.enqueueAll(NOTE_TABLES, 0);
+  const result = await phone.round(true, ALL);
+  for (const k of ["folder", "note", "page", "collection", "field", "row", "view"] as const) assert.ok(result.changed.has(k), k);
+  assert.equal(result.written.get("page")?.length, 2);
+  const seen = readNotebook(phone);
+  assert.deepEqual(seen, readNotebook(pc));
+  assert.deepEqual(seen.pages[0], ["Leggi", 0, `<p>vedi</p><div data-view="Tutti"></div><span data-ref-row="ok">riga</span>`]);
+  assert.equal(seen.views[0].numeric, true);
+  assert.notDeepEqual(phone.all(`SELECT id FROM note_collections`), pc.all(`SELECT id FROM note_collections`), "id locali diversi davvero");
+  assert.deepEqual(phone.all(`SELECT disk_path FROM notes`), [{ disk_path: null }], "la cartella su disco è di ogni dispositivo");
+  assert.equal(phone.all(`SELECT * FROM sync_outbox WHERE tbl <> 'settings'`).length, 0);
+});
+
+await test("Note: cancellata su un dispositivo, sparisce sull'altro con la sua cartella su disco nell'evento", async () => {
+  const { pc, phone } = pair();
+  const { note } = notebook(pc);
+  await pc.repo.enqueueAll(NOTE_TABLES, 1);
+  await pc.round(false, ALL);
+  await phone.repo.enqueueAll(NOTE_TABLES, 0);
+  await phone.round(true, ALL);
+  phone.sql(`UPDATE notes SET disk_path = 'scuola/fisica/leggi--7'`);
+  // come deleteNoteForever
+  pc.sql(`DELETE FROM note_pages WHERE note_id = ?`, note);
+  pc.sql(`DELETE FROM notes WHERE id = ?`, note);
+  await pc.round(false, ALL);
+  const result = await phone.round(false, ALL);
+  assert.equal(phone.all(`SELECT * FROM notes`).length, 0);
+  assert.equal(phone.all(`SELECT * FROM note_pages`).length, 0);
+  assert.deepEqual(result.deleted.get("note")?.map((r) => r.disk_path), ["scuola/fisica/leggi--7"]);
+});
+
+await test("Note: Unisci con una copia dello stesso quaderno non duplica niente", async () => {
+  const { server, pc, phone } = pair();
+  notebook(pc);
+  notebook(phone);
+  phone.sql(`UPDATE note_pages SET content = '<p>due, modificata</p>' WHERE position = 1`);
+  await pc.repo.enqueueAll(NOTE_TABLES, 1);
+  await pc.round(false, ALL);
+  await phone.repo.enqueueAll(NOTE_TABLES, 0);
+  await phone.round(true, ALL);
+  await pc.round(false, ALL);
+  const expected: Partial<Record<SyncKind, number>> = { folder: 2, note: 1, page: 2, collection: 1, field: 2, row: 1, view: 1 };
+  for (const [k, n] of Object.entries(expected)) assert.equal(server.ofKind(k as SyncKind).length, n, k);
+  assert.deepEqual(readNotebook(phone), readNotebook(pc));
+});
+
+await test("Usa i dati del cloud: Note e Studio di qui cancellati, cartelle su disco restituite", async () => {
+  const { pc, phone } = pair();
+  notebook(pc);
+  await pc.repo.enqueueAll(NOTE_TABLES, 1);
+  await pc.round(false, ALL);
+  notebook(phone);
+  phone.subject("Sul telefono");
+  const deleted = await chooseReplace(phone.repo, "u");
+  assert.deepEqual(deleted.get("note")?.map((r) => r.disk_path), ["scuola/fisica/leggi--1"]);
+  assert.equal(phone.all(`SELECT * FROM notes`).length, 0);
+  assert.equal(phone.outboxCount(), 0, "la cancellazione non va nel cloud");
+  await phone.round(false, ALL);
+  assert.deepEqual(readNotebook(phone), readNotebook(pc));
+  assert.deepEqual(phone.subjects(), []);
 });
 
 console.log(`OK: ${passed} prove superate`);

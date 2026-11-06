@@ -156,7 +156,9 @@ Debito noto: `widgets/youtube/screens/WatchScreen.tsx` importa `study/data/study
   e la rete in `core/cloud/syncApi.ts` (server: `supabase/migrations/…_sync.sql`, righe leggibili solo dal proprio utente).
   Le scritture del sync tengono i trigger accesi e tolgono subito la loro voce dal registro (il flag `applying` serve
   solo a "Usa i dati del cloud"). Chi tiene in memoria righe sincronizzate le rilegge con `onSyncApplied`
-  (`core/sync/syncEvents.ts`, come fanno impostazioni e timer dello Studio). I tipi accesi sono `SYNC_KINDS` in
+  (`core/sync/syncEvents.ts`, come fanno impostazioni e timer dello Studio; le Note passano da
+  `widgets/notes/sync/NotesSyncProvider.tsx`, che toglie le cartelle su disco delle note cancellate, ricalcola segni e
+  copia su disco e poi avvisa pagina, card e mini con `lib/remoteChanges.ts`). I tipi accesi sono `SYNC_KINDS` in
   `core/sync/syncSetup.ts`: uno nuovo entra nel registro da solo al primo giro. I totali dei Gruppi contano solo le
   sessioni con `origin_device` NULL (fatte qui).
 

@@ -176,8 +176,8 @@ function PrivacySection() {
       <p className="settings-field-description">
         Il nome della materia, le pose e le espressioni di Pixy (rivelano che tipo di app hai in primo piano) e i suoi
         fumetti solo se li attivi tu. Le singole sessioni, le materie, le note e tutto il resto non escono
-        dal dispositivo, a meno che tu non accenda "Sincronizza i miei dati": allora materie, sessioni e impostazioni
-        vanno anche nel tuo spazio online, che vedi solo tu. I dati online stanno su Supabase, in Europa; eliminando
+        dal dispositivo, a meno che tu non accenda "Sincronizza i miei dati": allora studio, note, raccolte e
+        impostazioni vanno anche nel tuo spazio online, che vedi solo tu. I dati online stanno su Supabase, in Europa; eliminando
         l'account vengono cancellati.
       </p>
     </div>

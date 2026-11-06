@@ -218,7 +218,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   // Materie e sessioni arrivate dagli altri dispositivi (core/sync/): si rileggono.
   useEffect(
     () =>
-      onSyncApplied((kinds) => {
+      onSyncApplied(({ kinds }) => {
         if (!kinds.has("subject") && !kinds.has("session")) return;
         void (async () => {
           try {

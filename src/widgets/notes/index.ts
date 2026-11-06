@@ -3,6 +3,7 @@ import { SIZE_STRIP, SIZE_S, SIZE_M } from "../../core/widgets/sizes";
 import NotesWidget from "./NotesWidget";
 import NotesDetail from "./NotesDetail";
 import NotesMini from "./mini/NotesMini";
+import { NotesSyncProvider } from "./sync/NotesSyncProvider";
 
 export const notesWidget: WidgetDefinition = {
   id: "notes",
@@ -14,4 +15,6 @@ export const notesWidget: WidgetDefinition = {
   // La pagina si apre anche dalla barra laterale.
   detailComponent: NotesDetail,
   mini: NotesMini,
+  // Note arrivate dagli altri dispositivi: cartelle su disco, segni e avviso a chi le mostra, anche a pagina chiusa.
+  provider: NotesSyncProvider,
 };

@@ -77,8 +77,8 @@ function FirstSyncChoice() {
         <div className="settings-field-text">
           <span className="settings-field-label">Unisci</span>
           <ExpandableText className="settings-field-description">
-            Le materie e le sessioni di qui si aggiungono a quelle del cloud; quelle uguali (stesso nome, stessa ora)
-            diventano una sola. Per le impostazioni vale quella del cloud.
+            Studio, note e raccolte di qui si aggiungono a quelli del cloud; gli elementi uguali (stessa materia, stessa
+            sessione, stessa nota…) diventano uno solo. Dove sono diversi, e per le impostazioni, vale il cloud.
           </ExpandableText>
         </div>
         <div className="settings-field-control">
@@ -91,7 +91,7 @@ function FirstSyncChoice() {
         <div className="settings-field-text">
           <span className="settings-field-label">Usa i dati del cloud</span>
           <ExpandableText className="settings-field-description">
-            Le materie e le sessioni di questo dispositivo si cancellano e arrivano quelle del cloud. Prima ti chiedo dove
+            Studio, note e raccolte di questo dispositivo si cancellano e arrivano quelli del cloud. Prima ti chiedo dove
             salvare una copia di tutti i dati di qui (si ripristina da Generale › Dati).
           </ExpandableText>
         </div>
@@ -124,8 +124,8 @@ function SyncSection() {
               Sincronizza i miei dati
             </label>
             <ExpandableText className="settings-field-description">
-              Materie, sessioni di studio e impostazioni uguali su tutti i dispositivi dove accedi con questo account.
-              Aspetto, suoni e disposizione restano di ogni dispositivo. I dati passano dal servizio online e li vedi
+              Studio, note, raccolte e impostazioni uguali su tutti i dispositivi dove accedi con questo account.
+              Aspetto, suoni e disposizione restano di ogni dispositivo; gli allegati delle note per ora no. I dati passano dal servizio online e li vedi
               solo tu, nemmeno i membri dei tuoi gruppi.
             </ExpandableText>
             {settings.syncEnabled && text && <p className="settings-field-description">{text}</p>}

@@ -181,6 +181,18 @@ export class SyncRepository {
     return out;
   }
 
+  /** Chiave e colonne locali (`localColumns`) delle righe indicate, o di tutte se `ids` manca. */
+  async localRows(spec: TableSpec, ids?: readonly LocalId[]): Promise<Row[]> {
+    const columns = [spec.key, ...(spec.localColumns ?? [])].map(quote).join(", ");
+    if (!ids) return (await this.db.select<Row[]>(`SELECT ${columns} FROM ${spec.table}`)).map((r) => ({ ...r }));
+    if (ids.length === 0) return [];
+    const rows = await this.db.select<Row[]>(
+      `SELECT ${columns} FROM ${spec.table} WHERE ${spec.key} IN (${placeholders(ids.length)})`,
+      [...ids]
+    );
+    return rows.map((r) => ({ ...r }));
+  }
+
   /** Una riga che ha questi valori (per riconoscere lo stesso elemento creato su due dispositivi), o null. */
   async findBy(spec: TableSpec, values: Row): Promise<LocalId | null> {
     const columns = Object.keys(values);

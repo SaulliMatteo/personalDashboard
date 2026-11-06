@@ -34,7 +34,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // cambiate qui e non ancora salvate restano quelle di qui.
   useEffect(
     () =>
-      onSyncApplied((kinds) => {
+      onSyncApplied(({ kinds }) => {
         if (!kinds.has("setting")) return;
         writeChain.current = writeChain.current.then(async () => {
           const loaded = await loadSettings();
