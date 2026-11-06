@@ -23,6 +23,13 @@ scarica il file per il tuo sistema.
    xattr -cr /Applications/personaldashboard.app
    ```
 
+**Gruppi su macOS dalla 1.0.7.** Fino alla 1.0.6, a ogni versione nuova macOS chiedeva la password del portachiavi
+("personaldashboard vuole usare i dati riservati… nel portachiavi"), e se la richiesta veniva annullata non ci si
+poteva sedere nella Stanza comune. Dalla 1.0.7 l'app ha una firma che resta uguale tra le versioni e la richiesta
+non compare più. Dopo il passaggio alla 1.0.7 bisogna **rientrare nei Gruppi con Google una volta**. Se vuoi, puoi
+eliminare le voci vecchie: apri **Accesso Portachiavi**, cerca `it.matteo.personalDashboard` ed elimina le voci
+`gruppi-auth…` (non quelle del servizio `it.matteo.personalDashboard.sessione`, che sono quelle nuove).
+
 Al primo avvio del File Transfer, consenti le connessioni in entrata quando il firewall lo chiede. Su macOS la porta
 5000 è occupata da AirPlay: l'app ne sceglie da sola un'altra e te la mostra nella pagina del widget.
 

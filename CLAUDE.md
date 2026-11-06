@@ -122,7 +122,12 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
 - Sui sistemi non supportati (oggi: oltre Windows e macOS, il Companion su Linux) l'app deve compilare e i widget
   mostrano un errore chiaro.
 - Release: `.github/workflows/release.yml` (tag `v*` o avvio manuale) compila `.dmg` universale + installer Windows
-  in una Release in bozza. macOS con firma ad-hoc (niente account Apple): istruzioni di sblocco nel README.
+  in una Release in bozza. macOS firmato in CI con un certificato **autofirmato** (niente account Apple; Secrets
+  `MACOS_CERTIFICATE` = `.p12` in base64 e `MACOS_CERTIFICATE_PASSWORD`, CN `personalDashboard Self-Signed`): lo
+  sblocco al primo avvio resta (istruzioni nel README), ma l'identità dell'app è la stessa a ogni versione e il
+  portachiavi non chiede più il permesso per la sessione dei Gruppi. Il certificato non si cambia (vale 10 anni) e
+  non si torna alla firma ad-hoc (`"-"` in `tauri.conf.json` resta solo per le build locali): ogni volta il
+  portachiavi richiederebbe la password su ogni Mac. La CI si ferma se mancano i Secrets o se la firma esce ad-hoc.
   La versione ha una sola fonte, `package.json` (`tauri.conf.json` ha `"version": "../package.json"`); `Cargo.toml` va
   tenuto uguale a mano (la CI si ferma se non coincide, o se il tag non è `v<versione>`).
   Per pubblicare: `npm version X.Y.Z --no-git-tag-version` + `version` in `src-tauri/Cargo.toml`, commit, poi
@@ -213,6 +218,10 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
   Per Tauri quella è un'origine remota, quindi anche i comandi dell'app passano dall'ACL: un comando nuovo va in
   `generate_handler!`, nel manifesto di `build.rs` e come `allow-<comando>` in `capabilities/default.json`
   (altrimenti su Mac viene rifiutato, e il portachiavi risulta "non disponibile").
+- Sessione dei Gruppi nel portachiavi (`src/secure_store.rs`): su Windows a pezzi (limite del Credential Manager), su
+  macOS **una sola voce** per chiave nel servizio `<identifier>.sessione`, perché ogni voce in più è una richiesta di
+  permesso in più. Le vecchie voci a pezzi del servizio `<identifier>` (build ad-hoc fino alla 1.0.6) non si leggono:
+  leggerle farebbe ricomparire le richieste. Su Mac non tornare ai pezzi, né al servizio vecchio.
 - Le notifiche mostrano il nome dell'app solo nella versione installata; in `tauri dev` Windows le attribuisce a PowerShell.
 - La pagina web servita all'iPad (`src-tauri/filetransfer/public/`) è un build copiato da un progetto esterno:
   non modificarla a mano (vedi `docs/FILE_TRANSFER.md`).
