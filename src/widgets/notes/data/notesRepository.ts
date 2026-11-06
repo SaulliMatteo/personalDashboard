@@ -9,7 +9,7 @@ import {
   type PagePin,
 } from "../lib/bookmarks";
 import { asPageColor } from "../lib/pageColor";
-import { parsePdfInfo, parsePdfInk, pdfSummary, type PdfBlockInfo, type PdfInk, type PdfSummary } from "../lib/pdf/pdfData";
+import { parsePdfInfo, parsePdfInk, pdfSummary, pdfThumbName, type PdfBlockInfo, type PdfInk, type PdfSummary } from "../lib/pdf/pdfData";
 import { isNoteFont, type NoteFont } from "../lib/textStyle";
 import { asTitleColor } from "../lib/titleColor";
 // ---------------------------------------------------------------------
@@ -719,4 +719,54 @@ export async function afterRemoteChanges(noteIds: number[], pageIds: number[]): 
   );
   await db.execute(`DELETE FROM note_attachments WHERE note_id NOT IN (SELECT id FROM notes)`);
   return ids;
+}
+
+/** Un file che le righe chiedono: allegati e PDF di una nota, o il valore di un campo File di una raccolta. */
+export type FileReference =
+  | { scope: "note"; ownerId: number; name: string; optional: boolean }
+  | { scope: "collection"; ownerId: number; name: string; optional: boolean };
+
+/**
+ * Tutti i file a cui puntano le righe (per il sync dei file, sync/fileSync.ts). Le immagini nelle pagine sono anche
+ * allegati; la miniatura di un PDF è facoltativa (se manca si rifà da sola).
+ */
+export async function listFileReferences(): Promise<FileReference[]> {
+  const db = await getDatabase();
+  const refs: FileReference[] = [];
+  for (const a of await db.select<{ note_id: number; name: string }[]>(`SELECT note_id, name FROM note_attachments`)) {
+    refs.push({ scope: "note", ownerId: a.note_id, name: a.name, optional: false });
+  }
+  for (const p of await db.select<{ note_id: number; pdf: string }[]>(`SELECT note_id, pdf FROM note_pages WHERE pdf IS NOT NULL`)) {
+    const info = parsePdfInfo(p.pdf);
+    if (!info?.file) continue;
+    refs.push({ scope: "note", ownerId: p.note_id, name: info.file, optional: false });
+    refs.push({ scope: "note", ownerId: p.note_id, name: pdfThumbName(info.file), optional: true });
+  }
+  const fileFields = await db.select<{ id: number }[]>(`SELECT id FROM note_collection_fields WHERE type = 'file'`);
+  if (fileFields.length > 0) {
+    const ids = fileFields.map((f) => String(f.id));
+    for (const r of await db.select<{ collection_id: number; data: string }[]>(`SELECT collection_id, data FROM note_collection_rows`)) {
+      let data: unknown;
+      try {
+        data = JSON.parse(r.data);
+      } catch {
+        continue;
+      }
+      if (typeof data !== "object" || data === null) continue;
+      for (const id of ids) {
+        const value = (data as Record<string, unknown>)[id] as { name?: unknown } | undefined;
+        if (value && typeof value.name === "string" && value.name) {
+          refs.push({ scope: "collection", ownerId: r.collection_id, name: value.name, optional: false });
+        }
+      }
+    }
+  }
+  return refs;
+}
+
+/** Cartella su disco di ogni nota (null = non ancora scritta). */
+export async function listNoteDirs(): Promise<Map<number, string | null>> {
+  const db = await getDatabase();
+  const rows = await db.select<{ id: number; disk_path: string | null }[]>(`SELECT id, disk_path FROM notes`);
+  return new Map(rows.map((r) => [r.id, r.disk_path]));
 }

@@ -9,6 +9,7 @@ import { useSettings } from "../settings/useSettings";
 import { syncRound, type SyncServer } from "./engine/round";
 import { SyncScheduler, type SyncFailure } from "./engine/scheduler";
 import { emitSyncApplied } from "./syncEvents";
+import { runSyncTasks } from "./syncTasks";
 import { SyncRepository } from "./syncRepository";
 import { chooseMerge, chooseReplace, finishAdopt, prepareSync, SYNC_KINDS, SYNC_TABLES_ON, syncKeys } from "./syncSetup";
 import { SyncContext, type SyncContextValue, type SyncStatus } from "./useSync";
@@ -88,6 +89,8 @@ export function SyncProvider({ children }: { children: ReactNode }) {
         });
         if (setup.adopt) await finishAdopt(repo, user);
         emitSyncApplied({ kinds: result.changed, written: result.written, deleted: result.deleted });
+        const retryIn = await runSyncTasks({ userId: user });
+        if (retryIn !== null) window.setTimeout(() => scheduler.request(0), retryIn);
       },
       classifyError: (error) => (error instanceof NeedsChoice ? "other" : classifyError(error)),
       onAuthError: retry,

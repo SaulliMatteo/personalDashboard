@@ -565,4 +565,19 @@ export const MIGRATIONS: Migration[] = [
       ...syncTracking("settings", "key", ["value"], true),
     ],
   },
+  {
+    version: 24,
+    description: "Sync tra dispositivi: file già allineati con il cloud (allegati delle note, file delle raccolte)",
+    statements: [
+      // Un file (per account) che c'è sia qui sia nel cloud. Serve a capire chi l'ha cancellato: sparito qui ma
+      // nell'elenco = cancellato qui (si toglie dal cloud); il suo riferimento sparito = cancellato altrove.
+      `CREATE TABLE IF NOT EXISTS sync_files (
+         user_id TEXT NOT NULL,
+         scope TEXT NOT NULL,
+         owner_uid TEXT NOT NULL,
+         name TEXT NOT NULL,
+         PRIMARY KEY (user_id, scope, owner_uid, name)
+       )`,
+    ],
+  },
 ];

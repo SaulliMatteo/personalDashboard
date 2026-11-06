@@ -1,10 +1,12 @@
 import { useEffect, type ReactNode } from "react";
 import { onSyncApplied } from "../../../core/sync/syncEvents";
+import { registerSyncTask } from "../../../core/sync/syncTasks";
 import type { SyncKind } from "../../../core/sync/tables";
 import { afterRemoteChanges } from "../data/notesRepository";
 import { loadCollections } from "../lib/collectionsStore";
 import { emitRemoteNotesChange } from "../lib/remoteChanges";
 import { removeNoteDir } from "../lib/vault";
+import { syncNoteFiles } from "./fileSync";
 
 const NOTE_KINDS: readonly SyncKind[] = ["folder", "note", "page", "attachment"];
 const COLLECTION_KINDS: readonly SyncKind[] = ["collection", "field", "row", "view"];
@@ -13,7 +15,8 @@ const numbers = (ids: readonly unknown[] | undefined) => (ids ?? []).filter((id)
 
 /**
  * Note e Raccolte arrivate dagli altri dispositivi (core/sync/): sempre montato, anche con la pagina Notes chiusa.
- * Toglie le cartelle su disco delle note cancellate, riallinea segni e copia su disco, poi avvisa chi le mostra.
+ * Toglie le cartelle su disco delle note cancellate, riallinea segni e copia su disco, poi avvisa chi le mostra; dopo
+ * ogni giro allinea i file (fileSync.ts).
  */
 export function NotesSyncProvider({ children }: { children: ReactNode }) {
   useEffect(
@@ -37,5 +40,8 @@ export function NotesSyncProvider({ children }: { children: ReactNode }) {
       }),
     []
   );
+  // i file (allegati, immagini, PDF, file delle raccolte) dopo ogni giro
+  useEffect(() => registerSyncTask(syncNoteFiles), []);
+
   return <>{children}</>;
 }

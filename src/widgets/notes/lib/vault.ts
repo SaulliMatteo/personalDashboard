@@ -4,6 +4,7 @@ import {
   exists,
   mkdir,
   readDir,
+  readFile,
   readTextFile,
   remove,
   rename,
@@ -439,4 +440,40 @@ export async function saveCollectionFile(collectionId: number, name: string, byt
 
 export async function collectionFilePath(collectionId: number, name: string): Promise<string> {
   return join(await documentDir(), VAULT_DIR, "Raccolte", "allegati", String(collectionId), name);
+}
+
+// ---------------------------------------------------------------------
+// File arrivati o da mandare con il sync (sync/fileSync.ts): nome esatto, senza " (2)"
+// ---------------------------------------------------------------------
+
+/** Dove sta un file del sync: allegati/ della nota, o la cartella dei file della raccolta. */
+export function syncedFileRel(place: { noteDir: string } | { collectionId: number }, name: string): string {
+  return "noteDir" in place
+    ? `${VAULT_DIR}/${place.noteDir}/allegati/${name}`
+    : `${COLLECTIONS_DIR}/allegati/${place.collectionId}/${name}`;
+}
+
+export async function syncedFileExists(rel: string): Promise<boolean> {
+  try {
+    return await exists(rel, BASE);
+  } catch {
+    return false;
+  }
+}
+
+export async function readSyncedFile(rel: string): Promise<Uint8Array> {
+  return readFile(rel, BASE);
+}
+
+export async function writeSyncedFile(rel: string, bytes: Uint8Array): Promise<void> {
+  await mkdir(parentOf(rel), { ...BASE, recursive: true });
+  await writeFile(rel, bytes, BASE);
+}
+
+export async function removeSyncedFile(rel: string): Promise<void> {
+  try {
+    if (await exists(rel, BASE)) await remove(rel, BASE);
+  } catch (error) {
+    console.error("Impossibile eliminare il file:", error);
+  }
 }

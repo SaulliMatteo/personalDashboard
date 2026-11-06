@@ -7,8 +7,20 @@ import type { SyncRepository } from "./syncRepository";
  * sincronizzarsi: primo sync (cloud vuoto, "Unisci" o "Usa i dati del cloud") e tipi nuovi in una versione dopo.
  */
 
-/** I tipi che questa versione sincronizza (gli allegati delle note arrivano dopo, con i loro file). */
-export const SYNC_KINDS: readonly SyncKind[] = ["subject", "session", "folder", "note", "page", "collection", "field", "row", "view", "setting"];
+/** I tipi che questa versione sincronizza. I file (allegati, PDF…) viaggiano a parte: syncTasks.ts. */
+export const SYNC_KINDS: readonly SyncKind[] = [
+  "subject",
+  "session",
+  "folder",
+  "note",
+  "page",
+  "attachment",
+  "collection",
+  "field",
+  "row",
+  "view",
+  "setting",
+];
 
 /**
  * Tipi che "Usa i dati del cloud" cancella qui prima di scaricare, in ordine di dipendenza. Le impostazioni restano
@@ -88,6 +100,8 @@ export async function chooseReplace(repo: SyncRepository, userId: string): Promi
   const deleted = new Map<SyncKind, Row[]>();
   for (const kind of REPLACED_KINDS) deleted.set(kind, specOf(kind).localColumns ? await repo.localRows(specOf(kind)) : []);
   await repo.whileApplying(() => repo.wipe(tablesOf(REPLACED_KINDS)));
+  // i file del cloud restano: senza questo il primo giro li cancellerebbe (i loro riferimenti qui sono spariti)
+  await repo.clearKnownFiles(userId);
   await repo.clearOutbox(tablesOf(SYNC_KINDS));
   await repo.setMeta(keys.cursor, null);
   await repo.setMeta(keys.pending, null);

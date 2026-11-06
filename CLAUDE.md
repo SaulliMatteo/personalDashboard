@@ -80,7 +80,8 @@ prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabas
 `node scripts/layout/mobileLayout.test.mts` quando si tocca `core/layout/mobileLayout.ts`, `node scripts/study/phases.test.mts`
 quando si tocca `widgets/study/timer/phases.ts`, `scripts/sync/records.test.mts`, `scripts/sync/schema.test.mts` (questa
 su SQLite vero con `node:sqlite`, tutte le migrazioni da zero) e `scripts/sync/round.test.mts` (due dispositivi su SQLite
-vero e un server finto) quando si tocca `core/sync/` o una tabella sincronizzata.
+vero e un server finto) quando si tocca `core/sync/` o una tabella sincronizzata, `node scripts/sync/files.test.mts`
+quando si tocca `widgets/notes/sync/filePlan.ts`.
 
 ```bash
 # Prove pure (scripts/gruppi/<nome>.test.mts e scripts/youtube/<nome>.test.mts, nessun server); una alla volta:
@@ -161,6 +162,12 @@ Debito noto: `widgets/youtube/screens/WatchScreen.tsx` importa `study/data/study
   copia su disco e poi avvisa pagina, card e mini con `lib/remoteChanges.ts`). I tipi accesi sono `SYNC_KINDS` in
   `core/sync/syncSetup.ts`: uno nuovo entra nel registro da solo al primo giro. I totali dei Gruppi contano solo le
   sessioni con `origin_device` NULL (fatte qui).
+  File (allegati, immagini e PDF delle pagine, campi File delle raccolte): non sono righe, li muove
+  `widgets/notes/sync/fileSync.ts` dopo ogni giro (registrato con `registerSyncTask` di `core/sync/syncTasks.ts`) nel
+  bucket privato `sync-files` (`<user_id>/<note|collection>/<uid>/<nome in base64url>`, rete solo in
+  `core/cloud/syncFilesApi.ts`). Cosa caricare, scaricare o togliere lo decide `filePlan.ts` (puro) dalle righe che li
+  citano e da `sync_files` (migrazione 24: i file già sia qui sia nel cloud). Un riferimento nuovo a un file va in
+  `listFileReferences` di `notesRepository.ts`. Lo Storage non si svuota da SQL: `deleteAccount` cancella prima i file.
 
 **Backend nativo** (`src-tauri/`): `src/lib.rs` registra plugin (sql, notification, fs/dialog/opener usati dal
 Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.json` ha `create: false`).

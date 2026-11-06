@@ -125,7 +125,8 @@ function SyncSection() {
             </label>
             <ExpandableText className="settings-field-description">
               Studio, note, raccolte e impostazioni uguali su tutti i dispositivi dove accedi con questo account.
-              Aspetto, suoni e disposizione restano di ogni dispositivo; gli allegati delle note per ora no. I dati passano dal servizio online e li vedi
+              Viaggiano anche allegati, immagini e PDF delle note (fino a 50 MB l'uno). Aspetto, suoni e disposizione
+              restano di ogni dispositivo. I dati passano dal servizio online e li vedi
               solo tu, nemmeno i membri dei tuoi gruppi.
             </ExpandableText>
             {settings.syncEnabled && text && <p className="settings-field-description">{text}</p>}

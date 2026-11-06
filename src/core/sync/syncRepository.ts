@@ -254,6 +254,36 @@ export class SyncRepository {
     }
   }
 
+  // ------------------------------------------------------------ file già allineati con il cloud (sync_files)
+
+  async knownFiles(userId: string): Promise<{ scope: string; ownerUid: string; name: string }[]> {
+    return this.db.select<{ scope: string; ownerUid: string; name: string }[]>(
+      `SELECT scope, owner_uid AS ownerUid, name FROM sync_files WHERE user_id = ?`,
+      [userId]
+    );
+  }
+
+  async addKnownFile(userId: string, scope: string, ownerUid: string, name: string): Promise<void> {
+    await this.db.execute(
+      `INSERT INTO sync_files (user_id, scope, owner_uid, name) VALUES (?, ?, ?, ?) ON CONFLICT DO NOTHING`,
+      [userId, scope, ownerUid, name]
+    );
+  }
+
+  async removeKnownFile(userId: string, scope: string, ownerUid: string, name: string): Promise<void> {
+    await this.db.execute(`DELETE FROM sync_files WHERE user_id = ? AND scope = ? AND owner_uid = ? AND name = ?`, [
+      userId,
+      scope,
+      ownerUid,
+      name,
+    ]);
+  }
+
+  /** Dimentica i file allineati (dopo "Usa i dati del cloud": quelli di qui non ci sono più, il cloud resta). */
+  async clearKnownFiles(userId: string): Promise<void> {
+    await this.db.execute(`DELETE FROM sync_files WHERE user_id = ?`, [userId]);
+  }
+
   // ------------------------------------------------------------ stato del sync (tabella meta)
 
   async getMeta(key: string): Promise<string | null> {

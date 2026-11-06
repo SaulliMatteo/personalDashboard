@@ -88,6 +88,7 @@ const SAME_ELEMENT: Partial<Record<SyncKind, readonly string[]>> = {
   field: ["collection_id", "name"],
   row: ["collection_id", "created_at"],
   view: ["collection_id", "name"],
+  attachment: ["note_id", "name"],
 };
 
 /** Colonne UNIQUE: un nome già usato da un altro elemento qui diventa "Nome (2)". */
