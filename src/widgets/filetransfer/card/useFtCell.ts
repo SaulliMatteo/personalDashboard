@@ -1,21 +1,23 @@
 import { useThemeVariant } from "../../../core/theme/variants";
 import { useFileTransfer } from "../useFileTransfer";
-import { STATUS_LABELS } from "../lib/labels";
+import { ROLE_TEXT, STATUS_LABELS } from "../lib/labels";
 
 /** Dati comuni delle celle 1×1 (una forma per tema, vedi cards.ts). */
 export function useFtCell() {
-  const { ready, running, error, files } = useFileTransfer();
+  const { role, ready, running, error, files } = useFileTransfer();
+  const text = ROLE_TEXT[role];
   const [onLabel, offLabel] = useThemeVariant(STATUS_LABELS);
   const failed = error !== null;
   const total = files.length;
   const count = failed ? "!" : ready ? String(total) : "–";
-  const state = running ? "online" : "server fermo";
+  const state = running ? "online" : text.off;
 
-  let ariaLabel = `File transfer: ${total} file ricevuti, ${state}`;
+  let ariaLabel = `File transfer: ${total} ${text.countLong}, ${state}`;
   if (failed) ariaLabel = `File transfer: errore, ${state}`;
   else if (!ready) ariaLabel = "File transfer: caricamento";
 
   return {
+    text,
     running,
     failed,
     count,

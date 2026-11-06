@@ -241,3 +241,28 @@
   padding: 18px 22px 22px;
 }
 
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .gp-nav-item,
+  .gp-tab {
+    position: relative;
+  }
+
+  .gp-nav-item::after,
+  .gp-tab::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}
+
+/* Telefono: il titolo e l'indietro stanno nella barra in alto; la colonna dei gruppi va a tutta larghezza. */
+:root[data-compact] .gp-header {
+  display: none;
+}
+
+:root[data-compact] .gp-nav {
+  flex-basis: 100%;
+  max-width: none;
+}

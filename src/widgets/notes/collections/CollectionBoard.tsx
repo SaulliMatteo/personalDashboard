@@ -4,6 +4,10 @@ import ChoiceChip from "./ChoiceChip";
 import RowTile from "./RowTile";
 import "./CollectionBoard.css";
 
+/** Col dito una scheda si trascina solo dopo una pressione lunga (prima si scorre la bacheca). */
+const LONG_PRESS_MS = 400;
+const TOUCH_SLOP = 8;
+
 interface CollectionBoardProps {
   fields: Field[];
   rows: Row[];
@@ -46,25 +50,50 @@ function CollectionBoard({ fields, rows, groupField, ctx, onOpenRow, onMoveRow, 
     const sx = e.clientX;
     const sy = e.clientY;
     let moving = false;
+    const touch = e.pointerType !== "mouse";
+    let pressed = !touch;
+    const pressTimer = touch
+      ? window.setTimeout(() => {
+          pressed = true;
+          startMoving();
+          setDrag({ row, x: sx, y: sy, over: overAt(sx, sy) });
+        }, LONG_PRESS_MS)
+      : null;
+    // da trascinamento iniziato, il dito non fa più scorrere la bacheca
+    const blockScroll = (ev: TouchEvent) => {
+      if (moving) ev.preventDefault();
+    };
+    function startMoving() {
+      moving = true;
+      try {
+        el.setPointerCapture(id);
+      } catch {
+        /* già rilasciato */
+      }
+    }
     const overAt = (x: number, y: number) => document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-group]")?.dataset.group ?? null;
     const move = (ev: PointerEvent) => {
       if (ev.pointerId !== id) return;
-      if (!moving && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return;
-      if (!moving) {
-        moving = true;
-        try {
-          el.setPointerCapture(id);
-        } catch {
-          /* già rilasciato */
-        }
+      const moved = Math.hypot(ev.clientX - sx, ev.clientY - sy);
+      if (!pressed) {
+        // col dito, muoversi prima della pressione lunga è uno scorrimento
+        if (moved > TOUCH_SLOP) stop();
+        return;
       }
+      if (!moving && moved < 6) return;
+      if (!moving) startMoving();
       setDrag({ row, x: ev.clientX, y: ev.clientY, over: overAt(ev.clientX, ev.clientY) });
     };
-    const up = (ev: PointerEvent) => {
-      if (ev.pointerId !== id) return;
+    const stop = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
+      window.removeEventListener("touchmove", blockScroll);
+      if (pressTimer !== null) window.clearTimeout(pressTimer);
+    };
+    const up = (ev: PointerEvent) => {
+      if (ev.pointerId !== id) return;
+      stop();
       setDrag(null);
       if (!moving) return;
       // Il rilascio genera un click sulla scheda: non deve aprirla.
@@ -78,6 +107,7 @@ function CollectionBoard({ fields, rows, groupField, ctx, onOpenRow, onMoveRow, 
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
+    if (touch) window.addEventListener("touchmove", blockScroll, { passive: false });
   }
 
   return (

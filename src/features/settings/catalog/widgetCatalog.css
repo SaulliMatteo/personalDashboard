@@ -11,3 +11,8 @@
   justify-content: space-between;
   gap: 16px;
 }
+
+/* telefono: margini laterali come la dashboard (la barra in alto ha già titolo e ←) */
+:root[data-compact] .widget-catalog {
+  padding: 2px var(--compact-side) 20px;
+}

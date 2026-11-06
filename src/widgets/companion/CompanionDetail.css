@@ -35,6 +35,13 @@
   gap: 14px;
 }
 
+/* in una colonna il palco non resta fermo in alto: il resto gli scorrerebbe sotto */
+@media (max-width: 900px) {
+  .companion-detail-side {
+    position: static;
+  }
+}
+
 .companion-detail-main {
   display: flex;
   flex-direction: column;
@@ -573,4 +580,27 @@
 .companion-app-select:focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;
+}
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .companion-btn,
+  .companion-tab,
+  .companion-cat,
+  .companion-small-btn,
+  .companion-pose,
+  .companion-anim-try {
+    position: relative;
+  }
+
+  .companion-btn::after,
+  .companion-tab::after,
+  .companion-cat::after,
+  .companion-small-btn::after,
+  .companion-pose::after,
+  .companion-anim-try::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
 }

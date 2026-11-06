@@ -143,6 +143,9 @@
   color: var(--text-primary);
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+  /* l'app disattiva la selezione: un messaggio si deve poter copiare (anche tenendo premuto col dito) */
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .is-cont .rch-bubble {
@@ -228,6 +231,13 @@
   opacity: 1;
 }
 
+/* col dito non c'è il "passare sopra": sempre visibili */
+@media (hover: none) {
+  .rch-hover {
+    opacity: 1;
+  }
+}
+
 /* ---------- Scrivere ---------- */
 .rch-form {
   flex: 0 0 auto;
@@ -306,4 +316,21 @@
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .rch-send,
+  .rch-del,
+  .rch-react {
+    position: relative;
+  }
+
+  .rch-send::after,
+  .rch-del::after,
+  .rch-react::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
 }

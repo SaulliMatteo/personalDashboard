@@ -1,10 +1,11 @@
 import { useState, type KeyboardEvent } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { readFile } from "@tauri-apps/plugin-fs";
-import { openPath, openUrl } from "@tauri-apps/plugin-opener";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { MdClose, MdOpenInNew, MdOutlineAttachFile } from "react-icons/md";
 import { type CellValue, type Field, type FileValue } from "../lib/collections";
-import { baseName, collectionFilePath, saveCollectionFile } from "../lib/vault";
+import { fileErrorMessage, openFile, pickedFileName } from "../data/filesApi";
+import { collectionFilePath, saveCollectionFile } from "../lib/vault";
 import ChoicePicker from "./ChoicePicker";
 import "./CellEditor.css";
 
@@ -138,7 +139,7 @@ function FileEditor({ field, value, onChange, onNotice }: { field: Field; value:
         onNotice("Il file supera i 50 MB");
         return;
       }
-      const name = await saveCollectionFile(field.collectionId, baseName(picked), bytes);
+      const name = await saveCollectionFile(field.collectionId, await pickedFileName(picked), bytes);
       onChange({ name, size: bytes.length });
     } catch (error) {
       console.error("File non aggiunto:", error);
@@ -162,8 +163,8 @@ function FileEditor({ field, value, onChange, onNotice }: { field: Field; value:
         title="Apri il file"
         onClick={() =>
           void collectionFilePath(field.collectionId, value.name)
-            .then(openPath)
-            .catch(() => onNotice("Impossibile aprire il file"))
+            .then(openFile)
+            .catch((error: unknown) => onNotice(fileErrorMessage(error, "Impossibile aprire il file")))
         }
       >
         <MdOutlineAttachFile aria-hidden="true" /> {value.name}

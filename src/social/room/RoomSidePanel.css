@@ -304,3 +304,18 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .rsp-tab,
+  .rsp-row-btn {
+    position: relative;
+  }
+
+  .rsp-tab::after,
+  .rsp-row-btn::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

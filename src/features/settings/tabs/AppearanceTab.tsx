@@ -4,6 +4,7 @@ import { ACCENT_KEYS } from "../../../core/settings/schema";
 import { ACCENT_PRESETS, THEME_IDS, THEMES } from "../../../core/theme/themes";
 import { useTheme } from "../../../core/theme/useTheme";
 import { GRID_COLS } from "../../../core/layout/gridConfig";
+import { useCompact } from "../../../core/layout/useCompact";
 
 /** Opzioni del controllo "Variante"; con "auto" le anteprime mostrano la variante risolta. */
 const MODE_OPTIONS = [
@@ -16,6 +17,8 @@ const MODE_OPTIONS = [
 function AppearanceTab() {
   const { settings, updateSetting } = useSettings();
   const theme = useTheme();
+  // sul telefono griglia, glow e barra laterale non ci sono (o si regolano dal desktop)
+  const compact = useCompact();
   // L'accent si sceglie per la variante attiva: l'altra tiene il suo.
   const accentKeys = ACCENT_KEYS[theme.mode];
   const effectiveAccent = theme.accent.toLowerCase();
@@ -117,21 +120,25 @@ function AppearanceTab() {
         </div>
       </div>
 
-      <div className="sp-info-row">
-        <div>
-          <div className="sp-info-title">Griglia</div>
-          <div className="sp-info-desc">
-            {GRID_COLS} colonne per {settings.gridRows} righe, riempie la finestra senza scorrere. Le righe si cambiano in Dashboard.
+      {!compact && (
+        <div className="sp-info-row">
+          <div>
+            <div className="sp-info-title">Griglia</div>
+            <div className="sp-info-desc">
+              {GRID_COLS} colonne per {settings.gridRows} righe, riempie la finestra senza scorrere. Le righe si cambiano in Dashboard.
+            </div>
           </div>
+          <span className="sp-info-value">
+            {GRID_COLS} × {settings.gridRows}
+          </span>
         </div>
-        <span className="sp-info-value">
-          {GRID_COLS} × {settings.gridRows}
-        </span>
-      </div>
+      )}
 
       <SettingsSection group="appearance" omit={["theme", "themeMode", "accentOverrideGiorno", "accentColorGiorno", "accentOverrideNotte", "accentColorNotte"]} />
 
-      {theme.glow ? (
+      {compact ? (
+        <p className="sp-note">Glow dei widget, griglia e posizione della barra laterale si regolano dal desktop.</p>
+      ) : theme.glow ? (
         <SettingsSection group="glow" />
       ) : (
         <p className="sp-note">Il bordo luminoso dei widget c'è solo nel tema {THEMES.notte.label}, variante notte: le sue impostazioni compaiono quando lo scegli.</p>

@@ -7,7 +7,7 @@ import type { BrainSnapshot } from "../../../core/pixy/engine/snapshot";
 import { useSettings } from "../../../core/settings/useSettings";
 import { useGroups } from "../../groups/useGroups";
 import { startClockSync } from "../../presence/clockSync";
-import { openChannels } from "../../presence/openChannels";
+import { openChannels, retryOnReturn } from "../../presence/openChannels";
 import { PresenceHub, type PresenceSnapshot } from "../../presence/presenceHub";
 import { PIXY_FEATURE_KEY } from "./feature";
 import { buildPixyPresence, parsePixyChannelState, type PixyAppearance, type PixyPresence } from "./payload";
@@ -82,6 +82,7 @@ export function PixyPresenceProvider({ children }: { children: ReactNode }) {
     );
     hubRef.current = next;
     openChannels(next, groupKeyRef.current);
+    const stopRetry = retryOnReturn(next);
 
     // il hub rimanda solo se il payload è diverso (senza condivisione non cambia mai)
     const unsubscribe = subscribeMyPixy(() => next.setLocal(readLocalRef.current()));
@@ -93,6 +94,7 @@ export function PixyPresenceProvider({ children }: { children: ReactNode }) {
 
     return () => {
       disposed = true;
+      stopRetry();
       unsubscribe();
       stopClock();
       next.stop();

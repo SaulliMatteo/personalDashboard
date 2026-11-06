@@ -7,7 +7,7 @@ import { sendAppNotification } from "../../../core/notify/notifier";
 import { useSettings } from "../../../core/settings/useSettings";
 import { useGroups } from "../../groups/useGroups";
 import { startClockSync } from "../../presence/clockSync";
-import { openChannels } from "../../presence/openChannels";
+import { openChannels, retryOnReturn } from "../../presence/openChannels";
 import type { ChannelState } from "../../presence/presenceHub";
 import { STUDY_FEATURE_KEY } from "../study/feature";
 import { buildPresence, unsavedStudySeconds } from "../study/presence/payload";
@@ -88,7 +88,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const group = groupsRef.current.find((g) => g.id === groupId);
       const author = (membersRef.current[groupId] ?? []).find((m) => m.userId === event.from)?.username ?? "";
       const text = event.text.length > NOTIFY_BODY_MAX ? `${event.text.slice(0, NOTIFY_BODY_MAX - 1)}…` : event.text;
-      void sendAppNotification({ kind: "groupMessage", title: group?.name ?? "Messaggi", body: `${author}: ${text}` });
+      void sendAppNotification({ kind: "groupMessage", title: group?.name ?? "Messaggi", body: `${author}: ${text}`, open: { type: "room" } });
     },
     [settingsRef, groupsRef, membersRef]
   );
@@ -147,6 +147,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     });
     hubRef.current = hub;
     openChannels(hub, groupKeyRef.current);
+    const stopRetry = retryOnReturn(hub);
     const stopClock = startClockSync((offset) => {
       if (disposed) return;
       offsetRef.current = offset;
@@ -154,6 +155,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     });
     return () => {
       disposed = true;
+      stopRetry();
       stopClock();
       hub.stop();
       hubRef.current = null;

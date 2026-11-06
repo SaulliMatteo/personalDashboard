@@ -185,3 +185,18 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .rtd-link,
+  .rtd-plus {
+    position: relative;
+  }
+
+  .rtd-link::after,
+  .rtd-plus::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

@@ -6,7 +6,7 @@ import { useLatestRef } from "../../../../core/hooks/useLatestRef";
 import { useSettings } from "../../../../core/settings/useSettings";
 import { useGroups } from "../../../groups/useGroups";
 import { startClockSync } from "../../../presence/clockSync";
-import { openChannels } from "../../../presence/openChannels";
+import { openChannels, retryOnReturn } from "../../../presence/openChannels";
 import { STUDY_FEATURE_KEY } from "../feature";
 import { StudyPresenceHub, type LocalStudyState, type PresenceSnapshot } from "./presenceHub";
 import { StudyPresenceContext, type StudyPresenceValue } from "./useStudyPresence";
@@ -69,6 +69,7 @@ export function StudyPresenceProvider({ children }: { children: ReactNode }) {
     hubRef.current = next;
     next.setLocal(readLocalRef.current());
     openChannels(next, groupKeyRef.current);
+    const stopRetry = retryOnReturn(next);
 
     // il bus cambia oggetto solo quando cambia qualcosa; il hub rimanda solo se il payload è diverso
     const unsubscribe = subscribeActivity(() => next.setLocal(readLocalRef.current()));
@@ -80,6 +81,7 @@ export function StudyPresenceProvider({ children }: { children: ReactNode }) {
 
     return () => {
       disposed = true;
+      stopRetry();
       unsubscribe();
       stopClock();
       next.stop();

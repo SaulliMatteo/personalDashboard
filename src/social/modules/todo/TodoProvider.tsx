@@ -4,7 +4,7 @@ import { useCloud } from "../../../core/cloud/useCloud";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import { useSettings } from "../../../core/settings/useSettings";
 import { useGroups } from "../../groups/useGroups";
-import { openChannels } from "../../presence/openChannels";
+import { openChannels, retryOnReturn } from "../../presence/openChannels";
 import { PresenceHub, type PresenceSnapshot } from "../../presence/presenceHub";
 import { addTodo, deleteTodo, listTodos, purgeDoneBefore, setTodoDone } from "./data/todoRepository";
 import { TODO_FEATURE_KEY } from "./feature";
@@ -100,8 +100,10 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     );
     hubRef.current = next;
     openChannels(next, groupKeyRef.current);
+    const stopRetry = retryOnReturn(next);
     return () => {
       disposed = true;
+      stopRetry();
       next.stop();
       hubRef.current = null;
       setSnapshot(EMPTY);

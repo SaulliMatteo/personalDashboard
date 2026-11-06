@@ -1,7 +1,10 @@
 import { useState, type ReactNode } from "react";
 import { useCloud } from "../../core/cloud/useCloud";
 import { useElementSize } from "../../core/hooks/useElementSize";
+import { useCompact } from "../../core/layout/useCompact";
+import { useDrawer } from "../../core/nav/useDrawer";
 import { useNav } from "../../core/nav/useNav";
+import CompactBar from "../../ui/CompactBar";
 import GroupsStatus from "../groups/components/GroupsStatus";
 import { useGroupsState } from "../groups/groupsState";
 import { useGroups } from "../groups/useGroups";
@@ -50,9 +53,13 @@ function Arrow({ dir }: { dir: "prev" | "next" }) {
  * (dettaglio del widget) o dagli stati senza gruppi, non da qui.
  * `pigment`: in Opaco la sala usa il pigmento del widget Gruppi (lo decide il registry, in app/App.tsx).
  * `controls`: i comandi dei widget per la stanza (`roomControls`, es. il timer dello Studio), passati da app/App.tsx.
+ * Sul telefono (docs/design/mobile/viste.html, vista 8): nome del gruppo e sala nella barra in alto, sotto gruppi e
+ * frecce delle sale, poi posto e timer, la sala a tutta larghezza e le schede sotto, dove scorre solo la lista.
  */
 function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode }) {
   const { openWidgetDetail } = useNav();
+  const compact = useCompact();
+  const { setOpen: openDrawer } = useDrawer();
   const { userId } = useCloud();
   const state = useGroupsState();
   const { groups, selectedGroup, selectGroup } = useGroups();
@@ -72,9 +79,38 @@ function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode
   const sceneScale =
     sceneWidth > 0 && sceneHeight > 0 ? Math.min(sceneWidth / STAGE_WIDTH, sceneHeight / STAGE_HEIGHT, MAX_SCENE_SCALE) : 1;
 
+  const settingsButton = (
+    <button
+      type="button"
+      className="grp-btn grp-btn--ghost roomp-icon-btn"
+      aria-label="Impostazioni dei gruppi"
+      onClick={() => openWidgetDetail(GROUPS_WIDGET_ID)}
+    >
+      <SettingsIcon />
+    </button>
+  );
+  // la barra del telefono: ☰, il nome del gruppo (o della pagina) e le impostazioni dei gruppi
+  const compactBar = (title: string, subtitle?: string) =>
+    compact ? (
+      <CompactBar
+        lead="menu"
+        onLead={() => openDrawer(true)}
+        title={title}
+        subtitle={subtitle}
+        actions={
+          group ? (
+            <button type="button" className="cbar-btn" aria-label="Impostazioni dei gruppi" onClick={() => openWidgetDetail(GROUPS_WIDGET_ID)}>
+              <SettingsIcon />
+            </button>
+          ) : undefined
+        }
+      />
+    ) : null;
+
   if (!group) {
     return (
       <div className="roomp">
+        {compactBar("Stanza comune")}
         <section className="roomp-card roomp-card--state">
           <GroupsStatus state={state === "ok" ? "loading" : state} />
         </section>
@@ -119,79 +155,99 @@ function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode
   // un clic apre la riga (o il posto), un secondo clic sullo stesso la chiude
   const toggle = (id: string) => update({ selected: id === selectedId ? null : id });
 
+  const seatStatus = (
+    <>
+      {isMyRoom ? (
+        <span className="roomp-here">Sei seduto qui</span>
+      ) : roomFull ? (
+        <span className="roomp-full">Sala piena</span>
+      ) : (
+        <button type="button" className="grp-btn roomp-fill" onClick={() => setRoom(group.id, shown)}>
+          Siediti in questa sala
+        </button>
+      )}
+      {isMyRoom && chosenSeats[group.id] !== undefined && (
+        <button type="button" className="grp-btn grp-btn--ghost" onClick={() => setRoom(group.id, shown)}>
+          Posto automatico
+        </button>
+      )}
+    </>
+  );
+  const groupChips = groups.length > 0 && (
+    <div className="roomp-groups" role="group" aria-label="I miei gruppi">
+      {groups.map((g) => (
+        <button
+          key={g.id}
+          type="button"
+          aria-pressed={g.id === group.id}
+          className={g.id === group.id ? "is-on" : undefined}
+          onClick={() => selectGroup(g.id)}
+        >
+          {g.name}
+        </button>
+      ))}
+    </div>
+  );
+  // sul telefono "Sala 1 di 2" sta nella barra in alto: qui restano le frecce
+  const roomArrows = (
+    <div className="roomp-rooms" role="group" aria-label={`Sala ${shown + 1} di ${roomCount}, ${roomInfo(inShown.length, ROOM_SEATS)}`}>
+      <button
+        type="button"
+        className="grp-btn grp-btn--ghost roomp-arrow"
+        aria-label="Sala precedente"
+        disabled={shown === 0}
+        onClick={() => update({ room: Math.max(0, shown - 1) })}
+      >
+        <Arrow dir="prev" />
+      </button>
+      {!compact && (
+        <span className="roomp-rooms-label">
+          Sala {shown + 1} di {roomCount}
+        </span>
+      )}
+      <button
+        type="button"
+        className="grp-btn grp-btn--ghost roomp-arrow"
+        aria-label="Sala successiva"
+        disabled={shown >= roomCount - 1}
+        onClick={() => update({ room: Math.min(roomCount - 1, shown + 1) })}
+      >
+        <Arrow dir="next" />
+      </button>
+    </div>
+  );
+
   return (
     <div className="roomp">
-      <header className="roomp-header">
-        <div className="roomp-top">
-          <h1>{group.name}</h1>
-          <div className="roomp-actions">
-            {isMyRoom ? (
-              <span className="roomp-here">Sei seduto qui</span>
-            ) : roomFull ? (
-              <span className="roomp-full">Sala piena</span>
-            ) : (
-              <button type="button" className="grp-btn roomp-fill" onClick={() => setRoom(group.id, shown)}>
-                Siediti in questa sala
-              </button>
-            )}
-            {isMyRoom && chosenSeats[group.id] !== undefined && (
-              <button type="button" className="grp-btn grp-btn--ghost" onClick={() => setRoom(group.id, shown)}>
-                Posto automatico
-              </button>
-            )}
-            {groups.length > 0 && (
-              <div className="roomp-groups" role="group" aria-label="I miei gruppi">
-                {groups.map((g) => (
-                  <button
-                    key={g.id}
-                    type="button"
-                    aria-pressed={g.id === group.id}
-                    className={g.id === group.id ? "is-on" : undefined}
-                    onClick={() => selectGroup(g.id)}
-                  >
-                    {g.name}
-                  </button>
-                ))}
-              </div>
-            )}
-            <button
-              type="button"
-              className="grp-btn grp-btn--ghost roomp-icon-btn"
-              aria-label="Impostazioni dei gruppi"
-              onClick={() => openWidgetDetail(GROUPS_WIDGET_ID)}
-            >
-              <SettingsIcon />
-            </button>
+      {compactBar(group.name, `Sala ${shown + 1} di ${roomCount} · ${roomInfo(inShown.length, ROOM_SEATS)}`)}
+      {compact ? (
+        <header className="roomp-header roomp-header--compact">
+          <div className="roomp-row">
+            {groupChips}
+            {roomArrows}
           </div>
-        </div>
-        {/* la sala guardata e i comandi dei widget (il timer dello Studio) */}
-        <div className="roomp-bar">
-          <div className="roomp-rooms" role="group" aria-label={`Sala ${shown + 1} di ${roomCount}, ${roomInfo(inShown.length, ROOM_SEATS)}`}>
-            <button
-              type="button"
-              className="grp-btn grp-btn--ghost roomp-arrow"
-              aria-label="Sala precedente"
-              disabled={shown === 0}
-              onClick={() => update({ room: Math.max(0, shown - 1) })}
-            >
-              <Arrow dir="prev" />
-            </button>
-            <span className="roomp-rooms-label">
-              Sala {shown + 1} di {roomCount}
-            </span>
-            <button
-              type="button"
-              className="grp-btn grp-btn--ghost roomp-arrow"
-              aria-label="Sala successiva"
-              disabled={shown >= roomCount - 1}
-              onClick={() => update({ room: Math.min(roomCount - 1, shown + 1) })}
-            >
-              <Arrow dir="next" />
-            </button>
+          <div className="roomp-row">
+            <div className="roomp-seat">{seatStatus}</div>
+            <div className="roomp-controls">{controls}</div>
           </div>
-          <div className="roomp-controls">{controls}</div>
-        </div>
-      </header>
+        </header>
+      ) : (
+        <header className="roomp-header">
+          <div className="roomp-top">
+            <h1>{group.name}</h1>
+            <div className="roomp-actions">
+              {seatStatus}
+              {groupChips}
+              {settingsButton}
+            </div>
+          </div>
+          {/* la sala guardata e i comandi dei widget (il timer dello Studio) */}
+          <div className="roomp-bar">
+            {roomArrows}
+            <div className="roomp-controls">{controls}</div>
+          </div>
+        </header>
+      )}
 
       <div className="roomp-main">
         <section className="roomp-room" aria-label="La stanza">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { MdOutlineContentCopy, MdOutlineEdit, MdSwapVert } from "react-icons/md";
+import { useTouchOnly } from "../../../core/layout/useCompact";
 import ConfirmButton from "../../../ui/ConfirmButton";
 import { addNote, deleteNote, listNotes, updateNote, type SavedVideo, type VideoNote } from "../data/youtubeRepository";
 import { copyText } from "../lib/clipboard";
@@ -22,6 +23,8 @@ const SORT_LABEL: Record<NoteSort, string> = { time: "Per minutaggio", recent: "
 function NotesPanel({ video, playerRef, onError, onChanged }: NotesPanelProps) {
   const [notes, setNotes] = useState<VideoNote[]>([]);
   const [text, setText] = useState("");
+  // senza tastiera fisica niente suggerimento di Ctrl+Invio
+  const touchOnly = useTouchOnly();
   const [now, setNow] = useState<number | null>(null);
   const [sort, setSort] = useState<NoteSort>("time");
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -127,7 +130,7 @@ function NotesPanel({ video, playerRef, onError, onChanged }: NotesPanelProps) {
               void submit();
             }
           }}
-          placeholder="Scrivi un appunto… (la prima riga è il titolo; Ctrl+Invio per salvare)"
+          placeholder={touchOnly ? "Scrivi un appunto… (la prima riga è il titolo)" : "Scrivi un appunto… (la prima riga è il titolo; Ctrl+Invio per salvare)"}
           rows={3}
           aria-label="Testo della nota"
         />

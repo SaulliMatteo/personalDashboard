@@ -1,4 +1,10 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { onBackButtonPress } from "@tauri-apps/api/app";
+import { isAndroid } from "../system/platform";
+import { onNotificationOpen } from "../notify/notifier";
+import { useLatestRef } from "../hooks/useLatestRef";
+import { runBackHandler, useBackHandlerCount } from "./backHandlers";
+import { closeTopOverlay, useOverlayOpen } from "./overlays";
 import { NavContext, type NavContextValue, type AppView } from "./useNav";
 
 export function NavProvider({ children }: { children: ReactNode }) {
@@ -15,6 +21,45 @@ export function NavProvider({ children }: { children: ReactNode }) {
     }),
     [view]
   );
+
+  // Tocco su una notifica (Android): apre la pagina che la notifica indica (Studio, Stanza comune).
+  useEffect(
+    () =>
+      onNotificationOpen((open) => {
+        setView(open.type === "room" ? { type: "room" } : { type: "widgetDetail", widgetId: open.widgetId });
+      }),
+    []
+  );
+
+  // Indietro di Android: prima lo schermo intero o il dialogo in cima (overlays.ts), poi chi ha qualcosa da chiudere
+  // (backHandlers.ts), poi la dashboard. Il listener c'è solo quando serve: senza, Android fa da sé (dalla dashboard
+  // chiude l'app).
+  const android = isAndroid();
+  const handlers = useBackHandlerCount();
+  const overlay = useOverlayOpen(android);
+  const needsBack = android && (view.type !== "dashboard" || handlers > 0 || overlay);
+  const onBack = useLatestRef(() => {
+    const goBack = () => {
+      if (!runBackHandler()) setView({ type: "dashboard" });
+    };
+    if (overlay) closeTopOverlay(goBack);
+    else goBack();
+  });
+  useEffect(() => {
+    if (!needsBack) return;
+    let cancelled = false;
+    let unregister: (() => void) | null = null;
+    onBackButtonPress(() => onBack.current())
+      .then((listener) => {
+        if (cancelled) void listener.unregister();
+        else unregister = () => void listener.unregister();
+      })
+      .catch((error) => console.error("Tasto indietro non agganciato:", error));
+    return () => {
+      cancelled = true;
+      unregister?.();
+    };
+  }, [needsBack, onBack]);
 
   return <NavContext.Provider value={value}>{children}</NavContext.Provider>;
 }

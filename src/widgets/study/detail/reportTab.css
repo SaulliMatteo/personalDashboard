@@ -10,8 +10,10 @@
 
 .study-report-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 10px 16px;
   margin-bottom: 16px;
 }
 
@@ -282,4 +284,17 @@
 :root[data-theme="fosforo"] .study-bar-stack {
   -webkit-mask: repeating-linear-gradient(to top, currentColor 0 6px, transparent 6px 8px);
   mask: repeating-linear-gradient(to top, currentColor 0 6px, transparent 6px 8px);
+}
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .study-nav-btn {
+    position: relative;
+  }
+
+  .study-nav-btn::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
 }

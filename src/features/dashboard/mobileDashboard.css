@@ -1,0 +1,255 @@
+/* Dashboard del telefono (docs/design/mobile/viste.html, viste 1-3 e 10): pagine 2×4, 4×2 in orizzontale. */
+
+.md {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* lo spazio cresce un po' con lo schermo: stesse proporzioni su telefoni stretti e larghi */
+  --md-gap: clamp(8px, 2.6vw, 14px);
+  --md-side: clamp(12px, 4vw, 20px);
+}
+
+.md-viewport {
+  flex: 1;
+  min-height: 0;
+  margin: 2px var(--md-side) 0;
+  overflow: hidden;
+  /* lo scorrimento orizzontale lo gestiamo noi; quello verticale resta ai widget */
+  touch-action: pan-y;
+}
+
+.md-track {
+  display: flex;
+  /* fra una pagina e l'altra lo stesso spazio che fra le celle (anche nel translateX di MobileDashboard) */
+  gap: var(--md-gap);
+  height: 100%;
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.md-track.is-swiping,
+:root[data-animations="off"] .md-track {
+  transition: none;
+}
+
+.md-page {
+  flex: 0 0 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: var(--md-gap);
+}
+
+.md--landscape .md-page {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.md-cell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* il widget è disegnato a grandezza "desktop" e scalato con zoom (MobileDashboard.tsx) */
+.md-zoom {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.md-zoom > * {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- modifica ---------- */
+.md--editing .md-cell {
+  touch-action: none;
+}
+
+/* il tratteggio sta sopra la card (che ha il suo sfondo), sotto × e taglia */
+.md--editing .md-cell::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  z-index: 1;
+  border: 2px dashed var(--accent);
+  border-radius: calc(var(--radius-card) - 4px);
+  pointer-events: none;
+}
+
+/* in modifica il widget non si usa: si sposta, si toglie, si cambia taglia */
+.md--editing .md-zoom {
+  pointer-events: none;
+}
+
+.md-cell.is-dragging {
+  opacity: 0.35;
+}
+
+.md-remove,
+.md-size {
+  position: absolute;
+  z-index: 2;
+  border: 0;
+  cursor: pointer;
+  font-family: var(--font-family);
+}
+
+/* × da 28px, ma l'area di tocco è più grande (::before) */
+.md-remove {
+  top: 6px;
+  right: 6px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: var(--on-danger);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.md-remove::before,
+.md-size::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+
+.md-size {
+  right: 8px;
+  bottom: 8px;
+  min-width: 40px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.md-slot {
+  min-width: 0;
+  min-height: 0;
+  border: 1.5px dashed var(--text-muted);
+  border-radius: var(--radius-card);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-family);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.md-float {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.3));
+}
+
+/* ---------- pallini delle pagine ---------- */
+.md-dots {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  padding: 2px 0 4px;
+}
+
+/* il pallino è piccolo, il pulsante è alto 24px e largo 28px per il tocco */
+.md-dots button {
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.md-dots button::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--text-secondary);
+  opacity: 0.4;
+  transition: width 0.2s ease;
+}
+
+.md-dots button.on::before {
+  width: 20px;
+  background: var(--accent);
+  opacity: 1;
+}
+
+:root[data-theme="fosforo"] .md-dots button.on::before {
+  box-shadow: 0 0 8px var(--accent);
+}
+
+/* ---------- barra della modifica e dashboard vuota ---------- */
+.md-editbar {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  padding: 6px var(--md-side) 10px;
+}
+
+.md-editbar .md-btn {
+  flex: 1;
+}
+
+.md-btn {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+  font-family: var(--font-family);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.md-btn--ghost {
+  border: var(--btn-ghost-border);
+  background: var(--btn-ghost-bg, var(--surface-2));
+  color: var(--btn-ghost-fg);
+}
+
+.md-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.md-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  color: var(--text-secondary);
+}
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .md-dots button {
+    position: relative;
+  }
+
+  .md-dots button::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

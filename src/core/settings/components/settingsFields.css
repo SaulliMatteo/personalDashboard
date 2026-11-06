@@ -175,3 +175,31 @@
 .settings-field :disabled {
   cursor: default;
 }
+
+/* Telefono: interruttori a destra del testo; campi di testo, menu e cursori vanno sotto, a tutta larghezza. */
+:root[data-compact] .settings-field {
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+:root[data-compact] .settings-field-text {
+  flex: 1 1 160px;
+}
+
+:root[data-compact] .settings-field-control:has(input[type="text"], input:not([type]), input[type="range"], select, textarea) {
+  flex: 1 1 100%;
+}
+
+:root[data-compact] .settings-field-control:has(input[type="text"], input:not([type]), input[type="range"], select, textarea) > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css; ::after è il pallino) */
+@media (pointer: coarse) {
+  .settings-switch::before {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

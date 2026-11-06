@@ -21,9 +21,64 @@ cd src-tauri && cargo check   # dopo modifiche a Rust o C
 ```
 
 Servono Node (LTS), Rust e i prerequisiti di Tauri v2 per il sistema.
+Android (`npx tauri android dev` / `npx tauri android build --debug --apk --target x86_64` per l'emulatore): servono
+`ANDROID_HOME`, `NDK_HOME` e un `JAVA_HOME` su una JDK che Gradle 8.14.3 supporti (21 o 23), **non** la JBR 25 di
+Android Studio: con quella Gradle si ferma su `A problem occurred configuring project ':buildSrc'. > 25.0.4`.
+APK vero (`it.matteo.personalDashboard`, senza `.debug`): `npm run android:release` (arm64, R8 attivo), firmato con la
+chiave dell'utente che sta fuori dal repo e indicata da `gen/android/keystore.properties` (ignorato da git; password
+anche in `PD_STORE_PASSWORD`/`PD_KEY_PASSWORD`, vedi `app/build.gradle.kts`). La chiave c'è già (`%USERPROFILE%\.android-keys`, con
+una copia di `keystore.properties`): mai ricrearla né leggerne o stamparne la password. `versionCode` lo calcola Tauri da `version` di `tauri.conf.json` (1.0.3 -> 1000003): alzarla a ogni APK.
+Icona: `res/mipmap-*` dall'icona del desktop (`tauri icon` per le legacy; il primo piano adattivo è `icon.png` al 60%
+su sfondo `#120E1B`, fatto a mano). Permessi nel manifest con il loro perché; `RECEIVE_BOOT_COMPLETED` e `WAKE_LOCK` del
+plugin delle notifiche sono tolti (`tools:node="remove"`): il ripristino dopo il riavvio della 2.4.0 non funziona
+(`batch` salva `sourceJson` vuoto). Backup automatico di Android: solo `dashboard.db` (`res/xml/backup_rules.xml` e
+`data_extraction_rules.xml`); la copia completa è Impostazioni > Generale > Dati (`core/db/backup.ts` +
+`src/db_backup.rs`: `VACUUM INTO`, import con controllo di intestazione e `user_version`, DB chiuso e pagina
+ricaricata; restano i `cloud_device_id:*` del dispositivo). Il FileProvider espone solo la cartella del Quaderno.
+Il progetto `src-tauri/gen/android` è versionato (manifest, Gradle e icone si modificano lì); ciò che Tauri rigenera a
+ogni build lo escludono i suoi `.gitignore`. Capability: `capabilities/default.json` solo desktop, `mobile.json` per
+Android. Su Android la pagina gira da `http://tauri.localhost` e il DB sta in `/data/data/<id>/dashboard.db`
+(app debug: `it.matteo.personalDashboard.debug`, un'app separata con i suoi dati; si legge con `adb exec-out run-as`).
+Sessione dei Gruppi su Android: i comandi `secure_store_*` passano al plugin locale `src-tauri/plugins/secure-store`
+(Kotlin: chiave AES-256-GCM nell'Android Keystore, valori cifrati in `noBackupFilesDir`), mai in SQLite o
+`localStorage`. Il deep link per Android è in `tauri.android.conf.json` (`plugins.deep-link.mobile`).
+Quaderno su Android: il vault (`documentDir()/Notes`) è `Android/data/<id>/files/Documents/Notes` (niente permessi, si
+cancella con la disinstallazione); il selettore file e l'esportazione danno URI `content://` (il plugin fs li apre da
+solo, il nome vero con `basename()`); aprire/condividere un file passa dal plugin locale `src-tauri/plugins/file-open`
+(FileProvider) con i comandi `file_open`/`file_share`, solo per file dentro il vault. Le differenze di piattaforma stanno
+in `widgets/notes/data/filesApi.ts` (con `core/system/platform.ts`), non nei componenti.
+Editor del Quaderno sul telefono (mockup `docs/design/mobile/quaderno.html`): `NoteEditor` con `useCompact()` disegna
+un'altra disposizione (nota fissa sopra la pagina, ← titolo ☆ ⋯, una riga di strumenti sopra la tastiera, il resto in
+`components/BottomSheet.tsx`); i pezzi in comune col desktop (esporta, pagine, colori…) sono variabili usate da
+entrambe, e un comando nuovo va messo in tutte e due. Con un foglio aperto il testo ha `inputmode="none"`, altrimenti
+Android riapre la tastiera al tocco su un pulsante.
+Layout del telefono (mockup `docs/design/mobile/viste.html`): è "compatto" quando il lato corto della finestra è sotto i
+600 dp (`core/layout/useCompact.ts`, l'unica definizione; AppShell mette `data-compact` su `<html>` e i CSS usano
+`:root[data-compact]`). Tablet e desktop restano nel layout desktop. Sul telefono: sidebar come menu a scomparsa, barra in
+alto `ui/CompactBar` (titolo e ← della pagina; i `.dashboard-header` dei dettagli nascondono titolo e BackButton),
+dashboard `features/dashboard/MobileDashboard.tsx` a pagine 2×4 (4×2 in orizzontale) con i widget scalati con `zoom`.
+Il suo layout è separato: tabella `dashboard_layout_mobile` (`core/layout/mobileLayout.ts` puro, prova
+`scripts/layout/mobileLayout.test.mts`), mai scritto su `dashboard_layout`; il catalogo passa da
+`features/settings/catalog/useCatalogLayout.ts`. Impostazioni solo desktop: `desktopOnly` in `SETTING_DEFS`;
+solo dove ci sono i segnali di sistema (app in primo piano, Windows e macOS): `systemSignals`; testi diversi su Android:
+`android: { label, description }`. Uscite dall'app su Android (stop automatico dello Studio): `MainActivity.kt` manda
+`pd-away` (uscita, rientro, tempo a schermo acceso fuori dall'app), letto solo da `core/system/androidAway.ts`.
+Barre di sistema e tastiera: la WebView in `env(safe-area-inset-*)` dà solo il foro della fotocamera, quindi
+`MainActivity.kt` le manda a `core/system/androidInsets.ts`; nei CSS si usano `--safe-top|right|bottom|left` e
+`--keyboard` (`styles/base.css`), e `:root[data-keyboard]` quando la tastiera è aperta. Indietro di Android: `NavProvider` (vista → dashboard) e `useBackHandler` di
+`core/nav/backHandlers.ts` per chi ha qualcosa da chiudere (menu, modifica, pannello del Quaderno, conferma della Lavagna).
+Prima ancora, `core/nav/overlays.ts` chiude lo schermo intero o il dialogo/menu in cima mandandogli Esc: un dialogo o
+menu nuovo deve avere `role="dialog"`/`aria-modal`/`role="menu"` e chiudersi con Esc, altrimenti l'indietro cambia vista.
+Tocco (anche tablet): ciò che compare solo passando col mouse va mostrato anche in `@media (hover: none)`; le aree
+toccabili sotto i 44px si allargano con un `::after` invisibile e `inset: var(--hit)` dentro `@media (pointer: coarse)`
+(niente cambi d'aspetto); le scorciatoie da tastiera non si suggeriscono con `useTouchOnly()` (`core/layout/useCompact.ts`).
+Col dito si trascina solo dopo una pressione lunga (dashboard del telefono, Note, tabellone, griglia desktop sul tablet
+con `features/dashboard/useLongPressGridDrag.ts`): un tocco apre, uno scorrimento scorre.
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
-prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, e quella dei consigli YouTube
-(`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts`.
+prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, quella dei consigli YouTube
+(`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts` e
+`node scripts/layout/mobileLayout.test.mts` quando si tocca `core/layout/mobileLayout.ts`, `node scripts/study/phases.test.mts`
+quando si tocca `widgets/study/timer/phases.ts`.
 
 ```bash
 # Prove pure (scripts/gruppi/<nome>.test.mts e scripts/youtube/<nome>.test.mts, nessun server); una alla volta:
@@ -98,6 +153,10 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
   browser non può caricare file), `Host` solo IPv4 o `localhost` (DNS rebinding), `X-File-Name` obbligatorio (niente
   richieste "semplici" senza preflight), nomi di file sicuri (anche quelli riservati di Windows), mai sovrascrivere
   (`"wbx"`, poi "nome (1).ext"), file a metà cancellati, al massimo 64 GB, 32 connessioni e 30 s di silenzio.
+  Su Android il server non c'è e il widget **invia** al PC (`src/file_send.rs`, `ft_check_target`/`ft_send_file`;
+  frontend `FileSendContext.tsx`/`FileSendDetail.tsx`, ruolo scelto in `data/fileSendApi.ts`): stessa richiesta della
+  pagina dell'iPad, senza `Origin`. Il comando accetta solo URI `content://` del selettore e IPv4 privati: non deve
+  poter mandare file dell'app né uscire su internet scavalcando la CSP.
 - Companion (Pixy): `companion_snapshot` in `src/companion.rs` (inattività, app in primo piano e descrizione
   dell'eseguibile via `windows-sys`; su macOS inattività da CoreGraphics e app via `NSWorkspace`, con il bundle `.app`
   come "processo" e titolo vuoto). Lato frontend la catena è `core/system/appCategory.ts` (classifica l'app; con
@@ -110,6 +169,15 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
   Il Companion registra un decoratore che le firma Pixy (faccia nello stile del tema, emoji, frase della personalità,
   `widgets/companion/notify/`); su Windows il toast con l'immagine lo mostra il comando `notify_with_image`
   (`src/notify.rs`, `tauri-winrt-notification`), altrove si ripiega sul plugin senza immagine.
+  Su Android: un canale per tipo (`CHANNEL_OF`), il tocco apre la vista di `open` (scritta nell'ultima cifra dell'id:
+  il plugin al tocco non riporta altro; `MainActivity.kt` legge l'id dall'intent e lo passa a
+  `core/system/androidTaps.ts`, anche all'avvio a freddo; una vista nuova va in fondo a `OPEN_TARGETS`), e ciò che deve
+  arrivare ad app congelata o chiusa si pianifica con `scheduleAppNotifications(gruppo, elenco)` (AlarmManager esatto,
+  `USE_EXACT_ALARM` nel manifest; la chiusura forzata e il riavvio del telefono cancellano gli allarmi, li rimette la
+  prossima apertura). Sul desktop la pianificazione non c'è (il plugin mostrerebbe subito). Timer dello Studio: lo stato
+  è fatto di istanti (`runningSince`), le fine fase le calcola `widgets/study/timer/phases.ts` (puro, prova
+  `node scripts/study/phases.test.mts`): al rientro si chiudono tutte le fasi finite nel frattempo, all'ora vera, e su
+  Android le prossime sono già pianificate come notifiche (il tick JS è congelato a schermo spento).
 - La finestra principale naviga solo dentro l'app (`on_navigation` + `is_app_url` in `src/lib.rs`): un link esterno
   (es. in una nota) si apre nel browser di sistema, mai nella webview che ha accesso ai comandi.
 - Lato frontend, ogni widget chiama `invoke()` da un solo file `data/*Api.ts` (i segnali di sistema condivisi da
@@ -122,7 +190,12 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
 - Sui sistemi non supportati (oggi: oltre Windows e macOS, il Companion su Linux) l'app deve compilare e i widget
   mostrano un errore chiaro.
 - Release: `.github/workflows/release.yml` (tag `v*` o avvio manuale) compila `.dmg` universale + installer Windows
-  in una Release in bozza. macOS con firma ad-hoc (niente account Apple): istruzioni di sblocco nel README.
+  in una Release in bozza. macOS firmato in CI con un certificato **autofirmato** (niente account Apple; Secrets
+  `MACOS_CERTIFICATE` = `.p12` in base64 e `MACOS_CERTIFICATE_PASSWORD`, CN `personalDashboard Self-Signed`): lo
+  sblocco al primo avvio resta (istruzioni nel README), ma l'identità dell'app è la stessa a ogni versione e il
+  portachiavi non chiede più il permesso per la sessione dei Gruppi. Il certificato non si cambia (vale 10 anni) e
+  non si torna alla firma ad-hoc (`"-"` in `tauri.conf.json` resta solo per le build locali): ogni volta il
+  portachiavi richiederebbe la password su ogni Mac. La CI si ferma se mancano i Secrets o se la firma esce ad-hoc.
   La versione ha una sola fonte, `package.json` (`tauri.conf.json` ha `"version": "../package.json"`); `Cargo.toml` va
   tenuto uguale a mano (la CI si ferma se non coincide, o se il tag non è `v<versione>`).
   Per pubblicare: `npm version X.Y.Z --no-git-tag-version` + `version` in `src-tauri/Cargo.toml`, commit, poi
@@ -185,11 +258,15 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
   riceve, non calcolarne uno diverso (la libreria non si riallinea a props uguali alle precedenti).
 - Dopo un drag i click sulla cella si ignorano per un attimo: il rilascio genera un click sul pulsante trascinato
   (es. aprirebbe un video o una nota).
+- react-grid-layout (react-draggable) annulla ogni `touchstart` sulle celle e col dito non arriverebbe nessun click:
+  sui tablet senza mouse `useLongPressGridDrag` lo ferma prima e glielo ripassa dopo la pressione lunga. Non toglierlo.
 - `<select>` nativi: il menu aperto lo disegna il sistema, quindi `color-scheme: inherit` sul select e sfondo pieno
   sulle `option` (`--modal-bg`); `--panel-bg` non va bene, in Fosforo è trasparente e il menu esce bianco.
 - Valori "ultimi" in interval/listener di lunga durata → `core/hooks/useLatestRef.ts`.
 - Presenza Realtime dei Gruppi: il server chiude un canale con più di 5 `track` in 30 s. Ogni modulo passa da
-  `social/presence/presenceHub.ts` (limite rispettato + via rapida in broadcast), mai `track` diretti.
+  `social/presence/presenceHub.ts` (limite rispettato + via rapida in broadcast), mai `track` diretti. Un hub nuovo
+  si apre con `openChannels` e `retryOnReturn` (`social/presence/openChannels.ts`: al ritorno in primo piano i canali
+  caduti rientrano subito invece di aspettare l'attesa crescente).
 - Contesti: `XContext.tsx` esporta solo il provider; contesto, tipo e hook in `useX.ts` (es. `useSettings.ts`).
 - `tauri-plugin-notification` è pinnato `=2.4.0` (e `tauri-winrt-notification` `=0.8.1`, la versione che usa) perché la 2.5 richiede `tauri ^2.12` (il progetto usa `2.11.3`):
   non aggiornarlo senza controllare il manifesto su crates.io. Idem `tauri-plugin-localhost` (`=2.3.1`, la 2.4 vuole `^2.12`),
@@ -213,6 +290,10 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
   Per Tauri quella è un'origine remota, quindi anche i comandi dell'app passano dall'ACL: un comando nuovo va in
   `generate_handler!`, nel manifesto di `build.rs` e come `allow-<comando>` in `capabilities/default.json`
   (altrimenti su Mac viene rifiutato, e il portachiavi risulta "non disponibile").
+- Sessione dei Gruppi nel portachiavi (`src/secure_store.rs`): su Windows a pezzi (limite del Credential Manager), su
+  macOS **una sola voce** per chiave nel servizio `<identifier>.sessione`, perché ogni voce in più è una richiesta di
+  permesso in più. Le vecchie voci a pezzi del servizio `<identifier>` (build ad-hoc fino alla 1.0.6) non si leggono:
+  leggerle farebbe ricomparire le richieste. Su Mac non tornare ai pezzi, né al servizio vecchio.
 - Le notifiche mostrano il nome dell'app solo nella versione installata; in `tauri dev` Windows le attribuisce a PowerShell.
 - La pagina web servita all'iPad (`src-tauri/filetransfer/public/`) è un build copiato da un progetto esterno:
   non modificarla a mano (vedi `docs/FILE_TRANSFER.md`).

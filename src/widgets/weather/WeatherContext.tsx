@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { publishActivity } from "../../core/activity/activityBus";
-import { useLayout } from "../../core/layout/useLayout";
+import { useWidgetPlaced } from "../../core/layout/useWidgetPlaced";
 import { useSettings } from "../../core/settings/useSettings";
 import { useNow } from "../../core/hooks/useNow";
 import { fetchCurrent, findPlace, WeatherError } from "./data/weatherApi";
@@ -20,11 +20,11 @@ const TYPING_DELAY_MS = 1000;
  */
 export function WeatherProvider({ children }: { children: ReactNode }) {
   const { settings } = useSettings();
-  const { layout } = useLayout();
   const now = useNow();
   const city = settings.weatherCity.trim();
+  const placed = useWidgetPlaced(WEATHER_WIDGET_ID);
   const inUse =
-    layout.some((item) => item.i === WEATHER_WIDGET_ID) ||
+    placed ||
     settings.headerSlot1 === WEATHER_WIDGET_ID ||
     settings.headerSlot2 === WEATHER_WIDGET_ID;
   const enabled = city !== "";
