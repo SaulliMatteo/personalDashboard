@@ -1,5 +1,6 @@
 import { defaultEdit, initialWidth, parseImageEdit, parseWidth, serializeImageEdit } from "./imageEdit";
 import { stripLookVars } from "./tableDom";
+import { prepareMarkers } from "./bookmarks";
 
 /**
  * Blocchi nella pagina: <figure data-block="image">, <div data-block="file"> e
@@ -22,7 +23,7 @@ function kindOf(el: HTMLElement): BlockKind {
 
 /** HTML da salvare: senza i nodi di React e senza gli attributi messi solo per l'editor. */
 export function serializeEditor(root: HTMLElement): string {
-  if (!root.querySelector("[data-runtime], [data-block], [data-cur], [data-ref-row], table")) return root.innerHTML;
+  if (!root.querySelector("[data-runtime], [data-block], [data-cur], [data-ref-row], [data-bm], [data-pdf], table")) return root.innerHTML;
   const clone = root.cloneNode(true) as HTMLElement;
   clone.querySelectorAll("[data-runtime]").forEach((n) => n.remove());
   // La riga della tabella dove sta il cursore (lib/tableDom.ts): solo per l'editor.
@@ -31,6 +32,14 @@ export function serializeEditor(root: HTMLElement): string {
   stripLookVars(clone);
   clone.querySelectorAll("[data-ref-row]").forEach((el) => {
     el.removeAttribute("contenteditable");
+    el.removeAttribute("data-missing");
+  });
+  // Segni (lib/bookmarks.ts): si salvano solo id, nome, tipo e colore.
+  clone.querySelectorAll("[data-bm], [data-pdf]").forEach((el) => {
+    el.removeAttribute("contenteditable");
+    el.removeAttribute("title");
+    el.removeAttribute("style");
+    el.removeAttribute("data-bm-flash");
     el.removeAttribute("data-missing");
   });
   clone.querySelectorAll<HTMLElement>("[data-block]").forEach((el) => {
@@ -73,6 +82,8 @@ export function hydrateBlocks(root: HTMLElement): { el: HTMLElement; host: HTMLE
   root.querySelectorAll<HTMLElement>("[data-ref-row]").forEach((el) => {
     if (el.getAttribute("contenteditable") !== "false") el.setAttribute("contenteditable", "false");
   });
+  // Anche i segni (nome al passaggio, colore libero).
+  prepareMarkers(root);
   return out;
 }
 

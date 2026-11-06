@@ -1,5 +1,15 @@
 import { getDatabase, getMeta, setMeta } from "../../../core/db";
+import {
+  asBookmarkColor,
+  asMarkKind,
+  parsePins,
+  readBookmarks,
+  type MarkKind,
+  type BookmarkPlace,
+  type PagePin,
+} from "../lib/bookmarks";
 import { asPageColor } from "../lib/pageColor";
+import { parsePdfInfo, parsePdfInk, pdfSummary, type PdfBlockInfo, type PdfInk, type PdfSummary } from "../lib/pdf/pdfData";
 import { isNoteFont, type NoteFont } from "../lib/textStyle";
 import { asTitleColor } from "../lib/titleColor";
 // ---------------------------------------------------------------------
@@ -50,6 +60,8 @@ export interface NoteSummary {
   font: NoteFont | null;
   /** Colore del titolo, "#rrggbb" scelto dall'utente (null = quello del tema). */
   titleColor: string | null;
+  /** Primo blocco PDF della nota (elenco e widget), o null. */
+  pdf: PdfSummary | null;
 }
 
 interface NoteRow {
@@ -67,6 +79,7 @@ interface NoteRow {
   synced_at: number | null;
   font: string | null;
   title_color: string | null;
+  first_pdf: string | null;
 }
 
 /** Un tratto di scrittura a mano. Coordinate normalizzate sulla LARGHEZZA della pagina (0..1). */
@@ -86,6 +99,12 @@ export interface NotePage {
   ink: InkStroke[];
   background: PageBackground;
   color: string | null;
+  /** Segni appoggiati sulla pagina (scrittura a mano), vedi lib/bookmarks.ts. */
+  pins: PagePin[];
+  /** Blocco PDF (lib/pdf/pdfData.ts): la pagina mostra le pagine di un PDF invece del testo. */
+  pdf: PdfBlockInfo | null;
+  /** Inchiostro sopra le pagine del PDF, per numero di pagina. */
+  pdfInk: PdfInk;
 }
 
 export interface Attachment {
@@ -196,7 +215,8 @@ export async function listNotes(): Promise<NoteSummary[]> {
   const rows = await db.select<NoteRow[]>(
     `SELECT n.id, n.folder_id, n.title, n.tags, n.starred, n.created_at, n.updated_at, n.deleted_at, n.disk_path, n.synced_at, n.font, n.title_color,
             (SELECT substr(p.content, 1, 4000) FROM note_pages p WHERE p.note_id = n.id ORDER BY p.position LIMIT 1) AS first_content,
-            (SELECT COUNT(*) FROM note_pages p WHERE p.note_id = n.id) AS page_count
+            (SELECT COUNT(*) FROM note_pages p WHERE p.note_id = n.id) AS page_count,
+            (SELECT p.pdf FROM note_pages p WHERE p.note_id = n.id AND p.pdf IS NOT NULL ORDER BY p.position, p.id LIMIT 1) AS first_pdf
      FROM notes n
      ORDER BY n.updated_at DESC`
   );
@@ -215,6 +235,7 @@ export async function listNotes(): Promise<NoteSummary[]> {
     syncedAt: r.synced_at,
     font: isNoteFont(r.font) && r.font !== "punti" ? r.font : null,
     titleColor: asTitleColor(r.title_color),
+    pdf: pdfSummary(parsePdfInfo(r.first_pdf)),
   }));
 }
 
@@ -223,6 +244,9 @@ export interface NewPageInput {
   ink: InkStroke[];
   background: PageBackground;
   color?: string | null;
+  pins?: PagePin[];
+  pdf?: PdfBlockInfo | null;
+  pdfInk?: PdfInk;
 }
 
 export interface NewNoteInput {
@@ -249,13 +273,31 @@ export async function createNote(folderId: number | null, input: NewNoteInput = 
   const id = result.lastInsertId;
   if (id == null) throw new Error("Nota non creata");
   const pages = input.pages.length > 0 ? input.pages : BLANK_NOTE.pages;
-  for (let i = 0; i < pages.length; i++) {
-    await db.execute(
-      `INSERT INTO note_pages (note_id, position, content, ink, background) VALUES (?, ?, ?, ?, ?)`,
-      [id, i, pages[i].content, JSON.stringify(pages[i].ink), pages[i].background]
-    );
-  }
+  for (let i = 0; i < pages.length; i++) await insertPage(id, i, pages[i]);
   return id;
+}
+
+/** Una pagina nuova della nota in quella posizione (con il suo indice dei segni). */
+async function insertPage(noteId: number, position: number, p: NewPageInput): Promise<number> {
+  const db = await getDatabase();
+  const pins = p.pins ?? [];
+  const result = await db.execute(
+    `INSERT INTO note_pages (note_id, position, content, ink, background, color, pins, pdf, pdf_ink) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      noteId,
+      position,
+      p.content,
+      JSON.stringify(p.ink),
+      p.background,
+      p.color ?? null,
+      JSON.stringify(pins),
+      p.pdf ? JSON.stringify(p.pdf) : null,
+      JSON.stringify(p.pdfInk ?? {}),
+    ]
+  );
+  if (result.lastInsertId == null) throw new Error("Pagina non creata");
+  await syncPageBookmarks(result.lastInsertId, noteId, p.content, pins);
+  return result.lastInsertId;
 }
 
 export interface ImportedNote extends NewNoteInput {
@@ -290,13 +332,7 @@ export async function insertImportedNote(input: ImportedNote): Promise<number> {
   );
   const id = result.lastInsertId;
   if (id == null) throw new Error("Nota non importata");
-  for (let i = 0; i < input.pages.length; i++) {
-    const p = input.pages[i];
-    await db.execute(
-      `INSERT INTO note_pages (note_id, position, content, ink, background, color) VALUES (?, ?, ?, ?, ?, ?)`,
-      [id, i, p.content, JSON.stringify(p.ink), p.background, p.color ?? null]
-    );
-  }
+  for (let i = 0; i < input.pages.length; i++) await insertPage(id, i, input.pages[i]);
   return id;
 }
 
@@ -363,6 +399,7 @@ export async function restoreNote(id: number, folderStillExists: boolean): Promi
 
 export async function deleteNoteForever(id: number): Promise<void> {
   const db = await getDatabase();
+  await db.execute(`DELETE FROM note_bookmarks WHERE note_id = ?`, [id]);
   await db.execute(`DELETE FROM note_pages WHERE note_id = ?`, [id]);
   await db.execute(`DELETE FROM note_attachments WHERE note_id = ?`, [id]);
   await db.execute(`DELETE FROM notes WHERE id = ?`, [id]);
@@ -378,9 +415,20 @@ export async function emptyTrash(ids: number[]): Promise<void> {
 export async function getPages(noteId: number): Promise<NotePage[]> {
   const db = await getDatabase();
   const rows = await db.select<
-    { id: number; note_id: number; position: number; content: string; ink: string; background: string | null; color: string | null }[]
+    {
+      id: number;
+      note_id: number;
+      position: number;
+      content: string;
+      ink: string;
+      background: string | null;
+      color: string | null;
+      pins: string | null;
+      pdf: string | null;
+      pdf_ink: string | null;
+    }[]
   >(
-    `SELECT id, note_id, position, content, ink, background, color FROM note_pages WHERE note_id = ? ORDER BY position, id`,
+    `SELECT id, note_id, position, content, ink, background, color, pins, pdf, pdf_ink FROM note_pages WHERE note_id = ? ORDER BY position, id`,
     [noteId]
   );
   return rows.map((r) => ({
@@ -391,6 +439,9 @@ export async function getPages(noteId: number): Promise<NotePage[]> {
     ink: parseInk(r.ink),
     background: parseBackground(r.background),
     color: asPageColor(r.color),
+    pins: parsePins(r.pins),
+    pdf: parsePdfInfo(r.pdf),
+    pdfInk: parsePdfInk(r.pdf_ink),
   }));
 }
 
@@ -406,18 +457,142 @@ export async function addPage(noteId: number, background: PageBackground = "none
     [noteId, position, background, color]
   );
   if (result.lastInsertId == null) throw new Error("Pagina non creata");
-  return { id: result.lastInsertId, noteId, position, content: "<p><br></p>", ink: [], background, color };
+  return { id: result.lastInsertId, noteId, position, content: "<p><br></p>", ink: [], background, color, pins: [], pdf: null, pdfInk: {} };
 }
 
-export async function savePage(pageId: number, noteId: number, content: string, ink: InkStroke[]): Promise<void> {
+/** Salva testo, inchiostro e segni della pagina, e riallinea l'indice dei segni (note_bookmarks). */
+export async function savePage(
+  pageId: number,
+  noteId: number,
+  content: string,
+  ink: InkStroke[],
+  pins: PagePin[],
+  pdfInk: PdfInk
+): Promise<void> {
   const db = await getDatabase();
-  await db.execute(`UPDATE note_pages SET content = ?, ink = ? WHERE id = ?`, [content, JSON.stringify(ink), pageId]);
+  await db.execute(`UPDATE note_pages SET content = ?, ink = ?, pins = ?, pdf_ink = ? WHERE id = ?`, [
+    content,
+    JSON.stringify(ink),
+    JSON.stringify(pins),
+    JSON.stringify(pdfInk),
+    pageId,
+  ]);
   await db.execute(`UPDATE notes SET updated_at = ? WHERE id = ?`, [Date.now(), noteId]);
+  await syncPageBookmarks(pageId, noteId, content, pins);
+}
+
+/** Dati del blocco PDF della pagina (dimensioni lette all'apertura, colori invertiti…): non tocca "ultima modifica". */
+export async function setPagePdf(pageId: number, info: PdfBlockInfo): Promise<void> {
+  const db = await getDatabase();
+  await db.execute(`UPDATE note_pages SET pdf = ? WHERE id = ?`, [JSON.stringify(info), pageId]);
+  await db.execute(`UPDATE notes SET synced_at = NULL WHERE id = (SELECT note_id FROM note_pages WHERE id = ?)`, [pageId]);
+}
+
+/** Un blocco PDF nuovo subito dopo la pagina in posizione `after` (le pagine dopo scalano di uno). */
+export async function insertPdfPage(noteId: number, after: number, info: PdfBlockInfo): Promise<NotePage> {
+  const db = await getDatabase();
+  await db.execute(`UPDATE note_pages SET position = position + 1 WHERE note_id = ? AND position > ?`, [noteId, after]);
+  const position = after + 1;
+  const id = await insertPage(noteId, position, { content: "", ink: [], background: "none", pdf: info });
+  await db.execute(`UPDATE notes SET updated_at = ? WHERE id = ?`, [Date.now(), noteId]);
+  return { id, noteId, position, content: "", ink: [], background: "none", color: null, pins: [], pdf: info, pdfInk: {} };
 }
 
 export async function deletePage(pageId: number): Promise<void> {
   const db = await getDatabase();
+  await db.execute(`DELETE FROM note_bookmarks WHERE page_id = ?`, [pageId]);
   await db.execute(`DELETE FROM note_pages WHERE id = ?`, [pageId]);
+}
+
+// ---------------------------------------------------------------------
+// Segni (indice per il pannello; la fonte è la pagina, vedi lib/bookmarks.ts)
+// ---------------------------------------------------------------------
+
+export interface BookmarkRow {
+  id: string;
+  noteId: number;
+  pageId: number;
+  /** Numero della pagina nella nota, da 0. */
+  pageIndex: number;
+  place: BookmarkPlace;
+  name: string;
+  /** Tipo del segno, o "pdf" per un collegamento a un blocco PDF. */
+  kind: MarkKind;
+  color: string | null;
+  position: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/**
+ * Riallinea l'indice di una pagina ai segni che contiene adesso: toglie quelli spariti
+ * (cancellati dal testo, tagliati…) e aggiorna o aggiunge gli altri, tenendo la data di creazione.
+ */
+export async function syncPageBookmarks(pageId: number, noteId: number, content: string, pins: PagePin[]): Promise<void> {
+  const db = await getDatabase();
+  const entries = readBookmarks(content, pins);
+  const rows = await db.select<{ id: string }[]>(`SELECT id FROM note_bookmarks WHERE page_id = ?`, [pageId]);
+  const keep = new Set(entries.map((e) => e.id));
+  for (const row of rows) {
+    if (!keep.has(row.id)) await db.execute(`DELETE FROM note_bookmarks WHERE id = ?`, [row.id]);
+  }
+  const now = Date.now();
+  for (const e of entries) {
+    // updated_at cambia solo se cambia qualcosa che si vede (nome, tipo, colore, pagina).
+    await db.execute(
+      `INSERT INTO note_bookmarks (id, note_id, page_id, place, name, kind, color, position, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         updated_at = CASE
+           WHEN note_bookmarks.name IS excluded.name AND note_bookmarks.kind IS excluded.kind
+             AND note_bookmarks.color IS excluded.color AND note_bookmarks.page_id IS excluded.page_id
+           THEN note_bookmarks.updated_at ELSE excluded.updated_at END,
+         note_id = excluded.note_id, page_id = excluded.page_id, place = excluded.place, name = excluded.name,
+         kind = excluded.kind, color = excluded.color, position = excluded.position`,
+      [e.id, noteId, pageId, e.place, e.name, e.kind, e.color, e.position, now, now]
+    );
+  }
+}
+
+/** I segni delle note non nel cestino, nota per nota, in ordine di pagina e di posizione. */
+export async function listBookmarks(): Promise<BookmarkRow[]> {
+  const db = await getDatabase();
+  const rows = await db.select<
+    {
+      id: string;
+      note_id: number;
+      page_id: number;
+      page_index: number;
+      place: string;
+      name: string;
+      kind: string;
+      color: string | null;
+      position: number;
+      created_at: number;
+      updated_at: number;
+    }[]
+  >(
+    `SELECT b.id, b.note_id, b.page_id, b.place, b.name, b.kind, b.color, b.position, b.created_at, b.updated_at,
+            (SELECT COUNT(*) FROM note_pages q
+              WHERE q.note_id = p.note_id AND (q.position < p.position OR (q.position = p.position AND q.id < p.id))) AS page_index
+     FROM note_bookmarks b
+     JOIN notes n ON n.id = b.note_id AND n.deleted_at IS NULL
+     JOIN note_pages p ON p.id = b.page_id AND p.note_id = b.note_id
+     ORDER BY b.note_id, page_index, b.position`
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    noteId: r.note_id,
+    pageId: r.page_id,
+    pageIndex: r.page_index,
+    place: r.place === "pagina" ? "pagina" : "testo",
+    name: r.name,
+    kind: asMarkKind(r.kind),
+    color: asBookmarkColor(r.color),
+    position: r.position,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }));
 }
 
 export async function reorderPages(orderedIds: number[]): Promise<void> {

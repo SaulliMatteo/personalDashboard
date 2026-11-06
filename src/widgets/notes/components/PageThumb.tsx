@@ -4,6 +4,8 @@ import type { NotePage } from "../data/notesRepository";
 import { sanitizeHtml } from "../lib/html";
 import { THEME_INK } from "../lib/ink";
 import { paperAttrs, paperStyle } from "../lib/pageColor";
+import { MdOutlinePictureAsPdf } from "react-icons/md";
+import { pagesLabel } from "../lib/pdf/pdfData";
 
 /** Pagina "di riferimento": la miniatura è questa pagina scalata, quindi identica all'originale. */
 const PAPER_W = 870;
@@ -19,6 +21,16 @@ function PageThumb({ page, kicker, dateLabel }: PageThumbProps) {
   const [box, setBox] = useState<HTMLSpanElement | null>(null);
   const { width } = useElementSize(box);
   const html = useMemo(() => sanitizeHtml(page.content), [page.content]);
+
+  // Blocco PDF: un'etichetta (disegnare il PDF per ogni miniatura costerebbe troppo).
+  if (page.pdf) {
+    return (
+      <span className="nq-thumb-box nq-thumb-pdf" aria-hidden="true">
+        <MdOutlinePictureAsPdf />
+        <span>{pagesLabel(page.pdf)}</span>
+      </span>
+    );
+  }
 
   return (
     <span ref={setBox} className="nq-thumb-box" aria-hidden="true">

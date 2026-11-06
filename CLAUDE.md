@@ -191,10 +191,14 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
   mostrano un errore chiaro.
 - Release: `.github/workflows/release.yml` (tag `v*` o avvio manuale) compila `.dmg` universale + installer Windows
   in una Release in bozza. macOS con firma ad-hoc (niente account Apple): istruzioni di sblocco nel README.
-  Per pubblicare: aggiorna `version` in `src-tauri/tauri.conf.json` (e `package.json`), poi
-  `git tag vX.Y.Z && git push --tags` (oppure Actions › Release › Run workflow); finito, pubblica la bozza.
+  La versione ha una sola fonte, `package.json` (`tauri.conf.json` ha `"version": "../package.json"`); `Cargo.toml` va
+  tenuto uguale a mano (la CI si ferma se non coincide, o se il tag non è `v<versione>`).
+  Per pubblicare: `npm version X.Y.Z --no-git-tag-version` + `version` in `src-tauri/Cargo.toml`, commit, poi
+  `git tag vX.Y.Z && git push --tags` (oppure Actions › Release › Run workflow); finito, scrivi le note e pubblica la
+  bozza: `release-notes.yml` copia il testo della release nel campo `notes` di `latest.json` (quello che l'app mostra).
   Il build per macOS si fa solo su un Mac o in CI, non da Windows. I valori dei Gruppi la CI li legge dai Secrets
-  `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` (senza, la build esce in solo locale).
+  `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` (senza, la build esce in solo locale), la firma degli aggiornamenti da
+  `TAURI_SIGNING_PRIVATE_KEY` e `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (senza, la build si ferma).
 
 **Temi e stile**: 4 temi (`core/theme/themes.ts`), scelti con `data-theme` su `<html>`; ogni tema ridefinisce i
 token di `src/styles/tokens.css` (colori, `--card-*`, `--panel-*`, `--radius-*`, `--font-display`, `--btn-*`…).
@@ -216,7 +220,10 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
   - i dati del widget Meteo (Open-Meteo), solo se l'utente imposta la città e lo usa;
   - i Gruppi (Supabase, regione UE), solo se la build ha `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` e l'utente
     accede con Google. Senza, l'app resta solo locale ("Gruppi non configurati"); con il server irraggiungibile
-    funziona tutto il resto. Tutta questa rete passa da `core/cloud/`. Segreti mai nel repo: vedi `docs/GRUPPI.md`.
+    funziona tutto il resto. Tutta questa rete passa da `core/cloud/`. Segreti mai nel repo: vedi `docs/GRUPPI.md`;
+  - gli aggiornamenti dell'app (`latest.json` e pacchetto dalle Release di GitHub), solo quando l'utente preme
+    "Controlla aggiornamenti" / "Aggiorna" in Impostazioni > Generale: nessun controllo automatico all'avvio. Tutte
+    le chiamate passano da `core/updater/updaterApi.ts` (la rete la fa il plugin in Rust, non la webview: niente CSP).
 
 ## Design
 
@@ -259,6 +266,15 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
 - `tauri-plugin-notification` è pinnato `=2.4.0` (e `tauri-winrt-notification` `=0.8.1`, la versione che usa) perché la 2.5 richiede `tauri ^2.12` (il progetto usa `2.11.3`):
   non aggiornarlo senza controllare il manifesto su crates.io. Idem `tauri-plugin-localhost` (`=2.3.1`, la 2.4 vuole `^2.12`),
   `tauri-plugin-deep-link` (`=2.4.10`, anche npm) e `tauri-plugin-single-instance` (`=2.4.5`); `tauri` stesso è `=2.11.3`.
+  Anche `tauri-plugin-updater` `=2.12.0` (dalla 2.13.0 vuole `^2.12`) e `tauri-plugin-process` `=2.3.1` (la 2.4.0 vuole
+  `^2.12`), con le stesse versioni esatte su npm (`@tauri-apps/plugin-updater`, `@tauri-apps/plugin-process`).
+- Aggiornamenti (`core/updater/`, `src-tauri/src/updater.rs`): su Windows `install` chiude il processo con
+  `std::process::exit` senza `CloseRequested` né `RunEvent::Exit`. Ciò che va fermato alla chiusura (oggi il server di
+  File Transfer) va fermato anche in `updater_prepare_install`, chiamato prima di `install`; il riavvio su macOS
+  (`relaunch`) passa invece da `RunEvent::Exit` in `src/lib.rs`. La chiave pubblica in `plugins.updater.pubkey` non si
+  cambia più: le app installate accettano solo pacchetti firmati con la privata corrispondente (Secret
+  `TAURI_SIGNING_PRIVATE_KEY`); persa quella, chi ha l'app deve reinstallarla a mano. Con `createUpdaterArtifacts`
+  anche `npm run tauri build` in locale vuole `TAURI_SIGNING_PRIVATE_KEY` nell'ambiente.
 - `@excalidraw/excalidraw` (Lavagna) è pinnato `0.18.1`: i font si servono offline da `public/excalidraw-assets/fonts/`
   (copiati da `scripts/copy-excalidraw-assets.mjs` in `predev`/`prebuild`, `EXCALIDRAW_ASSET_PATH` in
   `widgets/whiteboard/lib/excalidrawAssets.ts`) e cartelle/nomi dei font cambiano tra versioni; se manca un file

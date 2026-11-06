@@ -29,7 +29,15 @@ import {
   MdMoreHoriz,
   MdOutlineAddPhotoAlternate,
   MdOutlineAttachFile,
+  MdOutlineBookmarkAdd,
+  MdOutlinePictureAsPdf,
   MdOutlineImage,
+  MdOutlinePushPin,
+  MdContentCopy,
+  MdContentCut,
+  MdContentPaste,
+  MdDeleteOutline,
+  MdEdit,
   MdOutlineBackspace,
   MdOutlineShapeLine,
   MdOutlineBorderColor,
@@ -67,6 +75,8 @@ import {
   saveInkShapes,
   savePage,
   setPageBackground,
+  setPagePdf,
+  insertPdfPage,
   updateNote,
   setPageColor,
   setPagesColor,
@@ -76,7 +86,7 @@ import {
   type NoteSummary,
   type PageBackground,
 } from "../data/notesRepository";
-import { noteToMarkdown, renderNoteImage, renderNotePdf, saveBytes, saveText } from "../lib/exportNote";
+import { ExportTooTallError, noteToMarkdown, renderNoteImage, renderNotePdf, saveBytes, saveMarkdownWithPdfs, saveText } from "../lib/exportNote";
 import { fileErrorMessage, openFile } from "../data/filesApi";
 import { attachmentAbsolutePath, removeAttachmentFile, slugify } from "../lib/vault";
 import { BACKGROUND_OPTIONS } from "../lib/templates";
@@ -112,6 +122,26 @@ import {
 } from "../lib/editorDom";
 import { formatWhen, monthYear, sanitizeHtml, wordCount } from "../lib/html";
 import { createHistory, type RecordMeta } from "../lib/history";
+import {
+  MARKER_SELECTOR,
+  PDF_LINK_SELECTOR,
+  copiedHtmlFor,
+  createMarker,
+  createPdfLink,
+  defaultBookmarkName,
+  editMarkerInHtml,
+  editPin,
+  freshMarkerIds,
+  newBookmarkId,
+  pdfLinkIds,
+  prepareMarkers,
+  readBookmarks,
+  readMarker,
+  writeMarker,
+  type BookmarkData,
+  type BookmarkPatch,
+  type PagePin,
+} from "../lib/bookmarks";
 import { getTextOffsets, setTextOffsets, type TextOffsets } from "../lib/selectionOffsets";
 import { duplicateBlock, moveBlock } from "../lib/blockActions";
 import { caretCell, createTableElement, placeCaret } from "../lib/tableDom";
@@ -132,6 +162,13 @@ import FindBar from "./FindBar";
 import InsertMenu from "./InsertMenu";
 import type { InkTool } from "./InkLayer";
 import PageSurface from "./PageSurface";
+import PdfBlock, { PDF_ZOOM_MAX, PDF_ZOOM_MIN } from "./pdf/PdfBlock";
+import { PDF_MAX_BYTES, isPdfName, newPdfInfo, pagesLabel, pdfPageCount, pdfThumbName, type PdfBlockInfo, type PdfInk } from "../lib/pdf/pdfData";
+import { PdfOpenError } from "../lib/pdf/pdfDocument";
+import { inspectPdf, type PdfInspection } from "../lib/pdf/pdfImport";
+import PdfRangeDialog from "./pdf/PdfRangeDialog";
+import BookmarkPopover from "./BookmarkPopover";
+import PageMenu, { type PageMenuItem } from "./PageMenu";
 import Crumbs, { type Crumb } from "./Crumbs";
 import BottomSheet from "./BottomSheet";
 import ToolButton from "./ToolButton";
@@ -164,9 +201,28 @@ interface NoteEditorProps {
   registerEditor?: (api: EditorApi | null) => void;
   /** Copia i file nella cartella della nota e li aggiunge agli allegati; restituisce i nomi finali. */
   onStoreFiles: (noteId: number, files: IncomingFile[]) => Promise<StoredFile[]>;
+  /** Copia un PDF (e la sua miniatura) nella cartella della nota, fuori dagli allegati; restituisce il nome finale. */
+  onStorePdf?: (noteId: number, file: IncomingFile, thumbnail: Uint8Array | null) => Promise<string>;
   onOpenShortcuts?: () => void;
   /** Note e navigazione per raccolte, viste collegate e riferimenti @. */
   collections: CollectionLinks;
+  /** Segno da raggiungere (pannello dei segni): un oggetto nuovo per ogni richiesta. */
+  jumpTo?: { id: string; nonce: number } | null;
+  /** Il segno di jumpTo è stato raggiunto (chi chiama può dimenticare la richiesta). */
+  onJumped?: () => void;
+}
+
+/** Popover di un segno: nel testo o sulla pagina, con i suoi dati come sono adesso. */
+interface BookmarkPop {
+  place: "testo" | "pagina";
+  pageId: number;
+  data: BookmarkData;
+  anchor: DOMRect;
+  fresh: boolean;
+}
+
+function sameOffsets(a: TextOffsets | null, b: TextOffsets | null): boolean {
+  return a === b || (a !== null && b !== null && a.start === b.start && a.end === b.end);
 }
 
 /** Stato di una pagina per la cronologia (lib/history.ts). */
@@ -174,6 +230,9 @@ interface PageSnapshot {
   pageId: number;
   html: string;
   ink: InkStroke[];
+  pins: PagePin[];
+  /** Inchiostro sopra le pagine di un blocco PDF. */
+  pdfInk: PdfInk;
   color: string | null;
   background: PageBackground;
   selection: TextOffsets | null;
@@ -221,8 +280,11 @@ function NoteEditor({
   onClose,
   registerEditor,
   onStoreFiles,
+  onStorePdf,
   onOpenShortcuts,
   collections,
+  jumpTo = null,
+  onJumped,
 }: NoteEditorProps) {
   const [title, setTitle] = useState(note.title);
   const [pages, setPages] = useState<NotePage[]>([]);
@@ -235,6 +297,10 @@ function NoteEditor({
   const [size, setSize] = useState(2);
   const [shapes, setShapes] = useState(true);
   const [zoom, setZoom] = useState(100);
+  /** Zoom dei blocchi PDF (100 = adatta larghezza), separato da quello delle pagine di testo. */
+  const [pdfZoom, setPdfZoom] = useState(100);
+  /** Il contenitore che scorre: il blocco PDF ci disegna solo le pagine vicine. */
+  const [scrollEl, setScrollEl] = useState<HTMLDivElement | null>(null);
   const [block, setBlock] = useState("p");
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState(note.updatedAt);
@@ -284,6 +350,8 @@ function NoteEditor({
   const [refRow, setRefRow] = useState<number | null>(null);
   const zoomRef = useLatestRef(zoom);
   const [lightExport, setLightExport] = useState(true);
+  /** Esportazione: i segni si vedono sulle pagine (nel PDF diventano comunque i suoi segnalibri). */
+  const [exportMarks, setExportMarks] = useState(false);
   const [busy, setBusy] = useState(false);
   const [splitQuery, setSplitQuery] = useState("");
   const [findOpen, setFindOpen] = useState(false);
@@ -409,7 +477,7 @@ function NoteEditor({
       }
       for (const id of ids) {
         const page = pagesRef.current.find((p) => p.id === id);
-        if (page) await savePage(page.id, note.id, page.content, page.ink);
+        if (page) await savePage(page.id, note.id, page.content, page.ink, page.pins, page.pdfInk);
       }
       setSavedAt(Date.now());
       setSaving(false);
@@ -453,6 +521,8 @@ function NoteEditor({
       pageId: p.id,
       html: p.content,
       ink: p.ink,
+      pins: p.pins,
+      pdfInk: p.pdfInk,
       color: p.color,
       background: p.background,
       selection: p.id === pagesRef.current[index]?.id ? lastSelection.current : null,
@@ -468,10 +538,14 @@ function NoteEditor({
   }
 
   /** Modifica di testo o inchiostro: prima entra nella cronologia lo stato di adesso. */
-  function patchPage(id: number, patch: Partial<Pick<NotePage, "content" | "ink">>, meta: RecordMeta = { kind: "other" }) {
+  function patchPage(id: number, patch: Partial<Pick<NotePage, "content" | "ink" | "pins" | "pdfInk">>, meta: RecordMeta = { kind: "other" }) {
     const prev = pagesRef.current.find((p) => p.id === id);
     if (!prev) return;
-    const changed = (patch.content !== undefined && patch.content !== prev.content) || (patch.ink !== undefined && patch.ink !== prev.ink);
+    const changed =
+      (patch.content !== undefined && patch.content !== prev.content) ||
+      (patch.ink !== undefined && patch.ink !== prev.ink) ||
+      (patch.pins !== undefined && patch.pins !== prev.pins) ||
+      (patch.pdfInk !== undefined && patch.pdfInk !== prev.pdfInk);
     if (!changed) return;
     history.record(snapshotOf(prev), meta);
     const next = pagesRef.current.map((p) => (p.id === id ? { ...p, ...patch } : p));
@@ -479,6 +553,7 @@ function NoteEditor({
     setPages(next);
     dirtyPages.current.add(id);
     schedule();
+    if (patch.content !== undefined) checkRemovedPdfLinks(prev.content, patch.content);
   }
 
   function showToast(text: string) {
@@ -740,7 +815,7 @@ async function changePageColor(color: string | null) {
     const prev = pagesRef.current.find((p) => p.id === snap.pageId);
     if (!prev) return;
     const next = pagesRef.current.map((p) =>
-      p.id === snap.pageId ? { ...p, content: snap.html, ink: snap.ink, color: snap.color, background: snap.background } : p
+      p.id === snap.pageId ? { ...p, content: snap.html, ink: snap.ink, pins: snap.pins, pdfInk: snap.pdfInk, color: snap.color, background: snap.background } : p
     );
     pagesRef.current = next;
     setPages(next);
@@ -887,6 +962,24 @@ async function changePageColor(color: string | null) {
     saveInkShapes(next).catch((err) => console.error("Forme automatiche: salvataggio non riuscito", err));
   }
 
+  /** Inchiostro su una pagina di un blocco PDF: separato dal PDF, per numero di pagina. */
+  function handlePdfInk(pageNumber: number, strokes: InkStroke[]) {
+    const current = page ? pagesRef.current.find((p) => p.id === page.id) : undefined;
+    if (!current) return;
+    const next: PdfInk = { ...current.pdfInk };
+    if (strokes.length > 0) next[String(pageNumber)] = strokes;
+    else delete next[String(pageNumber)];
+    patchPage(current.id, { pdfInk: next });
+  }
+
+  /** Dati del blocco PDF (dimensioni lette, colori invertiti): si salvano subito, fuori dalla cronologia. */
+  function handlePdfInfo(pageId: number, info: PdfBlockInfo) {
+    const next = pagesRef.current.map((p) => (p.id === pageId ? { ...p, pdf: info } : p));
+    pagesRef.current = next;
+    setPages(next);
+    void attempt("Impossibile salvare i dati del PDF", () => setPagePdf(pageId, info));
+  }
+
   function handleInk(strokes: InkStroke[]) {
     if (!page) return;
     patchPage(page.id, { ink: strokes });
@@ -898,6 +991,568 @@ async function changePageColor(color: string | null) {
     if (!el || mode !== "text") return false;
     if (action(el)) commitEditor();
     return true;
+  }
+
+  // ---------------- Segni (lib/bookmarks.ts) ----------------
+
+  const [bmPop, setBmPop] = useState<BookmarkPop | null>(null);
+  /** Menu del tasto destro: dove, e il segno sotto il puntatore (id) se c'era. */
+  const [pageMenu, setPageMenu] = useState<{ x: number; y: number; marker: string | null; pdfLink: string | null; hasSelection: boolean } | null>(
+    null
+  );
+  /** Segno da mostrare appena la sua pagina è aperta (pannello, segno dopo/prima). */
+  const pendingJump = useRef<string | null>(null);
+  /** Ultimo segno raggiunto e il cursore di allora: "segno dopo/prima" riparte da lì. */
+  const lastJump = useRef<{ id: string; pageId: number; at: TextOffsets | null } | null>(null);
+
+  function markerEl(id: string): HTMLElement | null {
+    return editorRef.current?.querySelector<HTMLElement>(`span[data-bm="${id}"], span[data-pdf="${id}"]`) ?? null;
+  }
+
+  /** Il testo è cambiato per un segno. `live` = colore libero trascinato: una voce sola nella cronologia. */
+  function commitBookmark(live: string | null = null) {
+    const el = editorRef.current;
+    if (el && page) patchPage(page.id, { content: serializeEditor(el) }, live ? { kind: "typing", blockKey: `bm-${live}` } : { kind: "other" });
+  }
+
+  function caretAfterMarker(el: HTMLElement) {
+    const root = editorRef.current;
+    const sel = window.getSelection();
+    if (!root || !sel) return;
+    root.focus({ preventScroll: true });
+    const range = document.createRange();
+    range.setStartAfter(el);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  function openMarkerPopover(el: HTMLElement, fresh: boolean) {
+    const data = readMarker(el);
+    if (!data || !page) return;
+    setPageMenu(null);
+    setBmPop({ place: "testo", pageId: page.id, data, anchor: el.getBoundingClientRect(), fresh });
+  }
+
+  /**
+   * Mette un pezzo unico (segno, collegamento a un PDF) nel punto `at` del testo. Nel codice e nelle
+   * didascalie no: va in una riga nuova sopra il blocco ("codice" / "blocco" = è stato spostato lì).
+   */
+  function placeInText(root: HTMLElement, el: HTMLElement, at: Range | null): "codice" | "blocco" | null {
+    const node = at ? at.startContainer : null;
+    const inside = node ? (node instanceof Element ? node : node.parentElement) : null;
+    const blocked = inside?.closest<HTMLElement>("[data-block], figcaption") ?? null;
+    if (blocked && root.contains(blocked)) {
+      let top: HTMLElement = blocked;
+      while (top.parentElement && top.parentElement !== root) top = top.parentElement;
+      const line = document.createElement("p");
+      line.append(el, document.createElement("br"));
+      top.before(line);
+      return top.matches('[data-block="code"]') ? "codice" : "blocco";
+    }
+    if (at && root.contains(at.startContainer)) {
+      at.collapse(true);
+      at.insertNode(el);
+    } else {
+      // Nessun cursore nella pagina: all'inizio della prima riga.
+      const first = root.firstElementChild ?? root;
+      first.insertBefore(el, first.firstChild);
+    }
+    return null;
+  }
+
+  /** La riga di testo che contiene il segno (paragrafo, titolo, voce di lista, cella). */
+  function lineOf(el: HTMLElement): HTMLElement {
+    return el.parentElement?.closest<HTMLElement>("p, h1, h2, h3, li, td, th") ?? el.parentElement ?? editorRef.current ?? el;
+  }
+
+  /**
+   * Un segno dove sta il cursore. Nel codice e nelle didascalie no (il codice è solo testo):
+   * va in una riga nuova subito sopra il blocco. In modalità penna si passa allo strumento "segno".
+   */
+  function insertBookmark() {
+    if (page?.pdf) {
+      showToast("Sulle pagine PDF i segni non si mettono: usa la scrittura a mano");
+      return;
+    }
+    if (mode === "ink") {
+      setTool("pin");
+      showToast("Clicca sulla pagina dove vuoi il segno");
+      return;
+    }
+    const root = editorRef.current;
+    if (!root || !page) return;
+    const at = insertionPoint();
+    root.focus({ preventScroll: true });
+    const marker = createMarker({ id: newBookmarkId(), name: "Segno", kind: "bookmark", color: null });
+    const moved = placeInText(root, marker, at);
+    if (moved) showToast(moved === "codice" ? "Nel codice non si possono mettere segni: l'ho messo sopra il blocco" : "Il segno è sopra il blocco");
+    const line = lineOf(marker);
+    const after = document.createRange();
+    after.setStartAfter(marker);
+    after.setEnd(line, line.childNodes.length);
+    const before = document.createRange();
+    before.setStart(line, 0);
+    before.setEndBefore(marker);
+    writeMarker(marker, { name: defaultBookmarkName(after.toString(), before.toString()), kind: "bookmark", color: null });
+    caretAfterMarker(marker);
+    commitBookmark();
+    openMarkerPopover(marker, true);
+  }
+
+  /** Nome, tipo o colore cambiati nel popover. */
+  function changeBookmark(patch: BookmarkPatch, live = false) {
+    if (!bmPop || !page || bmPop.pageId !== page.id) return;
+    const id = bmPop.data.id;
+    if (bmPop.place === "testo") {
+      const el = markerEl(id);
+      if (!el) {
+        setBmPop(null);
+        return;
+      }
+      writeMarker(el, { ...bmPop.data, ...patch });
+      commitBookmark(live ? id : null);
+      const data = readMarker(el);
+      if (data) setBmPop({ ...bmPop, data, fresh: false });
+      return;
+    }
+    const current = pagesRef.current.find((p) => p.id === page.id);
+    const pins = current ? editPin(current.pins, id, patch) : null;
+    if (!pins) return;
+    patchPage(page.id, { pins }, live ? { kind: "typing", blockKey: `bm-${id}` } : { kind: "other" });
+    const data = pins.find((p) => p.id === id);
+    if (data) setBmPop({ ...bmPop, data, fresh: false });
+  }
+
+  function deleteBookmark(place: "testo" | "pagina", id: string) {
+    if (!page) return;
+    if (place === "testo") {
+      const el = markerEl(id);
+      if (!el) return;
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.setStartBefore(el);
+      range.collapse(true);
+      el.remove();
+      editorRef.current?.focus({ preventScroll: true });
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+      commitBookmark();
+    } else {
+      const current = pagesRef.current.find((p) => p.id === page.id);
+      const pins = current ? editPin(current.pins, id, "delete") : null;
+      if (pins) patchPage(page.id, { pins });
+    }
+  }
+
+  function closeBookmarkPopover(restoreFocus: boolean) {
+    const pop = bmPop;
+    setBmPop(null);
+    if (restoreFocus && pop?.place === "testo" && mode === "text") {
+      const el = markerEl(pop.data.id);
+      if (el) caretAfterMarker(el);
+    }
+  }
+
+  /** Segno appoggiato sulla pagina con lo strumento "segno". */
+  function placePin(point: [number, number], client: { x: number; y: number }) {
+    const current = page ? pagesRef.current.find((p) => p.id === page.id) : undefined;
+    if (!current) return;
+    const n = current.pins.length + 1;
+    const pin: PagePin = {
+      id: newBookmarkId(),
+      name: n === 1 ? "Segno sulla pagina" : `Segno sulla pagina ${n}`,
+      kind: "bookmark",
+      color: null,
+      x: point[0],
+      y: point[1],
+    };
+    patchPage(current.id, { pins: [...current.pins, pin] });
+    setBmPop({ place: "pagina", pageId: current.id, data: pin, anchor: new DOMRect(client.x - 10, client.y - 10, 20, 20), fresh: true });
+  }
+
+  function movePin(id: string, x: number, y: number) {
+    const current = page ? pagesRef.current.find((p) => p.id === page.id) : undefined;
+    if (current) patchPage(current.id, { pins: current.pins.map((p) => (p.id === id ? { ...p, x, y } : p)) });
+  }
+
+  function flashBookmark(el: HTMLElement) {
+    el.removeAttribute("data-bm-flash");
+    void el.offsetWidth; // fa ripartire l'animazione
+    el.setAttribute("data-bm-flash", "");
+    window.setTimeout(() => el.removeAttribute("data-bm-flash"), 1600);
+  }
+
+  /** Il segno è nella pagina aperta: ci si scorre, il cursore va subito dopo e il segno lampeggia. */
+  function revealBookmark(id: string): boolean {
+    const root = editorRef.current;
+    const pageId = pagesRef.current[index]?.id;
+    if (!root || pageId === undefined) return false;
+    const el = markerEl(id);
+    if (el) {
+      if (mode !== "text") {
+        // Il cursore va solo nel testo: si torna al testo e si riprova appena è modificabile.
+        pendingJump.current = id;
+        setMode("text");
+        return true;
+      }
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+      caretAfterMarker(el);
+      flashBookmark(el);
+      lastJump.current = { id, pageId, at: getTextOffsets(root) };
+      return true;
+    }
+    const pin = scrollWrapRef.current?.querySelector<HTMLElement>(`[data-pin="${id}"]`);
+    if (pin) {
+      pin.scrollIntoView({ block: "center", behavior: "smooth" });
+      flashBookmark(pin);
+      lastJump.current = { id, pageId, at: getTextOffsets(root) };
+      return true;
+    }
+    return false;
+  }
+
+  /** Blocco PDF da mostrare (e far lampeggiare) appena la sua pagina è aperta. */
+  const pendingPdfBlock = useRef<string | null>(null);
+
+  /** Apre il blocco PDF e lo fa lampeggiare (clic sul collegamento, pannello dei segni). */
+  function goToPdfBlock(id: string) {
+    const target = pagesRef.current.findIndex((p) => p.pdf?.id === id);
+    if (target < 0) {
+      showToast("Il PDF collegato non è più nella nota");
+      return;
+    }
+    setBmPop(null);
+    setPageMenu(null);
+    pendingPdfBlock.current = id;
+    if (target !== index) setIndex(target);
+    else revealPdfBlock();
+  }
+
+  function revealPdfBlock() {
+    const id = pendingPdfBlock.current;
+    if (!id) return;
+    pendingPdfBlock.current = null;
+    window.requestAnimationFrame(() => {
+      scrollEl?.scrollTo({ top: 0, behavior: "smooth" });
+      const bar = scrollEl?.querySelector<HTMLElement>(`[data-pdf-block="${id}"] .nq-pdf-bar`);
+      if (bar) flashBookmark(bar);
+    });
+  }
+  /**
+   * Va a un segno della nota, anche su un'altra pagina. Un collegamento a un PDF porta al blocco PDF,
+   * tranne con `toMarker` ("torna al punto", segno dopo/prima): allora al collegamento nel testo.
+   */
+  function goToBookmark(id: string, toMarker = false) {
+    if (!toMarker && pagesRef.current.some((p) => p.pdf?.id === id)) {
+      goToPdfBlock(id);
+      return;
+    }
+    const target = pagesRef.current.findIndex((p) => readBookmarks(p.content, p.pins).some((b) => b.id === id));
+    if (target < 0) {
+      showToast("Il segno non c'è più");
+      return;
+    }
+    setBmPop(null);
+    setPageMenu(null);
+    if (target !== index) {
+      pendingJump.current = id;
+      setIndex(target);
+      return;
+    }
+    if (!revealBookmark(id)) pendingJump.current = id;
+  }
+
+  /** Segno dopo (1) o prima (−1) del cursore, passando di pagina in pagina e ricominciando dall'inizio. */
+  function stepBookmark(delta: 1 | -1) {
+    const seq = pagesRef.current.flatMap((p, i) => readBookmarks(p.content, p.pins).map((b) => ({ id: b.id, page: i })));
+    if (seq.length === 0) {
+      showToast("Nessun segno in questa nota");
+      return;
+    }
+    const root = editorRef.current;
+    const pageId = pagesRef.current[index]?.id;
+    const now = root ? getTextOffsets(root) : null;
+    const last = lastJump.current;
+    const from = last && last.pageId === pageId && sameOffsets(last.at, now) ? seq.findIndex((b) => b.id === last.id) : -1;
+    let target: number;
+    if (from >= 0) target = from + delta;
+    else {
+      // Dal cursore: quanti segni della pagina aperta stanno prima di lui.
+      const start = seq.findIndex((b) => b.page >= index);
+      const first = start < 0 ? seq.length : start;
+      let before = 0;
+      const sel = window.getSelection();
+      const range = root && sel && sel.rangeCount > 0 && root.contains(sel.getRangeAt(0).startContainer) ? sel.getRangeAt(0) : null;
+      if (range && root) {
+        root.querySelectorAll(MARKER_SELECTOR).forEach((m) => {
+          const parent = m.parentNode;
+          if (!parent) return;
+          const at = Array.prototype.indexOf.call(parent.childNodes, m) as number;
+          if (range.comparePoint(parent, at + 1) <= 0) before++;
+        });
+      }
+      target = delta > 0 ? first + before : first + before - 1;
+    }
+    target = ((target % seq.length) + seq.length) % seq.length;
+    goToBookmark(seq[target].id, true);
+  }
+
+  /**
+   * Rinomina, cambia o elimina un segno di questa nota su qualunque pagina (dal pannello dei segni).
+   * Sulla pagina aperta si modifica il DOM; sulle altre l'HTML salvato. false = non è in questa nota.
+   */
+  function editBookmark(id: string, change: BookmarkPatch | "delete"): boolean {
+    const target = pagesRef.current.findIndex((p) => readBookmarks(p.content, p.pins).some((b) => b.id === id));
+    if (target < 0) return false;
+    const p = pagesRef.current[target];
+    if (bmPop?.data.id === id) setBmPop(null);
+    const pins = editPin(p.pins, id, change);
+    if (pins) {
+      patchPage(p.id, { pins });
+      return true;
+    }
+    if (target === index) {
+      const el = markerEl(id);
+      const data = el ? readMarker(el) : null;
+      if (el && data) {
+        if (change === "delete") el.remove();
+        else writeMarker(el, { ...data, ...change });
+        commitBookmark();
+        return true;
+      }
+    }
+    const html = editMarkerInHtml(p.content, id, change);
+    if (html === null) return false;
+    patchPage(p.id, { content: html });
+    return true;
+  }
+
+  const revealRef = useLatestRef(revealBookmark);
+  const goToRef = useLatestRef(goToBookmark);
+  const onJumpedRef = useLatestRef(onJumped);
+  const toastRef = useLatestRef(showToast);
+
+  // Pagina (o modalità) appena cambiata per raggiungere un segno: lo si mostra quando è nel DOM.
+  useEffect(() => {
+    const id = pendingJump.current;
+    if (!id || !ready) return;
+    pendingJump.current = null;
+    // Un fotogramma dopo: la pagina appena montata deve avere la sua altezza prima di scorrere.
+    window.requestAnimationFrame(() => {
+      if (!revealRef.current(id)) toastRef.current("Il segno non c'è più");
+    });
+  }, [index, ready, mode, revealRef, toastRef]);
+
+  // Richiesta dal pannello dei segni (anche appena aperta la nota).
+  useEffect(() => {
+    if (!jumpTo || !ready) return;
+    goToRef.current(jumpTo.id);
+    // Fatto: riaprendo la nota più tardi non si torna di nuovo a questo segno.
+    onJumpedRef.current?.();
+  }, [jumpTo, ready, goToRef, onJumpedRef]);
+
+  /** Tasto destro nel testo: il cursore va dove si è cliccato (se non è dentro la selezione). */
+  function openPageMenu(point: { x: number; y: number }, marker: HTMLElement | null) {
+    const root = editorRef.current;
+    const sel = window.getSelection();
+    if (!root || !sel) return;
+    if (!marker) {
+      const range = sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+      const inSelection =
+        range &&
+        !range.collapsed &&
+        root.contains(range.commonAncestorContainer) &&
+        Array.from(range.getClientRects()).some((r) => point.x >= r.left && point.x <= r.right && point.y >= r.top && point.y <= r.bottom);
+      if (!inSelection) {
+        const caret = caretAt(root, point.x, point.y);
+        if (caret) {
+          root.focus({ preventScroll: true });
+          sel.removeAllRanges();
+          sel.addRange(caret);
+        }
+      }
+    }
+    setBmPop(null);
+    const after = window.getSelection();
+    const hasSelection = Boolean(after && !after.isCollapsed && root.contains(after.anchorNode));
+    setPageMenu({ ...point, marker: marker?.dataset.bm ?? null, pdfLink: marker?.dataset.pdf ?? null, hasSelection });
+  }
+
+  /** HTML copiato da una nota (con i suoi segni): i segni incollati sono segni nuovi. */
+  function insertOwnHtml(html: string) {
+    const root = editorRef.current;
+    if (!root) return;
+    const box = document.createElement("template");
+    box.innerHTML = sanitizeHtml(html, { source: "esterno", bookmarks: true });
+    freshMarkerIds(box.content);
+    const out = document.createElement("div");
+    out.appendChild(box.content);
+    commandActive.current = true;
+    try {
+      document.execCommand("insertHTML", false, out.innerHTML);
+    } finally {
+      commandActive.current = false;
+    }
+    prepareMarkers(root);
+    commitEditor();
+  }
+
+  /** Taglia/Copia dal menu: gli stessi eventi di Ctrl+X/C (i segni passano da PageSurface). */
+  function clipboardCommand(command: "cut" | "copy") {
+    editorRef.current?.focus({ preventScroll: true });
+    if (!document.execCommand(command)) showToast(command === "cut" ? "Usa Ctrl+X per tagliare" : "Usa Ctrl+C per copiare");
+  }
+
+  /** Incolla dal menu: dagli appunti di sistema (se il sistema lo permette), altrimenti si chiede Ctrl+V. */
+  async function pasteFromMenu() {
+    const root = editorRef.current;
+    if (!root) return;
+    try {
+      const text = await navigator.clipboard.readText();
+      root.focus({ preventScroll: true });
+      const own = copiedHtmlFor(text);
+      if (own) {
+        insertOwnHtml(own);
+        return;
+      }
+      let html = "";
+      try {
+        for (const item of await navigator.clipboard.read()) {
+          if (item.types.includes("text/html")) {
+            html = await (await item.getType("text/html")).text();
+            break;
+          }
+        }
+      } catch {
+        /* solo testo */
+      }
+      const clean = html ? sanitizeHtml(html, { source: "esterno" }) : "";
+      commandActive.current = true;
+      try {
+        if (clean) document.execCommand("insertHTML", false, clean);
+        else document.execCommand("insertText", false, text);
+      } finally {
+        commandActive.current = false;
+      }
+      commitEditor();
+    } catch (error) {
+      console.error("Incolla dal menu non riuscito:", error);
+      showToast("Qui l'incolla dal menu non è permesso: usa Ctrl+V");
+    }
+  }
+
+  // ---------------- PDF aggiunti alla nota (lib/pdf) ----------------
+
+  /** PDF in attesa della scelta delle pagine (riquadro "tutte / intervallo"). */
+  const [pdfAsk, setPdfAsk] = useState<{ file: IncomingFile; inspection: PdfInspection; at: Range | null; pageId: number } | null>(null);
+
+  /**
+   * Un PDF rilasciato o scelto: si legge, poi (se ha più pagine e `ask`) si chiede l'intervallo.
+   * false = non è un PDF leggibile o è troppo grande: chi chiama lo inserisce come scheda del file.
+   */
+  async function startPdfInsert(file: IncomingFile, at: Range | null, ask: boolean): Promise<boolean> {
+    if (!page || !onStorePdf) return false;
+    if (file.bytes.length > PDF_MAX_BYTES) {
+      showToast(`«${file.name}» supera i 200 MB: inserito come file`);
+      return false;
+    }
+    let inspection: PdfInspection;
+    try {
+      setBusy(true);
+      inspection = await inspectPdf(file.bytes);
+    } catch (error) {
+      if (error instanceof PdfOpenError && error.kind === "damaged") {
+        showToast(`«${file.name}» è danneggiato: inserito come file`);
+        return false;
+      }
+      throw error;
+    } finally {
+      setBusy(false);
+    }
+    if (ask && inspection.pages > 1) setPdfAsk({ file, inspection, at, pageId: page.id });
+    else await finishPdfInsert(file, inspection, at, page.id, 1, inspection.pages);
+    return true;
+  }
+
+  /** Copia il PDF, crea il blocco subito dopo la pagina `pageId` e mette il collegamento nel testo. */
+  async function finishPdfInsert(file: IncomingFile, inspection: PdfInspection, at: Range | null, pageId: number, from: number, to: number) {
+    if (!onStorePdf) return;
+    setBusy(true);
+    try {
+      await flush();
+      const stored = await onStorePdf(note.id, file, inspection.thumbnail);
+      const info = newPdfInfo(stored, file.name, from, to, inspection.sizes.slice(from - 1, to));
+      const anchor = pagesRef.current.find((p) => p.id === pageId);
+      if (!anchor) return;
+      const created = await insertPdfPage(note.id, anchor.position, info);
+      const at2 = pagesRef.current.findIndex((p) => p.id === pageId);
+      const shifted = pagesRef.current.map((p) => (p.position > anchor.position ? { ...p, position: p.position + 1 } : p));
+      const next = [...shifted.slice(0, at2 + 1), created, ...shifted.slice(at2 + 1)];
+      pagesRef.current = next;
+      setPages(next);
+
+      // Il collegamento nel punto del rilascio (solo se quella pagina di testo è ancora aperta).
+      const root = editorRef.current;
+      if (root && !anchor.pdf && pagesRef.current[index]?.id === pageId) {
+        const link = createPdfLink({ id: info.id, name: file.name, pages: pdfPageCount(info), file: stored });
+        root.focus({ preventScroll: true });
+        placeInText(root, link, at);
+        caretAfterMarker(link);
+        commitEditor();
+      }
+      showSuggestion(`PDF inserito: ${pagesLabel(info)} dopo questa pagina · trascina il collegamento per spostarlo`, "Vai al PDF", () => goToPdfBlock(info.id));
+      if (inspection.locked) showToast(`«${file.name}» è protetto: la password si chiede quando lo apri`);
+      onChanged();
+    } catch (error) {
+      console.error("PDF non inserito:", error);
+      showToast("Impossibile inserire il PDF (dettagli nella console)");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** "Inserisci PDF" dalla barra: si sceglie il file e va dove sta il cursore. */
+  async function pickPdf() {
+    const at = insertionPoint();
+    try {
+      const picked = await openDialog({ multiple: false, filters: [{ name: "PDF", extensions: ["pdf"] }] });
+      if (typeof picked !== "string") return;
+      const [file] = await readPaths([picked]);
+      if (file && !(await startPdfInsert(file, at, true))) await insertIncoming([file], at, false);
+    } catch (error) {
+      console.error("PDF non inserito:", error);
+      showToast("Impossibile leggere il PDF (controlla i permessi di lettura)");
+    }
+  }
+
+  const revealPdfBlockRef = useLatestRef(revealPdfBlock);
+
+  useEffect(() => {
+    if (ready) revealPdfBlockRef.current();
+  }, [index, ready, revealPdfBlockRef]);
+
+  // Collegamenti a blocchi PDF che non ci sono più: in grigio ("PDF rimosso").
+  useEffect(() => {
+    const root = editorRef.current;
+    if (!root) return;
+    const ids = new Set(pages.flatMap((p) => (p.pdf ? [p.pdf.id] : [])));
+    root.querySelectorAll<HTMLElement>(PDF_LINK_SELECTOR).forEach((el) => el.toggleAttribute("data-missing", !ids.has(el.dataset.pdf ?? "")));
+  }, [pages, index]);
+
+  /**
+   * Un collegamento a un PDF tolto dal testo (Canc, taglia…): le pagine restano, ma l'avviso propone
+   * di eliminarle. Ctrl+Z riporta il collegamento.
+   */
+  function checkRemovedPdfLinks(before: string, after: string) {
+    if (!before.includes("data-pdf")) return;
+    const still = new Set(pdfLinkIds(after));
+    for (const p of pagesRef.current) for (const id of pdfLinkIds(p.content)) still.add(id);
+    const gone = pdfLinkIds(before).filter((id) => !still.has(id));
+    const block = gone.map((id) => pagesRef.current.find((p) => p.pdf?.id === id)).find((p) => p?.pdf);
+    if (!block?.pdf) return;
+    const blockId = block.id;
+    showSuggestion(`Collegamento a «${block.pdf.name}» tolto`, `Elimina anche le ${pagesLabel(block.pdf)}`, () => void removePage(blockId));
   }
 
   // ---------------- Scorciatoie (lib/shortcuts.ts) ----------------
@@ -961,13 +1616,16 @@ async function changePageColor(color: string | null) {
         setIndex((i) => Math.min(pagesRef.current.length - 1, i + 1));
         return true;
       case "zoomIn":
-        setZoom((z) => Math.min(160, z + 10));
+        if (page?.pdf) setPdfZoom((z) => Math.min(PDF_ZOOM_MAX, z + 10));
+        else setZoom((z) => Math.min(160, z + 10));
         return true;
       case "zoomOut":
-        setZoom((z) => Math.max(60, z - 10));
+        if (page?.pdf) setPdfZoom((z) => Math.max(PDF_ZOOM_MIN, z - 10));
+        else setZoom((z) => Math.max(60, z - 10));
         return true;
       case "zoomReset":
-        setZoom(100);
+        if (page?.pdf) setPdfZoom(100);
+        else setZoom(100);
         return true;
       case "pen":
       case "highlighter":
@@ -979,9 +1637,24 @@ async function changePageColor(color: string | null) {
         if (mode !== "ink") return false;
         setMode("text");
         return true;
+      case "pinTool":
+        if (mode !== "ink") return false;
+        setTool("pin");
+        return true;
+      case "bookmark":
+        insertBookmark();
+        return true;
+      case "nextBookmark":
+        stepBookmark(1);
+        return true;
+      case "prevBookmark":
+        stepBookmark(-1);
+        return true;
       case "escape": {
         // Chiude quello che è aperto; se non c'è niente esce dal disegno o deseleziona.
-        const open = Boolean(slash || mention || menu || linkOpen || findOpen);
+        const open = Boolean(slash || mention || menu || linkOpen || findOpen || bmPop || pageMenu);
+        setBmPop(null);
+        setPageMenu(null);
         setSlash(null);
         setMention(null);
         setMenu(null);
@@ -1009,15 +1682,18 @@ async function changePageColor(color: string | null) {
   const actionRef = useLatestRef(handleAction);
   const dragOverRef = useLatestRef(dragOver);
   const dropRef = useLatestRef(dropFiles);
+  const editBookmarkRef = useLatestRef(editBookmark);
   useEffect(() => {
     if (!registerEditor) return;
     registerEditor({
       action: (action) => actionRef.current(action),
       dragOver: (point, count) => dragOverRef.current(point, count),
       drop: (paths, point) => dropRef.current(paths, point),
+      noteId: note.id,
+      editBookmark: (id, change) => editBookmarkRef.current(id, change),
     });
     return () => registerEditor(null);
-  }, [registerEditor, actionRef, dragOverRef, dropRef]);
+  }, [registerEditor, actionRef, dragOverRef, dropRef, editBookmarkRef, note.id]);
 
   // ---------------- Menu "/" ----------------
 
@@ -1353,9 +2029,16 @@ async function changePageColor(color: string | null) {
   async function removePage(id: number) {
     if (pagesRef.current.length <= 1) return;
     await attempt("Impossibile eliminare la pagina", async () => {
+      const removed = pagesRef.current.find((p) => p.id === id);
       await deletePage(id);
       dirtyPages.current.delete(id);
       const next = pagesRef.current.filter((p) => p.id !== id);
+      // La copia del PDF va via solo se nessun altro blocco della nota la usa.
+      const file = removed?.pdf?.file;
+      if (file && note.diskPath && !next.some((p) => p.pdf?.file === file)) {
+        await removeAttachmentFile(note.diskPath, file);
+        await removeAttachmentFile(note.diskPath, pdfThumbName(file));
+      }
       pagesRef.current = next;
       setPages(next);
       setIndex((i) => Math.min(i, next.length - 1));
@@ -1395,19 +2078,22 @@ async function changePageColor(color: string | null) {
         await navigator.clipboard.writeText(noteToMarkdown(title, list));
         showToast("Markdown copiato negli appunti");
       } else if (kind === "md") {
-        if (await saveText(`${base}.md`, "md", "Markdown", noteToMarkdown(title, list, titleColor))) showToast("Markdown salvato");
+        // Con dei PDF: una cartella con il .md e le copie dei PDF accanto.
+        if (list.some((p) => p.pdf)) {
+          if (await saveMarkdownWithPdfs(base, title, list, titleColor, note.diskPath)) showToast("Markdown e PDF salvati");
+        } else if (await saveText(`${base}.md`, "md", "Markdown", noteToMarkdown(title, list, titleColor))) showToast("Markdown salvato");
       } else if (kind === "pdf") {
-        const bytes = await renderNotePdf(list, meta, { scale: 2, light: lightExport });
+        const bytes = await renderNotePdf(list, meta, { scale: 2, light: lightExport, marks: exportMarks });
         if (await saveBytes(`${base}.pdf`, "pdf", "PDF", bytes)) showToast("PDF salvato");
       } else {
-        const bytes = await renderNoteImage(list, meta, kind === "png" ? "png" : "jpeg", { scale: 3, light: lightExport });
+        const bytes = await renderNoteImage(list, meta, kind === "png" ? "png" : "jpeg", { scale: 3, light: lightExport, marks: exportMarks });
         if (await saveBytes(`${base}.${kind}`, kind, kind === "png" ? "Immagine PNG" : "Immagine JPG", bytes)) {
           showToast("Immagine salvata");
         }
       }
     } catch (error) {
       console.error("Esportazione non riuscita:", error);
-      showToast("Esportazione non riuscita");
+      showToast(error instanceof ExportTooTallError ? "Troppe pagine per una sola immagine: esporta in PDF" : "Esportazione non riuscita");
     } finally {
       setBusy(false);
     }
@@ -1425,7 +2111,14 @@ async function changePageColor(color: string | null) {
    * Mette dei file nella pagina: immagini come blocco immagine, .md e .txt come testo, gli altri
    * come scheda file. Immagini e file vanno nella cartella della nota (allegati), mai nel DB.
    */
-  async function insertIncoming(files: IncomingFile[], at: Range | null) {
+  async function insertIncoming(incoming: IncomingFile[], at: Range | null, pdfAsBlocks = true) {
+    // I PDF diventano blocchi PDF (pagine nuove + collegamento nel testo); quelli che non si possono
+    // leggere restano schede di file come prima.
+    const files: IncomingFile[] = [];
+    const pdfs = pdfAsBlocks ? incoming.filter((f) => isPdfName(f.name)) : [];
+    for (const pdf of pdfs) if (!(await startPdfInsert(pdf, at, pdfs.length === 1))) files.push(pdf);
+    files.push(...incoming.filter((f) => !pdfs.includes(f)));
+    if (files.length === 0) return;
     const el = editorRef.current;
     if (!el || !page) return;
     const pageId = page.id;
@@ -1508,6 +2201,13 @@ async function changePageColor(color: string | null) {
     }
     const text = e.clipboardData.getData("text/plain");
     const el = editorRef.current;
+    // Copiato da una nota con dei segni (PageSurface): si incolla il nostro HTML, con segni nuovi.
+    const own = copiedHtmlFor(text);
+    if (own && e.clipboardData.getData("text/html")) {
+      e.preventDefault();
+      insertOwnHtml(own);
+      return true;
+    }
     const insertPlain = () => {
       commandActive.current = true;
       try {
@@ -1665,6 +2365,53 @@ async function changePageColor(color: string | null) {
     });
   }
 
+  /** Voci del menu del tasto destro: sul segno (modifica, elimina) o nel testo. */
+  function pageMenuGroups(markerId: string | null, hasSelection: boolean, pdfLink: string | null = null): PageMenuItem[][] {
+    if (pdfLink) {
+      return [
+        [
+          { label: "Apri il PDF", icon: <MdOutlinePictureAsPdf />, onSelect: () => goToPdfBlock(pdfLink) },
+          {
+            label: "Togli il collegamento",
+            icon: <MdDeleteOutline />,
+            danger: true,
+            onSelect: () => {
+              markerEl(pdfLink)?.remove();
+              commitEditor();
+            },
+          },
+        ],
+      ];
+    }
+    if (markerId) {
+      return [
+        [
+          {
+            label: "Modifica il segno",
+            icon: <MdEdit />,
+            onSelect: () => {
+              const el = markerEl(markerId);
+              if (el) openMarkerPopover(el, false);
+            },
+          },
+          { label: "Elimina il segno", icon: <MdDeleteOutline />, danger: true, onSelect: () => deleteBookmark("testo", markerId) },
+        ],
+      ];
+    }
+    return [
+      [{ label: "Inserisci un segno qui", icon: <MdOutlineBookmarkAdd />, hint: shortcutLabel("bookmark"), onSelect: insertBookmark }],
+      [
+        { label: "Taglia", icon: <MdContentCut />, hint: "Ctrl X", disabled: !hasSelection, onSelect: () => clipboardCommand("cut") },
+        { label: "Copia", icon: <MdContentCopy />, hint: "Ctrl C", disabled: !hasSelection, onSelect: () => clipboardCommand("copy") },
+        { label: "Incolla", icon: <MdContentPaste />, hint: "Ctrl V", onSelect: () => void pasteFromMenu() },
+      ],
+      [
+        { label: "Annulla", icon: <MdUndo />, hint: shortcutLabel("undo"), onSelect: handleUndo },
+        { label: "Ripeti", icon: <MdRedo />, hint: shortcutLabel("redo"), onSelect: handleRedo },
+      ],
+    ];
+  }
+
   const splitQ = splitQuery.trim().toLowerCase();
   const splitList = splitCandidates
     .filter((n) => n.id !== note.id && n.title.toLowerCase().includes(splitQ))
@@ -1685,7 +2432,9 @@ async function changePageColor(color: string | null) {
 
   const kicker = pathLabel || "Senza cartella";
   const createdLabel = new Date(note.createdAt).toLocaleDateString("it-IT", { day: "numeric", month: "short" });
-  const textOff = mode !== "text";
+  // Su un blocco PDF i comandi del testo non servono (si scrive solo a mano).
+  const textOff = mode !== "text" || Boolean(page.pdf);
+  const pdfBlockId = page.pdf?.id ?? null;
 
 
   const titleBlock = (
@@ -1768,6 +2517,10 @@ async function changePageColor(color: string | null) {
       <label className="nq-menu-check">
         <input type="checkbox" checked={lightExport} onChange={(e) => setLightExport(e.target.checked)} />
         Sfondo chiaro (consigliato per stampare)
+      </label>
+      <label className="nq-menu-check">
+        <input type="checkbox" checked={exportMarks} onChange={(e) => setExportMarks(e.target.checked)} />
+        Mostra i segni nelle pagine (PDF e immagini)
       </label>
     </>
   );
@@ -2144,7 +2897,7 @@ async function changePageColor(color: string | null) {
   const pageArea = (
     <div ref={scrollWrapRef} className="nq-scroll-wrap">
       {dropDrag && <DropOverlay zone={dropDrag.zone} count={dropDrag.count} />}
-      {findOpen && (
+      {findOpen && !page.pdf && (
         <FindBar
           pages={pages}
           index={index}
@@ -2157,7 +2910,30 @@ async function changePageColor(color: string | null) {
         />
       )}
 
-      <div className="nq-scroll">
+      <div ref={setScrollEl} className="nq-scroll">
+        {page.pdf ? (
+          <PdfBlock
+            key={page.id}
+            page={page}
+            info={page.pdf}
+            noteDir={note.diskPath}
+            header={index === 0 ? titleBlock : null}
+            scrollEl={scrollEl}
+            zoom={pdfZoom}
+            onZoom={setPdfZoom}
+            mode={mode}
+            tool={tool}
+            color={color}
+            size={size}
+            shapes={shapes}
+            onInk={handlePdfInk}
+            onInfo={(info) => handlePdfInfo(page.id, info)}
+            findOpen={findOpen}
+            onCloseFind={() => setFindOpen(false)}
+            onNotice={showToast}
+            onBackToLink={pdfBlockId && pages.some((p) => pdfLinkIds(p.content).includes(pdfBlockId)) ? () => goToBookmark(pdfBlockId, true) : undefined}
+          />
+        ) : (
         <PageSurface
           key={page.id}
           page={page}
@@ -2189,7 +2965,17 @@ async function changePageColor(color: string | null) {
             else setRefRow(rowId);
           }}
           onHistory={(direction) => (direction === "undo" ? handleUndo() : handleRedo())}
+          onMarkerClick={(el) => openMarkerPopover(el, false)}
+          onPdfLinkClick={goToPdfBlock}
+          onPageMenu={openPageMenu}
+          onPlacePin={placePin}
+          onOpenPin={(pin, anchor) => {
+            setPageMenu(null);
+            setBmPop({ place: "pagina", pageId: page.id, data: pin, anchor, fresh: false });
+          }}
+          onMovePin={movePin}
         />
+        )}
       </div>
 
       {phone && pages.length > 1 && (
@@ -2276,6 +3062,33 @@ async function changePageColor(color: string | null) {
           );
         })()}
 
+      {bmPop && bmPop.pageId === page.id && (
+        <BookmarkPopover
+          key={bmPop.data.id}
+          data={bmPop.data}
+          anchor={bmPop.anchor}
+          fresh={bmPop.fresh}
+          onChange={changeBookmark}
+          onDelete={() => deleteBookmark(bmPop.place, bmPop.data.id)}
+          onClose={closeBookmarkPopover}
+        />
+      )}
+
+      {pdfAsk && (
+        <PdfRangeDialog
+          name={pdfAsk.file.name}
+          pages={pdfAsk.inspection.pages}
+          onCancel={() => setPdfAsk(null)}
+          onConfirm={(from, to) => {
+            const ask = pdfAsk;
+            setPdfAsk(null);
+            void finishPdfInsert(ask.file, ask.inspection, ask.at, ask.pageId, from, to);
+          }}
+        />
+      )}
+
+      {pageMenu && <PageMenu x={pageMenu.x} y={pageMenu.y} groups={pageMenuGroups(pageMenu.marker, pageMenu.hasSelection, pageMenu.pdfLink)} onClose={() => setPageMenu(null)} />}
+
       {toast && (
         <div className={`nq-toast${toastAction ? " nq-toast--action" : ""}`} role="status">
           {toast}
@@ -2297,7 +3110,7 @@ async function changePageColor(color: string | null) {
   // ---------------- Telefono (docs/design/mobile/quaderno.html) ----------------
 
   if (phone) {
-    const closeThen = (action: () => void) => () => {
+    const closeThen = (action: () => void) => {
       setMenu(null);
       action();
     };
@@ -2334,6 +3147,7 @@ async function changePageColor(color: string | null) {
             <ToolButton label="Penna" icon={<MdOutlineEdit />} pressed={tool === "pen"} onClick={() => setTool("pen")} />
             <ToolButton label="Evidenziatore" icon={<MdOutlineBorderColor />} pressed={tool === "highlighter"} onClick={() => setTool("highlighter")} />
             <ToolButton label="Gomma" icon={<MdOutlineBackspace />} pressed={tool === "eraser"} onClick={() => setTool("eraser")} />
+            <ToolButton label="Segno sulla pagina (tocca dove vuoi metterlo)" icon={<MdOutlinePushPin />} pressed={tool === "pin"} disabled={Boolean(page.pdf)} onClick={() => setTool("pin")} />
             <span className="nq-tsep" />
             <span className="nq-ph-scroll">
               {inkColors}
@@ -2342,7 +3156,7 @@ async function changePageColor(color: string | null) {
                 label={shapes ? "Forme automatiche: accese (tieni fermo a fine tratto)" : "Forme automatiche: spente"}
                 icon={<MdOutlineShapeLine />}
                 pressed={shapes}
-                disabled={tool === "eraser"}
+                disabled={tool === "eraser" || tool === "pin"}
                 onClick={toggleShapes}
               />
             </span>
@@ -2415,24 +3229,32 @@ async function changePageColor(color: string | null) {
           <BottomSheet label="Inserisci" onClose={() => setMenu(null)}>
             <h5>Inserisci</h5>
             <div className="nq-ph-tiles">
-              <button type="button" onClick={closeThen(insertTable)}>
+              <button type="button" onClick={() => closeThen(insertTable)}>
                 <MdOutlineTableChart aria-hidden="true" /> Tabella
               </button>
-              <button type="button" onClick={closeThen(() => insertCodeBlock())}>
+              <button type="button" onClick={() => closeThen(() => insertCodeBlock())}>
                 <MdCode aria-hidden="true" /> Codice
               </button>
-              <button type="button" disabled={busy} onClick={closeThen(() => void pickAndInsert("image"))}>
+              <button type="button" disabled={busy} onClick={() => closeThen(() => void pickAndInsert("image"))}>
                 <MdOutlineImage aria-hidden="true" /> Immagine
               </button>
-              <button type="button" onClick={closeThen(() => void pickFiles())}>
+              <button type="button" onClick={() => closeThen(() => void pickFiles())}>
                 <MdOutlineAttachFile aria-hidden="true" /> File
               </button>
-              <button type="button" onClick={closeThen(openLink)}>
+              <button type="button" onClick={() => closeThen(openLink)}>
                 <MdLink aria-hidden="true" /> Link
               </button>
               <button type="button" onClick={() => setMenu("views")}>
                 <MdOutlineStorage aria-hidden="true" /> Raccolta
               </button>
+              <button type="button" onClick={() => closeThen(insertBookmark)}>
+                <MdOutlineBookmarkAdd aria-hidden="true" /> Segno
+              </button>
+              {onStorePdf && (
+                <button type="button" disabled={busy} onClick={() => closeThen(() => void pickPdf())}>
+                  <MdOutlinePictureAsPdf aria-hidden="true" /> PDF
+                </button>
+              )}
             </div>
           </BottomSheet>
         )}
@@ -2480,7 +3302,7 @@ async function changePageColor(color: string | null) {
                   <PageThumb page={p} kicker={kicker} dateLabel={monthYear(note.createdAt)} />
                 </button>
               ))}
-              <button type="button" className="nq-ph-newpage" aria-label="Aggiungi pagina" onClick={closeThen(() => void handleAddPage())}>
+              <button type="button" className="nq-ph-newpage" aria-label="Aggiungi pagina" onClick={() => closeThen(() => void handleAddPage())}>
                 <MdAdd />
               </button>
             </div>
@@ -2728,12 +3550,14 @@ async function changePageColor(color: string | null) {
         <ToolButton label="Elenco puntato" shortcut="bullets" icon={<MdFormatListBulleted />} disabled={textOff} onClick={() => exec("insertUnorderedList")} />
         <ToolButton label="Checklist" shortcut="checklist" icon={<MdChecklist />} disabled={textOff} onClick={handleChecklist} />
         <ToolButton label="Link" shortcut="link" icon={<MdLink />} disabled={textOff} pressed={linkOpen} onClick={openLink} />
+        <ToolButton label="Inserisci un segno" shortcut="bookmark" icon={<MdOutlineBookmarkAdd />} onClick={insertBookmark} />
         {linkOpen && linkInput}
         <span className="nq-tsep" />
         <ToolButton label="Inserisci tabella" shortcut="table" icon={<MdOutlineTableChart />} disabled={textOff} onClick={insertTable} />
         <ToolButton label="Blocco di codice" shortcut="code" icon={<MdCode />} disabled={textOff} onClick={() => insertCodeBlock()} />
         <ToolButton label="Inserisci immagine" legend="img" icon={<MdOutlineImage />} disabled={busy} onClick={() => void pickAndInsert("image")} />
         <ToolButton label="Allega file" legend="file" icon={<MdOutlineAttachFile />} onClick={() => void pickFiles()} />
+        {onStorePdf && <ToolButton label="Inserisci un PDF (pagine nuove dopo questa)" legend="pdf" icon={<MdOutlinePictureAsPdf />} disabled={busy} onClick={() => void pickPdf()} />}
         <div className="nq-menu-anchor">
           <ToolButton
             label="Inserisci vista di una raccolta"
@@ -2775,13 +3599,14 @@ async function changePageColor(color: string | null) {
           <ToolButton label="Penna" shortcut="pen" text="Penna" icon={<MdOutlineEdit />} pressed={tool === "pen"} onClick={() => setTool("pen")} />
           <ToolButton label="Evidenziatore" shortcut="highlighter" text="Evidenziatore" icon={<MdOutlineBorderColor />} pressed={tool === "highlighter"} onClick={() => setTool("highlighter")} />
           <ToolButton label="Gomma" shortcut="eraser" text="Gomma" icon={<MdOutlineBackspace />} pressed={tool === "eraser"} onClick={() => setTool("eraser")} />
+          <ToolButton label="Segno sulla pagina (clicca dove vuoi metterlo)" shortcut="pinTool" text="Segno" icon={<MdOutlinePushPin />} pressed={tool === "pin"} disabled={Boolean(page.pdf)} onClick={() => setTool("pin")} />
           <ToolButton
             label={shapes ? "Forme automatiche: accese (tieni fermo a fine tratto)" : "Forme automatiche: spente"}
             legend="forme"
             text="Forme"
             icon={<MdOutlineShapeLine />}
             pressed={shapes}
-            disabled={tool === "eraser"}
+            disabled={tool === "eraser" || tool === "pin"}
             onClick={toggleShapes}
           />
           <span className="nq-tsep" />
@@ -2844,7 +3669,18 @@ async function changePageColor(color: string | null) {
         <button type="button" className="nq-icon-btn" onClick={() => void handleAddPage()} aria-label="Aggiungi pagina" title="Aggiungi pagina">
           <MdAdd />
         </button>
-        <span className="nq-pager nq-pager--muted">{wordCount(page.content)} parole</span>
+        <span className="nq-pager nq-pager--muted">{page.pdf ? `PDF · ${pagesLabel(page.pdf)}` : `${wordCount(page.content)} parole`}</span>
+        {page.pdf ? (
+          <span className="nq-pager">
+            <button type="button" className="nq-icon-btn" disabled={pdfZoom <= PDF_ZOOM_MIN} onClick={() => setPdfZoom(Math.max(PDF_ZOOM_MIN, pdfZoom - 10))} aria-label="Riduci lo zoom">
+              <MdRemove />
+            </button>
+            Zoom {pdfZoom}%
+            <button type="button" className="nq-icon-btn" disabled={pdfZoom >= PDF_ZOOM_MAX} onClick={() => setPdfZoom(Math.min(PDF_ZOOM_MAX, pdfZoom + 10))} aria-label="Aumenta lo zoom">
+              <MdAdd />
+            </button>
+          </span>
+        ) : (
         <span className="nq-pager">
           <button type="button" className="nq-icon-btn" disabled={zoom <= 60} onClick={() => setZoom(zoom - 10)} aria-label="Riduci lo zoom">
             <MdRemove />
@@ -2854,6 +3690,7 @@ async function changePageColor(color: string | null) {
             <MdAdd />
           </button>
         </span>
+        )}
         <span className="nq-pager nq-pager--muted nq-save-status">{savedLabel}</span>
       </footer>
 

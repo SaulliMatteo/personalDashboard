@@ -4,6 +4,7 @@ import {
   MdDeleteOutline,
   MdExpandMore,
   MdOutlineGridView,
+  MdOutlinePictureAsPdf,
   MdOutlineRestoreFromTrash,
   MdOutlineStarBorder,
   MdOutlineTune,
@@ -17,6 +18,7 @@ import type { DragItem } from "../lib/drag";
 import { formatWhen, relativeDay, sanitizeHtml } from "../lib/html";
 import { TEMPLATES } from "../lib/templates";
 import NoteTitle from "./NoteTitle";
+import PdfThumb from "./pdf/PdfThumb";
 
 export type SortKey = "updated" | "created" | "title";
 export type LayoutMode = "grid" | "list";
@@ -249,6 +251,11 @@ function NoteCollection(props: NoteCollectionProps) {
                   </div>
                   {note.tags[0] && <span className="nq-chip">{note.tags[0]}</span>}
                   <span className="nq-row-meta">
+                    {note.pdf && (
+                      <span className="nq-row-pdf">
+                        <MdOutlinePictureAsPdf aria-hidden="true" /> PDF{note.pdf.pages > 0 ? ` · ${note.pdf.pages} pag.` : ""} ·{" "}
+                      </span>
+                    )}
                     {note.pageCount} {note.pageCount === 1 ? "pagina" : "pagine"} · {formatWhen(note.updatedAt)}
                   </span>
                   {actions}
@@ -265,7 +272,11 @@ function NoteCollection(props: NoteCollectionProps) {
               >
                 <div className="nq-card-preview">
                   <div className="nq-card-kicker">{kicker || "Senza cartella"}</div>
-                  <div className="nq-doc nq-doc--card" dangerouslySetInnerHTML={{ __html: previews.get(note.id) ?? "" }} />
+                  {note.pdf && !previews.get(note.id) ? (
+                    <PdfThumb noteDir={note.diskPath} pdf={note.pdf} />
+                  ) : (
+                    <div className="nq-doc nq-doc--card" dangerouslySetInnerHTML={{ __html: previews.get(note.id) ?? "" }} />
+                  )}
                 </div>
                 <footer className="nq-card-foot">
                   <div className="nq-card-row">

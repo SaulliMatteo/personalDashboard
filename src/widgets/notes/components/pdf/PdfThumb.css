@@ -1,0 +1,64 @@
+/* Anteprima di una nota PDF nell'elenco (griglia) e segno "PDF" nelle righe. */
+
+.nq-pdf-thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 180px;
+  overflow: hidden;
+  /* Non --radius-item: in Opaco e Fosforo vale 999px e taglierebbe la pagina in un ovale. */
+  border-radius: min(calc(var(--radius-panel) / 2), 10px);
+  background: var(--note-page-bg);
+  border: var(--note-page-border);
+  color: var(--accent);
+}
+
+.nq-pdf-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.nq-pdf-thumb > svg {
+  font-size: 44px;
+}
+
+.nq-pdf-thumb-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.nq-row-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent);
+}
+
+.nq-row-pdf svg {
+  font-size: 14px;
+}
+
+/* Quaderno: un foglio pinzato; Fosforo: un display, il badge acceso. */
+:root[data-theme="quaderno"] .nq-pdf-thumb-badge {
+  border-radius: 3px;
+}
+
+:root[data-theme="fosforo"] .nq-pdf-thumb {
+  border: var(--panel-border);
+}
+
+:root[data-theme="fosforo"] .nq-pdf-thumb-badge {
+  border-radius: 2px;
+  text-transform: uppercase;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 45%, transparent);
+}

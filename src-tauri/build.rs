@@ -51,6 +51,7 @@ fn main() {
             "db_export_save",
             "db_import_stage",
             "db_import_apply",
+            "updater_prepare_install",
         ]),
     ))
     .expect("errore nel build di Tauri");

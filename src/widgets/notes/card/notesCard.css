@@ -87,6 +87,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Nota PDF: un'icona piccola accanto al titolo. */
+.nc-row-pdf {
+  flex: none;
+  font-size: 14px;
+  color: var(--accent);
+}
+
 .nc-empty {
   margin: 0;
   font-size: 13px;

@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "1.0.3"
+version = "1.0.4"
 description = "A Tauri App"
 authors = ["you"]
 license = ""
@@ -72,6 +72,11 @@ objc2-app-kit = { version = "0.3", default-features = false, features = ["std", 
 # già aperta e si chiude. Pinnata ESATTA: dalla 2.5.0 richiede tauri ^2.12 (verificato su crates.io).
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-single-instance = { version = "=2.4.5", features = ["deep-link"] }
+# Aggiornamenti dell'app (Impostazioni > Generale, src/core/updater/): vanno in rete solo quando
+# l'utente preme "Controlla aggiornamenti". Pinnate ESATTE: updater dalla 2.13.0 e process dalla
+# 2.4.0 richiedono tauri ^2.12 (verificato sui manifesti di crates.io). Stesse versioni anche su npm.
+tauri-plugin-updater = "=2.12.0"
+tauri-plugin-process = "=2.3.1"
 
 # Gruppi: sessione nel portachiavi del sistema (src/secure_store.rs). La 3.x: la 4.x richiede
 # Rust 1.88 ed edizione 2024. Le feature native vanno attivate a mano (nessuna di default).

@@ -5,6 +5,7 @@ mod file_send;
 mod file_transfer;
 mod notify;
 mod secure_store;
+mod updater;
 
 use tauri::Manager;
 
@@ -65,6 +66,13 @@ pub fn run() {
     // Aprire e condividere i file del Quaderno su Android (src/file_open.rs).
     #[cfg(target_os = "android")]
     let builder = builder.plugin(tauri_plugin_file_open::init());
+    // Aggiornamenti (Impostazioni > Generale, src/core/updater/): nessun controllo automatico, il plugin va
+    // in rete solo quando il frontend chiama `check` (pulsante "Controlla aggiornamenti"). Process serve per
+    // `relaunch` dopo l'installazione su macOS.
+    #[cfg(desktop)]
+    let builder = builder
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init());
 
     builder
         .plugin(tauri_plugin_fs::init())
@@ -94,6 +102,7 @@ pub fn run() {
             db_backup::db_export_save,
             db_backup::db_import_stage,
             db_backup::db_import_apply,
+            updater::updater_prepare_install,
         ])
         .on_window_event(|window, event| {
             // Chiudendo la finestra il server C va fermato, altrimenti la
@@ -142,6 +151,14 @@ pub fn run() {
                 .build()?;
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            // Uscita senza chiudere la finestra (es. il riavvio dopo un aggiornamento, `relaunch`):
+            // stessa pulizia di CloseRequested. Su Windows l'installer chiude il processo senza
+            // questo evento: lì la pulizia la fa `updater_prepare_install` (src/updater.rs).
+            if let tauri::RunEvent::Exit = event {
+                file_transfer::shutdown(app);
+            }
+        });
 }

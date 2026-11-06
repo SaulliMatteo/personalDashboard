@@ -1,16 +1,25 @@
 /** Markdown semplice ⇄ HTML delle pagine. Copre solo ciò che l'editor sa produrre. */
 
 import { asLangName } from "./codeLanguages";
+import { holdMarkerAnchors, isPinComment } from "./bookmarks";
 
 function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function inlineMd(text: string): string {
-  return escapeHtml(text)
+  // Le ancore dei segni (scritte dall'esportazione) tornano segni; il nome non passa da grassetto/corsivo.
+  const markers: string[] = [];
+  const held = holdMarkerAnchors(text, (html) => {
+    markers.push(html);
+    // Segnaposto con caratteri ad uso privato: non compaiono nel testo e il grassetto non li tocca.
+    return `${markers.length - 1}`;
+  });
+  return escapeHtml(held)
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
     .replace(/(^|[^*])\*(?!\s)(.+?)\*(?!\*)/g, "$1<i>$2</i>")
-    .replace(/\[([^\]]+)\]\(((?:https?:|mailto:)[^)\s]+)\)/g, '<a href="$2">$1</a>');
+    .replace(/\[([^\]]+)\]\(((?:https?:|mailto:)[^)\s]+)\)/g, '<a href="$2">$1</a>')
+    .replace(/(\d+)/g, (_all, i: string) => markers[Number(i)] ?? "");
 }
 
 /** Le celle di una riga GFM ("| a | b |"), con "\|" come barra vera. */
@@ -136,6 +145,8 @@ export function markdownToHtml(markdown: string): string {
       i = j;
       continue;
     }
+    // I segni sulla pagina scritti come commento: dal solo Markdown non si possono ricostruire (stanno in canvas.json).
+    if (isPinComment(line)) continue;
     const table = line.includes("|") ? parseTable(lines, i) : null;
 
     if (table) {

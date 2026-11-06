@@ -44,6 +44,10 @@ export type ShortcutAction =
   | "highlighter"
   | "eraser"
   | "textMode"
+  | "pinTool"
+  | "bookmark"
+  | "nextBookmark"
+  | "prevBookmark"
   | "help"
   | "escape";
 
@@ -60,7 +64,7 @@ interface Combo {
   mac?: boolean;
 }
 
-export type ShortcutGroup = "Modifica" | "Testo" | "Tabelle" | "Navigazione" | "Scrittura a mano";
+export type ShortcutGroup = "Modifica" | "Testo" | "Tabelle" | "Navigazione" | "Segni" | "Scrittura a mano";
 
 interface ShortcutDef {
   label: string;
@@ -128,14 +132,19 @@ export const SHORTCUTS: Record<ShortcutAction, ShortcutDef> = {
   },
   escape: { label: "Chiudi, deseleziona", group: "Navigazione", combos: [{ code: "Escape" }] },
 
+  bookmark: { label: "Inserisci un segno", group: "Segni", combos: [{ key: "b", mod: true, alt: true }] },
+  nextBookmark: { label: "Segno successivo", group: "Segni", combos: [{ code: "PageDown", alt: true }] },
+  prevBookmark: { label: "Segno precedente", group: "Segni", combos: [{ code: "PageUp", alt: true }] },
+
   pen: { label: "Penna", group: "Scrittura a mano", combos: [{ key: "p" }] },
   highlighter: { label: "Evidenziatore", group: "Scrittura a mano", combos: [{ key: "h" }] },
   eraser: { label: "Gomma", group: "Scrittura a mano", combos: [{ key: "e" }] },
   textMode: { label: "Torna al testo", group: "Scrittura a mano", combos: [{ key: "t" }] },
+  pinTool: { label: "Segno sulla pagina", group: "Scrittura a mano", combos: [{ key: "s" }] },
 };
 
 /** Azioni delle lettere senza modificatori: valgono solo in modalità disegno. */
-export const INK_ACTIONS: ReadonlySet<ShortcutAction> = new Set(["pen", "highlighter", "eraser", "textMode"]);
+export const INK_ACTIONS: ReadonlySet<ShortcutAction> = new Set(["pen", "highlighter", "eraser", "textMode", "pinTool"]);
 
 export function isMacPlatform(): boolean {
   const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
