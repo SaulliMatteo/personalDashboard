@@ -382,4 +382,63 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE notes ADD COLUMN title_color TEXT`,
     ],
   },
+  // La 18 è dello Studio (giorni e obiettivi per materia, branch non ancora in dev): qui si salta apposta, così un
+  // DB già passato dalla 18 riceve comunque questa. Il runner applica le versioni > user_version, i buchi non contano.
+  {
+    version: 19,
+    description: "YouTube: rinvii dei video consigliati e scarti per canale",
+    statements: [
+      // Una riga per video, creata al primo rinvio o alla prima proposta. Niente FK: deleteVideo la cancella a mano.
+      // snoozed_until e last_suggested_at sono timestamp in ms; NULL = mai rinviato / mai proposto.
+      `CREATE TABLE IF NOT EXISTS video_feedback (
+         video_id INTEGER PRIMARY KEY,
+         snooze_count INTEGER NOT NULL DEFAULT 0,
+         snoozed_until INTEGER,
+         last_suggested_at INTEGER
+       )`,
+      // Quanti video di un canale sono stati scartati: resta anche dopo che i video sono stati eliminati.
+      `CREATE TABLE IF NOT EXISTS video_channel_feedback (
+         channel TEXT PRIMARY KEY,
+         dismissed_count INTEGER NOT NULL DEFAULT 0,
+         updated_at INTEGER NOT NULL
+       )`,
+    ],
+  },
+  {
+    version: 20,
+    description: "Notes: segni (segnalibri) nel testo e sulla pagina",
+    statements: [
+      // Segni appoggiati sulla pagina (scrittura a mano): JSON [{id,name,kind,color,x,y}], coordinate come l'inchiostro.
+      // Rieseguita su un DB che la ha già non fa nulla (duplicate column ignorato in core/db/index.ts).
+      `ALTER TABLE note_pages ADD COLUMN pins TEXT NOT NULL DEFAULT '[]'`,
+      // Indice dei segni per il pannello: si ricalcola a ogni salvataggio della pagina dal suo HTML
+      // (<span data-bm>) e da pins (widgets/notes/lib/bookmarks.ts). Niente FK, come le altre tabelle delle Note.
+      `CREATE TABLE IF NOT EXISTS note_bookmarks (
+         id TEXT PRIMARY KEY,
+         note_id INTEGER NOT NULL,
+         page_id INTEGER NOT NULL,
+         place TEXT NOT NULL,
+         name TEXT NOT NULL,
+         kind TEXT NOT NULL,
+         color TEXT,
+         position INTEGER NOT NULL,
+         created_at INTEGER NOT NULL,
+         updated_at INTEGER NOT NULL
+       )`,
+      `CREATE INDEX IF NOT EXISTS idx_note_bookmarks_note ON note_bookmarks(note_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_note_bookmarks_page ON note_bookmarks(page_id)`,
+    ],
+  },
+  {
+    version: 21,
+    description: "Notes: blocchi PDF (pagine di un PDF copiato nella nota) con l'inchiostro separato",
+    statements: [
+      // NULL = pagina normale; altrimenti JSON del blocco {id, file, name, from, to, sizes, invert?}
+      // (widgets/notes/lib/pdf/pdfData.ts). Il PDF sta in Documenti/Notes/<nota>/allegati/.
+      // Rieseguite su un DB che le ha già non fanno nulla (duplicate column ignorato in core/db/index.ts).
+      `ALTER TABLE note_pages ADD COLUMN pdf TEXT`,
+      // Inchiostro sopra le pagine del PDF: JSON {"<numero pagina>": [tratti]}; il PDF resta intatto.
+      `ALTER TABLE note_pages ADD COLUMN pdf_ink TEXT NOT NULL DEFAULT '{}'`,
+    ],
+  },
 ];

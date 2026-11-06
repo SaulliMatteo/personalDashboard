@@ -3,6 +3,7 @@ import { useSettings } from "../../../core/settings/useSettings";
 import { listSubjects, loadTimerState, logSession } from "../../study/data/studyRepository";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import { emitActivityEvent, getActivity, publishActivity } from "../../../core/activity/activityBus";
+import { claimPlayer } from "../lib/durationFill";
 import { StudyLinkRecorder } from "../lib/studyLink";
 import { MdChevronRight, MdOutlineCheckCircle, MdOutlineDriveFileMove, MdCheckCircle } from "react-icons/md";
 import ConfirmButton from "../../../ui/ConfirmButton";
@@ -11,6 +12,7 @@ import NotesPanel from "../components/NotesPanel";
 import VideoPlayer, { type PlayerHandle } from "../components/VideoPlayer";
 import VideoRow from "../components/VideoRow";
 import {
+  addWatchSession,
   deleteVideo,
   saveProgress,
   setDuration,
@@ -68,6 +70,8 @@ function WatchScreen({ video, folders, videos, onOpenVideo, onNavigateLibrary, o
     () => () => publishActivity({ watchingVideo: false, videoPaused: false, videoProgress: null, videoDurationSeconds: null }),
     []
   );
+  // Mentre questa pagina è aperta il riempimento delle durate in sottofondo aspetta.
+  useEffect(() => claimPlayer(), []);
   // Video nuovo: durata nota (se c'è) e avanzamento da rileggere.
   useEffect(() => {
     publishActivity({ videoDurationSeconds: video.durationSeconds, videoProgress: null });
@@ -205,7 +209,11 @@ function WatchScreen({ video, folders, videos, onOpenVideo, onNavigateLibrary, o
                 if (duration) publishActivity({ videoProgress: Math.min(1, seconds / duration) });
                 void saveProgress(video.id, seconds).catch((e) => console.error(e));
               }}
-              onWatchSegment={(_startedAt, endedAt, seconds) => recorder.add(endedAt, seconds, (e) => console.error("Tempo di studio non salvato:", e))}
+              onWatchSegment={(startedAt, endedAt, seconds) => {
+                // Storico di visione per i consigli: un errore si registra soltanto, il player va avanti.
+                void addWatchSession(video.id, startedAt, endedAt, seconds).catch((e) => console.error("Sessione di visione non salvata:", e));
+                recorder.add(endedAt, seconds, (e) => console.error("Tempo di studio non salvato:", e));
+              }}
               onPlayingChange={(playing) => {
                 // Per il Companion (e chiunque ascolti): "sto guardando un video".
                 publishActivity({ watchingVideo: playing, videoPaused: !playing });

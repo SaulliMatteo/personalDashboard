@@ -1,0 +1,90 @@
+/* Scelta delle pagine di un PDF da inserire: un .nq-menu (forma per tema già nei suoi stili) al centro. */
+
+.nq-pdf-range-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+}
+
+.nq-menu.nq-pdf-range {
+  position: static;
+  box-sizing: border-box;
+  width: min(92vw, 380px);
+  max-height: none;
+  gap: 12px;
+  padding: 18px;
+  font-size: 13px;
+}
+
+.nq-pdf-range header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nq-pdf-range header svg {
+  flex: none;
+  font-size: 20px;
+  color: var(--accent);
+}
+
+.nq-pdf-range header strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.nq-pdf-range p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+}
+
+.nq-pdf-range-choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+}
+
+.nq-pdf-range-choice input[type="number"] {
+  box-sizing: border-box;
+  width: 64px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.nq-pdf-range-choice input[type="number"]:disabled {
+  opacity: 0.5;
+}
+
+.nq-pdf-range-error {
+  color: var(--danger);
+}
+
+.nq-pdf-range footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+:root[data-theme="fosforo"] .nq-pdf-range-choice input[type="number"] {
+  background: transparent;
+  border: var(--panel-border);
+}
+
+:root[data-theme="quaderno"] .nq-pdf-range-choice input[type="number"] {
+  background: transparent;
+  border-width: 1.5px;
+  border-radius: 4px;
+}

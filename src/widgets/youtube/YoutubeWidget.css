@@ -290,6 +290,54 @@
   color: var(--text-secondary);
 }
 
+/* Perché proprio questo video (lib/recommender.ts, describeReason): una riga, dati reali. */
+.ytw-reason {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-muted);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* "Non ora · Scarta" (o "Scartato · Annulla"): pulsanti di solo testo in fondo alla colonna. */
+.ytw-actions {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.ytw-action {
+  all: unset;
+  cursor: pointer;
+  color: var(--text-secondary);
+  border-radius: 4px;
+}
+
+.ytw-action:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ytw-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.ytw-action--danger:hover,
+.ytw-action.is-armed {
+  color: var(--danger);
+}
+
+.ytw-action.is-armed {
+  font-weight: 600;
+}
+
 /* Opaco: titolo grande a destra, "Poi:" sotto; posizione in grassetto. */
 :root[data-theme="opaco"] .ytw-col--left {
   gap: 12px;

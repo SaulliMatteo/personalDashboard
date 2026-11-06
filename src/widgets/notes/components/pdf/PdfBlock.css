@@ -1,0 +1,410 @@
+/* Blocco PDF: le pagine del PDF una sotto l'altra. Le pagine hanno i colori originali del PDF; la
+   cornice, la barra e lo sfondo attorno seguono il tema (solo token). */
+
+.nq-pdf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* ---------- Barra del blocco (resta in alto mentre si scorre) ---------- */
+
+.nq-pdf-bar {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  width: 100%;
+  padding: 6px 8px 6px 12px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: var(--card-border);
+  border-radius: var(--radius-item);
+  box-shadow: var(--card-shadow);
+}
+
+.nq-pdf-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.nq-pdf-title svg {
+  flex: none;
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.nq-pdf-title strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.nq-pdf-title em {
+  flex: none;
+  font-style: normal;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.nq-pdf-counter {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.nq-pdf-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.nq-pdf-tools .nq-icon-btn.is-on {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ---------- Avvisi (link esterno, errori, password) ---------- */
+
+.nq-pdf-confirm {
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.nq-pdf-confirm span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.nq-pdf-status {
+  margin: 24px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.nq-pdf-problem {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 460px);
+  margin: 24px 0;
+  padding: 24px;
+  text-align: center;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: var(--card-border);
+  border-radius: var(--radius-panel);
+}
+
+.nq-pdf-problem > svg {
+  font-size: 30px;
+  color: var(--text-muted);
+}
+
+.nq-pdf-problem p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.nq-pdf-problem small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.nq-pdf-password {
+  display: flex;
+  gap: 6px;
+}
+
+.nq-pdf-password input {
+  box-sizing: border-box;
+  width: 220px;
+  padding: 7px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+}
+
+.nq-pdf-password input:focus-visible {
+  outline: var(--focus-ring);
+}
+
+/* Titolo e proprietà della nota sopra le pagine (blocco come prima pagina). */
+.nq-paper.nq-pdf-titlecard {
+  flex: none;
+  min-height: 0;
+  padding-bottom: 0.4em;
+}
+
+.nq-pdf-find {
+  position: sticky;
+  top: 52px;
+  z-index: 6;
+}
+
+/* ---------- Pagine ---------- */
+
+.nq-pdf-pages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 8px;
+}
+
+.nq-pdf-page {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  background: var(--note-page-bg);
+  border: var(--note-page-border);
+  border-radius: calc(var(--radius-panel) / 2);
+  box-shadow: var(--note-page-shadow);
+}
+
+.nq-pdf-canvas,
+.nq-pdf-canvas canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.nq-pdf-page.is-inverted .nq-pdf-canvas {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.nq-pdf-placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.nq-pdf-number {
+  position: absolute;
+  z-index: 4;
+  right: 8px;
+  bottom: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+/* Testo selezionabile (le regole di base di PDF.js, pdf_viewer.css). */
+.nq-pdf-page .textLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: clip;
+  line-height: 1;
+  text-align: initial;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  caret-color: transparent;
+}
+
+.nq-pdf-page .textLayer :is(span, br) {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0% 0%;
+}
+
+.nq-pdf-page .textLayer span.markedContent {
+  top: 0;
+  height: 0;
+}
+
+.nq-pdf-page .textLayer .endOfContent {
+  display: block;
+  position: absolute;
+  inset: 100% 0 0;
+  z-index: 0;
+  cursor: default;
+  user-select: none;
+}
+
+.nq-pdf-page .textLayer.selecting .endOfContent {
+  top: 0;
+}
+
+.nq-pdf-page .textLayer ::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.nq-pdf-page .textLayer br::selection {
+  background: transparent;
+}
+
+/* In modalità penna il testo non si seleziona: si scrive. */
+.nq-pdf-page.is-ink .textLayer {
+  pointer-events: none;
+}
+
+/* Link del PDF: rettangoli trasparenti che si vedono al passaggio. */
+.nq-pdf-links {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.nq-pdf-link {
+  all: unset;
+  position: absolute;
+  border-radius: 2px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.nq-pdf-link:hover,
+.nq-pdf-link:focus-visible {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  outline: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* Inchiostro sopra la pagina PDF. */
+.nq-pdf-ink {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.nq-pdf-ink.is-active {
+  pointer-events: auto;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.nq-pdf-ink.is-eraser {
+  cursor: cell;
+}
+
+/* ---------- Per tema ---------- */
+
+:root[data-theme="opaco"] .nq-pdf-bar {
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  background: var(--surface-2);
+}
+
+:root[data-theme="quaderno"] .nq-pdf-bar {
+  border-radius: 6px;
+}
+
+:root[data-theme="quaderno"] .nq-pdf-counter {
+  font-family: var(--font-title);
+  font-size: 16px;
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .nq-pdf-bar {
+  /* Pieno: la barra resta in alto e le pagine le scorrono sotto. */
+  background: var(--bg);
+  border: var(--panel-border);
+  box-shadow: none;
+}
+
+/* Miniatura di un blocco PDF (barra ed elenco delle pagine della nota). */
+.nq-thumb-box.nq-thumb-pdf {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  background: var(--note-page-bg);
+  color: var(--accent);
+  font-size: 9px;
+}
+
+.nq-thumb-box.nq-thumb-pdf svg {
+  font-size: 22px;
+}
+
+.nq-thumb-box.nq-thumb-pdf span {
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Nei pallini della barra in basso (22×28 px) ci sta solo un'icona piccola, senza scritta. */
+.nq-pdot .nq-thumb-box.nq-thumb-pdf {
+  height: 100%;
+  aspect-ratio: auto;
+}
+
+.nq-pdot .nq-thumb-box.nq-thumb-pdf svg {
+  font-size: 15px;
+}
+
+.nq-pdot .nq-thumb-box.nq-thumb-pdf span {
+  display: none;
+}
+
+:root[data-theme="fosforo"] .nq-pdf-counter {
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* Raggiunto da un collegamento nel testo o dal pannello dei segni: la barra lampeggia. */
+.nq-pdf-bar[data-bm-flash] {
+  animation: nq-pdf-bar-flash 1.4s ease-out;
+}
+
+@keyframes nq-pdf-bar-flash {
+  0%,
+  35% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  100% {
+    box-shadow: var(--card-shadow);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nq-pdf-bar[data-bm-flash] {
+    animation: none;
+    outline: 2px solid var(--accent);
+  }
+}

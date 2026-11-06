@@ -18,6 +18,7 @@ import {
 } from "react-icons/md";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
 import FolderPanel from "./components/FolderPanel";
+import BookmarkPanel from "./components/BookmarkPanel";
 import VaultPanel from "./components/VaultPanel";
 import FolderTree from "./components/FolderTree";
 import NoteCollection, { type LayoutMode, type SortKey } from "./components/NoteCollection";
@@ -50,8 +51,10 @@ import {
   deleteFolders,
   getPages,
   savePage,
+  setPagePdf,
   deleteNoteForever,
   emptyTrash,
+  listBookmarks,
   listFolders,
   listNotes,
   markAllUnsynced,
@@ -59,9 +62,14 @@ import {
   trashNote,
   updateFolder,
   updateNote,
+  type BookmarkRow,
   type Folder,
   type NoteSummary,
 } from "./data/notesRepository";
+import { editMarkerInHtml, editPin, type BookmarkPatch } from "./lib/bookmarks";
+import { PDF_MAX_BYTES, isPdfName, newPdfInfo, pdfThumbName } from "./lib/pdf/pdfData";
+import { PdfOpenError } from "./lib/pdf/pdfDocument";
+import { inspectPdf } from "./lib/pdf/pdfImport";
 import type { DragItem } from "./lib/drag";
 import { folderIcon } from "./lib/folders";
 import { htmlToText } from "./lib/html";
@@ -94,6 +102,34 @@ type View =
 
 const RECENT_LIMIT = 12;
 
+/** Scheda della barra laterale (Note o Segni): resta tra un'apertura e l'altra, solo su questo dispositivo. */
+const SIDE_TAB_KEY = "notes.sideTab";
+type SideTab = "note" | "segni";
+
+function loadSideTab(): SideTab {
+  try {
+    return localStorage.getItem(SIDE_TAB_KEY) === "segni" ? "segni" : "note";
+  } catch {
+    return "note";
+  }
+}
+
+function saveSideTab(tab: SideTab) {
+  try {
+    localStorage.setItem(SIDE_TAB_KEY, tab);
+  } catch {
+    /* memoria del browser non disponibile: si riparte da "Note" */
+  }
+}
+
+/** Segno da raggiungere in un riquadro (un oggetto nuovo per ogni clic, vedi NoteEditor jumpTo). */
+interface BookmarkJump {
+  pane: "main" | "side";
+  noteId: number;
+  id: string;
+  nonce: number;
+}
+
 /** Pagina "Notes": cartelle, raccolta di note ed editor. */
 function NotesDetail() {
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -119,13 +155,22 @@ function NotesDetail() {
   const [notice, setNotice] = useState<string | null>(null);
   const [attachVersion, setAttachVersion] = useState(0);
   const [extDrag, setExtDrag] = useState(false);
+  const [bookmarks, setBookmarks] = useState<BookmarkRow[]>([]);
+  const [sideTab, setSideTabState] = useState<SideTab>(loadSideTab);
+  const [jump, setJump] = useState<BookmarkJump | null>(null);
   const syncing = useRef(false);
+
+  function setSideTab(tab: SideTab) {
+    setSideTabState(tab);
+    saveSideTab(tab);
+  }
 
   const reload = useCallback(async () => {
     try {
-      const [f, n] = await Promise.all([listFolders(), listNotes()]);
+      const [f, n, b] = await Promise.all([listFolders(), listNotes(), listBookmarks()]);
       setFolders(f);
       setNotes(n);
+      setBookmarks(b);
       setLoaded(true);
       setLoadError(null);
     } catch (error) {
@@ -338,8 +383,9 @@ function NotesDetail() {
   }, []);
 
   function focusSearch() {
-    // La ricerca sta nella barra laterale: se è nascosta la si riapre.
+    // La ricerca sta nella barra laterale (scheda Note): se è nascosta la si riapre.
     setSideOpen(true);
+    setSideTab("note");
     window.requestAnimationFrame(() => searchRef.current?.focus());
   }
   const focusSearchRef = useLatestRef(focusSearch);
@@ -467,6 +513,51 @@ function NotesDetail() {
 
   function handleAddSubfolder() {
     if (customizeFolder) startSubfolder(customizeFolder.id);
+  }
+
+  // ---------------- Segni (pannello) ----------------
+
+  /**
+   * Apre la nota del segno e ci va. Nel riquadro attivo; con `other` (Ctrl+clic) nell'altro lato
+   * dello schermo diviso, che si apre se non c'è. Una nota già aperta in un lato si usa lì.
+   */
+  function openBookmark(b: BookmarkRow, other: boolean) {
+    const split = splitNote !== null;
+    let pane: "main" | "side" = split ? activePane.current : "main";
+    if (other) pane = pane === "main" ? "side" : "main";
+    else if (openId === b.noteId) pane = "main";
+    else if (split && splitId === b.noteId) pane = "side";
+
+    if (pane === "side" && (openNote === null || openNote.id === b.noteId)) pane = "main";
+    if (pane === "side") {
+      setSplitId(b.noteId);
+    } else {
+      // La stessa nota non sta mai nei due lati.
+      if (splitId === b.noteId) setSplitId(null);
+      setOpenId(b.noteId);
+    }
+    setQuery("");
+    setJump({ pane, noteId: b.noteId, id: b.id, nonce: Date.now() });
+  }
+
+  /** Rinomina o elimina dal pannello: dall'editor se la nota è aperta, altrimenti nella pagina salvata. */
+  async function editBookmarkFromPanel(b: BookmarkRow, change: BookmarkPatch | "delete") {
+    for (const api of editorApis.current.values()) {
+      if (api.noteId === b.noteId && api.editBookmark(b.id, change)) return;
+    }
+    await attempt(change === "delete" ? "Impossibile eliminare il segno" : "Impossibile rinominare il segno", async () => {
+      const pages = await getPages(b.noteId);
+      const page = pages.find((p) => p.id === b.pageId);
+      if (!page) throw new Error("Pagina del segno non trovata");
+      if (b.place === "pagina") {
+        const pins = editPin(page.pins, b.id, change);
+        if (pins) await savePage(page.id, b.noteId, page.content, page.ink, pins, page.pdfInk);
+      } else {
+        const html = editMarkerInHtml(page.content, b.id, change);
+        if (html !== null) await savePage(page.id, b.noteId, html, page.ink, page.pins, page.pdfInk);
+      }
+      await reload();
+    });
   }
 
   // ---------------- Trascina e rilascia ----------------
@@ -742,6 +833,36 @@ function NotesDetail() {
   }
 
   /** Una nota nuova da un file: testo per .md/.txt, immagine o scheda del file per gli altri. */
+  /**
+   * Nota PDF: il PDF si legge (pagine, dimensioni, miniatura), si COPIA nella cartella della nota
+   * (l'originale non si tocca) e la nota ha un'unica pagina, il blocco PDF.
+   */
+  async function createPdfNote(file: IncomingFile, folderId: number | null, title: string): Promise<number> {
+    const inspection = await inspectPdf(file.bytes);
+    const id = await createNote(folderId, { title, tags: [], pages: [{ content: "", ink: [], background: "none" }] });
+    const stored = await storePdf(id, file, inspection.thumbnail);
+    const [first] = await getPages(id);
+    if (first) await setPagePdf(first.id, newPdfInfo(stored, file.name, 1, inspection.pages, inspection.sizes));
+    if (inspection.locked) showNotice(`«${file.name}» è protetto da password: la chiederà quando lo apri.`);
+    return id;
+  }
+
+  /**
+   * Copia un PDF nella cartella della nota (allegati/, ma non nell'elenco degli allegati: si vede come
+   * blocco) con la sua miniatura. Restituisce il nome finale ("nome (2).pdf" se c'era già).
+   */
+  async function storePdf(noteId: number, file: IncomingFile, thumbnail: Uint8Array | null): Promise<string> {
+    const dir = await noteDirFor(noteId);
+    const stored = await saveAttachmentFile(dir, file.name, file.bytes);
+    if (thumbnail) {
+      await saveAttachmentFile(dir, pdfThumbName(stored), thumbnail).catch((error: unknown) =>
+        console.error("Miniatura del PDF non salvata:", error)
+      );
+    }
+    await reload();
+    return stored;
+  }
+
   async function createNoteFromFile(file: IncomingFile, folderId: number | null): Promise<number> {
     const name = file.name;
     const title = name.replace(/\.[^.]+$/, "") || name;
@@ -761,6 +882,19 @@ function NotesDetail() {
         pages: plain(markdownToHtml(body)),
       });
     }
+    // PDF: una nota PDF (si vede e si annota dentro la nota). Se è troppo grande o danneggiato
+    // diventa una nota con la scheda del file, come prima.
+    if (isPdfName(name)) {
+      if (file.bytes.length > PDF_MAX_BYTES) showNotice(`«${name}» supera i 200 MB: resta un file allegato.`);
+      else {
+        try {
+          return await createPdfNote(file, folderId, title);
+        } catch (error) {
+          if (!(error instanceof PdfOpenError) || error.kind !== "damaged") throw error;
+          showNotice(`«${name}» è danneggiato o non è un PDF: creata una nota con il file allegato.`);
+        }
+      }
+    }
     const id = await createNote(folderId, { title, tags: [], pages: plain("<p><br></p>") });
     const [stored] = await storeFiles(id, [file]);
     if (stored) {
@@ -772,7 +906,7 @@ function NotesDetail() {
         block = createFileBlock(stored.name, stored.size);
       }
       const [first] = await getPages(id);
-      if (first) await savePage(first.id, id, `${block.outerHTML}<p><br></p>`, []);
+      if (first) await savePage(first.id, id, `${block.outerHTML}<p><br></p>`, [], first.pins, first.pdfInk);
     }
     return id;
   }
@@ -863,6 +997,7 @@ function NotesDetail() {
       <NoteEditor
         registerEditor={onClosePane ? registerSide : registerMain}
         onStoreFiles={storeFiles}
+        onStorePdf={storePdf}
         onOpenShortcuts={() => setKeysOpen(true)}
         key={`${onClosePane ? "side" : "main"}-${note.id}`}
         note={note}
@@ -893,6 +1028,8 @@ function NotesDetail() {
         compact={compact}
         onClosePane={onClosePane}
         collections={collectionLinks}
+        jumpTo={jump && jump.pane === (onClosePane ? "side" : "main") && jump.noteId === note.id ? jump : null}
+        onJumped={() => setJump(null)}
       />
     );
   }
@@ -961,7 +1098,30 @@ function NotesDetail() {
   return (
     <div className="nq">
       {sideOpen && (
-        <aside className="nq-side" aria-label="Note e cartelle">
+        <aside className="nq-side" aria-label="Note e cartelle" data-tab={sideTab}>
+          <div className="nq-side-tabs" role="tablist" aria-label="Barra laterale">
+            <button type="button" role="tab" aria-selected={sideTab === "note"} onClick={() => setSideTab("note")}>
+              Note
+            </button>
+            <button type="button" role="tab" aria-selected={sideTab === "segni"} onClick={() => setSideTab("segni")}>
+              Segni {bookmarks.length > 0 && <em>{bookmarks.filter((b) => live.some((n) => n.id === b.noteId)).length}</em>}
+            </button>
+          </div>
+
+          {sideTab === "segni" ? (
+            <div className="nq-side-scroll">
+              <BookmarkPanel
+                bookmarks={bookmarks}
+                notes={live}
+                childrenOf={childrenOf}
+                folderById={folderById}
+                openNoteId={openNote?.id ?? null}
+                onOpen={openBookmark}
+                onEdit={(b, change) => void editBookmarkFromPanel(b, change)}
+              />
+            </div>
+          ) : (
+          <>
           <label className="nq-search">
             <MdSearch aria-hidden="true" />
             <input
@@ -1083,6 +1243,8 @@ function NotesDetail() {
               <MdOutlineCheckCircle /> {vaultOn ? "Copia su disco attiva" : "Salvato su questo dispositivo"}
             </p>
           </div>
+          </>
+          )}
         </aside>
       )}
 

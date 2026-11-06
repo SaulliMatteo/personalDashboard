@@ -5,13 +5,14 @@ import { asStrokes } from "./ink";
 import { asLangName, langMarkdown } from "./codeLanguages";
 import { asCellAlign, asCellWidth, readTable } from "./tableDom";
 import { MAX_SPAN, asBorderStyle, asBorderWidth, asFillColor, asInkColor, tableToMarkdown } from "./tables";
+import { MARKER_TEXT, asBookmarkId, markerAnchor, markerAttr, pdfLinkAttr, readMarker } from "./bookmarks";
 
 /**
  * Il contenuto delle pagine è HTML scritto in un contentEditable. Prima di
  * rimetterlo nel DOM (editor o anteprime) lo si ripulisce: restano solo i tag
  * di formattazione e pochi attributi (href sicuri, data-check delle checklist, data-indent 1…6,
  * data-font/size/color/mark con i valori di lib/textStyle.ts, colspan/rowspan e
- * data-align/data-width delle celle di tabella).
+ * data-align/data-width delle celle di tabella, data-bm* dei segni di lib/bookmarks.ts).
  */
 const COLOR_RE = /^(#[0-9a-f]{3,8}|rgba?\(\s*\d{1,3}(\s*,\s*\d{1,3}){2}(\s*,\s*[\d.]+)?\s*\)|[a-z]+)$/i;
 const SIZE_RE = /^(\d+(\.\d+)?px|calc\(\s*\d+(\.\d+)?\s*\*\s*var\(--nq-px\)\s*\))$/;
@@ -99,17 +100,22 @@ function tableAttr(name: string, value: string): string | null {
 export interface SanitizeOptions {
   /** "esterno" = HTML incollato da un'altra app: niente blocchi (riferimenti a file della nota). */
   source?: "app" | "esterno";
+  /** Tiene i segni anche con source "esterno" (testo copiato da una nota e incollato nell'app). */
+  bookmarks?: boolean;
 }
 
 export function sanitizeHtml(html: string, options: SanitizeOptions = {}): string {
   if (!html) return "";
   const external = options.source === "esterno";
+  const keepMarkers = !external || options.bookmarks === true;
   const doc = new DOMParser().parseFromString(html, "text/html");
   doc
     .querySelectorAll(
       "script, style, iframe, frame, frameset, object, embed, applet, portal, link, meta, base, form, img, video, audio, svg, math, input, button, textarea, select, template, noscript, noembed, noframes, xmp, plaintext, title, colgroup, col, [data-runtime]"
     )
     .forEach((n) => n.remove());
+  // Nel codice non ci sono segni (il codice è solo testo): il marcatore sparirebbe lasciando il suo carattere.
+  doc.body.querySelectorAll("pre span[data-bm], pre span[data-pdf]").forEach((n) => n.remove());
   // Niente tabelle dentro le celle: quella interna diventa testo.
   doc.body.querySelectorAll("td table, th table").forEach((t) => t.replaceWith(doc.createTextNode(t.textContent ?? "")));
   // Blocchi di codice: il codice è SOLO testo. Il blocco si ricostruisce da zero con un solo <code>
@@ -153,6 +159,22 @@ export function sanitizeHtml(html: string, options: SanitizeOptions = {}): strin
       if (name === "data-indent" && !isBlock && /^[1-6]$/.test(attr.value) && /^(P|DIV|H1|H2|H3)$/.test(el.tagName)) continue;
       if (el.tagName === "SPAN" && validTextAttr(name, attr.value)) continue;
       if (el.tagName === "SPAN" && name === "data-ref-row" && !external && asId(attr.value) !== null) continue;
+      // Segni: solo id, nome, tipo e colore, e solo su uno span con un id valido.
+      if (el.tagName === "SPAN" && name.startsWith("data-bm") && keepMarkers && asBookmarkId(el.getAttribute("data-bm"))) {
+        const kept = markerAttr(name, attr.value);
+        if (kept !== null) {
+          if (kept !== attr.value) el.setAttribute(attr.name, kept);
+          continue;
+        }
+      }
+      // Collegamenti ai blocchi PDF: id, nome, pagine e file, validati (lib/bookmarks.ts).
+      if (el.tagName === "SPAN" && name.startsWith("data-pdf") && keepMarkers && asBookmarkId(el.getAttribute("data-pdf"))) {
+        const kept = pdfLinkAttr(name, attr.value);
+        if (kept !== null) {
+          if (kept !== attr.value) el.setAttribute(attr.name, kept);
+          continue;
+        }
+      }
       if (el.tagName === "TD" || el.tagName === "TH" || el.tagName === "TABLE") {
         const kept = el.tagName === "TABLE" ? tableAttr(name, attr.value) : cellAttr(name, attr.value);
         if (kept !== null) {
@@ -185,6 +207,7 @@ export function htmlToText(html: string): string {
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&amp;/g, "&")
+    .replaceAll(MARKER_TEXT, "") // il carattere dei segni (lib/bookmarks.ts) non è testo
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -194,12 +217,30 @@ export function wordCount(html: string): number {
   return text ? text.split(" ").length : 0;
 }
 
-export function htmlToMarkdown(html: string): string {
+export interface MarkdownOptions {
+  /** Dove sta il PDF di un collegamento rispetto al .md (default: accanto, con il suo nome). */
+  pdfHref?: (file: string) => string;
+}
+
+export function htmlToMarkdown(html: string, options: MarkdownOptions = {}): string {
+  const pdfHref = options.pdfHref ?? ((file: string) => file);
   const doc = new DOMParser().parseFromString(sanitizeHtml(html), "text/html");
 
   const inline = (node: Node): string => {
-    if (node.nodeType === Node.TEXT_NODE) return node.textContent ?? "";
+    if (node.nodeType === Node.TEXT_NODE) return (node.textContent ?? "").replaceAll(MARKER_TEXT, "");
     if (!(node instanceof HTMLElement)) return "";
+    // Un segno: un'ancora invisibile con il nome (lib/bookmarks.ts).
+    if (node.tagName === "SPAN" && node.dataset.bm) {
+      const data = readMarker(node);
+      return data ? markerAnchor(data) : "";
+    }
+    // Collegamento a un blocco PDF: un link al file.
+    if (node.tagName === "SPAN" && node.dataset.pdf) {
+      const name = (node.dataset.pdfName ?? "PDF").replace(/[[\]]/g, "");
+      const pages = Number(node.dataset.pdfPages) || 0;
+      const label = `📄 ${name}${pages > 0 ? ` (${pages === 1 ? "1 pagina" : `${pages} pagine`})` : ""}`;
+      return node.dataset.pdfFile ? `[${label}](<${pdfHref(node.dataset.pdfFile)}>)` : label;
+    }
     const inner = Array.from(node.childNodes).map(inline).join("");
     switch (node.tagName) {
       case "B":

@@ -3,6 +3,7 @@ import { SIZE_W, SIZE_S, SIZE_T, SIZE_L } from "../../core/widgets/sizes";
 import YoutubeWidget from "./YoutubeWidget";
 import YoutubeDetail from "./YoutubeDetail";
 import YoutubeMini from "./mini/YoutubeMini";
+import { YoutubeProvider } from "./YoutubeContext";
 
 export const youtubeWidget: WidgetDefinition = {
   id: "youtube",
@@ -12,8 +13,9 @@ export const youtubeWidget: WidgetDefinition = {
   sizes: [SIZE_W, SIZE_S, SIZE_T, SIZE_L],
   defaultPlacement: { x: 3, y: 0, w: 2, h: 1 },
   settingsGroup: "youtube",
-  // Nessun provider: il video si ferma
-  // quando si lascia la pagina di dettaglio (la posizione viene salvata).
+  // Il provider non tiene in vita il player (il video si ferma lasciando la pagina, la posizione viene
+  // salvata): riempie solo, in sottofondo, le durate mancanti (lib/durationFill.ts).
+  provider: YoutubeProvider,
   detailComponent: YoutubeDetail,
   mini: YoutubeMini,
 };

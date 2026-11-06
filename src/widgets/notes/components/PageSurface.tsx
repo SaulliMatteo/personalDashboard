@@ -12,6 +12,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import type { InkStroke, NotePage, PageBackground } from "../data/notesRepository";
+import { LINK_SELECTOR, MARKER_SELECTOR, MARKER_TEXT, PDF_LINK_SELECTOR, prepareMarkers, rememberCopy, type PagePin } from "../lib/bookmarks";
 import { BLOCK_SELECTOR, createCodeBlock, hydrateBlocks, serializeEditor, type BlockKind } from "../lib/blocks";
 import { parseFence } from "../lib/codeLanguages";
 import { currentBlock, topBlock } from "../lib/editorDom";
@@ -27,7 +28,9 @@ import CodeBlock from "./CodeBlock";
 import FileCard from "./FileCard";
 import ImageBlock from "./ImageBlock";
 import InkLayer, { type InkTool } from "./InkLayer";
+import InkPins from "./InkPins";
 import TableTools from "./TableTools";
+import { usePdfLinkDrag } from "./usePdfLinkDrag";
 
 interface PageSurfaceProps {
   page: NotePage;
@@ -63,6 +66,16 @@ interface PageSurfaceProps {
   collections: CollectionLinks;
   /** Clic su un riferimento a una riga (@). */
   onRefClick?: (rowId: number) => void;
+  /** Clic su un segno nel testo (si apre il suo popover). */
+  onMarkerClick?: (marker: HTMLElement) => void;
+  /** Clic su un collegamento a un blocco PDF (id del blocco). */
+  onPdfLinkClick?: (id: string) => void;
+  /** Tasto destro nel testo: il menu della pagina (marker = il segno sotto il puntatore). */
+  onPageMenu?: (point: { x: number; y: number }, marker: HTMLElement | null) => void;
+  /** Segni sulla pagina: appoggiato con lo strumento "segno", aperto con un clic, spostato trascinandolo. */
+  onPlacePin?: (point: [number, number], client: { x: number; y: number }) => void;
+  onOpenPin?: (pin: PagePin, anchor: DOMRect) => void;
+  onMovePin?: (id: string, x: number, y: number) => void;
 }
 
 /** Testo dei riferimenti @ allineato ai dati della raccolta (e segno sulle righe eliminate). */
@@ -90,6 +103,42 @@ interface BlockEntry {
 /** Una riga di testo vuota senza niente dentro (<p></p>): alta zero, il cursore non ci entra. */
 function isHollow(el: Element): boolean {
   return /^(P|DIV|H1|H2|H3)$/.test(el.tagName) && !el.hasAttribute("data-block") && el.childNodes.length === 0;
+}
+
+/**
+ * Il segno o collegamento PDF subito prima (-1) o subito dopo (1) il cursore, se c'è: salta i nodi di
+ * testo vuoti e risale gli span di stile del browser (il cursore all'inizio di uno span "vede" ciò che
+ * sta prima dello span). Solo con il cursore senza selezione e nella stessa riga.
+ */
+function adjacentLink(root: HTMLElement, direction: -1 | 1): HTMLElement | null {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return null;
+  const { startContainer: container, startOffset: offset } = sel.getRangeAt(0);
+  if (!root.contains(container)) return null;
+  const empty = (n: Node | null) => n !== null && n.nodeType === Node.TEXT_NODE && (n.textContent ?? "") === "";
+  let node: Node | null;
+  if (container.nodeType === Node.TEXT_NODE) {
+    const text = container.textContent ?? "";
+    if (direction < 0 ? offset > 0 : offset < text.length) return null;
+    node = container;
+  } else {
+    const child = container.childNodes[direction < 0 ? offset - 1 : offset] ?? null;
+    if (child) {
+      let candidate: Node | null = child;
+      while (empty(candidate)) candidate = direction < 0 ? candidate!.previousSibling : candidate!.nextSibling;
+      return candidate instanceof HTMLElement && candidate.matches(LINK_SELECTOR) ? candidate : null;
+    }
+    node = container;
+  }
+  // Dal bordo del nodo: il fratello accanto, risalendo finché si è al bordo del genitore (dentro la riga).
+  for (;;) {
+    let sibling = direction < 0 ? node.previousSibling : node.nextSibling;
+    while (empty(sibling)) sibling = direction < 0 ? sibling!.previousSibling : sibling!.nextSibling;
+    if (sibling) return sibling instanceof HTMLElement && sibling.matches(LINK_SELECTOR) ? sibling : null;
+    const parent: HTMLElement | null = node.parentElement;
+    if (!parent || parent === root || !/^(SPAN|B|I|U|S|STRONG|EM|A|MARK)$/.test(parent.tagName)) return null;
+    node = parent;
+  }
 }
 
 /**
@@ -244,6 +293,9 @@ function PageSurface(props: PageSurfaceProps) {
     if (editorRef.current) onContent(serializeEditor(editorRef.current));
   }
 
+  // Un collegamento a un PDF si sposta trascinandolo nel testo.
+  const linkDrag = usePdfLinkDrag(editorRef, props.mode === "text", emit);
+
   function selectBlock(el: HTMLElement) {
     setSelected(el);
     if (document.activeElement !== el && !el.contains(document.activeElement)) el.focus({ preventScroll: true });
@@ -270,6 +322,33 @@ function PageSurface(props: PageSurfaceProps) {
     onBlockChange();
   }
 
+  /**
+   * Copia o taglia una selezione con dei segni: negli appunti va il nostro HTML (con i segni), e lo si
+   * ricorda per riconoscerlo all'incolla (lib/bookmarks.ts). Senza segni resta il comportamento del browser.
+   */
+  function handleCopy(e: ClipboardEvent<HTMLDivElement>, cut: boolean) {
+    const root = editorRef.current;
+    const sel = window.getSelection();
+    if (!root || !sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    if (!root.contains(range.commonAncestorContainer)) return;
+    const box = document.createElement("div");
+    box.appendChild(range.cloneContents());
+    if (!box.querySelector(LINK_SELECTOR)) return;
+    e.preventDefault();
+    const html = serializeEditor(box);
+    // Il carattere a larghezza zero dei segni non serve fuori dalla nota.
+    const plain = sel.toString().replaceAll(MARKER_TEXT, "");
+    e.clipboardData.setData("text/html", html);
+    e.clipboardData.setData("text/plain", plain);
+    rememberCopy(plain, html);
+    // Taglia dal menu: un comando dentro un altro il browser non lo esegue, si cancella a mano.
+    if (cut && !document.execCommand("delete")) {
+      range.deleteContents();
+      emit();
+    }
+  }
+
   function handlePaste(e: ClipboardEvent<HTMLDivElement>) {
     if (props.onPaste?.(e)) return;
     // Se nessuno lo gestisce si incolla testo semplice.
@@ -279,7 +358,18 @@ function PageSurface(props: PageSurfaceProps) {
 
   // Click sul "cerchietto" di una voce di checklist = la spunta/toglie.
   function handleClick(e: MouseEvent<HTMLDivElement>) {
+    if (linkDrag.consumeClick()) return;
     const root = editorRef.current;
+    const marker = (e.target as HTMLElement).closest<HTMLElement>(MARKER_SELECTOR);
+    if (root && marker && root.contains(marker)) {
+      props.onMarkerClick?.(marker);
+      return;
+    }
+    const pdfLink = (e.target as HTMLElement).closest<HTMLElement>(PDF_LINK_SELECTOR);
+    if (root && pdfLink?.dataset.pdf && root.contains(pdfLink)) {
+      props.onPdfLinkClick?.(pdfLink.dataset.pdf);
+      return;
+    }
     const ref = (e.target as HTMLElement).closest<HTMLElement>("[data-ref-row]");
     if (root && ref && root.contains(ref)) {
       props.onRefClick?.(Number(ref.dataset.refRow));
@@ -316,6 +406,23 @@ function PageSurface(props: PageSurfaceProps) {
         e.preventDefault(); // il focus resta nella pagina
       }
       return;
+    }
+    // Backspace / Canc accanto a un segno o a un collegamento PDF: lo si toglie qui, sempre in un colpo
+    // (da certe posizioni il browser sposta solo il cursore). È una modifica normale: Ctrl+Z la annulla.
+    if ((e.key === "Backspace" || e.key === "Delete") && !e.ctrlKey && !e.metaKey && !e.altKey && editorRef.current) {
+      const link = adjacentLink(editorRef.current, e.key === "Backspace" ? -1 : 1);
+      if (link) {
+        e.preventDefault();
+        const sel = window.getSelection();
+        const range = document.createRange();
+        range.setStartBefore(link);
+        range.collapse(true);
+        link.remove();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+        emit();
+        return;
+      }
     }
     // Tabelle: Tab / Shift+Tab tra le celle (Tab nell'ultima aggiunge una riga), Invio = a capo nella cella.
     const cell = caretCell(editorRef.current);
@@ -407,15 +514,29 @@ function PageSurface(props: PageSurfaceProps) {
           suppressContentEditableWarning
           spellCheck
           onInput={() => {
+            // Segni arrivati nel testo (incolla, testo trascinato): un pezzo unico, con il nome al passaggio.
+            if (editorRef.current) prepareMarkers(editorRef.current);
             emit();
             props.onAfterInput?.();
           }}
           onPaste={handlePaste}
+          onCopy={(e) => handleCopy(e, false)}
+          onCut={(e) => handleCopy(e, true)}
+          onContextMenu={(e) => {
+            if (props.mode !== "text" || !props.onPageMenu) return;
+            const target = e.target as HTMLElement;
+            const marker = target.closest<HTMLElement>(LINK_SELECTOR);
+            // Dentro i blocchi (codice, immagini, file, viste) resta il loro comportamento.
+            if (!marker && target.closest("[data-block]")) return;
+            e.preventDefault();
+            props.onPageMenu({ x: e.clientX, y: e.clientY }, marker);
+          }}
           onDrop={(e) => e.preventDefault()}
           // I blocchi si spostano col loro trascinamento (ImageBlock), mai con quello nativo del browser.
           onDragStart={(e) => {
             if (e.target instanceof Element && e.target.closest("[data-block]")) e.preventDefault();
           }}
+          onPointerDown={linkDrag.onPointerDown}
           onClick={handleClick}
           onKeyDown={handleKeyDown}
           onFocus={(e) => {
@@ -432,12 +553,32 @@ function PageSurface(props: PageSurfaceProps) {
           size={props.size}
           shapes={props.shapes}
           onChange={props.onInk}
+          onPlacePin={props.onPlacePin}
         />
+
+        {page.pins.length > 0 && (
+          <InkPins
+            pins={page.pins}
+            movable={props.mode === "ink" && props.tool === "pin"}
+            onOpen={(pin, anchor) => props.onOpenPin?.(pin, anchor)}
+            onMove={(id, x, y) => props.onMovePin?.(id, x, y)}
+          />
+        )}
 
         {paper && props.mode === "text" && (
           <TableTools paper={paper} editorRef={editorRef} onChange={onBlockChange} onNotice={(message) => props.onNotice?.(message)} />
         )}
       </div>
+
+      {linkDrag.caret &&
+        createPortal(
+          <span
+            className="nq-link-drop-caret"
+            aria-hidden="true"
+            style={{ left: linkDrag.caret.x, top: linkDrag.caret.y, height: linkDrag.caret.h }}
+          />,
+          document.body
+        )}
 
       {blocks.map((b) =>
         createPortal(

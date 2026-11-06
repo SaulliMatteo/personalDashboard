@@ -117,23 +117,23 @@ function FolderTree(props: FolderTreeProps) {
                     onCancel={props.onCancelCreate}
                   />
                 )}
-                {selected &&
-                  direct.slice(0, 3).map((note) => (
-                    <button
-                      key={note.id}
-                      type="button"
-                      className={`nq-tree-note${openNoteId === note.id ? " is-active" : ""}`}
-                      style={{ paddingLeft: 10 + (depth + 1) * INDENT + 22 }}
-                      onClick={() => props.onOpenNote(note.id)}
-                      onPointerDown={(e) => props.onDragStart(e, { kind: "note", id: note.id, label: note.title || "Senza titolo" })}
-                    >
-                      <MdOutlineDescription />
-                      <NoteTitle className="nq-tree-name" color={note.titleColor} deps={[openNoteId === note.id]}>
-                        {note.title || "Senza titolo"}
-                      </NoteTitle>
-                    </button>
-                  ))}
-                {selected && direct.length > 3 && (
+                {/* Aperta (con la freccetta o selezionandola): si vedono le prime note, anche se non è selezionata. */}
+                {direct.slice(0, 3).map((note) => (
+                  <button
+                    key={note.id}
+                    type="button"
+                    className={`nq-tree-note${openNoteId === note.id ? " is-active" : ""}`}
+                    style={{ paddingLeft: 10 + (depth + 1) * INDENT + 22 }}
+                    onClick={() => props.onOpenNote(note.id)}
+                    onPointerDown={(e) => props.onDragStart(e, { kind: "note", id: note.id, label: note.title || "Senza titolo" })}
+                  >
+                    <MdOutlineDescription />
+                    <NoteTitle className="nq-tree-name" color={note.titleColor} deps={[openNoteId === note.id]}>
+                      {note.title || "Senza titolo"}
+                    </NoteTitle>
+                  </button>
+                ))}
+                {direct.length > 3 && (
                   <span className="nq-tree-more" style={{ paddingLeft: 10 + (depth + 1) * INDENT + 22 }}>
                     … Altri {direct.length - 3} documenti
                   </span>

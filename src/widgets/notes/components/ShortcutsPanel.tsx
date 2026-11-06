@@ -3,7 +3,7 @@ import { MdClose } from "react-icons/md";
 import { SHORTCUTS, shortcutKeys, type ShortcutAction, type ShortcutGroup } from "../lib/shortcuts";
 import "./ShortcutsPanel.css";
 
-const GROUPS: ShortcutGroup[] = ["Modifica", "Testo", "Tabelle", "Navigazione", "Scrittura a mano"];
+const GROUPS: ShortcutGroup[] = ["Modifica", "Testo", "Tabelle", "Navigazione", "Segni", "Scrittura a mano"];
 
 /** Voci che nel pannello stanno su una riga sola (come nel mockup). */
 const EXTRA_ROWS: Partial<Record<ShortcutGroup, { label: string; keys: string[] }[]>> = {

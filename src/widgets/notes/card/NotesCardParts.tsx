@@ -1,5 +1,5 @@
 import { useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
-import { MdAdd, MdOutlineDescription, MdOutlineStorage } from "react-icons/md";
+import { MdAdd, MdOutlineDescription, MdOutlinePictureAsPdf, MdOutlineStorage } from "react-icons/md";
 import type { NotesCardData } from "./useNotesCard";
 import NoteTitle from "../components/NoteTitle";
 import "./notesCard.css";
@@ -20,6 +20,7 @@ export function NoteRows({ data, limit }: { data: NotesCardData; limit: number }
           <NoteTitle className="nc-row-title" color={note.titleColor}>
             {note.title}
           </NoteTitle>
+          {note.pdf && <MdOutlinePictureAsPdf className="nc-row-pdf" aria-label="PDF" />}
           <time>{note.when}</time>
         </button>
       ))}
