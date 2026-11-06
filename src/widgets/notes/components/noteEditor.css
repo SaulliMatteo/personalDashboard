@@ -1070,7 +1070,8 @@
 
 /* ---------- Avviso ---------- */
 
-.nq-toast--action {
+/* .nq-toast (più sotto) toglie i clic: l'avviso con un pulsante li deve ricevere, quindi due classi. */
+.nq-toast.nq-toast--action {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -2148,4 +2149,120 @@
 /* Strumento "segno" della scrittura a mano. */
 .nq-ink.is-pin {
   cursor: copy;
+}
+
+/* ---------- Collegamento a un blocco PDF nel testo (lib/bookmarks.ts, lib/pdf) ----------
+   Span vuoto e non modificabile: l'etichetta ("PDF" + nome) la disegna il CSS dagli attributi. */
+
+.nq-doc span[data-pdf] {
+  /* inline-block, non inline-flex: così Canc e Backspace lo trattano come un carattere solo. */
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0 0.1em;
+  padding: 0.05em 0.5em 0.05em 0.2em;
+  vertical-align: 0.05em;
+  border-radius: var(--radius-item);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--note-page-ink);
+  font-size: 0.85em;
+  line-height: 1.5;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.nq-doc span[data-pdf]::before {
+  content: "PDF";
+  display: inline-block;
+  margin-right: 0.35em;
+  padding: 0 0.35em;
+  border-radius: calc(var(--radius-item) - 2px);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.75em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.nq-doc span[data-pdf]::after {
+  content: attr(data-pdf-name);
+}
+
+.nq-doc span[data-pdf]:hover {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* Trascinato per spostarlo (components/usePdfLinkDrag.ts): resta al suo posto, sbiadito, finché non lo si rilascia. */
+.nq-doc span[data-pdf][data-dragging] {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+/* Dove andrà il collegamento: una barretta come il cursore del testo (fuori dalla pagina, in body). */
+.nq-link-drop-caret {
+  position: fixed;
+  z-index: 1000;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+  pointer-events: none;
+}
+
+/* Il blocco PDF collegato non c'è più. */
+.nq-doc span[data-pdf][data-missing] {
+  opacity: 0.55;
+  text-decoration: line-through;
+  cursor: default;
+}
+
+.nq-doc span[data-pdf][data-missing]::after {
+  content: attr(data-pdf-name) " (rimosso)";
+}
+
+.nq-doc span[data-pdf][data-bm-flash] {
+  animation: nq-pdf-link-flash 1.4s ease-out;
+}
+
+@keyframes nq-pdf-link-flash {
+  0%,
+  35% {
+    box-shadow: 0 0 0 0.35em color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+
+:root[data-theme="opaco"] .nq-doc span[data-pdf] {
+  border: 0;
+  border-radius: 999px;
+}
+
+:root[data-theme="quaderno"] .nq-doc span[data-pdf] {
+  border-radius: 3px;
+  border-width: 1.5px;
+  background: transparent;
+}
+
+:root[data-theme="fosforo"] .nq-doc span[data-pdf] {
+  border-radius: 2px;
+  background: transparent;
+  border-color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .nq-doc span[data-pdf]::before {
+  background: transparent;
+  color: var(--accent);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nq-doc span[data-pdf][data-bm-flash] {
+    animation: none;
+    outline: 2px solid var(--accent);
+  }
 }

@@ -12,7 +12,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import type { InkStroke, NotePage, PageBackground } from "../data/notesRepository";
-import { MARKER_SELECTOR, MARKER_TEXT, prepareMarkers, rememberCopy, type PagePin } from "../lib/bookmarks";
+import { LINK_SELECTOR, MARKER_SELECTOR, MARKER_TEXT, PDF_LINK_SELECTOR, prepareMarkers, rememberCopy, type PagePin } from "../lib/bookmarks";
 import { BLOCK_SELECTOR, createCodeBlock, hydrateBlocks, serializeEditor, type BlockKind } from "../lib/blocks";
 import { parseFence } from "../lib/codeLanguages";
 import { currentBlock, topBlock } from "../lib/editorDom";
@@ -30,6 +30,7 @@ import ImageBlock from "./ImageBlock";
 import InkLayer, { type InkTool } from "./InkLayer";
 import InkPins from "./InkPins";
 import TableTools from "./TableTools";
+import { usePdfLinkDrag } from "./usePdfLinkDrag";
 
 interface PageSurfaceProps {
   page: NotePage;
@@ -67,6 +68,8 @@ interface PageSurfaceProps {
   onRefClick?: (rowId: number) => void;
   /** Clic su un segno nel testo (si apre il suo popover). */
   onMarkerClick?: (marker: HTMLElement) => void;
+  /** Clic su un collegamento a un blocco PDF (id del blocco). */
+  onPdfLinkClick?: (id: string) => void;
   /** Tasto destro nel testo: il menu della pagina (marker = il segno sotto il puntatore). */
   onPageMenu?: (point: { x: number; y: number }, marker: HTMLElement | null) => void;
   /** Segni sulla pagina: appoggiato con lo strumento "segno", aperto con un clic, spostato trascinandolo. */
@@ -100,6 +103,42 @@ interface BlockEntry {
 /** Una riga di testo vuota senza niente dentro (<p></p>): alta zero, il cursore non ci entra. */
 function isHollow(el: Element): boolean {
   return /^(P|DIV|H1|H2|H3)$/.test(el.tagName) && !el.hasAttribute("data-block") && el.childNodes.length === 0;
+}
+
+/**
+ * Il segno o collegamento PDF subito prima (-1) o subito dopo (1) il cursore, se c'è: salta i nodi di
+ * testo vuoti e risale gli span di stile del browser (il cursore all'inizio di uno span "vede" ciò che
+ * sta prima dello span). Solo con il cursore senza selezione e nella stessa riga.
+ */
+function adjacentLink(root: HTMLElement, direction: -1 | 1): HTMLElement | null {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return null;
+  const { startContainer: container, startOffset: offset } = sel.getRangeAt(0);
+  if (!root.contains(container)) return null;
+  const empty = (n: Node | null) => n !== null && n.nodeType === Node.TEXT_NODE && (n.textContent ?? "") === "";
+  let node: Node | null;
+  if (container.nodeType === Node.TEXT_NODE) {
+    const text = container.textContent ?? "";
+    if (direction < 0 ? offset > 0 : offset < text.length) return null;
+    node = container;
+  } else {
+    const child = container.childNodes[direction < 0 ? offset - 1 : offset] ?? null;
+    if (child) {
+      let candidate: Node | null = child;
+      while (empty(candidate)) candidate = direction < 0 ? candidate!.previousSibling : candidate!.nextSibling;
+      return candidate instanceof HTMLElement && candidate.matches(LINK_SELECTOR) ? candidate : null;
+    }
+    node = container;
+  }
+  // Dal bordo del nodo: il fratello accanto, risalendo finché si è al bordo del genitore (dentro la riga).
+  for (;;) {
+    let sibling = direction < 0 ? node.previousSibling : node.nextSibling;
+    while (empty(sibling)) sibling = direction < 0 ? sibling!.previousSibling : sibling!.nextSibling;
+    if (sibling) return sibling instanceof HTMLElement && sibling.matches(LINK_SELECTOR) ? sibling : null;
+    const parent: HTMLElement | null = node.parentElement;
+    if (!parent || parent === root || !/^(SPAN|B|I|U|S|STRONG|EM|A|MARK)$/.test(parent.tagName)) return null;
+    node = parent;
+  }
 }
 
 /**
@@ -254,6 +293,9 @@ function PageSurface(props: PageSurfaceProps) {
     if (editorRef.current) onContent(serializeEditor(editorRef.current));
   }
 
+  // Un collegamento a un PDF si sposta trascinandolo nel testo.
+  const linkDrag = usePdfLinkDrag(editorRef, props.mode === "text", emit);
+
   function selectBlock(el: HTMLElement) {
     setSelected(el);
     if (document.activeElement !== el && !el.contains(document.activeElement)) el.focus({ preventScroll: true });
@@ -292,7 +334,7 @@ function PageSurface(props: PageSurfaceProps) {
     if (!root.contains(range.commonAncestorContainer)) return;
     const box = document.createElement("div");
     box.appendChild(range.cloneContents());
-    if (!box.querySelector(MARKER_SELECTOR)) return;
+    if (!box.querySelector(LINK_SELECTOR)) return;
     e.preventDefault();
     const html = serializeEditor(box);
     // Il carattere a larghezza zero dei segni non serve fuori dalla nota.
@@ -316,10 +358,16 @@ function PageSurface(props: PageSurfaceProps) {
 
   // Click sul "cerchietto" di una voce di checklist = la spunta/toglie.
   function handleClick(e: MouseEvent<HTMLDivElement>) {
+    if (linkDrag.consumeClick()) return;
     const root = editorRef.current;
     const marker = (e.target as HTMLElement).closest<HTMLElement>(MARKER_SELECTOR);
     if (root && marker && root.contains(marker)) {
       props.onMarkerClick?.(marker);
+      return;
+    }
+    const pdfLink = (e.target as HTMLElement).closest<HTMLElement>(PDF_LINK_SELECTOR);
+    if (root && pdfLink?.dataset.pdf && root.contains(pdfLink)) {
+      props.onPdfLinkClick?.(pdfLink.dataset.pdf);
       return;
     }
     const ref = (e.target as HTMLElement).closest<HTMLElement>("[data-ref-row]");
@@ -358,6 +406,23 @@ function PageSurface(props: PageSurfaceProps) {
         e.preventDefault(); // il focus resta nella pagina
       }
       return;
+    }
+    // Backspace / Canc accanto a un segno o a un collegamento PDF: lo si toglie qui, sempre in un colpo
+    // (da certe posizioni il browser sposta solo il cursore). È una modifica normale: Ctrl+Z la annulla.
+    if ((e.key === "Backspace" || e.key === "Delete") && !e.ctrlKey && !e.metaKey && !e.altKey && editorRef.current) {
+      const link = adjacentLink(editorRef.current, e.key === "Backspace" ? -1 : 1);
+      if (link) {
+        e.preventDefault();
+        const sel = window.getSelection();
+        const range = document.createRange();
+        range.setStartBefore(link);
+        range.collapse(true);
+        link.remove();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+        emit();
+        return;
+      }
     }
     // Tabelle: Tab / Shift+Tab tra le celle (Tab nell'ultima aggiunge una riga), Invio = a capo nella cella.
     const cell = caretCell(editorRef.current);
@@ -460,7 +525,7 @@ function PageSurface(props: PageSurfaceProps) {
           onContextMenu={(e) => {
             if (props.mode !== "text" || !props.onPageMenu) return;
             const target = e.target as HTMLElement;
-            const marker = target.closest<HTMLElement>(MARKER_SELECTOR);
+            const marker = target.closest<HTMLElement>(LINK_SELECTOR);
             // Dentro i blocchi (codice, immagini, file, viste) resta il loro comportamento.
             if (!marker && target.closest("[data-block]")) return;
             e.preventDefault();
@@ -471,6 +536,7 @@ function PageSurface(props: PageSurfaceProps) {
           onDragStart={(e) => {
             if (e.target instanceof Element && e.target.closest("[data-block]")) e.preventDefault();
           }}
+          onPointerDown={linkDrag.onPointerDown}
           onClick={handleClick}
           onKeyDown={handleKeyDown}
           onFocus={(e) => {
@@ -503,6 +569,16 @@ function PageSurface(props: PageSurfaceProps) {
           <TableTools paper={paper} editorRef={editorRef} onChange={onBlockChange} onNotice={(message) => props.onNotice?.(message)} />
         )}
       </div>
+
+      {linkDrag.caret &&
+        createPortal(
+          <span
+            className="nq-link-drop-caret"
+            aria-hidden="true"
+            style={{ left: linkDrag.caret.x, top: linkDrag.caret.y, height: linkDrag.caret.h }}
+          />,
+          document.body
+        )}
 
       {blocks.map((b) =>
         createPortal(

@@ -20,6 +20,8 @@ import {
   markerAttr,
   newBookmarkId,
   parsePins,
+  pdfLinkAttr,
+  pdfLinkIds,
   pinsMarkdown,
   readBookmarks,
   readTextBookmarks,
@@ -160,6 +162,24 @@ test("copia dentro l'app: l'HTML si riconosce solo se il testo è lo stesso", ()
   rememberCopy("ciao", "<p>ciao</p>");
   assert.equal(copiedHtmlFor("ciao"), "<p>ciao</p>");
   assert.equal(copiedHtmlFor("altro"), null);
+});
+
+test("collegamenti ai PDF: letti in ordine con i segni, attributi validati", () => {
+  const html = `<p>a ${marker("aaaaaaaa")} b <span data-pdf="pppppppp" data-pdf-name="Dispensa.pdf" data-pdf-pages="12" data-pdf-file="dispensa.pdf"></span></p>`;
+  assert.deepEqual(
+    readTextBookmarks(html).map((m) => [m.id, m.kind, m.name]),
+    [
+      ["aaaaaaaa", "bookmark", "Segno"],
+      ["pppppppp", "pdf", "Dispensa.pdf"],
+    ]
+  );
+  assert.deepEqual(pdfLinkIds(html), ["pppppppp"]);
+  assert.equal(pdfLinkAttr("data-pdf", "x"), null);
+  assert.equal(pdfLinkAttr("data-pdf-pages", "abc"), "0");
+  assert.equal(pdfLinkAttr("data-pdf-file", "../x.pdf"), null);
+  assert.equal(pdfLinkAttr("data-pdf-file", "a.exe"), null);
+  assert.equal(pdfLinkAttr("data-pdf-file", "Libro (2).pdf"), "Libro (2).pdf");
+  assert.equal(pdfLinkAttr("data-pdf-other", "x"), null);
 });
 
 console.log(`bookmarks: ${passed} prove superate`);

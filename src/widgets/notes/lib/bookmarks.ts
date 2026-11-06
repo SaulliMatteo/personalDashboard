@@ -17,6 +17,8 @@
 import { TEXT_COLORS } from "./textStyle";
 
 export type BookmarkKind = "bookmark" | "star" | "important" | "question" | "review" | "todo";
+/** Nell'indice e nel pannello c'è anche il collegamento a un blocco PDF (lib/pdf). */
+export type MarkKind = BookmarkKind | "pdf";
 export type BookmarkPlace = "testo" | "pagina";
 
 /** Ordine dei pulsanti nel popover e dei filtri nel pannello. */
@@ -52,8 +54,13 @@ export interface PagePin extends BookmarkData {
   y: number;
 }
 
+/** Un segno nel testo come lo legge l'indice (anche i collegamenti ai PDF). */
+export interface TextMark extends Omit<BookmarkData, "kind"> {
+  kind: MarkKind;
+}
+
 /** Una riga dell'indice: dove sta il segno nella pagina e com'è fatto. */
-export interface BookmarkEntry extends BookmarkData {
+export interface BookmarkEntry extends TextMark {
   place: BookmarkPlace;
   /** Ordine nella pagina: prima i segni nel testo (ordine del testo), poi quelli sulla pagina (dall'alto). */
   position: number;
@@ -71,6 +78,10 @@ export function isBookmarkKind(value: unknown): value is BookmarkKind {
 
 export function asBookmarkKind(value: unknown): BookmarkKind {
   return isBookmarkKind(value) ? value : "bookmark";
+}
+
+export function asMarkKind(value: unknown): MarkKind {
+  return value === "pdf" ? "pdf" : asBookmarkKind(value);
 }
 
 export function asBookmarkId(value: unknown): string | null {
@@ -164,12 +175,65 @@ export function defaultBookmarkName(after: string, before: string, words = 5): s
   return asBookmarkName(tail.slice(-40));
 }
 
-export function kindLabel(kind: BookmarkKind): string {
+export function kindLabel(kind: MarkKind): string {
+  if (kind === "pdf") return "PDF";
   return BOOKMARK_KINDS.find((k) => k.key === kind)?.label ?? "Segno";
 }
 
-export function kindGlyph(kind: BookmarkKind): string {
+export function kindGlyph(kind: MarkKind): string {
+  if (kind === "pdf") return "📄";
   return BOOKMARK_KINDS.find((k) => k.key === kind)?.glyph ?? "🔖";
+}
+
+// ---------------------------------------------------------------------
+// Collegamenti ai blocchi PDF nel testo:
+// <span data-pdf="ID del blocco" data-pdf-name="Dispensa.pdf" data-pdf-pages="12" data-pdf-file="dispensa.pdf"></span>
+// Vuoti e non modificabili come i segni; l'etichetta la disegna il CSS.
+// ---------------------------------------------------------------------
+
+export const PDF_LINK_SELECTOR = "span[data-pdf]";
+/** Segni e collegamenti ai PDF: i pezzi unici nel testo che copia e incolla devono conservare. */
+export const LINK_SELECTOR = "span[data-bm], span[data-pdf]";
+
+export interface PdfLinkData {
+  id: string;
+  name: string;
+  pages: number;
+  file: string;
+}
+
+function asLinkFile(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const name = value.trim();
+  return name && name.length <= 200 && !/[\\/:*?"<>|]/.test(name) && /\.pdf$/i.test(name) ? name : null;
+}
+
+function asLinkPages(value: unknown): number {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 0 && n <= 10000 ? n : 0;
+}
+
+/** Valore da tenere per un attributo data-pdf* (sanitizeHtml), o null per toglierlo. */
+export function pdfLinkAttr(name: string, value: string): string | null {
+  switch (name) {
+    case "data-pdf":
+      return asBookmarkId(value);
+    case "data-pdf-name":
+      return asBookmarkName(value).slice(0, 200);
+    case "data-pdf-pages":
+      return String(asLinkPages(value));
+    case "data-pdf-file":
+      return asLinkFile(value);
+    default:
+      return null;
+  }
+}
+
+/** Gli id dei blocchi PDF collegati nel testo (in ordine, senza ripetizioni). */
+export function pdfLinkIds(html: string): string[] {
+  return readTextBookmarks(html)
+    .filter((m) => m.kind === "pdf")
+    .map((m) => m.id);
 }
 
 // ---------------------------------------------------------------------
@@ -196,13 +260,20 @@ function attributesOf(raw: string): Map<string, string> {
   return map;
 }
 
-/** I segni nel testo, nell'ordine in cui compaiono (un id ripetuto vale una volta sola). */
-export function readTextBookmarks(html: string): BookmarkData[] {
-  if (!html.includes("data-bm")) return [];
-  const out: BookmarkData[] = [];
+/** I segni nel testo, nell'ordine in cui compaiono (un id ripetuto vale una volta sola), con i collegamenti ai PDF. */
+export function readTextBookmarks(html: string): TextMark[] {
+  if (!html.includes("data-bm") && !html.includes("data-pdf")) return [];
+  const out: TextMark[] = [];
   const seen = new Set<string>();
   for (const m of html.matchAll(SPAN_RE)) {
     const attrs = attributesOf(m[1]);
+    const pdf = asBookmarkId(attrs.get("data-pdf"));
+    if (pdf) {
+      if (seen.has(pdf)) continue;
+      seen.add(pdf);
+      out.push({ id: pdf, name: asBookmarkName(attrs.get("data-pdf-name")), kind: "pdf", color: null });
+      continue;
+    }
     const id = asBookmarkId(attrs.get("data-bm"));
     if (!id || seen.has(id)) continue;
     seen.add(id);
@@ -324,11 +395,35 @@ export function createMarker(data: BookmarkData): HTMLSpanElement {
   return el;
 }
 
+/** Il collegamento nel testo a un blocco PDF appena inserito. */
+export function createPdfLink(data: PdfLinkData): HTMLSpanElement {
+  const el = document.createElement("span");
+  el.dataset.pdf = data.id;
+  el.dataset.pdfName = asBookmarkName(data.name).slice(0, 200);
+  el.dataset.pdfPages = String(asLinkPages(data.pages));
+  const file = asLinkFile(data.file);
+  if (file) el.dataset.pdfFile = file;
+  el.setAttribute("contenteditable", "false");
+  return el;
+}
+
+function preparePdfLinks(root: HTMLElement) {
+  root.querySelectorAll<HTMLElement>(PDF_LINK_SELECTOR).forEach((el) => {
+    if (el.getAttribute("contenteditable") !== "false") el.setAttribute("contenteditable", "false");
+    if (el.firstChild) el.textContent = "";
+    const pages = asLinkPages(el.dataset.pdfPages);
+    const title = `PDF: ${el.dataset.pdfName ?? ""}${pages > 0 ? ` (${pages === 1 ? "1 pagina" : `${pages} pagine`})` : ""} — clic per aprirlo, trascinalo per spostarlo`;
+    if (el.title !== title) el.title = title;
+  });
+}
+
 /**
  * Prepara i marcatori della pagina per l'editor: un pezzo unico nel testo, nome al passaggio,
  * colore libero. Un id ripetuto nella stessa pagina (blocco duplicato) ne riceve uno nuovo.
+ * Anche i collegamenti ai PDF diventano pezzi unici.
  */
 export function prepareMarkers(root: HTMLElement, random: () => number = Math.random) {
+  preparePdfLinks(root);
   const seen = new Set<string>();
   root.querySelectorAll<HTMLElement>(MARKER_SELECTOR).forEach((el) => {
     const data = readMarker(el);

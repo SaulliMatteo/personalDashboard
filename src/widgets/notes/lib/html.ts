@@ -5,7 +5,7 @@ import { asStrokes } from "./ink";
 import { asLangName, langMarkdown } from "./codeLanguages";
 import { asCellAlign, asCellWidth, readTable } from "./tableDom";
 import { MAX_SPAN, asBorderStyle, asBorderWidth, asFillColor, asInkColor, tableToMarkdown } from "./tables";
-import { MARKER_TEXT, asBookmarkId, markerAnchor, markerAttr, readMarker } from "./bookmarks";
+import { MARKER_TEXT, asBookmarkId, markerAnchor, markerAttr, pdfLinkAttr, readMarker } from "./bookmarks";
 
 /**
  * Il contenuto delle pagine è HTML scritto in un contentEditable. Prima di
@@ -115,7 +115,7 @@ export function sanitizeHtml(html: string, options: SanitizeOptions = {}): strin
     )
     .forEach((n) => n.remove());
   // Nel codice non ci sono segni (il codice è solo testo): il marcatore sparirebbe lasciando il suo carattere.
-  doc.body.querySelectorAll("pre span[data-bm]").forEach((n) => n.remove());
+  doc.body.querySelectorAll("pre span[data-bm], pre span[data-pdf]").forEach((n) => n.remove());
   // Niente tabelle dentro le celle: quella interna diventa testo.
   doc.body.querySelectorAll("td table, th table").forEach((t) => t.replaceWith(doc.createTextNode(t.textContent ?? "")));
   // Blocchi di codice: il codice è SOLO testo. Il blocco si ricostruisce da zero con un solo <code>
@@ -167,6 +167,14 @@ export function sanitizeHtml(html: string, options: SanitizeOptions = {}): strin
           continue;
         }
       }
+      // Collegamenti ai blocchi PDF: id, nome, pagine e file, validati (lib/bookmarks.ts).
+      if (el.tagName === "SPAN" && name.startsWith("data-pdf") && keepMarkers && asBookmarkId(el.getAttribute("data-pdf"))) {
+        const kept = pdfLinkAttr(name, attr.value);
+        if (kept !== null) {
+          if (kept !== attr.value) el.setAttribute(attr.name, kept);
+          continue;
+        }
+      }
       if (el.tagName === "TD" || el.tagName === "TH" || el.tagName === "TABLE") {
         const kept = el.tagName === "TABLE" ? tableAttr(name, attr.value) : cellAttr(name, attr.value);
         if (kept !== null) {
@@ -209,7 +217,13 @@ export function wordCount(html: string): number {
   return text ? text.split(" ").length : 0;
 }
 
-export function htmlToMarkdown(html: string): string {
+export interface MarkdownOptions {
+  /** Dove sta il PDF di un collegamento rispetto al .md (default: accanto, con il suo nome). */
+  pdfHref?: (file: string) => string;
+}
+
+export function htmlToMarkdown(html: string, options: MarkdownOptions = {}): string {
+  const pdfHref = options.pdfHref ?? ((file: string) => file);
   const doc = new DOMParser().parseFromString(sanitizeHtml(html), "text/html");
 
   const inline = (node: Node): string => {
@@ -219,6 +233,13 @@ export function htmlToMarkdown(html: string): string {
     if (node.tagName === "SPAN" && node.dataset.bm) {
       const data = readMarker(node);
       return data ? markerAnchor(data) : "";
+    }
+    // Collegamento a un blocco PDF: un link al file.
+    if (node.tagName === "SPAN" && node.dataset.pdf) {
+      const name = (node.dataset.pdfName ?? "PDF").replace(/[[\]]/g, "");
+      const pages = Number(node.dataset.pdfPages) || 0;
+      const label = `📄 ${name}${pages > 0 ? ` (${pages === 1 ? "1 pagina" : `${pages} pagine`})` : ""}`;
+      return node.dataset.pdfFile ? `[${label}](<${pdfHref(node.dataset.pdfFile)}>)` : label;
     }
     const inner = Array.from(node.childNodes).map(inline).join("");
     switch (node.tagName) {

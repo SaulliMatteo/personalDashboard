@@ -429,4 +429,16 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_note_bookmarks_page ON note_bookmarks(page_id)`,
     ],
   },
+  {
+    version: 21,
+    description: "Notes: blocchi PDF (pagine di un PDF copiato nella nota) con l'inchiostro separato",
+    statements: [
+      // NULL = pagina normale; altrimenti JSON del blocco {id, file, name, from, to, sizes, invert?}
+      // (widgets/notes/lib/pdf/pdfData.ts). Il PDF sta in Documenti/Notes/<nota>/allegati/.
+      // Rieseguite su un DB che le ha già non fanno nulla (duplicate column ignorato in core/db/index.ts).
+      `ALTER TABLE note_pages ADD COLUMN pdf TEXT`,
+      // Inchiostro sopra le pagine del PDF: JSON {"<numero pagina>": [tratti]}; il PDF resta intatto.
+      `ALTER TABLE note_pages ADD COLUMN pdf_ink TEXT NOT NULL DEFAULT '{}'`,
+    ],
+  },
 ];

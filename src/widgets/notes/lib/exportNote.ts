@@ -1,5 +1,7 @@
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { join } from "@tauri-apps/api/path";
+import { open as openDialog, save } from "@tauri-apps/plugin-dialog";
+import { exists, writeFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import type { PDFDocument, PDFPage } from "pdf-lib";
 import type { NotePage } from "../data/notesRepository";
 import { htmlToMarkdown, monthYear, sanitizeHtml } from "./html";
 import { isPageColorKey, luminance, paperVars } from "./pageColor";
@@ -10,7 +12,10 @@ import { expandCollectionBlocks } from "./viewExport";
 import { THEME_INK, drawStrokes } from "./ink"; // al posto del solo drawStrokes
 import { CONTRAST_LARGE, asTitleColor } from "./titleColor";
 import { readableOn } from "./useTitleColor";
-import { MARKER_SELECTOR, kindGlyph, pinsMarkdown, readBookmarks, readMarker, type BookmarkData } from "./bookmarks";
+import { MARKER_SELECTOR, kindGlyph, pinsMarkdown, readBookmarks, readMarker, type TextMark } from "./bookmarks";
+import { pdfMarkdownLink, pdfPageCount } from "./pdf/pdfData";
+import { readNotePdf } from "./pdf/pdfDocument";
+import { appendPdfBlock, renderPdfBlockCanvases } from "./pdf/pdfExport";
 
 export interface ExportMeta {
   title: string;
@@ -48,7 +53,7 @@ interface RenderedPage {
 }
 
 /** Il titolo del segno nei segnalibri del PDF: il nome, con il simbolo del tipo davanti (tranne il segnalibro). */
-function markTitle(b: Pick<BookmarkData, "name" | "kind">): string {
+function markTitle(b: Pick<TextMark, "name" | "kind">): string {
   return b.kind === "bookmark" ? b.name : `${kindGlyph(b.kind)} ${b.name}`;
 }
 
@@ -84,11 +89,18 @@ const LIGHT_VARS: Record<string, string> = {
  * Markdown della nota. Con un colore del titolo il file comincia con un frontmatter YAML
  * (`titleColor: "#rrggbb"`, tra virgolette perché in YAML # apre un commento), come nota.md.
  */
-export function noteToMarkdown(title: string, pages: NotePage[], titleColor: string | null = null): string {
-  // Le viste collegate diventano tabelle con i dati del momento (lib/viewExport.ts); i segni sulla pagina, commenti.
+export function noteToMarkdown(
+  title: string,
+  pages: NotePage[],
+  titleColor: string | null = null,
+  pdfHref: (file: string) => string = (file) => file
+): string {
+  // Le viste collegate diventano tabelle con i dati del momento (lib/viewExport.ts); i segni sulla pagina,
+  // commenti; i blocchi PDF, un link al file (salvato accanto al .md).
   const body = pages
     .map((p) => {
-      const text = htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }));
+      if (p.pdf) return pdfMarkdownLink(p.pdf, pdfHref(p.pdf.file));
+      const text = htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }), { pdfHref });
       const pins = pinsMarkdown(p.pins);
       return pins ? `${text}\n\n${pins}` : text;
     })
@@ -313,16 +325,32 @@ async function renderPage(
 }
 
 /** Scala massima che tiene l'altezza sotto il limite dei canvas dei browser. */
-function safeScale(wanted: number, pages: NotePage[]): number {
-  const approxHeight = Math.max(1, pages.length) * 900;
+function safeScale(wanted: number, pageCount: number): number {
+  const approxHeight = Math.max(1, pageCount) * 900;
   return Math.max(1, Math.min(wanted, 14000 / approxHeight));
 }
 
+/** Pagine "come immagini" dell'esportazione: un blocco PDF ne dà una per ogni sua pagina. */
+function imagePageCount(pages: NotePage[]): number {
+  return pages.reduce((n, p) => n + (p.pdf ? Math.max(1, pdfPageCount(p.pdf)) : 1), 0);
+}
+
 async function renderAll(pages: NotePage[], meta: ExportMeta, options: RenderOptions): Promise<RenderedPage[]> {
-  const opts = { ...options, scale: safeScale(options.scale, pages) };
+  const opts = { ...options, scale: safeScale(options.scale, imagePageCount(pages)) };
   const canvases: RenderedPage[] = [];
   const withCount = { ...meta, pageCount: pages.length };
-  for (let i = 0; i < pages.length; i++) canvases.push(await renderPage(pages[i], i + 1, withCount, opts));
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i];
+    if (page.pdf) {
+      // Le pagine del PDF, disegnate con il loro inchiostro (un PDF che non si apre non esce).
+      for (const canvas of await renderPdfBlockCanvases(page, meta.noteDir ?? null, Math.round(PAPER_WIDTH * opts.scale))) {
+        canvases.push({ canvas, marks: [] });
+      }
+    } else {
+      canvases.push(await renderPage(page, i + 1, withCount, opts));
+    }
+  }
+  if (canvases.length === 0) throw new Error("Niente da esportare");
   return canvases;
 }
 
@@ -340,6 +368,16 @@ async function blobBytes(blob: Blob): Promise<Uint8Array> {
 // Immagine (tutte le pagine una sotto l'altra)
 // ---------------------------------------------------------------------
 
+/** Altezza massima dell'immagine esportata (px). */
+const IMAGE_MAX_HEIGHT = 32000;
+
+/** La nota è troppo lunga per una sola immagine (es. un PDF di molte pagine): meglio il PDF. */
+export class ExportTooTallError extends Error {
+  constructor() {
+    super("Troppe pagine per una sola immagine");
+  }
+}
+
 export async function renderNoteImage(
   pages: NotePage[],
   meta: ExportMeta,
@@ -349,6 +387,8 @@ export async function renderNoteImage(
   const canvases = (await renderAll(pages, meta, options)).map((r) => r.canvas);
   const gap = Math.round(24 * canvases[0].width / PAPER_WIDTH);
   const total = canvases.reduce((sum, c) => sum + c.height, 0) + gap * (canvases.length - 1);
+  // Un'immagine sola non può essere infinita (i browser rifiutano i canvas troppo alti).
+  if (total > IMAGE_MAX_HEIGHT) throw new ExportTooTallError();
 
   const sheet = document.createElement("canvas");
   sheet.width = canvases[0].width;
@@ -370,10 +410,110 @@ export async function renderNoteImage(
 // ---------------------------------------------------------------------
 
 export async function renderNotePdf(pages: NotePage[], meta: ExportMeta, options: RenderOptions): Promise<Uint8Array> {
+  if (pages.some((p) => p.pdf)) return renderNotePdfWithBlocks(pages, meta, options);
   const rendered = await renderAll(pages, meta, options);
   const jpegs = [];
   for (const { canvas: c } of rendered) jpegs.push({ data: await blobBytes(await toBlob(c, "image/jpeg", 0.92)), w: c.width, h: c.height });
   return buildPdf(jpegs, rendered.map((r) => r.marks));
+}
+
+/** Una pagina di testo della nota come immagine JPEG nel PDF di pdf-lib (larga come un A4). */
+async function addImagePage(out: PDFDocument, canvas: HTMLCanvasElement): Promise<PDFPage> {
+  const jpg = await out.embedJpg(await blobBytes(await toBlob(canvas, "image/jpeg", 0.92)));
+  const width = 595.28;
+  const height = (width * canvas.height) / canvas.width;
+  const page = out.addPage([width, height]);
+  page.drawImage(jpg, { x: 0, y: 0, width, height });
+  return page;
+}
+
+interface LibOutline {
+  title: string;
+  page: PDFPage;
+  ratio: number;
+  kids: LibOutline[];
+}
+
+/**
+ * Nota con dei blocchi PDF: si costruisce con pdf-lib. Le pagine di testo restano immagini (come
+ * sempre); quelle dei PDF sono le pagine originali, con l'inchiostro disegnato sopra come tracciati.
+ * Un PDF cifrato non si copia: si ripiega sulle sue pagine come immagini, se si apre senza password.
+ */
+async function renderNotePdfWithBlocks(pages: NotePage[], meta: ExportMeta, options: RenderOptions): Promise<Uint8Array> {
+  const lib = await import("pdf-lib");
+  const out = await lib.PDFDocument.create();
+  const opts = { ...options, scale: safeScale(options.scale, pages.filter((p) => !p.pdf).length) };
+  const withCount = { ...meta, pageCount: pages.length };
+  const outline: LibOutline[] = [];
+  let anyMark = false;
+
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i];
+    if (!page.pdf) {
+      const r = await renderPage(page, i + 1, withCount, opts);
+      const target = await addImagePage(out, r.canvas);
+      anyMark ||= r.marks.length > 0;
+      outline.push({ title: `Pagina ${i + 1}`, page: target, ratio: 0, kids: r.marks.map((m) => ({ title: m.title, page: target, ratio: m.ratio, kids: [] })) });
+      continue;
+    }
+    let added: PDFPage[] = [];
+    try {
+      added = await appendPdfBlock(out, page, meta.noteDir ?? null);
+    } catch (error) {
+      console.error(`PDF «${page.pdf.name}» non copiato, lo esporto come immagini:`, error);
+      for (const canvas of await renderPdfBlockCanvases(page, meta.noteDir ?? null, Math.round(PAPER_WIDTH * opts.scale))) {
+        added.push(await addImagePage(out, canvas));
+      }
+    }
+    if (added.length === 0) {
+      // Protetto da password o illeggibile: una pagina che lo dice, invece di sparire in silenzio.
+      const font = await out.embedFont(lib.StandardFonts.Helvetica);
+      const note = out.addPage([595.28, 160]);
+      const text = /^[\x20-\x7e\u00a0-\u00ff]*$/.test(page.pdf.name) ? `PDF "${page.pdf.name}" non esportato (protetto o illeggibile)` : "PDF non esportato (protetto o illeggibile)";
+      note.drawText(text, { x: 36, y: 74, size: 12, font });
+      added.push(note);
+    }
+    anyMark = true;
+    outline.push({ title: `PDF: ${page.pdf.name}`, page: added[0], ratio: 0, kids: [] });
+  }
+
+  if (anyMark) addLibOutlines(lib, out, outline);
+  return out.save();
+}
+
+/** Segnalibri del PDF (pdf-lib non ha una funzione per farli: si scrivono gli oggetti a mano). */
+function addLibOutlines(lib: typeof import("pdf-lib"), out: PDFDocument, items: LibOutline[]) {
+  if (items.length === 0) return;
+  const ctx = out.context;
+  const rootRef = ctx.nextRef();
+  const refs = new Map<LibOutline, ReturnType<typeof ctx.nextRef>>();
+  const all = (list: LibOutline[]): LibOutline[] => list.flatMap((n) => [n, ...all(n.kids)]);
+  for (const node of all(items)) refs.set(node, ctx.nextRef());
+  const dest = (node: LibOutline) => {
+    const height = node.page.getHeight();
+    return ctx.obj([node.page.ref, "XYZ", null, Math.min(height, height * (1 - node.ratio) + 24), null]);
+  };
+  const write = (list: LibOutline[], parent: ReturnType<typeof ctx.nextRef>) => {
+    list.forEach((node, i) => {
+      const dict = ctx.obj({ Title: lib.PDFHexString.fromText(node.title), Parent: parent, Dest: dest(node) });
+      if (i > 0) dict.set(lib.PDFName.of("Prev"), refs.get(list[i - 1])!);
+      if (i < list.length - 1) dict.set(lib.PDFName.of("Next"), refs.get(list[i + 1])!);
+      if (node.kids.length > 0) {
+        dict.set(lib.PDFName.of("First"), refs.get(node.kids[0])!);
+        dict.set(lib.PDFName.of("Last"), refs.get(node.kids[node.kids.length - 1])!);
+        dict.set(lib.PDFName.of("Count"), lib.PDFNumber.of(node.kids.length));
+      }
+      ctx.assign(refs.get(node)!, dict);
+      write(node.kids, refs.get(node)!);
+    });
+  };
+  write(items, rootRef);
+  ctx.assign(
+    rootRef,
+    ctx.obj({ Type: "Outlines", First: refs.get(items[0])!, Last: refs.get(items[items.length - 1])!, Count: all(items).length })
+  );
+  out.catalog.set(lib.PDFName.of("Outlines"), rootRef);
+  out.catalog.set(lib.PDFName.of("PageMode"), lib.PDFName.of("UseOutlines"));
 }
 
 /** Testo per il PDF in UTF-16BE (accenti e simboli compresi), come stringa esadecimale. */
@@ -512,6 +652,39 @@ export async function saveBytes(defaultName: string, extension: string, label: s
   const path = await save({ defaultPath: defaultName, filters: [{ name: label, extensions: [extension] }] });
   if (!path) return false;
   await writeFile(path, bytes);
+  return true;
+}
+
+/**
+ * Markdown di una nota con dei PDF: si sceglie una CARTELLA (la finestra di sistema dà il permesso
+ * di scriverci) e lì vanno il .md e le copie dei PDF, linkati per nome. Niente sovrascritture:
+ * un nome già usato diventa "nome (2)". false = annullato.
+ */
+export async function saveMarkdownWithPdfs(base: string, title: string, pages: NotePage[], titleColor: string | null, noteDir: string | null): Promise<boolean> {
+  const folder = await openDialog({ directory: true, multiple: false, title: "Scegli la cartella per la nota e i suoi PDF" });
+  if (typeof folder !== "string") return false;
+  const free = async (name: string): Promise<string> => {
+    const dot = name.lastIndexOf(".");
+    const stem = dot > 0 ? name.slice(0, dot) : name;
+    const ext = dot > 0 ? name.slice(dot) : "";
+    let candidate = name;
+    for (let n = 2; n < 1000; n++) {
+      const taken = await exists(await join(folder, candidate)).catch(() => false);
+      if (!taken) return candidate;
+      candidate = `${stem} (${n})${ext}`;
+    }
+    return candidate;
+  };
+  const names = new Map<string, string>();
+  for (const p of pages) {
+    if (!p.pdf || names.has(p.pdf.file)) continue;
+    const target = await free(p.pdf.file);
+    names.set(p.pdf.file, target);
+    await writeFile(await join(folder, target), await readNotePdf(noteDir, p.pdf.file));
+  }
+  // Anche i collegamenti nel testo (al PDF di un blocco della nota) puntano alla copia salvata qui.
+  const md = noteToMarkdown(title, pages, titleColor, (file) => names.get(file) ?? file);
+  await writeTextFile(await join(folder, await free(`${base}.md`)), md);
   return true;
 }
 

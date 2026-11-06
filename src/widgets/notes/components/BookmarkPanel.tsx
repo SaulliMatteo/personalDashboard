@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { MdChevronRight, MdDeleteOutline, MdEdit, MdExpandMore, MdOutlineDescription, MdOutlineFolder, MdOutlinePushPin, MdSearch } from "react-icons/md";
 import type { BookmarkRow, Folder, NoteSummary } from "../data/notesRepository";
-import { BOOKMARK_COLORS, BOOKMARK_KINDS, NAME_MAX, asBookmarkName, kindLabel, type BookmarkKind, type BookmarkPatch } from "../lib/bookmarks";
+import { BOOKMARK_COLORS, BOOKMARK_KINDS, NAME_MAX, asBookmarkName, kindLabel, type BookmarkPatch, type MarkKind } from "../lib/bookmarks";
 import { folderIcon } from "../lib/folders";
 import { bookmarkColorVar, bookmarkIcon } from "./bookmarkIcons";
 import NoteTitle from "./NoteTitle";
@@ -37,7 +37,7 @@ function BookmarkPanel({ bookmarks, notes, childrenOf, folderById, openNoteId, o
   const [scopeChoice, setScope] = useState<Scope | null>(null);
   const scope: Scope = scopeChoice ?? (openNoteId !== null ? "nota" : "tutte");
   const [query, setQuery] = useState("");
-  const [kinds, setKinds] = useState<Set<BookmarkKind>>(new Set());
+  const [kinds, setKinds] = useState<Set<MarkKind>>(new Set());
   const [colors, setColors] = useState<Set<ColorFilter>>(new Set());
   /** Rami chiusi dell'albero ("f12", "n4", "n4-p1"): di solito è tutto aperto. */
   const [closed, setClosed] = useState<Set<string>>(new Set());
@@ -99,7 +99,7 @@ function BookmarkPanel({ bookmarks, notes, childrenOf, folderById, openNoteId, o
     return next;
   }
 
-  function toggleKind(kind: BookmarkKind) {
+  function toggleKind(kind: MarkKind) {
     setKinds((prev) => {
       const next = new Set(prev);
       if (next.has(kind)) next.delete(kind);
@@ -274,7 +274,7 @@ function BookmarkPanel({ bookmarks, notes, childrenOf, folderById, openNoteId, o
       </label>
 
       <div className="nq-bm-filters" role="group" aria-label="Filtra per tipo">
-        {BOOKMARK_KINDS.map((k) => (
+        {[...BOOKMARK_KINDS, { key: "pdf" as const, label: "Collegamenti ai PDF" }].map((k) => (
           <button key={k.key} type="button" className="nq-tag nq-bm-chip" aria-pressed={kinds.has(k.key)} title={k.label} aria-label={k.label} onClick={() => toggleKind(k.key)}>
             {bookmarkIcon(k.key)}
           </button>
@@ -354,10 +354,13 @@ function BookmarkPanel({ bookmarks, notes, childrenOf, folderById, openNoteId, o
               { label: "Vai al segno", icon: bookmarkIcon(menu.b.kind), onSelect: () => onOpen(menu.b, false) },
               { label: "Apri nell'altro lato", icon: <MdOutlineDescription />, hint: "Ctrl clic", onSelect: () => onOpen(menu.b, true) },
             ],
-            [
-              { label: "Rinomina", icon: <MdEdit />, onSelect: () => setRenaming({ id: menu.b.id, draft: menu.b.name }) },
-              { label: "Elimina", icon: <MdDeleteOutline />, danger: true, onSelect: () => onEdit(menu.b, "delete") },
-            ],
+            // Un collegamento a un PDF si toglie dal testo, non da qui (le sue pagine restano nella nota).
+            menu.b.kind === "pdf"
+              ? []
+              : [
+                  { label: "Rinomina", icon: <MdEdit />, onSelect: () => setRenaming({ id: menu.b.id, draft: menu.b.name }) },
+                  { label: "Elimina", icon: <MdDeleteOutline />, danger: true, onSelect: () => onEdit(menu.b, "delete") },
+                ],
           ]}
           onClose={() => setMenu(null)}
         />

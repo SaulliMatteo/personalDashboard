@@ -51,6 +51,7 @@ import {
   deleteFolders,
   getPages,
   savePage,
+  setPagePdf,
   deleteNoteForever,
   emptyTrash,
   listBookmarks,
@@ -66,6 +67,9 @@ import {
   type NoteSummary,
 } from "./data/notesRepository";
 import { editMarkerInHtml, editPin, type BookmarkPatch } from "./lib/bookmarks";
+import { PDF_MAX_BYTES, isPdfName, newPdfInfo, pdfThumbName } from "./lib/pdf/pdfData";
+import { PdfOpenError } from "./lib/pdf/pdfDocument";
+import { inspectPdf } from "./lib/pdf/pdfImport";
 import type { DragItem } from "./lib/drag";
 import { folderIcon } from "./lib/folders";
 import { htmlToText } from "./lib/html";
@@ -547,10 +551,10 @@ function NotesDetail() {
       if (!page) throw new Error("Pagina del segno non trovata");
       if (b.place === "pagina") {
         const pins = editPin(page.pins, b.id, change);
-        if (pins) await savePage(page.id, b.noteId, page.content, page.ink, pins);
+        if (pins) await savePage(page.id, b.noteId, page.content, page.ink, pins, page.pdfInk);
       } else {
         const html = editMarkerInHtml(page.content, b.id, change);
-        if (html !== null) await savePage(page.id, b.noteId, html, page.ink, page.pins);
+        if (html !== null) await savePage(page.id, b.noteId, html, page.ink, page.pins, page.pdfInk);
       }
       await reload();
     });
@@ -829,6 +833,36 @@ function NotesDetail() {
   }
 
   /** Una nota nuova da un file: testo per .md/.txt, immagine o scheda del file per gli altri. */
+  /**
+   * Nota PDF: il PDF si legge (pagine, dimensioni, miniatura), si COPIA nella cartella della nota
+   * (l'originale non si tocca) e la nota ha un'unica pagina, il blocco PDF.
+   */
+  async function createPdfNote(file: IncomingFile, folderId: number | null, title: string): Promise<number> {
+    const inspection = await inspectPdf(file.bytes);
+    const id = await createNote(folderId, { title, tags: [], pages: [{ content: "", ink: [], background: "none" }] });
+    const stored = await storePdf(id, file, inspection.thumbnail);
+    const [first] = await getPages(id);
+    if (first) await setPagePdf(first.id, newPdfInfo(stored, file.name, 1, inspection.pages, inspection.sizes));
+    if (inspection.locked) showNotice(`«${file.name}» è protetto da password: la chiederà quando lo apri.`);
+    return id;
+  }
+
+  /**
+   * Copia un PDF nella cartella della nota (allegati/, ma non nell'elenco degli allegati: si vede come
+   * blocco) con la sua miniatura. Restituisce il nome finale ("nome (2).pdf" se c'era già).
+   */
+  async function storePdf(noteId: number, file: IncomingFile, thumbnail: Uint8Array | null): Promise<string> {
+    const dir = await noteDirFor(noteId);
+    const stored = await saveAttachmentFile(dir, file.name, file.bytes);
+    if (thumbnail) {
+      await saveAttachmentFile(dir, pdfThumbName(stored), thumbnail).catch((error: unknown) =>
+        console.error("Miniatura del PDF non salvata:", error)
+      );
+    }
+    await reload();
+    return stored;
+  }
+
   async function createNoteFromFile(file: IncomingFile, folderId: number | null): Promise<number> {
     const name = file.name;
     const title = name.replace(/\.[^.]+$/, "") || name;
@@ -848,6 +882,19 @@ function NotesDetail() {
         pages: plain(markdownToHtml(body)),
       });
     }
+    // PDF: una nota PDF (si vede e si annota dentro la nota). Se è troppo grande o danneggiato
+    // diventa una nota con la scheda del file, come prima.
+    if (isPdfName(name)) {
+      if (file.bytes.length > PDF_MAX_BYTES) showNotice(`«${name}» supera i 200 MB: resta un file allegato.`);
+      else {
+        try {
+          return await createPdfNote(file, folderId, title);
+        } catch (error) {
+          if (!(error instanceof PdfOpenError) || error.kind !== "damaged") throw error;
+          showNotice(`«${name}» è danneggiato o non è un PDF: creata una nota con il file allegato.`);
+        }
+      }
+    }
     const id = await createNote(folderId, { title, tags: [], pages: plain("<p><br></p>") });
     const [stored] = await storeFiles(id, [file]);
     if (stored) {
@@ -859,7 +906,7 @@ function NotesDetail() {
         block = createFileBlock(stored.name, stored.size);
       }
       const [first] = await getPages(id);
-      if (first) await savePage(first.id, id, `${block.outerHTML}<p><br></p>`, [], first.pins);
+      if (first) await savePage(first.id, id, `${block.outerHTML}<p><br></p>`, [], first.pins, first.pdfInk);
     }
     return id;
   }
@@ -950,6 +997,7 @@ function NotesDetail() {
       <NoteEditor
         registerEditor={onClosePane ? registerSide : registerMain}
         onStoreFiles={storeFiles}
+        onStorePdf={storePdf}
         onOpenShortcuts={() => setKeysOpen(true)}
         key={`${onClosePane ? "side" : "main"}-${note.id}`}
         note={note}

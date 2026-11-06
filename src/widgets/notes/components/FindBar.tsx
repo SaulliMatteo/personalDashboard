@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { MdClose, MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import type { NotePage } from "../data/notesRepository";
 import { sanitizeHtml } from "../lib/html";
+import { FIND_ALL, FIND_CURRENT, clearHighlights, countIn, highlightsSupported, rangesIn } from "../lib/findHighlight";
 import "./FindBar.css";
 
 interface FindBarProps {
@@ -12,58 +13,8 @@ interface FindBarProps {
   onClose: () => void;
 }
 
-const ALL = "nq-find";
-const CURRENT = "nq-find-current";
-
-/** La CSS Highlight API evidenzia senza toccare il DOM della pagina (che non è di React). */
-function highlightsSupported(): boolean {
-  return typeof CSS !== "undefined" && "highlights" in CSS && typeof Highlight !== "undefined";
-}
-
-function clearHighlights() {
-  if (!highlightsSupported()) return;
-  CSS.highlights.delete(ALL);
-  CSS.highlights.delete(CURRENT);
-}
-
-function countIn(text: string, needle: string): number {
-  if (!needle) return 0;
-  let n = 0;
-  for (let i = text.indexOf(needle); i >= 0; i = text.indexOf(needle, i + needle.length)) n++;
-  return n;
-}
-
 function pageText(html: string): string {
   return new DOMParser().parseFromString(sanitizeHtml(html), "text/html").body.textContent ?? "";
-}
-
-/** Intervalli del testo cercato nella pagina aperta, anche quando una parola attraversa più nodi. */
-function rangesIn(root: HTMLElement, needle: string): Range[] {
-  const nodes: Text[] = [];
-  const starts: number[] = [];
-  let text = "";
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
-    nodes.push(node);
-    starts.push(text.length);
-    text += node.data;
-  }
-  const lower = text.toLowerCase();
-  const point = (at: number) => {
-    let i = starts.length - 1;
-    while (i > 0 && starts[i] > at) i--;
-    return { node: nodes[i], offset: at - starts[i] };
-  };
-  const ranges: Range[] = [];
-  for (let i = lower.indexOf(needle); i >= 0 && needle; i = lower.indexOf(needle, i + needle.length)) {
-    const a = point(i);
-    const b = point(i + needle.length);
-    const range = document.createRange();
-    range.setStart(a.node, a.offset);
-    range.setEnd(b.node, b.offset);
-    ranges.push(range);
-  }
-  return ranges;
 }
 
 /** Cerca nella nota (Ctrl+F): conta in tutte le pagine, Invio va alla successiva. */
@@ -103,13 +54,13 @@ function FindBar({ pages, index, editorRef, onGoToPage, onClose }: FindBarProps)
     const root = editorRef.current;
     if (!root || !highlightsSupported()) return;
     const ranges = needle ? rangesIn(root, needle) : [];
-    CSS.highlights.set(ALL, new Highlight(...ranges));
+    CSS.highlights.set(FIND_ALL, new Highlight(...ranges));
     const mine = target.page === index ? ranges[target.local] : undefined;
     if (mine) {
-      CSS.highlights.set(CURRENT, new Highlight(mine));
+      CSS.highlights.set(FIND_CURRENT, new Highlight(mine));
       mine.startContainer.parentElement?.scrollIntoView({ block: "center", behavior: "smooth" });
     } else {
-      CSS.highlights.delete(CURRENT);
+      CSS.highlights.delete(FIND_CURRENT);
     }
   }, [needle, pages, index, target.page, target.local, editorRef]);
 

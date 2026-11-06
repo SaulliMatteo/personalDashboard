@@ -20,6 +20,8 @@ export interface NotesCardNote {
   color: string | null;
   /** Colore del titolo scelto dall'utente (null = quello del tema). */
   titleColor: string | null;
+  /** Nota con un PDF (icona nell'elenco). */
+  pdf: boolean;
 }
 
 /** La prossima voce di una raccolta (riga con una data da oggi in poi): riga in fondo alla 2×2. */
@@ -114,10 +116,12 @@ export function useNotesCard(): NotesCardData {
   const notes = raw.map((n) => ({
     id: n.id,
     title: n.title || "Senza titolo",
-    excerpt: htmlToText(n.firstContent).slice(0, 200),
+    // Nota PDF: al posto del testo (che di solito non c'è) il nome del PDF e le pagine.
+    excerpt: n.pdf && !htmlToText(n.firstContent) ? `PDF · ${n.pdf.name}${n.pdf.pages > 0 ? ` · ${n.pdf.pages} pagine` : ""}` : htmlToText(n.firstContent).slice(0, 200),
     when: relativeWhen(n.updatedAt, now),
     color: n.folderId !== null ? colors.get(n.folderId) ?? null : null,
     titleColor: n.titleColor,
+    pdf: n.pdf !== null,
   }));
 
   function open(e: MouseEvent, id: number) {

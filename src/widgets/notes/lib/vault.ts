@@ -26,6 +26,7 @@ import {
 } from "../data/notesRepository";
 import { htmlToMarkdown } from "./html";
 import { asPins, pinsMarkdown } from "./bookmarks";
+import { asPdfInfo, asPdfInk, pdfMarkdownLink } from "./pdf/pdfData";
 import { markdownToHtml, parseFrontmatter, parseMetaString, parseMetaTags } from "./markdown";
 
 import { asPageColor } from "./pageColor";
@@ -127,7 +128,9 @@ function buildMarkdown(note: NoteSummary, pages: NotePage[]): string {
   // I segni nel testo sono ancore HTML; quelli sulla pagina, commenti in fondo (si rileggono da canvas.json).
   const body = pages
     .map((p) => {
-      const text = htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }));
+      // Blocco PDF: il link al PDF copiato in allegati/ (canvas.json tiene blocco e inchiostro).
+      if (p.pdf) return pdfMarkdownLink(p.pdf, `allegati/${p.pdf.file}`);
+      const text = htmlToMarkdown(expandCollectionBlocks(p.content, { refsAsText: true }), { pdfHref: (file) => `allegati/${file}` });
       const pins = pinsMarkdown(p.pins);
       return pins ? `${text}\n\n${pins}` : text;
     })
@@ -138,7 +141,7 @@ function buildMarkdown(note: NoteSummary, pages: NotePage[]): string {
 function buildCanvasJson(pages: NotePage[]): string {
   return JSON.stringify({
     version: 1,
-    pages: pages.map((p) => ({ background: p.background, color: p.color, strokes: p.ink, pins: p.pins, html: p.content })),
+    pages: pages.map((p) => ({ background: p.background, color: p.color, strokes: p.ink, pins: p.pins, html: p.content, ...(p.pdf ? { pdf: p.pdf, pdfInk: p.pdfInk } : {}) })),
   });
 }
 
@@ -261,6 +264,9 @@ interface CanvasFilePage {
   strokes?: InkStroke[];
   /** Segni sulla pagina (lib/bookmarks.ts); i file scritti prima non li hanno. */
   pins?: unknown;
+  /** Blocco PDF e il suo inchiostro (lib/pdf/pdfData.ts). */
+  pdf?: unknown;
+  pdfInk?: unknown;
   html?: string;
   color?: string | null;
 }
@@ -339,11 +345,15 @@ export async function importVault(knownPaths: Set<string>, folders: Folder[]): P
     const pages: NewPageInput[] = [];
     for (let i = 0; i < count; i++) {
       const fromCanvas = canvas?.[i];
+      const pdf = asPdfInfo(fromCanvas?.pdf);
       pages.push({
         color: asPageColor(fromCanvas?.color),
-        content: fromCanvas?.html ? fromCanvas.html : markdownToHtml(mdPages[i] ?? ""),
+        // Un blocco PDF non ha testo: in nota.md c'è solo il link al file.
+        content: pdf ? "" : fromCanvas?.html ? fromCanvas.html : markdownToHtml(mdPages[i] ?? ""),
         ink: Array.isArray(fromCanvas?.strokes) ? fromCanvas.strokes : [],
         pins: asPins(fromCanvas?.pins),
+        pdf,
+        pdfInk: asPdfInk(fromCanvas?.pdfInk),
         background: asBackground(fromCanvas?.background),
       });
     }
