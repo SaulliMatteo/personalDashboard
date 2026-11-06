@@ -1,27 +1,3 @@
-# Personal Dashboard
-
-Una dashboard personale per lo studio, per **Windows** e **macOS**. Raccoglie in un'unica finestra il timer di studio,
-le note, i video da guardare, il meteo e un piccolo compagno animato, tutto disposto come preferisci.
-
-**Local-first**: i tuoi dati restano sul tuo computer, in un database locale. Niente account obbligatori, niente
-pubblicità, niente tracciamento.
-
-## Cosa c'è dentro
-
-| Widget | A cosa serve |
-|---|---|
-| **Studio** | Timer pomodoro o cronometro, tempo di studio per materia e report per settimana, mese e anno |
-| **Notes** | Note in cartelle, con editor a pagine e scrittura a mano |
-| **YouTube** | Salva in cartelle i video da guardare per lo studio, riproducili e prendi appunti a tempo |
-| **Pixy** | Un compagno a LED che cambia espressione con quello che fai: studio, pause, video, ora del giorno |
-| **File Transfer** | Ricevi file dall'iPad via Wi-Fi: scansioni un QR e li mandi |
-| **Meteo** | Temperatura e cielo nella tua città |
-| **Orario** e **Giorno** | L'ora e la data, grandi e leggibili |
-| **Gruppi** (facoltativo) | Studia con gli amici: chi sta studiando adesso, una stanza comune e la classifica |
-
-Ogni widget si può aggiungere, spostare e ridimensionare sulla griglia; con un doppio clic si apre la sua pagina
-completa. Ci sono **4 temi** (Notte, Opaco, Quaderno, Fosforo), ognuno con la variante giorno e notte, che può seguire
-quella del sistema.
 
 ## Scaricare e installare
 
