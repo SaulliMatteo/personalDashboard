@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type Database from "@tauri-apps/plugin-sql";
 import { getDatabase } from "./client";
 import { MIGRATIONS } from "./migrations";
+import { isAndroid } from "../system/platform";
 
 /**
  * Copia di sicurezza di tutto il database (`dashboard.db`), con i comandi di src-tauri/src/db_backup.rs:
@@ -24,6 +25,9 @@ const LATEST_VERSION = Math.max(...MIGRATIONS.map((m) => m.version));
 
 /** Chiave del `localStorage` con le righe di `meta` da rimettere dopo l'importazione (sopravvive al ricaricamento). */
 const KEEP_KEY = "pd-import-keep-meta";
+
+/** Filtro dei selettori dei file: su Android i .db non hanno un tipo noto e il filtro li nasconderebbe. */
+export const BACKUP_FILE_FILTERS = isAndroid() ? undefined : [{ name: "Database", extensions: ["db"] }];
 
 /** Nome proposto per il file esportato, con la data di oggi. */
 export function exportFileName(now = new Date()): string {

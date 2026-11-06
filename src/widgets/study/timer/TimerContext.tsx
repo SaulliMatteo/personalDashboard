@@ -23,6 +23,7 @@ import { useLatestRef } from "../../../core/hooks/useLatestRef";
 import { emitActivityEvent, publishActivity } from "../../../core/activity/activityBus";
 import { readSystemSnapshot } from "../../../core/system/systemApi";
 import { onAppReturn, reportsAppReturn } from "../../../core/system/androidAway";
+import { onSyncApplied } from "../../../core/sync/syncEvents";
 import {
   canScheduleNotifications,
   scheduleAppNotifications,
@@ -213,6 +214,23 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     prevTodayTotalRef.current = total;
     if (prev !== null && goal > 0 && prev < goal && total >= goal) emitActivityEvent({ type: "goalReached" });
   }, [ready, todayBySubject, settings.studyDailyGoalMinutes]);
+
+  // Materie e sessioni arrivate dagli altri dispositivi (core/sync/): si rileggono.
+  useEffect(
+    () =>
+      onSyncApplied((kinds) => {
+        if (!kinds.has("subject") && !kinds.has("session")) return;
+        void (async () => {
+          try {
+            setSubjects(await listSubjects());
+            await refreshToday();
+          } catch (error) {
+            console.error("Errore nel ricaricamento dello studio:", error);
+          }
+        })();
+      }),
+    []
+  );
 
   // Refresh periodico di "studiato oggi": copre anche l'app aperta a cavallo della mezzanotte.
   useEffect(() => {

@@ -5,6 +5,7 @@ import { applySettingsToDocument } from "./applySettings";
 import { resolveMode } from "../theme/themes";
 import { useSystemDark } from "../theme/useSystemDark";
 import { SettingsContext } from "./useSettings";
+import { onSyncApplied } from "../sync/syncEvents";
 
 // Gli slider emettono molti valori al secondo: li raccogliamo e scriviamo
 // una volta sola quando l'utente si ferma.
@@ -28,6 +29,22 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  // Impostazioni arrivate dagli altri dispositivi (core/sync/): si rileggono, dopo le scritture in coda, e quelle
+  // cambiate qui e non ancora salvate restano quelle di qui.
+  useEffect(
+    () =>
+      onSyncApplied((kinds) => {
+        if (!kinds.has("setting")) return;
+        writeChain.current = writeChain.current.then(async () => {
+          const loaded = await loadSettings();
+          const merged = { ...loaded, ...pending.current };
+          settingsRef.current = merged;
+          setSettings(merged);
+        });
+      }),
+    []
+  );
 
   // Applica tema/colori/ecc. PRIMA del paint, per evitare un flash. Con la variante
   // "auto" si riapplica anche quando cambia il tema del sistema.

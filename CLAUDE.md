@@ -78,8 +78,9 @@ Non c'è un test runner né la CI di test: si verifica con `npm run build` + `np
 prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, quella dei consigli YouTube
 (`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts` e
 `node scripts/layout/mobileLayout.test.mts` quando si tocca `core/layout/mobileLayout.ts`, `node scripts/study/phases.test.mts`
-quando si tocca `widgets/study/timer/phases.ts`, `scripts/sync/records.test.mts` e `scripts/sync/schema.test.mts` (questa
-su SQLite vero con `node:sqlite`, tutte le migrazioni da zero) quando si tocca `core/sync/` o una tabella sincronizzata.
+quando si tocca `widgets/study/timer/phases.ts`, `scripts/sync/records.test.mts`, `scripts/sync/schema.test.mts` (questa
+su SQLite vero con `node:sqlite`, tutte le migrazioni da zero) e `scripts/sync/round.test.mts` (due dispositivi su SQLite
+vero e un server finto) quando si tocca `core/sync/` o una tabella sincronizzata.
 
 ```bash
 # Prove pure (scripts/gruppi/<nome>.test.mts e scripts/youtube/<nome>.test.mts, nessun server); una alla volta:
@@ -150,6 +151,14 @@ Debito noto: `widgets/youtube/screens/WatchScreen.tsx` importa `study/data/study
   UPSERT esterno SQLite non li rispetta. Gli id locali dentro i contenuti (`data-view`, `data-ref-row`, campi delle
   righe e delle viste) li traduce `core/sync/engine/records.ts`: un riferimento nuovo a un id va aggiunto lì.
   Impostazioni del singolo dispositivo: `PER_DEVICE_SETTINGS` in `core/settings/schema.ts`.
+  Il giro (`core/sync/engine/round.ts`, puro: pull per `seq`, poi push del registro) lo fa partire `SyncProvider`
+  (`core/sync/SyncContext.tsx`, solo con l'account pronto e `syncEnabled`), l'SQL sta tutto in `core/sync/syncRepository.ts`
+  e la rete in `core/cloud/syncApi.ts` (server: `supabase/migrations/…_sync.sql`, righe leggibili solo dal proprio utente).
+  Le scritture del sync tengono i trigger accesi e tolgono subito la loro voce dal registro (il flag `applying` serve
+  solo a "Usa i dati del cloud"). Chi tiene in memoria righe sincronizzate le rilegge con `onSyncApplied`
+  (`core/sync/syncEvents.ts`, come fanno impostazioni e timer dello Studio). I tipi accesi sono `SYNC_KINDS` in
+  `core/sync/syncSetup.ts`: uno nuovo entra nel registro da solo al primo giro. I totali dei Gruppi contano solo le
+  sessioni con `origin_device` NULL (fatte qui).
 
 **Backend nativo** (`src-tauri/`): `src/lib.rs` registra plugin (sql, notification, fs/dialog/opener usati dal
 Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.json` ha `create: false`).
