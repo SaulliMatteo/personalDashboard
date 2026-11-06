@@ -1,0 +1,34 @@
+# Quando pubblichi a mano la release in bozza (vedi release.yml), copia il testo della release nel campo
+# `notes` di latest.json, così l'app mostra le note che hai scritto su GitHub e non il testo fisso della build.
+# Le firme in latest.json riguardano i pacchetti, non questo file: cambiare le note non le invalida.
+name: Note della release per gli aggiornamenti
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggiorna notes in latest.json
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          # Passati come variabili, mai interpolati nello script: il testo della release è libero.
+          TAG: ${{ github.event.release.tag_name }}
+          BODY: ${{ github.event.release.body }}
+        run: |
+          dir="$RUNNER_TEMP/release"
+          mkdir -p "$dir"
+          if ! gh release download "$TAG" --pattern latest.json --dir "$dir"; then
+            echo "::notice::La release $TAG non ha latest.json: niente da aggiornare."
+            exit 0
+          fi
+          jq --arg notes "$BODY" '.notes = $notes' "$dir/latest.json" > "$dir/latest.new.json"
+          mv "$dir/latest.new.json" "$dir/latest.json"
+          gh release upload "$TAG" "$dir/latest.json" --clobber

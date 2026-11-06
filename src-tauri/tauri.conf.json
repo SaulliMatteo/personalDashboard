@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "personaldashboard",
-  "version": "1.0.4",
+  "version": "../package.json",
   "identifier": "it.matteo.personalDashboard",
   "build": {
     "frontendDist": "../dist",
@@ -58,6 +58,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -77,6 +78,15 @@
     }
   },
   "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI1N0FGMjY4Nzc4ODVBNUMKUldSY1dvaDNhUEo2dFlwWnZ0b3FhOWJzdHluN0RhSkxHVm9NY3JYVTMzbXRkb01NVEZFSVlDL1oK",
+      "endpoints": [
+        "https://github.com/SaulliMatteo/personalDashboard/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    },
     "deep-link": {
       "desktop": {
         "schemes": [

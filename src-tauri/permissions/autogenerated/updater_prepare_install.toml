@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-updater-prepare-install"
+description = "Enables the updater_prepare_install command without any pre-configured scope."
+commands.allow = ["updater_prepare_install"]
+
+[[permission]]
+identifier = "deny-updater-prepare-install"
+description = "Denies the updater_prepare_install command without any pre-configured scope."
+commands.deny = ["updater_prepare_install"]
