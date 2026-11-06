@@ -3,6 +3,7 @@ import SettingsSection from "../../../core/settings/components/SettingsSection";
 import { useSettings } from "../../../core/settings/useSettings";
 import ConfirmButton from "../../../ui/ConfirmButton";
 import ExpandableText from "../../../ui/ExpandableText";
+import UpdateSection from "./UpdateSection";
 
 /** Esporta/importa tutte le impostazioni come testo JSON (backup, trasferimento tra computer). */
 function BackupSection() {
@@ -69,10 +70,11 @@ function GeneralTab() {
     <>
       <header className="sp-head">
         <h2>Generale</h2>
-        <p>Il tuo nome, il titolo dell'app e il backup delle impostazioni.</p>
+        <p>Il tuo nome, il titolo dell'app, il backup delle impostazioni e gli aggiornamenti.</p>
       </header>
 
       <SettingsSection group="general" />
+      <UpdateSection />
       <BackupSection />
 
       <div className="settings-section">

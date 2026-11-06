@@ -29,6 +29,12 @@ src/
 │   ├─ notify/               notifier.ts: UNICO punto da cui partono le notifiche (sendAppNotification); un
 │   │                        decoratore registrato dal Companion le firma Pixy. notifyApi.ts: invoke
 │   │                        "notify_with_image" (src-tauri/src/notify.rs, toast con immagine su Windows)
+│   ├─ updater/              aggiornamenti dell'app (Impostazioni > Generale > Versione e aggiornamenti):
+│   │                        updaterApi.ts = UNICO punto con getVersion/check/download/install/relaunch
+│   │                        (tauri-plugin-updater/process) e invoke("updater_prepare_install") → src-tauri/
+│   │                        src/updater.rs; useUpdater.ts = stato (idle/controllo/disponibile/download/
+│   │                        installazione/errore) a livello di modulo. In rete solo quando l'utente preme il
+│   │                        pulsante; la UI è features/settings/tabs/UpdateSection.tsx. Nessun widget lo importa
 │   ├─ report/               periods.ts: periodi (settimana/mese/anno) e barre per i grafici di report
 │   └─ hooks/                hook generici (useLatestRef, useNow)
 ├─ features/                 schermate dell'app (dashboard + intestazione, sidebar,
@@ -205,6 +211,12 @@ src/
 │   ├─ notify/               notifier.ts: UNICO punto da cui partono le notifiche (sendAppNotification); un
 │   │                        decoratore registrato dal Companion le firma Pixy. notifyApi.ts: invoke
 │   │                        "notify_with_image" (src-tauri/src/notify.rs, toast con immagine su Windows)
+│   ├─ updater/              aggiornamenti dell'app (Impostazioni > Generale > Versione e aggiornamenti):
+│   │                        updaterApi.ts = UNICO punto con getVersion/check/download/install/relaunch
+│   │                        (tauri-plugin-updater/process) e invoke("updater_prepare_install") → src-tauri/
+│   │                        src/updater.rs; useUpdater.ts = stato (idle/controllo/disponibile/download/
+│   │                        installazione/errore) a livello di modulo. In rete solo quando l'utente preme il
+│   │                        pulsante; la UI è features/settings/tabs/UpdateSection.tsx. Nessun widget lo importa
 │   ├─ report/               periods.ts: periodi (settimana/mese/anno) e barre per i grafici di report
 │   └─ hooks/                hook generici (useLatestRef, useNow)
 ├─ features/                 schermate dell'app (dashboard + intestazione, sidebar,
@@ -449,5 +461,9 @@ Colonna in una nuova migrazione → campo in `Subject`/`SubjectRow`/`PATCH_COLUM
 - Le query SQL stanno solo nei `*Repository.ts`; i componenti non scrivono SQL.
 - Rete: solo il Meteo va in internet, solo se attivato (città impostata e widget o mini in uso), e solo da
   `widgets/weather/data/weatherApi.ts` (come `invoke()` in `data/*Api.ts`). Cache nel `meta` (`weather_cache`).
+  Seconda eccezione: gli aggiornamenti dell'app (`core/updater/updaterApi.ts`), solo quando l'utente preme
+  "Controlla aggiornamenti" o "Aggiorna"; nessun controllo automatico all'avvio. La rete la fa il plugin in Rust
+  (`latest.json` e pacchetti dalle Release di GitHub), quindi la CSP non cambia.
+  (I Gruppi, quando configurati e con l'accesso Google, passano da `core/cloud/`.)
 - Impostazioni = preferenze dell'app (schema). Dati e metadati interni = tabelle/`meta`.
 - Il dettaglio di un widget si apre con il **doppio click** sulla cella (Dashboard.tsx). Il doppio click su un controllo interno (button, link, input) viene ignorato; un pulsante che occupa tutta la cella (1×1) va marcato `data-cell-action` perché il doppio click apra comunque il dettaglio. I controlli continuano a fare `e.stopPropagation()` sul click.

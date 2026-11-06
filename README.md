@@ -50,9 +50,21 @@ scarica il file per il tuo sistema.
 Al primo avvio del File Transfer, consenti le connessioni in entrata quando il firewall lo chiede. Su macOS la porta
 5000 è occupata da AirPlay: l'app ne sceglie da sola un'altra e te la mostra nella pagina del widget.
 
-### Aggiornare
+### Aggiornamenti
 
-Scarica e installa la nuova versione sopra la vecchia: i tuoi dati restano.
+Dalla versione che include gli aggiornamenti automatici in poi, l'app si aggiorna da sola quando glielo chiedi:
+
+1. apri **Impostazioni** › **Generale** › **Versione e aggiornamenti** (lì vedi anche la versione installata);
+2. premi **Controlla aggiornamenti**: se c'è una versione nuova compaiono il numero e le note della release;
+3. premi **Aggiorna**: l'app scarica il pacchetto, controlla la firma, lo installa e si riavvia. Su Windows compare
+   per un attimo la finestra dell'installer (con il `.msi` Windows può chiedere il permesso di amministratore).
+
+L'app non controlla gli aggiornamenti da sola all'avvio: va in internet solo quando premi il pulsante. I pacchetti
+vengono dalle Release di questo repository e sono firmati: un pacchetto con una firma diversa viene rifiutato.
+I tuoi dati restano dove sono.
+
+Dalle versioni precedenti (o se preferisci farlo a mano): scarica e installa la nuova versione sopra la vecchia,
+i dati restano.
 
 ## I tuoi dati e la privacy
 
@@ -64,7 +76,8 @@ Scarica e installa la nuova versione sopra la vecchia: i tuoi dati restano.
 - L'app usa internet solo per quello che attivi tu:
   - il **Meteo**, se imposti una città (dati di [Open-Meteo](https://open-meteo.com));
   - i **video di YouTube**, quando li guardi;
-  - i **Gruppi**, solo se accedi con Google.
+  - i **Gruppi**, solo se accedi con Google;
+  - gli **aggiornamenti**, solo quando premi "Controlla aggiornamenti" o "Aggiorna" (Release di GitHub).
 - **Gruppi**: gli altri membri vedono solo il tuo nome utente, se stai studiando o sei in pausa e il tempo totale di
   studio per giorno. Email e nome Google non vengono mai mostrati; sessioni, note e video restano sul tuo computer.
   La materia che studi e le espressioni di Pixy si condividono solo se le attivi. Dalle impostazioni puoi uscire o
@@ -89,6 +102,11 @@ npm run tauri build    # crea l'installer per il tuo sistema
 ```
 
 Senza configurazione i Gruppi restano disattivati ("Gruppi non configurati") e tutto il resto funziona normalmente.
+
+`npm run tauri build` crea anche i pacchetti firmati per gli aggiornamenti, quindi vuole una chiave di firma nella
+variabile `TAURI_SIGNING_PRIVATE_KEY` (generala con `npx tauri signer generate` e metti la sua chiave pubblica in
+`plugins.updater.pubkey` di `src-tauri/tauri.conf.json`). Per una build personale senza aggiornamenti, togli invece
+`"createUpdaterArtifacts": true` da quel file.
 
 ## Licenza
 

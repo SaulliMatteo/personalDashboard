@@ -44,6 +44,36 @@ jobs:
 
       - run: npm ci
 
+      # Aggiornamenti: la versione ha una sola fonte (package.json, letta da tauri.conf.json) e il tag deve
+      # coincidere; la chiave pubblica va incollata prima di rilasciare (una release col segnaposto non potrebbe
+      # più aggiornarsi) e la privata deve esserci, se no la build degli artefatti firmati fallisce.
+      - name: Controlla versione e firma degli aggiornamenti
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          # tr: sul runner Windows il checkout ha i fine riga CRLF.
+          cargo_version="$(tr -d '\r' < src-tauri/Cargo.toml | sed -n 's/^version = "\(.*\)"$/\1/p' | head -n1)"
+          if [ "$REF_TYPE" = "tag" ] && [ "$REF_NAME" != "v$version" ]; then
+            echo "::error::Il tag $REF_NAME non coincide con la versione di package.json ($version)."
+            exit 1
+          fi
+          if [ "$cargo_version" != "$version" ]; then
+            echo "::error::src-tauri/Cargo.toml ha la versione $cargo_version, package.json $version: allineale."
+            exit 1
+          fi
+          if grep -q 'INSERIRE_CHIAVE_PUBBLICA' src-tauri/tauri.conf.json; then
+            echo "::error::plugins.updater.pubkey in src-tauri/tauri.conf.json è ancora il segnaposto: incolla la chiave pubblica."
+            exit 1
+          fi
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo "::error::Secret TAURI_SIGNING_PRIVATE_KEY assente: gli aggiornamenti non si possono firmare."
+            exit 1
+          fi
+
       # Avvisa (senza fermare la build e senza stampare i valori) se i Secrets dei Gruppi mancano o sono
       # sbagliati: l'app uscirebbe in solo locale ("Gruppi non configurati", src/core/cloud/config.ts).
       - name: Controlla la configurazione dei Gruppi
@@ -75,10 +105,51 @@ jobs:
           # scritti nel repo. Se mancano, la build esce in solo locale ("Gruppi non configurati").
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          # Aggiornamenti: firma degli artefatti (bundle.createUpdaterArtifacts). La privata non è mai nel repo.
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_type == 'tag' && github.ref_name || 'app-v__VERSION__' }}
           releaseName: "personalDashboard v__VERSION__"
           releaseBody: "Scarica il .dmg per macOS o l'installer .msi/.exe per Windows. Su macOS, al primo avvio, segui le istruzioni del README per sbloccare l'app."
           releaseDraft: true
           prerelease: false
+          # latest.json per l'updater, allegato alla release: ogni job aggiunge le sue piattaforme. Il .dmg
+          # universale finisce sia in darwin-aarch64 sia in darwin-x86_64; per Windows il plugin sceglie
+          # windows-x86_64-msi o -nsis in base a come è stata installata l'app (windows-x86_64 = .msi).
+          # Le note (notes) sono il releaseBody qui sopra: alla pubblicazione le riallinea release-notes.yml.
+          includeUpdaterJson: true
           args: ${{ matrix.args }}
+
+  # Controlla latest.json dopo entrambe le build: se manca una piattaforma, chi la usa non si aggiornerebbe.
+  updater-json:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Controlla latest.json
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$REF_TYPE" = "tag" ]; then
+            tag="$REF_NAME"
+          else
+            version="$(gh api "repos/$GH_REPO/contents/package.json?ref=$GITHUB_SHA" --jq .content | base64 -d | jq -r .version)"
+            tag="app-v$version"
+          fi
+          gh release download "$tag" --pattern latest.json --dir "$RUNNER_TEMP"
+          file="$RUNNER_TEMP/latest.json"
+          for platform in darwin-aarch64 darwin-x86_64 windows-x86_64; do
+            if ! jq -e --arg p "$platform" '.platforms[$p] | (.url | length > 0) and (.signature | length > 0)' "$file" > /dev/null; then
+              echo "::error::latest.json non ha la piattaforma $platform (o manca url/firma)."
+              exit 1
+            fi
+          done
+          if [ "$(jq -r '.platforms["darwin-aarch64"].url' "$file")" != "$(jq -r '.platforms["darwin-x86_64"].url' "$file")" ]; then
+            echo "::error::darwin-aarch64 e darwin-x86_64 dovrebbero puntare entrambi al pacchetto universale."
+            exit 1
+          fi
+          jq '{version, notes, platforms: (.platforms | map_values(.url))}' "$file"
