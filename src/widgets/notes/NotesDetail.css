@@ -771,6 +771,14 @@
   opacity: 1;
 }
 
+/* col dito non c'è il "passare sopra": azioni delle note e "+" delle cartelle sempre visibili */
+@media (hover: none) {
+  .nq-hover-only,
+  .nq-tree-add {
+    opacity: 1;
+  }
+}
+
 /* Elenco */
 
 .nq-list {
@@ -1549,4 +1557,68 @@ button.nq-crumb:hover {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+/* ---------- Telefono: la barra laterale è un pannello sopra le note (si apre dal pulsante in alto) ---------- */
+:root[data-compact] .nq {
+  position: relative;
+  min-height: 70vh;
+}
+
+:root[data-compact] .nq-side {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  width: auto;
+  padding-top: 12px;
+}
+
+:root[data-compact] .nq-topbar {
+  padding: 10px 12px 4px;
+}
+
+/* intestazione della raccolta: icona e titolo sopra, il pulsante sotto */
+:root[data-compact] .nq-collection {
+  padding: 14px 12px 12px;
+}
+
+:root[data-compact] .nq-col-head {
+  flex-wrap: wrap;
+}
+
+:root[data-compact] .nq-col-titles {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+:root[data-compact] .nq-tabs button {
+  white-space: nowrap;
+}
+
+:root[data-compact] .nq-toolrow {
+  flex-wrap: wrap;
+}
+
+/* senza tastiera fisica i suggerimenti delle scorciatoie non servono */
+@media (hover: none) and (pointer: coarse) {
+  .nq-search kbd {
+    display: none;
+  }
+}
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .nq-icon-btn,
+  .nq-btn,
+  .nq-tabs button {
+    position: relative;
+  }
+
+  .nq-icon-btn::after,
+  .nq-btn::after,
+  .nq-tabs button::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
 }

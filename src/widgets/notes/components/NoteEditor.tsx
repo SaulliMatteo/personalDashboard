@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import {
   MdAdd,
+  MdArrowBack,
   MdArrowDownward,
   MdArrowUpward,
   MdChecklist,
@@ -57,8 +58,9 @@ import {
   MdUndo,
 } from "react-icons/md";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
+import { useCompact } from "../../../core/layout/useCompact";
+import { useBackHandler } from "../../../core/nav/backHandlers";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
-import { openPath } from "@tauri-apps/plugin-opener";
 import ConfirmButton from "../../../ui/ConfirmButton";
 import {
   addPage,
@@ -85,6 +87,7 @@ import {
   type PageBackground,
 } from "../data/notesRepository";
 import { ExportTooTallError, noteToMarkdown, renderNoteImage, renderNotePdf, saveBytes, saveMarkdownWithPdfs, saveText } from "../lib/exportNote";
+import { fileErrorMessage, openFile } from "../data/filesApi";
 import { attachmentAbsolutePath, removeAttachmentFile, slugify } from "../lib/vault";
 import { BACKGROUND_OPTIONS } from "../lib/templates";
 import { THEME_INK } from "../lib/ink";
@@ -167,6 +170,7 @@ import PdfRangeDialog from "./pdf/PdfRangeDialog";
 import BookmarkPopover from "./BookmarkPopover";
 import PageMenu, { type PageMenuItem } from "./PageMenu";
 import Crumbs, { type Crumb } from "./Crumbs";
+import BottomSheet from "./BottomSheet";
 import ToolButton from "./ToolButton";
 import "./noteEditor.css";
 
@@ -191,6 +195,8 @@ interface NoteEditorProps {
   /** Pannello stretto (schermo diviso): niente colonna delle pagine. */
   compact?: boolean;
   onClosePane?: () => void;
+  /** Telefono: il ← della barra in alto chiude la nota (torna all'elenco). */
+  onClose?: () => void;
   /** Il riquadro si registra per scorciatoie e file trascinati (lib/editorApi.ts); null = si toglie. */
   registerEditor?: (api: EditorApi | null) => void;
   /** Copia i file nella cartella della nota e li aggiunge agli allegati; restituisce i nomi finali. */
@@ -271,6 +277,7 @@ function NoteEditor({
   splitCandidates = [],
   compact = false,
   onClosePane,
+  onClose,
   registerEditor,
   onStoreFiles,
   onStorePdf,
@@ -327,7 +334,16 @@ function NoteEditor({
   const titleColorRef = useLatestRef(titleColor);
   // Il titolo sta solo sulla prima pagina: si ricolora quando torna visibile o cambia lo sfondo della pagina.
   useTitleColor(titleInputRef, titleColor, CONTRAST_LARGE, [index, ready, pages[0]?.color, pages[0]?.background], setTitleAdjusted);
-  const [menu, setMenu] = useState<"export" | "split" | "color" | "mark" | "more" | "pages" | "views" | null>(null);
+  // "format", "insert" e "note" sono i fogli del telefono (Aa, + e ⋯); gli altri sono i menu del desktop, che sul
+  // telefono si aprono anch'essi come fogli
+  const [menu, setMenu] = useState<
+    "export" | "split" | "color" | "mark" | "more" | "pages" | "views" | "format" | "insert" | "note" | "page" | null
+  >(null);
+  /** Telefono (core/layout/useCompact.ts): barra in alto ridotta, una riga di strumenti in basso, fogli dal basso. */
+  const phone = useCompact();
+  /** Grassetto e corsivo sotto il cursore (lo stato dei pulsanti B e I del telefono). */
+  const [boldOn, setBoldOn] = useState(false);
+  const [italicOn, setItalicOn] = useState(false);
   const store = useCollections();
   const [mentionState, setMention] = useState<SlashState | null>(null);
   /** Riga aperta da un riferimento @ (scheda della riga). */
@@ -381,6 +397,8 @@ function NoteEditor({
       setFontKey(textAttrAt(root, "data-font") ?? "");
       setColorKey(textAttrAt(root, "data-color") ?? "");
       setInTitle(inHeading(root));
+      setBoldOn(document.queryCommandState("bold"));
+      setItalicOn(document.queryCommandState("italic"));
       slashCheckRef.current(false);
     };
     document.addEventListener("selectionchange", onSelection);
@@ -476,13 +494,21 @@ function NoteEditor({
 
   const flushRef = useLatestRef(flush);
 
-  // Uscendo dall'editor si scrive subito quello che è in sospeso.
-  useEffect(
-    () => () => {
+  // Uscendo dall'editor si scrive subito quello che è in sospeso. Anche quando l'app va in sfondo: su Android
+  // potrebbe non tornare più (processo chiuso per memoria), e i 700 ms del debounce non arriverebbero.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.hidden) void flushRef.current();
+    };
+    const onPageHide = () => void flushRef.current();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", onPageHide);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", onPageHide);
       void flushRef.current();
-    },
-    [flushRef]
-  );
+    };
+  }, [flushRef]);
 
   const schedule = useCallback(() => {
     setSaving(true);
@@ -553,6 +579,46 @@ function NoteEditor({
     );
     return () => window.clearTimeout(timer);
   }, [toast, toastAction]);
+
+  // Esc chiude il menu o il foglio aperto; sul telefono così lo chiude anche l'indietro (core/nav/overlays.ts).
+  useEffect(() => {
+    if (menu === null) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === "Escape") setMenu(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menu]);
+
+  // Telefono: l'indietro esce dalla scrittura a mano prima di chiudere la nota.
+  useBackHandler(phone && mode === "ink", () => setMode("text"));
+
+  // Telefono: con un foglio aperto il testo resta selezionato ma non chiede la tastiera (Android la riaprirebbe al
+  // tocco su un pulsante, coprendo il foglio); chiuso il foglio si torna a scrivere.
+  useEffect(() => {
+    const el = editorRef.current;
+    if (!phone || !el) return;
+    if (menu !== null || linkOpen) el.inputMode = "none";
+    else el.removeAttribute("inputmode");
+  }, [phone, menu, linkOpen, index, ready]);
+
+  // Telefono: aprendo la tastiera la pagina si accorcia; il cursore deve restare in vista sopra la riga di strumenti.
+  useEffect(() => {
+    const wrap = scrollWrapRef.current;
+    if (!phone || !wrap) return;
+    const observer = new ResizeObserver(() => {
+      const el = editorRef.current;
+      const sel = window.getSelection();
+      if (!el || !sel || sel.rangeCount === 0 || document.activeElement !== el) return;
+      const caret = sel.getRangeAt(0).getBoundingClientRect();
+      const box = wrap.getBoundingClientRect();
+      if (caret.height === 0) return;
+      const scroller = wrap.querySelector<HTMLElement>(".nq-scroll");
+      if (caret.bottom > box.bottom - 16) scroller?.scrollBy({ top: caret.bottom - box.bottom + 48 });
+    });
+    observer.observe(wrap);
+    return () => observer.disconnect();
+  }, [phone, ready]);
 
   /** Azione dell'utente: se fallisce lo dice con un avviso (dettagli in console). */
   async function attempt(failure: string, action: () => Promise<void>) {
@@ -2284,10 +2350,10 @@ async function changePageColor(color: string | null) {
       return;
     }
     try {
-      await openPath(await attachmentAbsolutePath(note.diskPath, attachment.name));
+      await openFile(await attachmentAbsolutePath(note.diskPath, attachment.name));
     } catch (error) {
       console.error("Impossibile aprire l'allegato:", error);
-      showToast("Impossibile aprire il file");
+      showToast(fileErrorMessage(error, "Impossibile aprire il file"));
     }
   }
 
@@ -2401,773 +2467,528 @@ async function changePageColor(color: string | null) {
     </div>
   );
 
-  return (
-    <div className={`nq-editor${compact ? " nq-editor--compact" : ""}`}>
-      <header className="nq-ed-head">
-        {onToggleSide && (
-          <button
-            type="button"
-            className="nq-icon-btn"
-            onClick={onToggleSide}
-            aria-label={sideOpen ? "Nascondi la barra laterale" : "Mostra la barra laterale"}
-            aria-pressed={sideOpen}
-          >
-            <MdOutlineViewSidebar />
-          </button>
-        )}
-        <Crumbs items={crumbs} />
+  // ---------------- Pezzi in comune tra desktop (menu) e telefono (fogli dal basso) ----------------
 
-        <div className="nq-tag-row">
-          {note.tags.map((tag) => (
-            <span key={tag} className="nq-chip">
-              #{tag}
-              <button type="button" onClick={() => void removeTag(tag)} aria-label={`Rimuovi il tag ${tag}`}>
-                <MdClose />
-              </button>
-            </span>
-          ))}
-          <input
-            className="nq-tag-input"
-            value={tagDraft}
-            placeholder="+ tag"
-            maxLength={24}
-            aria-label="Aggiungi un tag"
-            onChange={(e) => setTagDraft(e.target.value)}
-            onKeyDown={handleTagKey}
-            onBlur={() => void addTag()}
-          />
-        </div>
-
-        <button
-          type="button"
-          className={`nq-icon-btn nq-star${note.starred ? " is-on" : ""}`}
-          onClick={onToggleStar}
-          aria-label={note.starred ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
-          aria-pressed={note.starred}
-          title="Preferiti"
-        >
-          {note.starred ? <MdStar /> : <MdOutlineStarBorder />}
-        </button>
-
-        {onSplit && (
-          <div className="nq-menu-anchor">
-            <button
-              type="button"
-              className={`nq-icon-btn${menu === "split" ? " is-on" : ""}`}
-              aria-label="Schermo diviso"
-              aria-expanded={menu === "split"}
-              title="Schermo diviso: affianca un'altra nota"
-              onClick={() => {
-                setSplitQuery("");
-                setMenu(menu === "split" ? null : "split");
-              }}
-            >
-              <MdOutlineVerticalSplit />
-            </button>
-            {menu === "split" && (
-              <>
-                <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
-                <div className="nq-menu nq-menu--right nq-menu--list">
-                  <input
-                    autoFocus
-                    className="nq-menu-search"
-                    placeholder="Cerca una nota da affiancare…"
-                    aria-label="Cerca una nota da affiancare"
-                    value={splitQuery}
-                    onChange={(e) => setSplitQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") setMenu(null);
-                    }}
-                  />
-                  {splitList.map((n) => (
-                    <button
-                      key={n.id}
-                      type="button"
-                      onClick={() => {
-                        setMenu(null);
-                        onSplit(n.id);
-                      }}
-                    >
-                      <strong>{n.title || "Senza titolo"}</strong>
-                      <span>{formatWhen(n.updatedAt)}</span>
-                    </button>
-                  ))}
-                  {splitList.length === 0 && <p className="nq-menu-empty">Nessuna nota trovata.</p>}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        <div className="nq-menu-anchor">
-          <button
-            type="button"
-            className={`nq-icon-btn${menu === "export" ? " is-on" : ""}`}
-            disabled={busy}
-            aria-label={busy ? "Esportazione in corso" : "Esporta"}
-            aria-expanded={menu === "export"}
-            title="Esporta (PDF, Markdown, PNG, JPG)"
-            onClick={() => setMenu(menu === "export" ? null : "export")}
-          >
-            <MdOutlineFileUpload />
-          </button>
-          {menu === "export" && (
-            <>
-              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
-              <div className="nq-menu nq-menu--right">
-                <button type="button" onClick={() => void exportAs("pdf")}>
-                  <strong>PDF</strong>
-                  <span>Una pagina PDF per ogni pagina della nota</span>
-                </button>
-                <button type="button" onClick={() => void exportAs("png")}>
-                  <strong>Immagine PNG</strong>
-                  <span>Alta risoluzione, tutte le pagine in verticale</span>
-                </button>
-                <button type="button" onClick={() => void exportAs("jpg")}>
-                  <strong>Immagine JPG</strong>
-                  <span>Più leggera del PNG</span>
-                </button>
-                <button type="button" onClick={() => void exportAs("md")}>
-                  <strong>Markdown (.md)</strong>
-                  <span>Solo testo, senza la scrittura a mano</span>
-                </button>
-                <button type="button" onClick={() => void exportAs("copy")}>
-                  <strong>Copia Markdown</strong>
-                  <span>Negli appunti</span>
-                </button>
-                <label className="nq-menu-check">
-                  <input type="checkbox" checked={lightExport} onChange={(e) => setLightExport(e.target.checked)} />
-                  Sfondo chiaro (consigliato per stampare)
-                </label>
-                <label className="nq-menu-check">
-                  <input type="checkbox" checked={exportMarks} onChange={(e) => setExportMarks(e.target.checked)} />
-                  Mostra i segni nelle pagine (PDF e immagini)
-                </label>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="nq-menu-anchor">
-          <button
-            type="button"
-            className={`nq-icon-btn${menu === "more" ? " is-on" : ""}`}
-            aria-label="Altre azioni"
-            aria-expanded={menu === "more"}
-            title="Altre azioni"
-            onClick={() => setMenu(menu === "more" ? null : "more")}
-          >
-            <MdMoreHoriz />
-          </button>
-          {menu === "more" && (
-            <>
-              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
-              <div className="nq-menu nq-menu--right nq-menu--more">
-                <p className="nq-menu-status">{savedLabel}</p>
-                <p className="nq-menu-status">
-                  {kicker} · Modificata {formatWhen(note.updatedAt).toLowerCase()}
-                </p>
-                <label className="nq-menu-field">
-                  <span>Font della nota</span>
-                  <select
-                    className="nq-tsel"
-                    value={noteFont ?? ""}
-                    onChange={(e) => void changeNoteFont((e.target.value || null) as NoteFont | null)}
-                  >
-                    <option value="">Font del tema</option>
-                    {NOTE_DEFAULT_FONTS.map((f) => (
-                      <option key={f.key} value={f.key}>
-                        {f.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div className="nq-menu-field" role="group" aria-label="Colore del titolo">
-                  <span>Colore del titolo</span>
-                  <span className="nq-title-colors">
-                    <button
-                      type="button"
-                      className="nq-title-default"
-                      aria-pressed={titleColor === null}
-                      title="Torna al colore del tema"
-                      onClick={() => changeTitleColor(null)}
-                    >
-                      Predefinito
-                    </button>
-                    {TITLE_COLORS.map((c) => (
-                      <button
-                        key={c.color}
-                        type="button"
-                        className="nq-ink-dot"
-                        aria-pressed={titleColor === c.color}
-                        style={{ background: c.color }}
-                        aria-label={`Titolo: ${c.label}`}
-                        title={c.label}
-                        onClick={() => changeTitleColor(c.color)}
-                      />
-                    ))}
-                    <label
-                      className={`nq-ink-dot nq-ink-custom${titleColor && !TITLE_COLORS.some((c) => c.color === titleColor) ? " is-on" : ""}`}
-                      title="Colore libero"
-                      style={titleColor && !TITLE_COLORS.some((c) => c.color === titleColor) ? { background: titleColor } : undefined}
-                    >
-                      <input
-                        type="color"
-                        value={isTitleColor(titleColor) ? titleColor : "#1c7ed6"}
-                        onChange={(e) => changeTitleColor(e.target.value.toLowerCase())}
-                        aria-label="Titolo: colore libero"
-                      />
-                    </label>
-                  </span>
-                  {titleColor && titleAdjusted && (
-                    <small className="nq-title-warn">Adattato per leggibilità su questo sfondo</small>
-                  )}
-                </div>
-                <label className="nq-menu-check nq-menu-check--pref">
-                  <input type="checkbox" checked={codeDetectOn} onChange={toggleCodeDetect} />
-                  <span>
-                    Riconosci il codice incollato
-                    <small>Ctrl+Shift+V incolla sempre come testo</small>
-                  </span>
-                </label>
-                <ConfirmButton
-                  className="nq-menu-danger"
-                  label="Sposta nel cestino"
-                  confirmLabel="Sicuro? Clicca ancora"
-                  onConfirm={() => {
-                    setMenu(null);
-                    onTrash();
-                  }}
-                />
-              </div>
-            </>
-          )}
-        </div>
-
-        {onClosePane && (
-          <button type="button" className="nq-icon-btn" onClick={onClosePane} aria-label="Chiudi riquadro" title="Chiudi riquadro">
+  const tagRow = (
+    <div className="nq-tag-row">
+      {note.tags.map((tag) => (
+        <span key={tag} className="nq-chip">
+          #{tag}
+          <button type="button" onClick={() => void removeTag(tag)} aria-label={`Rimuovi il tag ${tag}`}>
             <MdClose />
           </button>
-        )}
-      </header>
+        </span>
+      ))}
+      <input
+        className="nq-tag-input"
+        value={tagDraft}
+        placeholder="+ tag"
+        maxLength={24}
+        aria-label="Aggiungi un tag"
+        onChange={(e) => setTagDraft(e.target.value)}
+        onKeyDown={handleTagKey}
+        onBlur={() => void addTag()}
+      />
+    </div>
+  );
 
-      {/* onMouseDown preventDefault: i pulsanti non rubano la selezione al testo. */}
-      <div
-        className="nq-toolbar"
-        role="toolbar"
-        aria-label="Strumenti di scrittura"
-        onMouseDown={(e) => {
-          if (!(e.target instanceof HTMLSelectElement) && !(e.target instanceof HTMLInputElement)) e.preventDefault();
-        }}
-      >
-        <ToolButton label="Annulla" shortcut="undo" icon={<MdUndo />} onClick={handleUndo} />
-        <ToolButton label="Ripeti" shortcut="redo" icon={<MdRedo />} onClick={handleRedo} />
-        <span className="nq-tsep" />
+  const exportItems = (
+    <>
+      <button type="button" onClick={() => void exportAs("pdf")}>
+        <strong>PDF</strong>
+        <span>Una pagina PDF per ogni pagina della nota</span>
+      </button>
+      <button type="button" onClick={() => void exportAs("png")}>
+        <strong>Immagine PNG</strong>
+        <span>Alta risoluzione, tutte le pagine in verticale</span>
+      </button>
+      <button type="button" onClick={() => void exportAs("jpg")}>
+        <strong>Immagine JPG</strong>
+        <span>Più leggera del PNG</span>
+      </button>
+      <button type="button" onClick={() => void exportAs("md")}>
+        <strong>Markdown (.md)</strong>
+        <span>Solo testo, senza la scrittura a mano</span>
+      </button>
+      <button type="button" onClick={() => void exportAs("copy")}>
+        <strong>Copia Markdown</strong>
+        <span>Negli appunti</span>
+      </button>
+      <label className="nq-menu-check">
+        <input type="checkbox" checked={lightExport} onChange={(e) => setLightExport(e.target.checked)} />
+        Sfondo chiaro (consigliato per stampare)
+      </label>
+      <label className="nq-menu-check">
+        <input type="checkbox" checked={exportMarks} onChange={(e) => setExportMarks(e.target.checked)} />
+        Mostra i segni nelle pagine (PDF e immagini)
+      </label>
+    </>
+  );
+
+  const trashButton = (
+    <ConfirmButton
+      className="nq-menu-danger"
+      label="Sposta nel cestino"
+      confirmLabel={phone ? "Sicuro? Tocca ancora" : "Sicuro? Clicca ancora"}
+      onConfirm={() => {
+        setMenu(null);
+        onTrash();
+      }}
+    />
+  );
+
+  // sul telefono lo stato del salvataggio sta nella barra in alto e il cestino nel foglio ⋯
+  const moreItems = (
+    <>
+      {!phone && <p className="nq-menu-status">{savedLabel}</p>}
+      <p className="nq-menu-status">
+        {kicker} · Modificata {formatWhen(note.updatedAt).toLowerCase()}
+      </p>
+      <label className="nq-menu-field">
+        <span>Font della nota</span>
         <select
           className="nq-tsel"
-          value={block}
-          disabled={textOff}
-          onChange={(e) => handleBlockChange(e.target.value)}
-          aria-label="Stile del paragrafo"
-          title="Stile del paragrafo"
+          value={noteFont ?? ""}
+          onChange={(e) => void changeNoteFont((e.target.value || null) as NoteFont | null)}
         >
-          <option value="p">Testo normale</option>
-          <option value="h1">Titolo 1</option>
-          <option value="h2">Titolo 2</option>
-          <option value="h3">Titolo 3</option>
-        </select>
-        <select
-          className="nq-tsel nq-tsel--font"
-          value={fontKey}
-          disabled={textOff}
-          onChange={(e) => handleFont(e.target.value)}
-          aria-label="Font della selezione"
-          title="Font della selezione"
-        >
-          <option value="">{noteFont ? "Font della nota" : "Font del tema"}</option>
-          {NOTE_FONTS.map((f) => (
-            <option key={f.key} value={f.key} disabled={f.key === "punti" && !inTitle && fontKey !== "punti"}>
+          <option value="">Font del tema</option>
+          {NOTE_DEFAULT_FONTS.map((f) => (
+            <option key={f.key} value={f.key}>
               {f.label}
             </option>
           ))}
         </select>
-        <span className="nq-tsize">
-          <button type="button" className="nq-tsize-btn" disabled={textOff} onClick={() => handleFontSize(fontSize - 1)} aria-label="Riduci il testo" title="Riduci il testo">
-            A−
-          </button>
-          <NumberField className="nq-size-input" value={fontSize} min={SIZE_MIN} max={SIZE_MAX} disabled={textOff} onCommit={handleFontSize} aria-label="Dimensione del testo in pixel" title={`Dimensione del testo (${SIZE_MIN}–${SIZE_MAX} px)`} />
-          <button type="button" className="nq-tsize-btn" disabled={textOff} onClick={() => handleFontSize(fontSize + 1)} aria-label="Ingrandisci il testo" title="Ingrandisci il testo">
-            A+
-          </button>
-        </span>
-        <span className="nq-tsep" />
-        <ToolButton label="Grassetto" shortcut="bold" icon={<MdFormatBold />} disabled={textOff} onClick={() => exec("bold")} />
-        <ToolButton label="Corsivo" shortcut="italic" icon={<MdFormatItalic />} disabled={textOff} onClick={() => exec("italic")} />
-        <ToolButton label="Sottolineato" shortcut="underline" icon={<MdFormatUnderlined />} disabled={textOff} onClick={() => exec("underline")} />
-        <ToolButton label="Barrato" shortcut="strike" icon={<MdFormatStrikethrough />} disabled={textOff} onClick={() => exec("strikeThrough")} />
-        <div className="nq-menu-anchor">
-          <ToolButton
-            label="Colore del testo"
-            legend="colore"
-            icon={<MdFormatColorText className="nq-color-ico" data-color={colorKey || undefined} />}
-            disabled={textOff}
-            pressed={menu === "color"}
-            onClick={() => setMenu(menu === "color" ? null : "color")}
-          />
-          {menu === "color" && (
-            <>
-              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
-              <div className="nq-menu nq-menu--swatches" role="dialog" aria-label="Colore del testo">
-                <div className="nq-swatch-grid">
-                  <button type="button" className="nq-sw nq-sw--theme" aria-label="Colore del tema" title="Colore del tema" aria-pressed={colorKey === ""} onClick={() => handleTextColor(null)}>
-                    <MdFormatColorReset />
-                  </button>
-                  {TEXT_COLORS.map((c) => (
-                    <button
-                      key={c.key}
-                      type="button"
-                      className="nq-sw nq-sw--ink"
-                      data-color={c.key}
-                      aria-label={c.label}
-                      title={c.label}
-                      aria-pressed={colorKey === c.key}
-                      onClick={() => handleTextColor(c.key)}
-                    />
-                  ))}
-                </div>
-                <label className="nq-sw-custom-row">
-                  <input type="color" value={textColor} onChange={(e) => handleCustomTextColor(e.target.value)} />
-                  <span>Altro colore…</span>
-                </label>
-              </div>
-            </>
-          )}
-        </div>
-        <div className="nq-menu-anchor">
-          <ToolButton
-            label="Evidenzia"
-            legend="evid."
-            icon={<MdHighlight />}
-            disabled={textOff}
-            pressed={menu === "mark"}
-            onClick={() => setMenu(menu === "mark" ? null : "mark")}
-          />
-          {menu === "mark" && (
-            <>
-              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
-              <div className="nq-menu nq-menu--swatches" role="dialog" aria-label="Evidenziatore">
-                <div className="nq-swatch-grid">
-                  <button type="button" className="nq-sw nq-sw--mark" data-mark={MARK_THEME} aria-label="Colore del tema" title="Colore del tema" onClick={() => handleMark(MARK_THEME)} />
-                  {MARK_COLORS.map((c) => (
-                    <button
-                      key={c.key}
-                      type="button"
-                      className="nq-sw nq-sw--mark"
-                      data-mark={c.key}
-                      aria-label={c.label}
-                      title={c.label}
-                      onClick={() => handleMark(c.key)}
-                    />
-                  ))}
-                </div>
-                <button type="button" className="nq-menu-reset nq-menu-reset--after" onClick={() => handleMark(null)}>
-                  <strong>Togli l'evidenziatura</strong>
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-        <ToolButton label="Cancella la formattazione" legend="pulisci" icon={<MdFormatClear />} disabled={textOff} onClick={() => withSelection(clearFormatting)} />
-        <span className="nq-tsep" />
-        <ToolButton label="Elenco puntato" shortcut="bullets" icon={<MdFormatListBulleted />} disabled={textOff} onClick={() => exec("insertUnorderedList")} />
-        <ToolButton label="Checklist" shortcut="checklist" icon={<MdChecklist />} disabled={textOff} onClick={handleChecklist} />
-        <ToolButton label="Link" shortcut="link" icon={<MdLink />} disabled={textOff} pressed={linkOpen} onClick={openLink} />
-        <ToolButton label="Inserisci un segno" shortcut="bookmark" icon={<MdOutlineBookmarkAdd />} onClick={insertBookmark} />
-        {linkOpen && (
-          <span className="nq-link-pop">
-            <input
-              autoFocus
-              value={linkUrl}
-              placeholder="https://…"
-              aria-label="Indirizzo del link"
-              onChange={(e) => setLinkUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") applyLink();
-                if (e.key === "Escape") setLinkOpen(false);
-              }}
-            />
-            <button type="button" className="nq-icon-btn" onClick={applyLink} aria-label="Applica il link">
-              <MdAdd />
-            </button>
-          </span>
-        )}
-        <span className="nq-tsep" />
-        <ToolButton label="Inserisci tabella" shortcut="table" icon={<MdOutlineTableChart />} disabled={textOff} onClick={insertTable} />
-        <ToolButton label="Blocco di codice" shortcut="code" icon={<MdCode />} disabled={textOff} onClick={() => insertCodeBlock()} />
-        <ToolButton label="Inserisci immagine" legend="img" icon={<MdOutlineImage />} disabled={busy} onClick={() => void pickAndInsert("image")} />
-        <ToolButton label="Allega file" legend="file" icon={<MdOutlineAttachFile />} onClick={() => void pickFiles()} />
-        {onStorePdf && <ToolButton label="Inserisci un PDF (pagine nuove dopo questa)" legend="pdf" icon={<MdOutlinePictureAsPdf />} disabled={busy} onClick={() => void pickPdf()} />}
-        <div className="nq-menu-anchor">
-          <ToolButton
-            label="Inserisci vista di una raccolta"
-            legend="racc."
-            icon={<MdOutlineStorage />}
-            disabled={textOff}
-            pressed={menu === "views"}
-            onClick={() => {
-              commitEditor();
-              setMenu(menu === "views" ? null : "views");
-            }}
-          />
-          {menu === "views" && (
-            <>
-              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
-              <div className="nq-menu" role="menu" aria-label="Vista di una raccolta" onMouseDown={(e) => e.preventDefault()}>
-                {store.collections
-                  .filter((c) => c.deletedAt === null)
-                  .map((c) => (
-                    <button key={c.id} type="button" role="menuitem" onClick={() => void insertView(c.id)}>
-                      <strong>{c.name}</strong>
-                      <span>{fieldsOf(store, c.id).length} campi</span>
-                    </button>
-                  ))}
-                <button type="button" role="menuitem" onClick={() => void insertView("nuova")}>
-                  <strong>+ Nuova raccolta</strong>
-                  <span>Con i campi Titolo, Stato e Data</span>
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-        <span className="nq-tsep" />
-        <span className="nq-swatches" role="group" aria-label="Colore della pagina">
+      </label>
+      <div className="nq-menu-field" role="group" aria-label="Colore del titolo">
+        <span>Colore del titolo</span>
+        <span className="nq-title-colors">
           <button
             type="button"
-            className="nq-psw nq-psw--theme"
-            aria-label="Pagina: colore del tema"
-            title="Pagina: colore del tema"
-            aria-pressed={page.color === null}
-            onClick={() => void changePageColor(null)}
-          />
-          {PAGE_COLORS.map((c) => (
+            className="nq-title-default"
+            aria-pressed={titleColor === null}
+            title="Torna al colore del tema"
+            onClick={() => changeTitleColor(null)}
+          >
+            Predefinito
+          </button>
+          {TITLE_COLORS.map((c) => (
             <button
-              key={c.key}
+              key={c.color}
               type="button"
-              className="nq-psw"
-              data-k={c.key}
-              aria-label={`Pagina: ${c.label}`}
-              title={`Pagina: ${c.label}`}
-              aria-pressed={page.color === c.key}
-              onClick={() => void changePageColor(c.key)}
+              className="nq-ink-dot"
+              aria-pressed={titleColor === c.color}
+              style={{ background: c.color }}
+              aria-label={`Titolo: ${c.label}`}
+              title={c.label}
+              onClick={() => changeTitleColor(c.color)}
             />
           ))}
           <label
-            className="nq-psw nq-psw--custom"
-            title="Pagina: altro colore"
-            data-on={page.color !== null && !isPageColorKey(page.color) ? "" : undefined}
-            style={page.color !== null && !isPageColorKey(page.color) ? { background: page.color } : undefined}
+            className={`nq-ink-dot nq-ink-custom${titleColor && !TITLE_COLORS.some((c) => c.color === titleColor) ? " is-on" : ""}`}
+            title="Colore libero"
+            style={titleColor && !TITLE_COLORS.some((c) => c.color === titleColor) ? { background: titleColor } : undefined}
           >
             <input
               type="color"
-              value={customPageColor(page.color)}
-              onChange={(e) => void changePageColor(e.target.value)}
-              aria-label="Pagina: altro colore"
+              value={isTitleColor(titleColor) ? titleColor : "#1c7ed6"}
+              onChange={(e) => changeTitleColor(e.target.value.toLowerCase())}
+              aria-label="Titolo: colore libero"
             />
           </label>
         </span>
-        <ToolButton label="Applica il colore a tutte le pagine" legend="tutte" icon={<MdDoneAll />} onClick={() => void applyColorToAll()} />
-        <select
-          className="nq-tsel"
-          value={page.background}
-          onChange={(e) => void changeBackground(e.target.value as PageBackground)}
-          aria-label="Sfondo della pagina"
-          title="Sfondo: puntini, quadretti, righe"
-        >
-          {BACKGROUND_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <span className="nq-tsep" />
-        <ToolButton
-          label={mode === "ink" ? "Torna al testo" : "Scrittura a mano"}
-          legend="mano"
-          icon={<MdOutlineGesture />}
-          pressed={mode === "ink"}
-          onClick={() => setMode(mode === "ink" ? "text" : "ink")}
-        />
-        {onOpenShortcuts && (
-          <ToolButton label="Scorciatoie" shortcut="help" icon={<MdKeyboard />} onClick={onOpenShortcuts} />
-        )}
+        {titleColor && titleAdjusted && <small className="nq-title-warn">Adattato per leggibilità su questo sfondo</small>}
       </div>
+      <label className="nq-menu-check nq-menu-check--pref">
+        <input type="checkbox" checked={codeDetectOn} onChange={toggleCodeDetect} />
+        <span>
+          Riconosci il codice incollato
+          {!phone && <small>Ctrl+Shift+V incolla sempre come testo</small>}
+        </span>
+      </label>
+      {!phone && trashButton}
+    </>
+  );
 
-      {mode === "ink" && (
-        <div className="nq-toolbar nq-ink-bar" role="toolbar" aria-label="Scrittura a mano">
-          <ToolButton label="Penna" shortcut="pen" text="Penna" icon={<MdOutlineEdit />} pressed={tool === "pen"} onClick={() => setTool("pen")} />
-          <ToolButton label="Evidenziatore" shortcut="highlighter" text="Evidenziatore" icon={<MdOutlineBorderColor />} pressed={tool === "highlighter"} onClick={() => setTool("highlighter")} />
-          <ToolButton label="Gomma" shortcut="eraser" text="Gomma" icon={<MdOutlineBackspace />} pressed={tool === "eraser"} onClick={() => setTool("eraser")} />
-          <ToolButton label="Segno sulla pagina (clicca dove vuoi metterlo)" shortcut="pinTool" text="Segno" icon={<MdOutlinePushPin />} pressed={tool === "pin"} disabled={Boolean(page.pdf)} onClick={() => setTool("pin")} />
-          <ToolButton
-            label={shapes ? "Forme automatiche: accese (tieni fermo a fine tratto)" : "Forme automatiche: spente"}
-            legend="forme"
-            text="Forme"
-            icon={<MdOutlineShapeLine />}
-            pressed={shapes}
-            disabled={tool === "eraser" || tool === "pin"}
-            onClick={toggleShapes}
+  const fontSelect = (
+    <select
+      className="nq-tsel nq-tsel--font"
+      value={fontKey}
+      disabled={textOff}
+      onChange={(e) => handleFont(e.target.value)}
+      aria-label="Font della selezione"
+      title="Font della selezione"
+    >
+      <option value="">{noteFont ? "Font della nota" : "Font del tema"}</option>
+      {NOTE_FONTS.map((f) => (
+        <option key={f.key} value={f.key} disabled={f.key === "punti" && !inTitle && fontKey !== "punti"}>
+          {f.label}
+        </option>
+      ))}
+    </select>
+  );
+
+  const sizeControl = (
+    <span className="nq-tsize">
+      <button type="button" className="nq-tsize-btn" disabled={textOff} onClick={() => handleFontSize(fontSize - 1)} aria-label="Riduci il testo" title="Riduci il testo">
+        A−
+      </button>
+      <NumberField className="nq-size-input" value={fontSize} min={SIZE_MIN} max={SIZE_MAX} disabled={textOff} onCommit={handleFontSize} aria-label="Dimensione del testo in pixel" title={`Dimensione del testo (${SIZE_MIN}–${SIZE_MAX} px)`} />
+      <button type="button" className="nq-tsize-btn" disabled={textOff} onClick={() => handleFontSize(fontSize + 1)} aria-label="Ingrandisci il testo" title="Ingrandisci il testo">
+        A+
+      </button>
+    </span>
+  );
+
+  const textColorPanel = (
+    <>
+      <div className="nq-swatch-grid">
+        <button type="button" className="nq-sw nq-sw--theme" aria-label="Colore del tema" title="Colore del tema" aria-pressed={colorKey === ""} onClick={() => handleTextColor(null)}>
+          <MdFormatColorReset />
+        </button>
+        {TEXT_COLORS.map((c) => (
+          <button
+            key={c.key}
+            type="button"
+            className="nq-sw nq-sw--ink"
+            data-color={c.key}
+            aria-label={c.label}
+            title={c.label}
+            aria-pressed={colorKey === c.key}
+            onClick={() => handleTextColor(c.key)}
           />
-          <span className="nq-tsep" />
-          <span className="nq-ink-colors">
-            {INK_COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                className="nq-ink-dot"
-                aria-pressed={c === color}
-                style={{ background: c === THEME_INK ? "var(--text-primary)" : c }}
-                onClick={() => setColor(c)}
-                aria-label={c === THEME_INK ? "Inchiostro del tema" : `Colore ${c}`}
-              />
-            ))}
-            <label
-              className={`nq-ink-dot nq-ink-custom${INK_COLORS.includes(color) ? "" : " is-on"}`}
-              title="Colore personalizzato"
-              style={INK_COLORS.includes(color) ? undefined : { background: color }}
+        ))}
+      </div>
+      <label className="nq-sw-custom-row">
+        <input type="color" value={textColor} onChange={(e) => handleCustomTextColor(e.target.value)} />
+        <span>Altro colore…</span>
+      </label>
+    </>
+  );
+
+  const markPanel = (
+    <>
+      <div className="nq-swatch-grid">
+        <button type="button" className="nq-sw nq-sw--mark" data-mark={MARK_THEME} aria-label="Colore del tema" title="Colore del tema" onClick={() => handleMark(MARK_THEME)} />
+        {MARK_COLORS.map((c) => (
+          <button
+            key={c.key}
+            type="button"
+            className="nq-sw nq-sw--mark"
+            data-mark={c.key}
+            aria-label={c.label}
+            title={c.label}
+            onClick={() => handleMark(c.key)}
+          />
+        ))}
+      </div>
+      <button type="button" className="nq-menu-reset nq-menu-reset--after" onClick={() => handleMark(null)}>
+        <strong>Togli l'evidenziatura</strong>
+      </button>
+    </>
+  );
+
+  const viewsItems = (
+    <>
+      {store.collections
+        .filter((c) => c.deletedAt === null)
+        .map((c) => (
+          <button key={c.id} type="button" role="menuitem" onClick={() => void insertView(c.id)}>
+            <strong>{c.name}</strong>
+            <span>{fieldsOf(store, c.id).length} campi</span>
+          </button>
+        ))}
+      <button type="button" role="menuitem" onClick={() => void insertView("nuova")}>
+        <strong>+ Nuova raccolta</strong>
+        <span>Con i campi Titolo, Stato e Data</span>
+      </button>
+    </>
+  );
+
+  const pageColorControls = (
+    <>
+      <span className="nq-swatches" role="group" aria-label="Colore della pagina">
+        <button
+          type="button"
+          className="nq-psw nq-psw--theme"
+          aria-label="Pagina: colore del tema"
+          title="Pagina: colore del tema"
+          aria-pressed={page.color === null}
+          onClick={() => void changePageColor(null)}
+        />
+        {PAGE_COLORS.map((c) => (
+          <button
+            key={c.key}
+            type="button"
+            className="nq-psw"
+            data-k={c.key}
+            aria-label={`Pagina: ${c.label}`}
+            title={`Pagina: ${c.label}`}
+            aria-pressed={page.color === c.key}
+            onClick={() => void changePageColor(c.key)}
+          />
+        ))}
+        <label
+          className="nq-psw nq-psw--custom"
+          title="Pagina: altro colore"
+          data-on={page.color !== null && !isPageColorKey(page.color) ? "" : undefined}
+          style={page.color !== null && !isPageColorKey(page.color) ? { background: page.color } : undefined}
+        >
+          <input
+            type="color"
+            value={customPageColor(page.color)}
+            onChange={(e) => void changePageColor(e.target.value)}
+            aria-label="Pagina: altro colore"
+          />
+        </label>
+      </span>
+      <ToolButton label="Applica il colore a tutte le pagine" legend="tutte" text={phone ? "A tutte" : undefined} icon={<MdDoneAll />} onClick={() => void applyColorToAll()} />
+      <select
+        className="nq-tsel"
+        value={page.background}
+        onChange={(e) => void changeBackground(e.target.value as PageBackground)}
+        aria-label="Sfondo della pagina"
+        title="Sfondo: puntini, quadretti, righe"
+      >
+        {BACKGROUND_OPTIONS.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </>
+  );
+
+  const pagesPanel = (
+    <>
+      <div className="nq-pages-head">
+        <span>Pagine</span>
+        <span>{pages.length}</span>
+      </div>
+      <div className="nq-pages-list">
+        {pages.map((p, i) => (
+          <div key={p.id} className={`nq-thumb-wrap${i === index ? " is-active" : ""}`}>
+            <div
+              className="nq-thumb"
+              role="button"
+              tabIndex={0}
+              aria-label={`Vai alla pagina ${i + 1}`}
+              aria-current={i === index ? "page" : undefined}
+              onClick={() => {
+                setIndex(i);
+                if (phone) setMenu(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setIndex(i);
+                }
+              }}
             >
-              <input type="color" value={color} onChange={(e) => setColor(e.target.value)} aria-label="Colore personalizzato" />
-            </label>
-          </span>
-          <select className="nq-tsel" value={size} onChange={(e) => setSize(Number(e.target.value))} aria-label="Spessore" title="Spessore">
-            {INK_SIZES.map((s) => (
-              <option key={s} value={s}>
-                {s} px
-              </option>
-            ))}
-          </select>
-        </div>
+              <PageThumb page={p} kicker={kicker} dateLabel={monthYear(note.createdAt)} />
+            </div>
+            <div className="nq-thumb-foot">
+              <span>Pagina {i + 1}</span>
+              <span className="nq-thumb-tools">
+                <button type="button" disabled={i === 0} onClick={() => void movePage(i, i - 1)} aria-label={`Sposta la pagina ${i + 1} prima`}>
+                  <MdArrowUpward />
+                </button>
+                <button type="button" disabled={i === pages.length - 1} onClick={() => void movePage(i, i + 1)} aria-label={`Sposta la pagina ${i + 1} dopo`}>
+                  <MdArrowDownward />
+                </button>
+                {pages.length > 1 && (
+                  <ConfirmButton className="nq-thumb-del" label="✕" confirmLabel="Elimina?" onConfirm={() => removePage(p.id)} />
+                )}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        className="nq-btn nq-btn--block"
+        onClick={() => {
+          if (phone) setMenu(null);
+          void handleAddPage();
+        }}
+      >
+        <MdAdd /> Aggiungi pagina
+      </button>
+    </>
+  );
+
+  const attachmentItems = attachments.map((a) => (
+    <span key={a.id} className="nq-attach">
+      <button type="button" onClick={() => void openAttachment(a)} title="Apri">
+        <MdOutlineAttachFile /> {a.name} <em>{formatBytes(a.size)}</em>
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          if (phone) setMenu(null);
+          void insertAttachment(a);
+        }}
+        aria-label={`Inserisci ${a.name} nella pagina`}
+        title="Inserisci nella pagina"
+      >
+        <MdOutlineAddPhotoAlternate />
+      </button>
+      <button type="button" onClick={() => void removeAttachment(a)} aria-label={`Rimuovi ${a.name}`}>
+        <MdClose />
+      </button>
+    </span>
+  ));
+
+  const linkInput = (
+    <span className="nq-link-pop">
+      <input
+        autoFocus
+        value={linkUrl}
+        placeholder="https://…"
+        aria-label="Indirizzo del link"
+        onChange={(e) => setLinkUrl(e.target.value)}
+        onKeyDown={(e) => {
+          // senza preventDefault l'Invio, finito applyLink, arriverebbe alla pagina e sostituirebbe il testo del link
+          if (e.key === "Enter") {
+            e.preventDefault();
+            applyLink();
+          }
+          if (e.key === "Escape") setLinkOpen(false);
+        }}
+      />
+      <button type="button" className="nq-icon-btn" onClick={applyLink} aria-label="Applica il link">
+        <MdAdd />
+      </button>
+    </span>
+  );
+
+  const inkColors = (
+    <span className="nq-ink-colors">
+      {(phone ? [THEME_INK, ...INK_COLORS.slice(0, 6)] : INK_COLORS).map((c) => (
+        <button
+          key={c}
+          type="button"
+          className="nq-ink-dot"
+          aria-pressed={c === color}
+          style={{ background: c === THEME_INK ? "var(--text-primary)" : c }}
+          onClick={() => setColor(c)}
+          aria-label={c === THEME_INK ? "Inchiostro del tema" : `Colore ${c}`}
+        />
+      ))}
+      <label
+        className={`nq-ink-dot nq-ink-custom${INK_COLORS.includes(color) ? "" : " is-on"}`}
+        title="Colore personalizzato"
+        style={INK_COLORS.includes(color) ? undefined : { background: color }}
+      >
+        <input type="color" value={color} onChange={(e) => setColor(e.target.value)} aria-label="Colore personalizzato" />
+      </label>
+    </span>
+  );
+
+  const sizeSelect = (
+    <select className="nq-tsel" value={size} onChange={(e) => setSize(Number(e.target.value))} aria-label="Spessore" title="Spessore">
+      {INK_SIZES.map((s) => (
+        <option key={s} value={s}>
+          {s} px
+        </option>
+      ))}
+    </select>
+  );
+
+  const pageArea = (
+    <div ref={scrollWrapRef} className="nq-scroll-wrap">
+      {dropDrag && <DropOverlay zone={dropDrag.zone} count={dropDrag.count} />}
+      {findOpen && !page.pdf && (
+        <FindBar
+          pages={pages}
+          index={index}
+          editorRef={editorRef}
+          onGoToPage={setIndex}
+          onClose={() => {
+            setFindOpen(false);
+            editorRef.current?.focus();
+          }}
+        />
       )}
 
-      {attachments.length > 0 && (
-        <div className="nq-attachments" aria-label="Allegati">
-          {attachments.map((a) => (
-            <span key={a.id} className="nq-attach">
-              <button type="button" onClick={() => void openAttachment(a)} title="Apri">
-                <MdOutlineAttachFile /> {a.name} <em>{formatBytes(a.size)}</em>
-              </button>
-              <button
-                type="button"
-                onClick={() => void insertAttachment(a)}
-                aria-label={`Inserisci ${a.name} nella pagina`}
-                title="Inserisci nella pagina"
-              >
-                <MdOutlineAddPhotoAlternate />
-              </button>
-              <button type="button" onClick={() => void removeAttachment(a)} aria-label={`Rimuovi ${a.name}`}>
-                <MdClose />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div ref={scrollWrapRef} className="nq-scroll-wrap">
-        {dropDrag && <DropOverlay zone={dropDrag.zone} count={dropDrag.count} />}
-        {findOpen && !page.pdf && (
-          <FindBar
-            pages={pages}
-            index={index}
-            editorRef={editorRef}
-            onGoToPage={setIndex}
-            onClose={() => {
-              setFindOpen(false);
-              editorRef.current?.focus();
-            }}
-          />
-        )}
-
-        <div ref={setScrollEl} className="nq-scroll">
-          {page.pdf ? (
-            <PdfBlock
-              key={page.id}
-              page={page}
-              info={page.pdf}
-              noteDir={note.diskPath}
-              header={index === 0 ? titleBlock : null}
-              scrollEl={scrollEl}
-              zoom={pdfZoom}
-              onZoom={setPdfZoom}
-              mode={mode}
-              tool={tool}
-              color={color}
-              size={size}
-              shapes={shapes}
-              onInk={handlePdfInk}
-              onInfo={(info) => handlePdfInfo(page.id, info)}
-              findOpen={findOpen}
-              onCloseFind={() => setFindOpen(false)}
-              onNotice={showToast}
-              onBackToLink={pdfBlockId && pages.some((p) => pdfLinkIds(p.content).includes(pdfBlockId)) ? () => goToBookmark(pdfBlockId, true) : undefined}
-            />
-          ) : (
-          <PageSurface
+      <div ref={setScrollEl} className="nq-scroll">
+        {page.pdf ? (
+          <PdfBlock
             key={page.id}
             page={page}
-            zoom={zoom}
-            background={page.background}
+            info={page.pdf}
+            noteDir={note.diskPath}
+            header={index === 0 ? titleBlock : null}
+            scrollEl={scrollEl}
+            zoom={pdfZoom}
+            onZoom={setPdfZoom}
             mode={mode}
             tool={tool}
             color={color}
             size={size}
             shapes={shapes}
-            header={index === 0 ? titleBlock : null}
-            noteFont={noteFont}
-            noteDir={note.diskPath}
-            editorRef={editorRef}
-            onContent={handleTyping}
-            onBlockChange={commitEditor}
-            onPaste={handlePaste}
+            onInk={handlePdfInk}
+            onInfo={(info) => handlePdfInfo(page.id, info)}
+            findOpen={findOpen}
+            onCloseFind={() => setFindOpen(false)}
             onNotice={showToast}
-            onInk={handleInk}
-            onEditorKeyDown={handleEditorKey}
-            onAfterInput={() => {
-              checkSlash(true);
-              checkMention(true);
-            }}
-            collections={collections}
-            onRefClick={(rowId) => {
-              const info = rowInfo(store, rowId);
-              if (!info) showToast("Riga eliminata per sempre dalla sua raccolta");
-              else setRefRow(rowId);
-            }}
-            onHistory={(direction) => (direction === "undo" ? handleUndo() : handleRedo())}
-            onMarkerClick={(el) => openMarkerPopover(el, false)}
-            onPdfLinkClick={goToPdfBlock}
-            onPageMenu={openPageMenu}
-            onPlacePin={placePin}
-            onOpenPin={(pin, anchor) => {
-              setPageMenu(null);
-              setBmPop({ place: "pagina", pageId: page.id, data: pin, anchor, fresh: false });
-            }}
-            onMovePin={movePin}
+            onBackToLink={pdfBlockId && pages.some((p) => pdfLinkIds(p.content).includes(pdfBlockId)) ? () => goToBookmark(pdfBlockId, true) : undefined}
           />
-          )}
-        </div>
+        ) : (
+        <PageSurface
+          key={page.id}
+          page={page}
+          zoom={zoom}
+          background={page.background}
+          mode={mode}
+          tool={tool}
+          color={color}
+          size={size}
+          shapes={shapes}
+          header={index === 0 ? titleBlock : null}
+          noteFont={noteFont}
+          noteDir={note.diskPath}
+          editorRef={editorRef}
+          onContent={handleTyping}
+          onBlockChange={commitEditor}
+          onPaste={handlePaste}
+          onNotice={showToast}
+          onInk={handleInk}
+          onEditorKeyDown={handleEditorKey}
+          onAfterInput={() => {
+            checkSlash(true);
+            checkMention(true);
+          }}
+          collections={collections}
+          onRefClick={(rowId) => {
+            const info = rowInfo(store, rowId);
+            if (!info) showToast("Riga eliminata per sempre dalla sua raccolta");
+            else setRefRow(rowId);
+          }}
+          onHistory={(direction) => (direction === "undo" ? handleUndo() : handleRedo())}
+          onMarkerClick={(el) => openMarkerPopover(el, false)}
+          onPdfLinkClick={goToPdfBlock}
+          onPageMenu={openPageMenu}
+          onPlacePin={placePin}
+          onOpenPin={(pin, anchor) => {
+            setPageMenu(null);
+            setBmPop({ place: "pagina", pageId: page.id, data: pin, anchor, fresh: false });
+          }}
+          onMovePin={movePin}
+        />
+        )}
       </div>
 
-      <footer className="nq-pagebar">
-        <span className="nq-pdots" aria-label="Pagine">
-          {pages.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              className="nq-pdot"
-              aria-pressed={i === index}
-              aria-label={`Pagina ${i + 1}`}
-              title={`Pagina ${i + 1}`}
-              onClick={() => setIndex(i)}
-            >
-              <PageThumb page={p} kicker={kicker} dateLabel={monthYear(note.createdAt)} />
-            </button>
-          ))}
-        </span>
-        <span className="nq-pager">
-          <button type="button" className="nq-icon-btn" disabled={index === 0} onClick={() => setIndex(index - 1)} aria-label="Pagina precedente">
-            <MdChevronLeft />
-          </button>
-          Pagina {index + 1} di {pages.length}
-          <button type="button" className="nq-icon-btn" disabled={index >= pages.length - 1} onClick={() => setIndex(index + 1)} aria-label="Pagina successiva">
-            <MdChevronRight />
-          </button>
-        </span>
-        <div className="nq-menu-anchor">
-          <button
-            type="button"
-            className={`nq-btn nq-btn--small${menu === "pages" ? " is-on" : ""}`}
-            aria-expanded={menu === "pages"}
-            onClick={() => setMenu(menu === "pages" ? null : "pages")}
-          >
-            <MdOutlineLayers aria-hidden="true" /> Pagine
-          </button>
-          {menu === "pages" && (
-            <>
-              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
-              <div className="nq-menu nq-menu--up nq-pages-pop" role="dialog" aria-label="Gestisci le pagine">
-                <div className="nq-pages-head">
-                  <span>Pagine</span>
-                  <span>{pages.length}</span>
-                </div>
-                <div className="nq-pages-list">
-                  {pages.map((p, i) => (
-                    <div key={p.id} className={`nq-thumb-wrap${i === index ? " is-active" : ""}`}>
-                      <div
-                        className="nq-thumb"
-                        role="button"
-                        tabIndex={0}
-                        aria-label={`Vai alla pagina ${i + 1}`}
-                        aria-current={i === index ? "page" : undefined}
-                        onClick={() => setIndex(i)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            setIndex(i);
-                          }
-                        }}
-                      >
-                        <PageThumb page={p} kicker={kicker} dateLabel={monthYear(note.createdAt)} />
-                      </div>
-                      <div className="nq-thumb-foot">
-                        <span>Pagina {i + 1}</span>
-                        <span className="nq-thumb-tools">
-                          <button type="button" disabled={i === 0} onClick={() => void movePage(i, i - 1)} aria-label={`Sposta la pagina ${i + 1} prima`}>
-                            <MdArrowUpward />
-                          </button>
-                          <button type="button" disabled={i === pages.length - 1} onClick={() => void movePage(i, i + 1)} aria-label={`Sposta la pagina ${i + 1} dopo`}>
-                            <MdArrowDownward />
-                          </button>
-                          {pages.length > 1 && (
-                            <ConfirmButton className="nq-thumb-del" label="✕" confirmLabel="Elimina?" onConfirm={() => removePage(p.id)} />
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <button type="button" className="nq-btn nq-btn--block" onClick={() => void handleAddPage()}>
-                  <MdAdd /> Aggiungi pagina
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-        <button type="button" className="nq-icon-btn" onClick={() => void handleAddPage()} aria-label="Aggiungi pagina" title="Aggiungi pagina">
-          <MdAdd />
+      {phone && pages.length > 1 && (
+        <button type="button" className="nq-ph-pages" onClick={() => setMenu("pages")} aria-label={`Pagina ${index + 1} di ${pages.length}: gestisci le pagine`}>
+          <MdOutlineLayers aria-hidden="true" />
+          <b>{index + 1}</b> / {pages.length}
         </button>
-        <span className="nq-pager nq-pager--muted">{page.pdf ? `PDF · ${pagesLabel(page.pdf)}` : `${wordCount(page.content)} parole`}</span>
-        {page.pdf ? (
-          <span className="nq-pager">
-            <button type="button" className="nq-icon-btn" disabled={pdfZoom <= PDF_ZOOM_MIN} onClick={() => setPdfZoom(Math.max(PDF_ZOOM_MIN, pdfZoom - 10))} aria-label="Riduci lo zoom">
-              <MdRemove />
-            </button>
-            Zoom {pdfZoom}%
-            <button type="button" className="nq-icon-btn" disabled={pdfZoom >= PDF_ZOOM_MAX} onClick={() => setPdfZoom(Math.min(PDF_ZOOM_MAX, pdfZoom + 10))} aria-label="Aumenta lo zoom">
-              <MdAdd />
-            </button>
-          </span>
-        ) : (
-        <span className="nq-pager">
-          <button type="button" className="nq-icon-btn" disabled={zoom <= 60} onClick={() => setZoom(zoom - 10)} aria-label="Riduci lo zoom">
-            <MdRemove />
-          </button>
-          Zoom {zoom}%
-          <button type="button" className="nq-icon-btn" disabled={zoom >= 160} onClick={() => setZoom(zoom + 10)} aria-label="Aumenta lo zoom">
-            <MdAdd />
-          </button>
-        </span>
-        )}
-        <span className="nq-pager nq-pager--muted nq-save-status">{savedLabel}</span>
-      </footer>
+      )}
+    </div>
+  );
 
+  const floating = (
+    <>
       {slash && (
         <InsertMenu
           items={slashItems}
@@ -3278,6 +3099,602 @@ async function changePageColor(color: string | null) {
           )}
         </div>
       )}
+    </>
+  );
+
+  // I pulsanti delle barre non rubano la selezione al testo (né chiudono la tastiera), salvo select e campi.
+  const keepSelection = (e: { target: EventTarget; preventDefault: () => void }) => {
+    if (!(e.target instanceof HTMLSelectElement) && !(e.target instanceof HTMLInputElement)) e.preventDefault();
+  };
+
+  // ---------------- Telefono (docs/design/mobile/quaderno.html) ----------------
+
+  if (phone) {
+    const closeThen = (action: () => void) => {
+      setMenu(null);
+      action();
+    };
+    return (
+      <div className="nq-editor nq-editor--phone">
+        <header className="nq-ph-head">
+          {onClose && (
+            <button type="button" className="nq-icon-btn" onClick={onClose} aria-label="Chiudi la nota">
+              <MdArrowBack />
+            </button>
+          )}
+          <span className="nq-ph-title">{title || "Senza titolo"}</span>
+          <span className="nq-ph-saved" aria-live="polite">
+            {saving ? "Salvataggio…" : "Salvato"}
+          </span>
+          <button
+            type="button"
+            className={`nq-icon-btn nq-star${note.starred ? " is-on" : ""}`}
+            onClick={onToggleStar}
+            aria-label={note.starred ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+            aria-pressed={note.starred}
+          >
+            {note.starred ? <MdStar /> : <MdOutlineStarBorder />}
+          </button>
+          <button type="button" className="nq-icon-btn" aria-label="Opzioni della nota" aria-expanded={menu === "note"} onClick={() => setMenu("note")}>
+            <MdMoreHoriz />
+          </button>
+        </header>
+
+        {pageArea}
+
+        {mode === "ink" ? (
+          <div className="nq-ph-bar nq-ph-bar--ink" role="toolbar" aria-label="Scrittura a mano" onMouseDown={keepSelection}>
+            <ToolButton label="Penna" icon={<MdOutlineEdit />} pressed={tool === "pen"} onClick={() => setTool("pen")} />
+            <ToolButton label="Evidenziatore" icon={<MdOutlineBorderColor />} pressed={tool === "highlighter"} onClick={() => setTool("highlighter")} />
+            <ToolButton label="Gomma" icon={<MdOutlineBackspace />} pressed={tool === "eraser"} onClick={() => setTool("eraser")} />
+            <ToolButton label="Segno sulla pagina (tocca dove vuoi metterlo)" icon={<MdOutlinePushPin />} pressed={tool === "pin"} disabled={Boolean(page.pdf)} onClick={() => setTool("pin")} />
+            <span className="nq-tsep" />
+            <span className="nq-ph-scroll">
+              {inkColors}
+              {sizeSelect}
+              <ToolButton
+                label={shapes ? "Forme automatiche: accese (tieni fermo a fine tratto)" : "Forme automatiche: spente"}
+                icon={<MdOutlineShapeLine />}
+                pressed={shapes}
+                disabled={tool === "eraser" || tool === "pin"}
+                onClick={toggleShapes}
+              />
+            </span>
+            <button type="button" className="nq-ph-done" onClick={() => setMode("text")}>
+              Fine
+            </button>
+          </div>
+        ) : (
+          <div className="nq-ph-bar" role="toolbar" aria-label="Strumenti di scrittura" onMouseDown={keepSelection}>
+            <ToolButton label="Annulla" icon={<MdUndo />} onClick={handleUndo} />
+            <ToolButton label="Ripeti" icon={<MdRedo />} onClick={handleRedo} />
+            <span className="nq-tsep" />
+            <ToolButton label="Formato del testo" icon={<span className="nq-ph-aa">Aa</span>} pressed={menu === "format"} onClick={() => setMenu(menu === "format" ? null : "format")} />
+            <ToolButton label="Grassetto" icon={<MdFormatBold />} pressed={boldOn} onClick={() => exec("bold")} />
+            <ToolButton label="Corsivo" icon={<MdFormatItalic />} pressed={italicOn} onClick={() => exec("italic")} />
+            <ToolButton label="Elenco puntato" icon={<MdFormatListBulleted />} onClick={() => exec("insertUnorderedList")} />
+            <ToolButton label="Checklist" icon={<MdChecklist />} onClick={handleChecklist} />
+            <span className="nq-tsep" />
+            <ToolButton
+              label="Inserisci"
+              icon={<MdAdd />}
+              pressed={menu === "insert"}
+              onClick={() => {
+                commitEditor();
+                setMenu(menu === "insert" ? null : "insert");
+              }}
+            />
+            <ToolButton label="Scrittura a mano" icon={<MdOutlineGesture />} onClick={() => setMode("ink")} />
+          </div>
+        )}
+
+        {menu === "format" && (
+          <BottomSheet label="Formato del testo" onClose={() => setMenu(null)}>
+            <h5>Paragrafo</h5>
+            <div className="nq-ph-chips">
+              {(
+                [
+                  ["p", "Testo"],
+                  ["h1", "Titolo 1"],
+                  ["h2", "Titolo 2"],
+                  ["h3", "Titolo 3"],
+                ] as const
+              ).map(([value, label]) => (
+                <button key={value} type="button" className="nq-ph-chip" aria-pressed={block === value} onClick={() => handleBlockChange(value)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <h5>Font e dimensione</h5>
+            <div className="nq-ph-row">
+              {fontSelect}
+              {sizeControl}
+            </div>
+            <h5>Stile</h5>
+            <div className="nq-ph-seg">
+              <ToolButton label="Grassetto" icon={<MdFormatBold />} pressed={boldOn} onClick={() => exec("bold")} />
+              <ToolButton label="Corsivo" icon={<MdFormatItalic />} pressed={italicOn} onClick={() => exec("italic")} />
+              <ToolButton label="Sottolineato" icon={<MdFormatUnderlined />} onClick={() => exec("underline")} />
+              <ToolButton label="Barrato" icon={<MdFormatStrikethrough />} onClick={() => exec("strikeThrough")} />
+              <ToolButton label="Cancella la formattazione" text="Pulisci" icon={<MdFormatClear />} onClick={() => withSelection(clearFormatting)} />
+            </div>
+            <h5>Colore del testo</h5>
+            <div className="nq-menu nq-menu--sheet">{textColorPanel}</div>
+            <h5>Evidenziatore</h5>
+            <div className="nq-menu nq-menu--sheet">{markPanel}</div>
+          </BottomSheet>
+        )}
+
+        {menu === "insert" && (
+          <BottomSheet label="Inserisci" onClose={() => setMenu(null)}>
+            <h5>Inserisci</h5>
+            <div className="nq-ph-tiles">
+              <button type="button" onClick={() => closeThen(insertTable)}>
+                <MdOutlineTableChart aria-hidden="true" /> Tabella
+              </button>
+              <button type="button" onClick={() => closeThen(() => insertCodeBlock())}>
+                <MdCode aria-hidden="true" /> Codice
+              </button>
+              <button type="button" disabled={busy} onClick={() => closeThen(() => void pickAndInsert("image"))}>
+                <MdOutlineImage aria-hidden="true" /> Immagine
+              </button>
+              <button type="button" onClick={() => closeThen(() => void pickFiles())}>
+                <MdOutlineAttachFile aria-hidden="true" /> File
+              </button>
+              <button type="button" onClick={() => closeThen(openLink)}>
+                <MdLink aria-hidden="true" /> Link
+              </button>
+              <button type="button" onClick={() => setMenu("views")}>
+                <MdOutlineStorage aria-hidden="true" /> Raccolta
+              </button>
+              <button type="button" onClick={() => closeThen(insertBookmark)}>
+                <MdOutlineBookmarkAdd aria-hidden="true" /> Segno
+              </button>
+              {onStorePdf && (
+                <button type="button" disabled={busy} onClick={() => closeThen(() => void pickPdf())}>
+                  <MdOutlinePictureAsPdf aria-hidden="true" /> PDF
+                </button>
+              )}
+            </div>
+          </BottomSheet>
+        )}
+
+        {menu === "views" && (
+          <BottomSheet label="Vista di una raccolta" onClose={() => setMenu(null)}>
+            <h5>Vista di una raccolta</h5>
+            <div className="nq-menu nq-menu--sheet" role="menu" aria-label="Raccolte">
+              {viewsItems}
+            </div>
+          </BottomSheet>
+        )}
+
+        {linkOpen && (
+          <BottomSheet label="Link" onClose={() => setLinkOpen(false)}>
+            <h5>Link</h5>
+            {linkInput}
+          </BottomSheet>
+        )}
+
+        {menu === "note" && (
+          <BottomSheet label="Opzioni della nota" onClose={() => setMenu(null)}>
+            <h5>Tag</h5>
+            {tagRow}
+            {attachments.length > 0 && (
+              <>
+                <h5>Allegati ({attachments.length})</h5>
+                <div className="nq-ph-attachments">{attachmentItems}</div>
+              </>
+            )}
+            <h5>Pagine</h5>
+            <div className="nq-ph-thumbs">
+              {pages.map((p, i) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="nq-pdot"
+                  aria-pressed={i === index}
+                  aria-label={`Pagina ${i + 1}`}
+                  onClick={() => {
+                    setIndex(i);
+                    setMenu(null);
+                  }}
+                >
+                  <PageThumb page={p} kicker={kicker} dateLabel={monthYear(note.createdAt)} />
+                </button>
+              ))}
+              <button type="button" className="nq-ph-newpage" aria-label="Aggiungi pagina" onClick={() => closeThen(() => void handleAddPage())}>
+                <MdAdd />
+              </button>
+            </div>
+            <div className="nq-ph-list">
+              <button type="button" onClick={() => setMenu("pages")}>
+                <MdOutlineLayers aria-hidden="true" /> Gestisci le pagine <small>{pages.length === 1 ? "1 pagina" : `${pages.length} pagine`}</small>
+              </button>
+              <button type="button" onClick={() => setMenu("page")}>
+                <MdFormatColorText aria-hidden="true" /> Colore e sfondo della pagina
+                <small>{BACKGROUND_OPTIONS.find((o) => o.value === page.background)?.label}</small>
+              </button>
+              <button type="button" disabled={busy} onClick={() => setMenu("export")}>
+                <MdOutlineFileUpload aria-hidden="true" /> Esporta <small>PDF, Markdown, immagine</small>
+              </button>
+              <button type="button" onClick={() => setMenu("more")}>
+                <MdMoreHoriz aria-hidden="true" /> Titolo, font e altro
+              </button>
+            </div>
+            <div className="nq-menu nq-menu--sheet">{trashButton}</div>
+          </BottomSheet>
+        )}
+
+        {menu === "pages" && (
+          <BottomSheet label="Gestisci le pagine" onClose={() => setMenu(null)}>
+            <div className="nq-pages-pop nq-ph-pages-panel">{pagesPanel}</div>
+          </BottomSheet>
+        )}
+
+        {menu === "page" && (
+          <BottomSheet label="Colore e sfondo della pagina" onClose={() => setMenu(null)}>
+            <h5>Colore e sfondo della pagina</h5>
+            <div className="nq-ph-row nq-ph-row--wrap">{pageColorControls}</div>
+          </BottomSheet>
+        )}
+
+        {menu === "export" && (
+          <BottomSheet label="Esporta" onClose={() => setMenu(null)}>
+            <h5>Esporta</h5>
+            <div className="nq-menu nq-menu--sheet">{exportItems}</div>
+          </BottomSheet>
+        )}
+
+        {menu === "more" && (
+          <BottomSheet label="Titolo, font e altro" onClose={() => setMenu(null)}>
+            <h5>Titolo, font e altro</h5>
+            <div className="nq-menu nq-menu--sheet">{moreItems}</div>
+          </BottomSheet>
+        )}
+
+        {floating}
+      </div>
+    );
+  }
+
+  // ---------------- Desktop e tablet ----------------
+
+  return (
+    <div className={`nq-editor${compact ? " nq-editor--compact" : ""}`}>
+      <header className="nq-ed-head">
+        {onToggleSide && (
+          <button
+            type="button"
+            className="nq-icon-btn"
+            onClick={onToggleSide}
+            aria-label={sideOpen ? "Nascondi la barra laterale" : "Mostra la barra laterale"}
+            aria-pressed={sideOpen}
+          >
+            <MdOutlineViewSidebar />
+          </button>
+        )}
+        <Crumbs items={crumbs} />
+
+        {tagRow}
+
+        <button
+          type="button"
+          className={`nq-icon-btn nq-star${note.starred ? " is-on" : ""}`}
+          onClick={onToggleStar}
+          aria-label={note.starred ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+          aria-pressed={note.starred}
+          title="Preferiti"
+        >
+          {note.starred ? <MdStar /> : <MdOutlineStarBorder />}
+        </button>
+
+        {onSplit && (
+          <div className="nq-menu-anchor">
+            <button
+              type="button"
+              className={`nq-icon-btn${menu === "split" ? " is-on" : ""}`}
+              aria-label="Schermo diviso"
+              aria-expanded={menu === "split"}
+              title="Schermo diviso: affianca un'altra nota"
+              onClick={() => {
+                setSplitQuery("");
+                setMenu(menu === "split" ? null : "split");
+              }}
+            >
+              <MdOutlineVerticalSplit />
+            </button>
+            {menu === "split" && (
+              <>
+                <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+                <div className="nq-menu nq-menu--right nq-menu--list" role="dialog" aria-label="Schermo diviso">
+                  <input
+                    autoFocus
+                    className="nq-menu-search"
+                    placeholder="Cerca una nota da affiancare…"
+                    aria-label="Cerca una nota da affiancare"
+                    value={splitQuery}
+                    onChange={(e) => setSplitQuery(e.target.value)}
+                  />
+                  {splitList.map((n) => (
+                    <button
+                      key={n.id}
+                      type="button"
+                      onClick={() => {
+                        setMenu(null);
+                        onSplit(n.id);
+                      }}
+                    >
+                      <strong>{n.title || "Senza titolo"}</strong>
+                      <span>{formatWhen(n.updatedAt)}</span>
+                    </button>
+                  ))}
+                  {splitList.length === 0 && <p className="nq-menu-empty">Nessuna nota trovata.</p>}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        <div className="nq-menu-anchor">
+          <button
+            type="button"
+            className={`nq-icon-btn${menu === "export" ? " is-on" : ""}`}
+            disabled={busy}
+            aria-label={busy ? "Esportazione in corso" : "Esporta"}
+            aria-expanded={menu === "export"}
+            title="Esporta (PDF, Markdown, PNG, JPG)"
+            onClick={() => setMenu(menu === "export" ? null : "export")}
+          >
+            <MdOutlineFileUpload />
+          </button>
+          {menu === "export" && (
+            <>
+              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+              <div className="nq-menu nq-menu--right" role="dialog" aria-label="Esporta">
+                {exportItems}
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="nq-menu-anchor">
+          <button
+            type="button"
+            className={`nq-icon-btn${menu === "more" ? " is-on" : ""}`}
+            aria-label="Altre azioni"
+            aria-expanded={menu === "more"}
+            title="Altre azioni"
+            onClick={() => setMenu(menu === "more" ? null : "more")}
+          >
+            <MdMoreHoriz />
+          </button>
+          {menu === "more" && (
+            <>
+              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+              <div className="nq-menu nq-menu--right nq-menu--more" role="dialog" aria-label="Altre azioni">
+                {moreItems}
+              </div>
+            </>
+          )}
+        </div>
+
+        {onClosePane && (
+          <button type="button" className="nq-icon-btn" onClick={onClosePane} aria-label="Chiudi riquadro" title="Chiudi riquadro">
+            <MdClose />
+          </button>
+        )}
+      </header>
+
+      <div className="nq-toolbar" role="toolbar" aria-label="Strumenti di scrittura" onMouseDown={keepSelection}>
+        <ToolButton label="Annulla" shortcut="undo" icon={<MdUndo />} onClick={handleUndo} />
+        <ToolButton label="Ripeti" shortcut="redo" icon={<MdRedo />} onClick={handleRedo} />
+        <span className="nq-tsep" />
+        <select
+          className="nq-tsel"
+          value={block}
+          disabled={textOff}
+          onChange={(e) => handleBlockChange(e.target.value)}
+          aria-label="Stile del paragrafo"
+          title="Stile del paragrafo"
+        >
+          <option value="p">Testo normale</option>
+          <option value="h1">Titolo 1</option>
+          <option value="h2">Titolo 2</option>
+          <option value="h3">Titolo 3</option>
+        </select>
+        {fontSelect}
+        {sizeControl}
+        <span className="nq-tsep" />
+        <ToolButton label="Grassetto" shortcut="bold" icon={<MdFormatBold />} disabled={textOff} onClick={() => exec("bold")} />
+        <ToolButton label="Corsivo" shortcut="italic" icon={<MdFormatItalic />} disabled={textOff} onClick={() => exec("italic")} />
+        <ToolButton label="Sottolineato" shortcut="underline" icon={<MdFormatUnderlined />} disabled={textOff} onClick={() => exec("underline")} />
+        <ToolButton label="Barrato" shortcut="strike" icon={<MdFormatStrikethrough />} disabled={textOff} onClick={() => exec("strikeThrough")} />
+        <div className="nq-menu-anchor">
+          <ToolButton
+            label="Colore del testo"
+            legend="colore"
+            icon={<MdFormatColorText className="nq-color-ico" data-color={colorKey || undefined} />}
+            disabled={textOff}
+            pressed={menu === "color"}
+            onClick={() => setMenu(menu === "color" ? null : "color")}
+          />
+          {menu === "color" && (
+            <>
+              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+              <div className="nq-menu nq-menu--swatches" role="dialog" aria-label="Colore del testo">
+                {textColorPanel}
+              </div>
+            </>
+          )}
+        </div>
+        <div className="nq-menu-anchor">
+          <ToolButton
+            label="Evidenzia"
+            legend="evid."
+            icon={<MdHighlight />}
+            disabled={textOff}
+            pressed={menu === "mark"}
+            onClick={() => setMenu(menu === "mark" ? null : "mark")}
+          />
+          {menu === "mark" && (
+            <>
+              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+              <div className="nq-menu nq-menu--swatches" role="dialog" aria-label="Evidenziatore">
+                {markPanel}
+              </div>
+            </>
+          )}
+        </div>
+        <ToolButton label="Cancella la formattazione" legend="pulisci" icon={<MdFormatClear />} disabled={textOff} onClick={() => withSelection(clearFormatting)} />
+        <span className="nq-tsep" />
+        <ToolButton label="Elenco puntato" shortcut="bullets" icon={<MdFormatListBulleted />} disabled={textOff} onClick={() => exec("insertUnorderedList")} />
+        <ToolButton label="Checklist" shortcut="checklist" icon={<MdChecklist />} disabled={textOff} onClick={handleChecklist} />
+        <ToolButton label="Link" shortcut="link" icon={<MdLink />} disabled={textOff} pressed={linkOpen} onClick={openLink} />
+        <ToolButton label="Inserisci un segno" shortcut="bookmark" icon={<MdOutlineBookmarkAdd />} onClick={insertBookmark} />
+        {linkOpen && linkInput}
+        <span className="nq-tsep" />
+        <ToolButton label="Inserisci tabella" shortcut="table" icon={<MdOutlineTableChart />} disabled={textOff} onClick={insertTable} />
+        <ToolButton label="Blocco di codice" shortcut="code" icon={<MdCode />} disabled={textOff} onClick={() => insertCodeBlock()} />
+        <ToolButton label="Inserisci immagine" legend="img" icon={<MdOutlineImage />} disabled={busy} onClick={() => void pickAndInsert("image")} />
+        <ToolButton label="Allega file" legend="file" icon={<MdOutlineAttachFile />} onClick={() => void pickFiles()} />
+        {onStorePdf && <ToolButton label="Inserisci un PDF (pagine nuove dopo questa)" legend="pdf" icon={<MdOutlinePictureAsPdf />} disabled={busy} onClick={() => void pickPdf()} />}
+        <div className="nq-menu-anchor">
+          <ToolButton
+            label="Inserisci vista di una raccolta"
+            legend="racc."
+            icon={<MdOutlineStorage />}
+            disabled={textOff}
+            pressed={menu === "views"}
+            onClick={() => {
+              commitEditor();
+              setMenu(menu === "views" ? null : "views");
+            }}
+          />
+          {menu === "views" && (
+            <>
+              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+              <div className="nq-menu" role="menu" aria-label="Vista di una raccolta" onMouseDown={(e) => e.preventDefault()}>
+                {viewsItems}
+              </div>
+            </>
+          )}
+        </div>
+        <span className="nq-tsep" />
+        {pageColorControls}
+        <span className="nq-tsep" />
+        <ToolButton
+          label={mode === "ink" ? "Torna al testo" : "Scrittura a mano"}
+          legend="mano"
+          icon={<MdOutlineGesture />}
+          pressed={mode === "ink"}
+          onClick={() => setMode(mode === "ink" ? "text" : "ink")}
+        />
+        {onOpenShortcuts && (
+          <ToolButton label="Scorciatoie" shortcut="help" icon={<MdKeyboard />} onClick={onOpenShortcuts} />
+        )}
+      </div>
+
+      {mode === "ink" && (
+        <div className="nq-toolbar nq-ink-bar" role="toolbar" aria-label="Scrittura a mano">
+          <ToolButton label="Penna" shortcut="pen" text="Penna" icon={<MdOutlineEdit />} pressed={tool === "pen"} onClick={() => setTool("pen")} />
+          <ToolButton label="Evidenziatore" shortcut="highlighter" text="Evidenziatore" icon={<MdOutlineBorderColor />} pressed={tool === "highlighter"} onClick={() => setTool("highlighter")} />
+          <ToolButton label="Gomma" shortcut="eraser" text="Gomma" icon={<MdOutlineBackspace />} pressed={tool === "eraser"} onClick={() => setTool("eraser")} />
+          <ToolButton label="Segno sulla pagina (clicca dove vuoi metterlo)" shortcut="pinTool" text="Segno" icon={<MdOutlinePushPin />} pressed={tool === "pin"} disabled={Boolean(page.pdf)} onClick={() => setTool("pin")} />
+          <ToolButton
+            label={shapes ? "Forme automatiche: accese (tieni fermo a fine tratto)" : "Forme automatiche: spente"}
+            legend="forme"
+            text="Forme"
+            icon={<MdOutlineShapeLine />}
+            pressed={shapes}
+            disabled={tool === "eraser" || tool === "pin"}
+            onClick={toggleShapes}
+          />
+          <span className="nq-tsep" />
+          {inkColors}
+          {sizeSelect}
+        </div>
+      )}
+
+      {attachments.length > 0 && (
+        <div className="nq-attachments" aria-label="Allegati">
+          {attachmentItems}
+        </div>
+      )}
+
+      {pageArea}
+
+      <footer className="nq-pagebar">
+        <span className="nq-pdots" aria-label="Pagine">
+          {pages.map((p, i) => (
+            <button
+              key={p.id}
+              type="button"
+              className="nq-pdot"
+              aria-pressed={i === index}
+              aria-label={`Pagina ${i + 1}`}
+              title={`Pagina ${i + 1}`}
+              onClick={() => setIndex(i)}
+            >
+              <PageThumb page={p} kicker={kicker} dateLabel={monthYear(note.createdAt)} />
+            </button>
+          ))}
+        </span>
+        <span className="nq-pager">
+          <button type="button" className="nq-icon-btn" disabled={index === 0} onClick={() => setIndex(index - 1)} aria-label="Pagina precedente">
+            <MdChevronLeft />
+          </button>
+          Pagina {index + 1} di {pages.length}
+          <button type="button" className="nq-icon-btn" disabled={index >= pages.length - 1} onClick={() => setIndex(index + 1)} aria-label="Pagina successiva">
+            <MdChevronRight />
+          </button>
+        </span>
+        <div className="nq-menu-anchor">
+          <button
+            type="button"
+            className={`nq-btn nq-btn--small${menu === "pages" ? " is-on" : ""}`}
+            aria-expanded={menu === "pages"}
+            onClick={() => setMenu(menu === "pages" ? null : "pages")}
+          >
+            <MdOutlineLayers aria-hidden="true" /> Pagine
+          </button>
+          {menu === "pages" && (
+            <>
+              <div className="nq-menu-backdrop" onClick={() => setMenu(null)} />
+              <div className="nq-menu nq-menu--up nq-pages-pop" role="dialog" aria-label="Gestisci le pagine">
+                {pagesPanel}
+              </div>
+            </>
+          )}
+        </div>
+        <button type="button" className="nq-icon-btn" onClick={() => void handleAddPage()} aria-label="Aggiungi pagina" title="Aggiungi pagina">
+          <MdAdd />
+        </button>
+        <span className="nq-pager nq-pager--muted">{page.pdf ? `PDF · ${pagesLabel(page.pdf)}` : `${wordCount(page.content)} parole`}</span>
+        {page.pdf ? (
+          <span className="nq-pager">
+            <button type="button" className="nq-icon-btn" disabled={pdfZoom <= PDF_ZOOM_MIN} onClick={() => setPdfZoom(Math.max(PDF_ZOOM_MIN, pdfZoom - 10))} aria-label="Riduci lo zoom">
+              <MdRemove />
+            </button>
+            Zoom {pdfZoom}%
+            <button type="button" className="nq-icon-btn" disabled={pdfZoom >= PDF_ZOOM_MAX} onClick={() => setPdfZoom(Math.min(PDF_ZOOM_MAX, pdfZoom + 10))} aria-label="Aumenta lo zoom">
+              <MdAdd />
+            </button>
+          </span>
+        ) : (
+        <span className="nq-pager">
+          <button type="button" className="nq-icon-btn" disabled={zoom <= 60} onClick={() => setZoom(zoom - 10)} aria-label="Riduci lo zoom">
+            <MdRemove />
+          </button>
+          Zoom {zoom}%
+          <button type="button" className="nq-icon-btn" disabled={zoom >= 160} onClick={() => setZoom(zoom + 10)} aria-label="Aumenta lo zoom">
+            <MdAdd />
+          </button>
+        </span>
+        )}
+        <span className="nq-pager nq-pager--muted nq-save-status">{savedLabel}</span>
+      </footer>
+
+      {floating}
     </div>
   );
 }

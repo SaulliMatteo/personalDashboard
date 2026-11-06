@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backup automatico di Android (Google Drive) fino ad Android 11: solo il database (cartella dei dati dell'app,
+     src-tauri/src/db_backup.rs). Restano fuori la cartella del Quaderno (allegati, che farebbero superare i 25 MB),
+     la WebView e le cache; la sessione dei Gruppi sta in no_backup e non si salva mai.
+     Da Android 12 vale data_extraction_rules.xml, con le stesse regole. -->
+<full-backup-content>
+  <include domain="root" path="dashboard.db" />
+  <include domain="root" path="dashboard.db-wal" />
+</full-backup-content>

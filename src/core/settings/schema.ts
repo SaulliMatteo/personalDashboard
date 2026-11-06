@@ -158,6 +158,12 @@ interface BaseDef {
   description?: string;
   /** Chiave booleana da cui dipende: se è false il campo resta visibile ma disattivato. */
   dependsOn?: SettingKey;
+  /** Solo nel layout del desktop: sul telefono (useCompact) il campo non compare, il valore resta. */
+  desktopOnly?: true;
+  /** Solo dove ci sono i segnali di sistema (Windows e macOS, `systemSignalsAvailable`): altrove non compare. */
+  systemSignals?: true;
+  /** Testi da usare su Android, se lì il campo vuol dire altro (es. lo stop automatico dello Studio). */
+  android?: { label: string; description?: string };
 }
 
 export type SettingDef = BaseDef &
@@ -193,7 +199,7 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "accentOverrideNotte", group: "appearance", section: "Tema e colori", type: "boolean", label: "Accent personalizzato (notte)", description: "Spento: si usa l'accent del tema." },
   { key: "accentColorNotte", group: "appearance", section: "Tema e colori", type: "color", dependsOn: "accentOverrideNotte", label: "Colore accent (notte)" },
 
-  { key: "sidebarPosition", group: "appearance", section: "Barra laterale", type: "select", label: "Posizione", options: [{ value: "left", label: "Sinistra" }, { value: "right", label: "Destra" }] },
+  { key: "sidebarPosition", desktopOnly: true, group: "appearance", section: "Barra laterale", type: "select", label: "Posizione", options: [{ value: "left", label: "Sinistra" }, { value: "right", label: "Destra" }] },
   { key: "sidebarShowTitle", group: "appearance", section: "Barra laterale", type: "boolean", label: "Mostra il titolo dell'app" },
 
   { key: "animationsEnabled", group: "appearance", section: "Movimento", type: "boolean", label: "Animazioni", description: "Disattivandole si spengono transizioni e sweep del glow." },
@@ -219,19 +225,19 @@ export const SETTING_DEFS: SettingDef[] = [
   },
   // Le opzioni vengono dal registry dei widget (che core non conosce): la scheda Dashboard
   // le mostra come select con SettingsField; qui basta la validazione da testo.
-  { key: "headerSlot1", group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Spazio in alto a destra", description: "Un mini widget accanto al saluto." },
-  { key: "headerSlot2", group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Secondo spazio", description: "Un altro mini widget, affiancato al primo." },
+  { key: "headerSlot1", desktopOnly: true, group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Spazio in alto a destra", description: "Un mini widget accanto al saluto." },
+  { key: "headerSlot2", desktopOnly: true, group: "dashboard", section: "Intestazione", type: "text", maxLength: 40, dependsOn: "showDashboardHeader", label: "Secondo spazio", description: "Un altro mini widget, affiancato al primo." },
 
-  { key: "gridRows", group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 4, max: 8, step: 1, label: "Righe disponibili", description: "Più righe = più spazio per i widget, che diventano più bassi: la dashboard resta sempre dentro lo schermo. Non scende mai sotto le righe già occupate." },
+  { key: "gridRows", desktopOnly: true, group: "dashboard", section: "Griglia", type: "number", control: "slider", min: 4, max: 8, step: 1, label: "Righe disponibili", description: "Più righe = più spazio per i widget, che diventano più bassi: la dashboard resta sempre dentro lo schermo. Non scende mai sotto le righe già occupate." },
 
-  { key: "lockLayout", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Blocca layout", description: "Impedisce di trascinare i widget." },
-  { key: "gridPushDelayMs", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 1500, step: 50, unit: "ms", label: "Ritardo spinta widget", description: "Quanto tieni un widget sopra un altro prima che lo sposti (se lo rilasci lì, lo sposta subito)." },
-  { key: "dragThreshold", group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 20, step: 1, unit: "px", label: "Distanza prima che parta il trascinamento", description: "Evita trascinamenti involontari quando clicchi." },
-  { key: "openDetailOnClick", group: "dashboard", section: "Trascinamento", type: "boolean", label: "Apri il dettaglio con un doppio click sul widget" },
+  { key: "lockLayout", desktopOnly: true, group: "dashboard", section: "Trascinamento", type: "boolean", label: "Blocca layout", description: "Impedisce di trascinare i widget." },
+  { key: "gridPushDelayMs", desktopOnly: true, group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 1500, step: 50, unit: "ms", label: "Ritardo spinta widget", description: "Quanto tieni un widget sopra un altro prima che lo sposti (se lo rilasci lì, lo sposta subito)." },
+  { key: "dragThreshold", desktopOnly: true, group: "dashboard", section: "Trascinamento", type: "number", control: "slider", min: 0, max: 20, step: 1, unit: "px", label: "Distanza prima che parta il trascinamento", description: "Evita trascinamenti involontari quando clicchi." },
+  { key: "openDetailOnClick", desktopOnly: true, group: "dashboard", section: "Trascinamento", type: "boolean", label: "Apri il dettaglio con un doppio click sul widget" },
 
-  { key: "showDragGhost", group: "dashboard", section: "Anteprima di spostamento", type: "boolean", label: "Mostra l'anteprima fantasma", description: "La copia sfocata che indica dove atterrerà il widget." },
-  { key: "ghostOpacity", group: "dashboard", section: "Anteprima di spostamento", type: "number", control: "slider", min: 0.15, max: 0.8, step: 0.05, dependsOn: "showDragGhost", label: "Opacità" },
-  { key: "ghostBlur", group: "dashboard", section: "Anteprima di spostamento", type: "number", control: "slider", min: 0, max: 6, step: 0.5, unit: "px", dependsOn: "showDragGhost", label: "Sfocatura" },
+  { key: "showDragGhost", desktopOnly: true, group: "dashboard", section: "Anteprima di spostamento", type: "boolean", label: "Mostra l'anteprima fantasma", description: "La copia sfocata che indica dove atterrerà il widget." },
+  { key: "ghostOpacity", desktopOnly: true, group: "dashboard", section: "Anteprima di spostamento", type: "number", control: "slider", min: 0.15, max: 0.8, step: 0.05, dependsOn: "showDragGhost", label: "Opacità" },
+  { key: "ghostBlur", desktopOnly: true, group: "dashboard", section: "Anteprima di spostamento", type: "number", control: "slider", min: 0, max: 6, step: 0.5, unit: "px", dependsOn: "showDragGhost", label: "Sfocatura" },
 
   // ======================= WIDGET: STUDIO =======================
   // Le durate qui sotto sono i valori PREDEFINITI delle nuove materie:
@@ -245,11 +251,11 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "studyAutoStartNext", group: "study", section: "Timer", type: "boolean", label: "Avvia in automatico la fase successiva", description: "Solo pomodoro. Se spento, a fine fase il timer si ferma e aspetta che premi play." },
   { key: "studyStopwatchLapMinutes", group: "study", section: "Timer", type: "number", control: "input", min: 1, max: 240, step: 1, label: "Giro dell'anello del cronometro (min)", description: "Ogni quanti minuti l'anello del cronometro compie un giro." },
 
-  { key: "studyAutoStopEnabled", group: "study", section: "Stop automatico", type: "boolean", label: "Ferma il timer se sei inattivo", description: "Senza mouse né tastiera per il tempo qui sotto, il timer si ferma e registra lo studio fino a quando hai smesso. Solo Windows e macOS." },
-  { key: "studyAutoStopMinutes", group: "study", section: "Stop automatico", type: "number", control: "input", min: 1, max: 120, step: 1, dependsOn: "studyAutoStopEnabled", label: "Inattività prima dello stop (min)", description: "Vale anche per le app qui sotto. Le assenze più brevi contano come studio." },
-  { key: "studyAutoStopGame", group: "study", section: "Stop automatico", type: "boolean", dependsOn: "studyAutoStopEnabled", label: "Ferma anche se stai giocando", description: "Giochi e launcher (Steam, Epic, Riot…) in primo piano, anche se non sei inattivo." },
-  { key: "studyAutoStopVideo", group: "study", section: "Stop automatico", type: "boolean", dependsOn: "studyAutoStopEnabled", label: "Ferma anche se guardi video", description: "YouTube, Netflix, Twitch… nel browser o nelle loro app. I video aperti nella dashboard non contano." },
-  { key: "studyAutoStopChat", group: "study", section: "Stop automatico", type: "boolean", dependsOn: "studyAutoStopEnabled", label: "Ferma anche se sei in chat", description: "Discord, WhatsApp, Telegram… La categoria di un'app si può cambiare nella pagina di Pixy." },
+  { key: "studyAutoStopEnabled", group: "study", section: "Stop automatico", type: "boolean", label: "Ferma il timer se sei inattivo", description: "Senza mouse né tastiera per il tempo qui sotto, il timer si ferma e registra lo studio fino a quando hai smesso. Solo Windows e macOS.", android: { label: "Ferma il timer se usi altre app", description: "Se mentre studi usi il telefono in altre app per il tempo qui sotto, al rientro il timer si ferma e registra lo studio fino a quando sei uscito. Lo schermo spento conta come studio." } },
+  { key: "studyAutoStopMinutes", group: "study", section: "Stop automatico", type: "number", control: "input", min: 1, max: 120, step: 1, dependsOn: "studyAutoStopEnabled", label: "Inattività prima dello stop (min)", description: "Vale anche per le app qui sotto. Le assenze più brevi contano come studio.", android: { label: "Minuti in altre app prima dello stop", description: "Le uscite più brevi contano come studio." } },
+  { key: "studyAutoStopGame", systemSignals: true, group: "study", section: "Stop automatico", type: "boolean", dependsOn: "studyAutoStopEnabled", label: "Ferma anche se stai giocando", description: "Giochi e launcher (Steam, Epic, Riot…) in primo piano, anche se non sei inattivo." },
+  { key: "studyAutoStopVideo", systemSignals: true, group: "study", section: "Stop automatico", type: "boolean", dependsOn: "studyAutoStopEnabled", label: "Ferma anche se guardi video", description: "YouTube, Netflix, Twitch… nel browser o nelle loro app. I video aperti nella dashboard non contano." },
+  { key: "studyAutoStopChat", systemSignals: true, group: "study", section: "Stop automatico", type: "boolean", dependsOn: "studyAutoStopEnabled", label: "Ferma anche se sei in chat", description: "Discord, WhatsApp, Telegram… La categoria di un'app si può cambiare nella pagina di Pixy." },
 
   { key: "studySoundEnabled", group: "study", section: "Suoni e notifiche", type: "boolean", label: "Suono a fine fase" },
   { key: "studyVolume", group: "study", section: "Suoni e notifiche", type: "number", control: "slider", min: 5, max: 100, step: 5, unit: "%", dependsOn: "studySoundEnabled", label: "Volume" },
@@ -332,9 +338,9 @@ export const SETTING_DEFS: SettingDef[] = [
     options: [{ value: "rare", label: "Rara" }, { value: "normal", label: "Normale" }, { value: "often", label: "Frequente" }],
   },
 
-  { key: "companionIdleMinutes", group: "companion", section: "Comportamento", type: "number", control: "input", min: 1, max: 120, step: 1, label: "Si addormenta dopo (min)", description: "Minuti senza mouse e tastiera. Non dorme mentre studi o guardi un video." },
+  { key: "companionIdleMinutes", group: "companion", section: "Comportamento", type: "number", control: "input", min: 1, max: 120, step: 1, label: "Si addormenta dopo (min)", description: "Minuti senza usare il dispositivo (sul telefono contano i tocchi nell'app). Non dorme mentre studi o guardi un video." },
   {
-    key: "companionWatchForegroundApp", group: "companion", section: "Comportamento", type: "boolean",
+    key: "companionWatchForegroundApp", systemSignals: true, group: "companion", section: "Comportamento", type: "boolean",
     label: "Osserva l'app in primo piano (Windows e macOS)",
     description: "Legge nome e titolo della finestra attiva per capire se stai ascoltando musica, programmando o guardando un video. Tutto resta sul PC: niente viene salvato né inviato.",
   },

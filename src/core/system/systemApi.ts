@@ -1,4 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
+import { isAndroid } from "./platform";
+
+/**
+ * Ci sono i segnali di sistema (app in primo piano, inattività del computer)? Solo su Windows e macOS
+ * (src-tauri/src/companion.rs). Altrove (Android, Linux) chi li usa nasconde le parti che ne dipendono.
+ */
+export function systemSignalsAvailable(): boolean {
+  return typeof navigator !== "undefined" && !isAndroid() && /Windows|Macintosh/.test(navigator.userAgent);
+}
 
 /** Risposta di `companion_snapshot` (src-tauri/src/companion.rs). */
 export interface SystemSnapshot {

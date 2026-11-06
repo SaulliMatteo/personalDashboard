@@ -1,7 +1,8 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "enables the default permissions",
+  "description": "Permessi dell'app desktop (Windows, macOS, Linux). Android: mobile.json",
+  "platforms": ["windows", "macOS", "linux"],
   "windows": ["main"],
   "remote": { "urls": ["http://localhost:14321"] },
   "permissions": [
@@ -24,6 +25,12 @@
     "allow-secure-store-get",
     "allow-secure-store-set",
     "allow-secure-store-remove",
+    "allow-file-open",
+    "allow-file-share",
+    "allow-db-export-prepare",
+    "allow-db-export-save",
+    "allow-db-import-stage",
+    "allow-db-import-apply",
     "allow-updater-prepare-install",
     "updater:allow-check",
     "updater:allow-download",

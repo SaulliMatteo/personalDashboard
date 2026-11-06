@@ -11,6 +11,7 @@ import { COMPANION_CARDS } from "./card/cards";
 import { ANIMATIONS, ANIMATION_CATEGORIES, ANIMATION_GALLERY, type AnimationCategory, type GalleryItem } from "./engine/animations";
 import { PERSONALITIES, PERSONALITY_IDS } from "../../core/pixy/engine/personalities";
 import { APP_CATEGORIES, type AppCategory } from "../../core/system/appCategory";
+import { systemSignalsAvailable } from "../../core/system/systemApi";
 import "./CompanionDetail.css";
 
 const CATEGORY_LABELS: Record<AppCategory, string> = {
@@ -33,6 +34,11 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "apps", label: "App viste" },
   { id: "settings", label: "Impostazioni" },
 ];
+
+/** Senza segnali di sistema (Android, Linux) Pixy vede solo l'app: niente "App viste" né pose per le app. */
+const SYSTEM_SIGNALS = systemSignalsAvailable();
+const VISIBLE_TABS = SYSTEM_SIGNALS ? TABS : TABS.filter((t) => t.id !== "apps");
+const VISIBLE_CATEGORIES = SYSTEM_SIGNALS ? ANIMATION_CATEGORIES : ANIMATION_CATEGORIES.filter((c) => c.id !== "apps");
 
 /** Quanto resta ogni posa quando la galleria va da sola. */
 const STEP_MS = 3500;
@@ -131,7 +137,7 @@ function CompanionDetail() {
 
   const studyText = activity.studying ? "In corso" : activity.onBreak ? "In pausa (pomodoro)" : activity.studyPaused ? "Timer fermo" : "—";
 
-  const cat = ANIMATION_CATEGORIES.find((c) => c.id === category) ?? ANIMATION_CATEGORIES[0];
+  const cat = VISIBLE_CATEGORIES.find((c) => c.id === category) ?? VISIBLE_CATEGORIES[0];
   const catAnims = ANIMATIONS.filter((a) => a.category === cat.id);
   const catAllOn = catAnims.every((a) => !disabled.has(a.id));
   const gallery = ANIMATION_GALLERY[cat.id] ?? [];
@@ -184,20 +190,26 @@ function CompanionDetail() {
               <dd>{studyText}</dd>
               <dt>Video nell'app</dt>
               <dd>{activity.watchingVideo ? "In riproduzione" : "—"}</dd>
-              <dt>App in primo piano</dt>
-              <dd>{foregroundText}</dd>
+              {SYSTEM_SIGNALS && (
+                <>
+                  <dt>App in primo piano</dt>
+                  <dd>{foregroundText}</dd>
+                </>
+              )}
               <dt>Inattivo da</dt>
               <dd>{formatIdle(idleSeconds)}</dd>
             </dl>
             <p className="companion-note">
-              Tutto viene elaborato sul PC e dimenticato subito: nessun titolo di finestra viene salvato o inviato.
+              {SYSTEM_SIGNALS
+                ? "Tutto viene elaborato sul PC e dimenticato subito: nessun titolo di finestra viene salvato o inviato."
+                : "Pixy vede solo quello che fai nell'app: niente viene salvato né inviato."}
             </p>
           </section>
         </aside>
 
         <div className="companion-detail-main">
           <div className="companion-tabs" role="tablist" aria-label={`Sezioni di ${name}`}>
-            {TABS.map((t) => (
+            {VISIBLE_TABS.map((t) => (
               <button
                 key={t.id}
                 type="button"
@@ -217,12 +229,12 @@ function CompanionDetail() {
             {tab === "animations" && (
               <section className="companion-card">
                 <p className="companion-note companion-note-top">
-                  Scegli un gruppo, tocca una posa per vederla sulla faccia qui accanto o premi "Guarda tutte". Le pose cambiano con la
+                  Scegli un gruppo, tocca una posa per vederla sulla faccia di Pixy o premi "Guarda tutte". Le pose cambiano con la
                   personalità ({PERSONALITIES[settings.companionPersonality].label}).
                 </p>
 
                 <div className="companion-cats" aria-label="Gruppi di animazioni">
-                  {ANIMATION_CATEGORIES.map((c) => {
+                  {VISIBLE_CATEGORIES.map((c) => {
                     const anims = ANIMATIONS.filter((a) => a.category === c.id);
                     const on = anims.filter((a) => !disabled.has(a.id)).length;
                     return (

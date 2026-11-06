@@ -9,6 +9,7 @@ use serde::Serialize;
 use std::io;
 use std::net::UdpSocket;
 use std::path::PathBuf;
+#[cfg(desktop)]
 use std::process::Command;
 use std::sync::Mutex;
 use std::time::UNIX_EPOCH;
@@ -154,6 +155,8 @@ pub fn shutdown(app: &AppHandle) {
 #[tauri::command]
 pub fn ft_start_server(app: AppHandle, state: State<FileTransferState>, port: Option<u16>) -> Result<String, String> {
     let port = port.unwrap_or(PORT);
+    // Senza il server C (es. Android) `info` non si modifica.
+    #[cfg_attr(not(ft_native), allow(unused_mut))]
     let mut info = state.0.lock().map_err(|e| e.to_string())?;
 
     if info.running {
@@ -276,5 +279,13 @@ pub fn ft_open_folder(app: AppHandle) -> Result<(), String> {
     #[cfg(target_os = "linux")]
     Command::new("xdg-open").arg(&path).spawn().map_err(|e| e.to_string())?;
 
+    // Su Android (e iOS) non c'è un gestore file da aprire con un comando.
+    #[cfg(mobile)]
+    {
+        let _ = path;
+        return Err("Aprire la cartella non è disponibile su questo sistema".into());
+    }
+
+    #[cfg(desktop)]
     Ok(())
 }

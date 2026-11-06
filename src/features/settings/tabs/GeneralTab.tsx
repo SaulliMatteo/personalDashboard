@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { BackupError, exportDatabase, exportFileName, importDatabase } from "../../../core/db/backup";
+import { isAndroid } from "../../../core/system/platform";
 import SettingsSection from "../../../core/settings/components/SettingsSection";
 import { useSettings } from "../../../core/settings/useSettings";
 import ConfirmButton from "../../../ui/ConfirmButton";
@@ -63,6 +66,82 @@ function BackupSection() {
   );
 }
 
+/** Filtro dei selettori: su Android i .db non hanno un tipo noto e il filtro li nasconderebbe. */
+const DB_FILTERS = isAndroid() ? undefined : [{ name: "Database", extensions: ["db"] }];
+
+/** Copia di tutti i dati (il database) in un file, e ripristino da una copia (core/db/backup.ts). */
+function DataSection() {
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handleExport() {
+    setMessage(null);
+    const target = await save({ defaultPath: exportFileName(), filters: DB_FILTERS });
+    if (!target) return;
+    setBusy(true);
+    try {
+      await exportDatabase(target);
+      setMessage("Dati esportati. Conserva il file in un posto sicuro (es. su un altro dispositivo).");
+    } catch (error) {
+      setMessage(error instanceof BackupError ? error.message : "Esportazione non riuscita.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleImport() {
+    setMessage(null);
+    const source = await open({ multiple: false, directory: false, filters: DB_FILTERS });
+    if (typeof source !== "string") return;
+    setBusy(true);
+    try {
+      await importDatabase(source); // se riesce l'app si riavvia da sola
+    } catch (error) {
+      setMessage(error instanceof BackupError ? error.message : "Importazione non riuscita.");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="settings-section">
+      <h4 className="settings-section-title">Dati</h4>
+      <div className="settings-fields">
+        <div className="settings-field">
+          <div className="settings-field-text">
+            <span className="settings-field-label">Esporta i dati</span>
+            <ExpandableText className="settings-field-description">
+              Salva in un file tutto ciò che l'app ricorda: impostazioni, dashboard, studio, note e raccolte. Gli allegati delle note restano fuori.
+            </ExpandableText>
+          </div>
+          <div className="settings-field-control">
+            <button type="button" className="sp-btn" onClick={() => void handleExport()} disabled={busy}>
+              Esporta
+            </button>
+          </div>
+        </div>
+        <div className="settings-field">
+          <div className="settings-field-text">
+            <span className="settings-field-label">Importa i dati</span>
+            <ExpandableText className="settings-field-description">
+              Sostituisce tutti i dati di questo dispositivo con quelli di un file esportato, poi l'app si riavvia. I dati di adesso si perdono: esportali prima se ti servono.
+            </ExpandableText>
+          </div>
+          <div className="settings-field-control">
+            {busy ? (
+              <button type="button" className="sp-btn" disabled>
+                Attendi…
+              </button>
+            ) : (
+              <ConfirmButton className="sp-btn sp-btn--danger" label="Importa" onConfirm={handleImport} />
+            )}
+          </div>
+        </div>
+      </div>
+      {message && <p className="settings-field-description">{message}</p>}
+    </div>
+  );
+}
+
 function GeneralTab() {
   const { resetSettings } = useSettings();
 
@@ -70,12 +149,13 @@ function GeneralTab() {
     <>
       <header className="sp-head">
         <h2>Generale</h2>
-        <p>Il tuo nome, il titolo dell'app, il backup delle impostazioni e gli aggiornamenti.</p>
+        <p>Il tuo nome, il titolo dell'app, il backup delle impostazioni e di tutti i dati, gli aggiornamenti.</p>
       </header>
 
       <SettingsSection group="general" />
       <UpdateSection />
       <BackupSection />
+      <DataSection />
 
       <div className="settings-section">
         <h4 className="settings-section-title">Ripristino</h4>

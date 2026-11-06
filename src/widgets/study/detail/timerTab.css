@@ -331,3 +331,43 @@
 .study-timer-card .sn--M .sn-timer {
   flex: 0 0 auto;
 }
+
+/* Telefono: timer e materie uno sotto l'altro, ad altezza naturale (la pagina scorre). */
+:root[data-compact] .study-detail-recap {
+  gap: 8px;
+}
+
+:root[data-compact] .study-detail-main {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: none;
+}
+
+:root[data-compact] .study-detail--fit,
+:root[data-compact] .study-detail--fit > .study-detail-main {
+  flex: none;
+}
+
+:root[data-compact] .study-detail-main > * {
+  grid-column: auto;
+}
+
+:root[data-compact] .study-timer-card {
+  min-height: 340px;
+}
+
+:root[data-compact] .study-subjects-card {
+  min-height: 320px;
+}
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .study-icon-btn {
+    position: relative;
+  }
+
+  .study-icon-btn::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

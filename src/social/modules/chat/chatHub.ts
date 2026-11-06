@@ -57,6 +57,22 @@ export class ChatHub {
     }
   }
 
+  /**
+   * Al rientro nell'app (Android l'ha congelata, il portatile si è risvegliato): i canali caduti riprovano subito
+   * invece di aspettare l'attesa crescente. Il conto dei fallimenti resta, quindi se il server continua a rifiutare
+   * l'attesa dopo cresce come prima.
+   */
+  retryNow(): void {
+    if (this.stopped) return;
+    for (const [groupId, entry] of [...this.groups]) {
+      if (entry.state !== "error" || entry.retry === null) continue;
+      this.deps.clearTimer(entry.retry);
+      entry.retry = null;
+      this.join(groupId);
+    }
+    this.emit();
+  }
+
   stop(): void {
     this.stopped = true;
     for (const groupId of [...this.groups.keys()]) this.leave(groupId);

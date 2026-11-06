@@ -2,6 +2,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
+import { isAndroid } from "../system/platform";
 
 /**
  * UNICO punto con le chiamate degli aggiornamenti (tauri-plugin-updater + process, src-tauri/src/updater.rs).
@@ -9,8 +10,11 @@ import { check, type Update } from "@tauri-apps/plugin-updater";
  * `installUpdate`, cioè quando l'utente preme i pulsanti: niente controlli automatici.
  */
 
-/** Gli aggiornamenti esistono solo nell'app installata: in `tauri dev` (e nel browser) no. */
-export const UPDATES_SUPPORTED = !import.meta.env.DEV;
+/**
+ * Gli aggiornamenti esistono solo nell'app installata: in `tauri dev` (e nel browser) no. Su Android neanche: il
+ * plugin c'è solo sul desktop (src/lib.rs) e l'APK nuovo si installa sopra il vecchio.
+ */
+export const UPDATES_SUPPORTED = !import.meta.env.DEV && !isAndroid();
 
 /** Tempo massimo per scaricare `latest.json`. */
 const CHECK_TIMEOUT_MS = 30_000;

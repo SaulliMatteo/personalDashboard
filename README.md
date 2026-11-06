@@ -33,6 +33,19 @@ eliminare le voci vecchie: apri **Accesso Portachiavi**, cerca `it.matteo.person
 Al primo avvio del File Transfer, consenti le connessioni in entrata quando il firewall lo chiede. Su macOS la porta
 5000 è occupata da AirPlay: l'app ne sceglie da sola un'altra e te la mostra nella pagina del widget.
 
+### Android (7 o successivo)
+
+L'APK per Android non è nelle Releases: lo compila chi lo usa (vedi [Compilare dal codice](#compilare-dal-codice)).
+
+1. Copia `app-universal-release.apk` sul telefono (cavo, Drive, email…) e aprilo.
+2. Android chiede di consentire l'installazione di **app sconosciute** per l'app con cui l'hai aperto (es. Files):
+   consentila, poi installa.
+3. Notifiche del timer: al primo avvio dello Studio l'app chiede il permesso (Android 13 e successivi).
+4. Su alcuni telefoni (OPPO/ColorOS, Xiaomi, Huawei…) il sistema chiude le app in sfondo e cancella le notifiche
+   programmate: nelle impostazioni dell'app consenti l'**attività in background** e l'**avvio automatico**, e nelle
+   app recenti blocca personalDashboard (lucchetto). Se chiudi l'app forzatamente o riavvii il telefono, le notifiche
+   del timer tornano alla prossima apertura.
+
 ### Aggiornamenti
 
 Dalla versione che include gli aggiornamenti automatici in poi, l'app si aggiorna da sola quando glielo chiedi:
@@ -49,13 +62,23 @@ I tuoi dati restano dove sono.
 Dalle versioni precedenti (o se preferisci farlo a mano): scarica e installa la nuova versione sopra la vecchia,
 i dati restano.
 
+Su Android gli aggiornamenti dall'app non ci sono: si installa l'APK nuovo sopra il vecchio. Deve avere una versione
+più alta ed essere firmato con la **stessa chiave**, altrimenti Android rifiuta l'aggiornamento (e disinstallare per
+reinstallare cancella i dati: esportali prima).
+
 ## I tuoi dati e la privacy
 
 - Tutto ciò che crei (sessioni di studio, note, video salvati, impostazioni) sta in un file sul tuo computer:
   - **Windows**: `%APPDATA%\it.matteo.personalDashboard\dashboard.db`
   - **macOS**: `~/Library/Application Support/it.matteo.personalDashboard/dashboard.db`
 
-  Per fare un backup basta copiare quel file con l'app chiusa.
+  - **Android**: nei dati privati dell'app (non si raggiunge a mano).
+
+  Per fare un backup, in **Impostazioni › Generale › Dati** premi **Esporta**: salva tutto in un file `.db` dove
+  scegli tu. **Importa** rimette i dati da un file esportato (anche da un altro dispositivo, es. dal PC al telefono)
+  e sostituisce quelli presenti. Sul computer basta anche copiare il file con l'app chiusa. Gli allegati delle note
+  sono file a parte (cartella `Documenti/Notes`) e non entrano nel backup.
+  Su Android c'è anche il backup automatico di Google (se attivo nel telefono): salva solo questo database.
 - L'app usa internet solo per quello che attivi tu:
   - il **Meteo**, se imposti una città (dati di [Open-Meteo](https://open-meteo.com));
   - i **video di YouTube**, quando li guardi;
@@ -70,8 +93,10 @@ i dati restano.
 
 - **Windows**: Impostazioni › App › Personal Dashboard › Disinstalla.
 - **macOS**: trascina l'app da Applicazioni nel Cestino.
+- **Android**: tieni premuta l'icona › Informazioni app › Disinstalla. **Su Android disinstallare cancella tutti i
+  dati, note e allegati compresi**: esportali prima.
 
-Per cancellare anche i dati, elimina la cartella indicata sopra.
+Per cancellare anche i dati sul computer, elimina la cartella indicata sopra.
 
 ## Compilare dal codice
 
@@ -83,6 +108,28 @@ npm install
 npm run tauri dev      # avvia l'app in sviluppo
 npm run tauri build    # crea l'installer per il tuo sistema
 ```
+
+**Android** (da Windows, macOS o Linux): servono anche Android Studio (SDK e NDK), le variabili `ANDROID_HOME`,
+`NDK_HOME` e `JAVA_HOME` (JDK 21 o 23) e una chiave di firma tua, creata una volta sola:
+
+```bash
+keytool -genkeypair -v -keystore <cartella fuori dal progetto>/personaldashboard.jks -alias personaldashboard -keyalg RSA -keysize 2048 -validity 10950
+```
+
+Poi crea `src-tauri/gen/android/keystore.properties` (è ignorato da git):
+
+```properties
+storeFile=<cartella fuori dal progetto>/personaldashboard.jks
+keyAlias=personaldashboard
+storePassword=<password>
+keyPassword=<password>
+```
+
+(le due password si possono anche lasciare fuori dal file e mettere nelle variabili `PD_STORE_PASSWORD` e
+`PD_KEY_PASSWORD`). Infine `npm run android:release` crea
+`src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk` (telefoni arm64).
+**Fai una copia della chiave e delle password** (gestore di password + una copia offline): senza, l'app installata
+non si può più aggiornare. Per ogni aggiornamento alza `version` in `src-tauri/tauri.conf.json`.
 
 Senza configurazione i Gruppi restano disattivati ("Gruppi non configurati") e tutto il resto funziona normalmente.
 

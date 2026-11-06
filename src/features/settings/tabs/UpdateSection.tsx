@@ -1,4 +1,5 @@
 import { useUpdater, type UpdaterStatus } from "../../../core/updater/useUpdater";
+import { isAndroid } from "../../../core/system/platform";
 import ExpandableText from "../../../ui/ExpandableText";
 import ProgressBar from "../../../ui/ProgressBar";
 import "./updateSection.css";
@@ -7,7 +8,9 @@ import "./updateSection.css";
 function statusText(status: UpdaterStatus): string {
   switch (status.kind) {
     case "unsupported":
-      return "Aggiornamenti disponibili solo nella versione installata.";
+      return isAndroid()
+        ? "Su Android si aggiorna installando l'APK nuovo sopra il vecchio."
+        : "Aggiornamenti disponibili solo nella versione installata.";
     case "idle":
       return "Premi «Controlla aggiornamenti» per cercare una versione nuova.";
     case "checking":

@@ -374,6 +374,49 @@ await test("rientro automatico di Realtime (SUBSCRIBED di nuovo sullo stesso can
   h.hub.stop();
 });
 
+await test("rientro nell'app (retryNow): i canali caduti rientrano subito, l'attesa dopo resta cresciuta", async () => {
+  const h = harness();
+  h.hub.setGroups(["g1", "g2"]);
+  h.status("g1", "joined");
+  h.status("g2", "error"); // primo errore: riproverebbe tra 5 s
+  await h.advance(5_000);
+  h.status("g2", "error"); // secondo: tra 10 s
+  const before = h.channels.length;
+  h.hub.retryNow();
+  assert.equal(h.channels.length, before + 1, "solo il canale caduto rientra, subito");
+  assert.equal(h.open("g1").length, 1, "quello connesso non si tocca");
+  assert.equal(h.last().channels.g2, "joining");
+  await h.advance(10_000);
+  assert.equal(h.channels.length, before + 1, "il tentativo programmato è stato annullato");
+  h.status("g2", "error");
+  await h.advance(19_999);
+  assert.equal(h.channels.length, before + 1);
+  await h.advance(1);
+  assert.equal(h.channels.length, before + 2, "fallito ancora: 20 s, il conto dei fallimenti è rimasto");
+  h.hub.retryNow(); // niente in errore: non fa nulla
+  assert.equal(h.channels.length, before + 2);
+  h.hub.stop();
+});
+
+await test("retryNow rispetta il limite di invii della presenza", async () => {
+  const h = harness();
+  h.hub.setGroups(["g1"]);
+  for (let i = 0; i < PRESENCE_MAX_TRACKS; i++) {
+    h.status("g1", "joined");
+    h.hub.setLocal({ timer: { ...working, phaseTotalSeconds: 1500 + i }, subject: null, rooms: {}, seats: {} });
+    await h.settle();
+    h.status("g1", "error");
+    h.hub.retryNow();
+  }
+  h.status("g1", "joined");
+  await h.settle();
+  const tracks = h.channels.reduce((n, c) => n + c.tracked.length, 0);
+  assert.ok(tracks <= PRESENCE_MAX_TRACKS, `al massimo ${PRESENCE_MAX_TRACKS} invii in 30 s, sono ${tracks}`);
+  await h.advance(PRESENCE_WINDOW_MS);
+  assert.ok(h.channels.reduce((n, c) => n + c.tracked.length, 0) > tracks, "dopo la finestra lo stato parte");
+  h.hub.stop();
+});
+
 await test("gruppo tolto mentre aspetta di rientrare: non rientra", async () => {
   const h = harness();
   h.hub.setGroups(["g1"]);

@@ -1,0 +1,68 @@
+/* Foglio dal basso dell'editor sul telefono (docs/design/mobile/quaderno.html, viste 3, 4 e 6). */
+
+.nq-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: var(--overlay);
+}
+
+.nq-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 51;
+  max-height: 78%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px 16px 20px;
+  background: var(--modal-bg);
+  color: var(--text-primary);
+  border: var(--modal-border);
+  border-bottom: 0;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  box-shadow: var(--shadow-pop);
+}
+
+.nq-sheet-grip {
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 10px;
+  border-radius: 4px;
+  background: var(--text-muted);
+  opacity: 0.45;
+}
+
+/* titoletto di sezione */
+.nq-sheet h5 {
+  margin: 14px 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.nq-sheet h5:first-of-type {
+  margin-top: 2px;
+}
+
+:root[data-theme="quaderno"] .nq-sheet {
+  border: 1.5px solid var(--accent);
+  border-bottom: 0;
+}
+
+:root[data-theme="quaderno"] .nq-sheet h5 {
+  font-family: var(--font-title);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .nq-sheet h5 {
+  font-family: var(--font-display);
+  font-weight: 400;
+}

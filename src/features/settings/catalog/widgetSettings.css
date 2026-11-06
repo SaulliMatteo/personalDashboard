@@ -28,3 +28,16 @@
   color: var(--accent);
   transform: rotate(60deg);
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .widget-settings-gear {
+    position: relative;
+  }
+
+  .widget-settings-gear::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

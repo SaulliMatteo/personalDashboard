@@ -1,4 +1,7 @@
 mod companion;
+mod db_backup;
+mod file_open;
+mod file_send;
 mod file_transfer;
 mod notify;
 mod secure_store;
@@ -57,6 +60,12 @@ pub fn run() {
     }));
     #[cfg(all(target_os = "macos", not(dev)))]
     let builder = builder.plugin(tauri_plugin_localhost::Builder::new(LOCALHOST_PORT).build());
+    // Sessione dei Gruppi su Android (src/secure_store.rs): il portachiavi è l'Android Keystore.
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(tauri_plugin_secure_store::init());
+    // Aprire e condividere i file del Quaderno su Android (src/file_open.rs).
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(tauri_plugin_file_open::init());
     // Aggiornamenti (Impostazioni > Generale, src/core/updater/): nessun controllo automatico, il plugin va
     // in rete solo quando il frontend chiama `check` (pulsante "Controlla aggiornamenti"). Process serve per
     // `relaunch` dopo l'installazione su macOS.
@@ -80,16 +89,25 @@ pub fn run() {
             file_transfer::ft_list_files,
             file_transfer::ft_read_preview,
             file_transfer::ft_open_folder,
+            file_send::ft_check_target,
+            file_send::ft_send_file,
             companion::companion_snapshot,
             notify::notify_with_image,
             secure_store::secure_store_get,
             secure_store::secure_store_set,
             secure_store::secure_store_remove,
+            file_open::file_open,
+            file_open::file_share,
+            db_backup::db_export_prepare,
+            db_backup::db_export_save,
+            db_backup::db_import_stage,
+            db_backup::db_import_apply,
             updater::updater_prepare_install,
         ])
         .on_window_event(|window, event| {
             // Chiudendo la finestra il server C va fermato, altrimenti la
-            // porta resta occupata fino alla morte del processo.
+            // porta resta occupata fino alla morte del processo. Su Android
+            // CloseRequested non arriva, ma lì il server C non c'è.
             if let tauri::WindowEvent::CloseRequested { .. } = event {
                 file_transfer::shutdown(window.app_handle());
             }

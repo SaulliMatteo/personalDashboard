@@ -51,6 +51,13 @@
   opacity: 1;
 }
 
+/* col dito (tablet) non c'è il "passare sopra": sempre visibile */
+@media (hover: none) {
+  .dh-slots-edit {
+    opacity: 1;
+  }
+}
+
 .dh-slots-edit:focus-visible {
   outline: var(--focus-ring);
   outline-offset: 2px;

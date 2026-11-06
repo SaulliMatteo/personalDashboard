@@ -441,4 +441,40 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE note_pages ADD COLUMN pdf_ink TEXT NOT NULL DEFAULT '{}'`,
     ],
   },
+  {
+    version: 22,
+    description: "Layout della dashboard sul telefono, separato da quello del desktop (+ riparazione 20-21)",
+    statements: [
+      // Pagine 2×4 (core/layout/mobileLayout.ts): page da 0, x 0-1, y 0-3, taglie fino a 2×2.
+      // dashboard_layout (desktop) non si tocca: i due layout vivono in parallelo.
+      `CREATE TABLE IF NOT EXISTS dashboard_layout_mobile (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         widget_id TEXT NOT NULL UNIQUE,
+         page INTEGER NOT NULL,
+         x INTEGER NOT NULL,
+         y INTEGER NOT NULL,
+         w INTEGER NOT NULL,
+         h INTEGER NOT NULL
+       )`,
+      // Riparazione: la versione Android di prova usava il numero 20 per questa tabella, quindi i suoi DB (già a 20)
+      // salterebbero la 20 delle Note. Si rieseguono 20 e 21: su un DB che le ha già non fanno nulla.
+      `ALTER TABLE note_pages ADD COLUMN pins TEXT NOT NULL DEFAULT '[]'`,
+      `CREATE TABLE IF NOT EXISTS note_bookmarks (
+         id TEXT PRIMARY KEY,
+         note_id INTEGER NOT NULL,
+         page_id INTEGER NOT NULL,
+         place TEXT NOT NULL,
+         name TEXT NOT NULL,
+         kind TEXT NOT NULL,
+         color TEXT,
+         position INTEGER NOT NULL,
+         created_at INTEGER NOT NULL,
+         updated_at INTEGER NOT NULL
+       )`,
+      `CREATE INDEX IF NOT EXISTS idx_note_bookmarks_note ON note_bookmarks(note_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_note_bookmarks_page ON note_bookmarks(page_id)`,
+      `ALTER TABLE note_pages ADD COLUMN pdf TEXT`,
+      `ALTER TABLE note_pages ADD COLUMN pdf_ink TEXT NOT NULL DEFAULT '{}'`,
+    ],
+  },
 ];

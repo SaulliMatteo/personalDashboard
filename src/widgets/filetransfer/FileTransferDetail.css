@@ -489,3 +489,16 @@
   line-height: 0.85;
   color: var(--accent);
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .ft-btn {
+    position: relative;
+  }
+
+  .ft-btn::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

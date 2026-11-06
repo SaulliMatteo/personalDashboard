@@ -1,5 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { useNav } from "../../core/nav/useNav";
+import { useBackHandler } from "../../core/nav/backHandlers";
 import { useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
 import BackButton from "../../ui/BackButton";
 import ConfirmButton from "../../ui/ConfirmButton";
@@ -29,6 +30,15 @@ function WhiteboardDetail() {
   const [hasDrawing, setHasDrawing] = useState(false);
   const noticePlace = useThemeVariant(NOTICE_PLACE);
   const [fullscreen, setFullscreen] = useState(false);
+  // Indietro (Android, o ← sul telefono) con un disegno: il primo avvisa, il secondo entro 3 s esce e lo cancella,
+  // come "Esci e cancella" qui sotto (che sul telefono è nascosto).
+  const [backArmed, setBackArmed] = useState(false);
+  useBackHandler(hasDrawing, () => (backArmed ? goToDashboard() : setBackArmed(true)));
+  useEffect(() => {
+    if (!backArmed) return;
+    const t = window.setTimeout(() => setBackArmed(false), 3000);
+    return () => window.clearTimeout(t);
+  }, [backArmed]);
   // true solo se la finestra è davvero andata a schermo intero (altrove, es. Linux, resta la lavagna a tutta finestra).
   const windowFullscreenRef = useRef(false);
 
@@ -93,6 +103,11 @@ function WhiteboardDetail() {
       </header>
 
       {noticePlace === "above" && <UnsavedNotice />}
+      {backArmed && hasDrawing && (
+        <p className="wb-back-hint" role="status">
+          Premi di nuovo indietro per uscire: il disegno si perde.
+        </p>
+      )}
 
       <div className="wb-frame">
         {noticePlace === "inside" && <UnsavedNotice />}

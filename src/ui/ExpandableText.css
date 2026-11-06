@@ -34,3 +34,16 @@
   outline-offset: 2px;
   border-radius: 2px;
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .xt-toggle {
+    position: relative;
+  }
+
+  .xt-toggle::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

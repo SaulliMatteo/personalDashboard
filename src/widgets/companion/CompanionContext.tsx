@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getActivity, subscribeActivity, subscribeActivityEvents } from "../../core/activity/activityBus";
-import { useLayout } from "../../core/layout/useLayout";
+import { useWidgetPlaced } from "../../core/layout/useWidgetPlaced";
 import { useSettings } from "../../core/settings/useSettings";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
 import { useThemeVariant } from "../../core/theme/variants";
@@ -49,7 +49,6 @@ function clamp(v: number, min: number, max: number) {
 
 export function CompanionProvider({ children }: { children: ReactNode }) {
   const { settings, updateSetting } = useSettings();
-  const { layout } = useLayout();
 
   const disabled = useMemo(() => parseDisabled(settings.companionDisabledAnimations), [settings.companionDisabledAnimations]);
 
@@ -96,7 +95,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   const appChoices = useMemo(() => parseAppCategories(settings.companionAppCategories), [settings.companionAppCategories]);
   const appChoicesRef = useLatestRef(appChoices);
 
-  const placed = layout.some((item) => item.i === COMPANION_WIDGET_ID);
+  const placed = useWidgetPlaced(COMPANION_WIDGET_ID);
   // Con le espressioni condivise nei Gruppi il cervello lavora anche se Pixy non è in dashboard.
   const active = placed || retainCount > 0 || settings.groupsSharePixy;
 
@@ -152,6 +151,15 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
     window.addEventListener("wheel", onInput, { passive: true });
     window.addEventListener("focus", onFocus);
     window.addEventListener("blur", onBlur);
+    // sul telefono uscire dall'app (o spegnere lo schermo) non sempre toglie il focus: conta anche la visibilità
+    const onVisibility = () => {
+      if (document.hidden) onBlur();
+      else {
+        lastLocalInputRef.current = Date.now();
+        onFocus();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("keydown", onInput);
@@ -159,6 +167,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("wheel", onInput);
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, [pushInput]);
 
@@ -209,7 +218,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   // personalità). Il provider è sempre montato, quindi vale anche se Pixy non è in dashboard.
   const faceStyleRef = useLatestRef(useThemeVariant(FACE_STYLES));
   useEffect(() => {
-    setNotificationDecorator(async (n) => {
+    setNotificationDecorator(async (n, { image }) => {
       const cfg = settingsRef.current;
       const personality = PERSONALITIES[cfg.companionPersonality];
       const look = pixyLook(n);
@@ -220,6 +229,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
         userName: cfg.userName,
         random: Math.random,
       });
+      if (!image) return text;
       const imageDataUrl = renderNotificationFace(look, {
         style: faceStyleRef.current,
         tweak: personality.faceTweak,

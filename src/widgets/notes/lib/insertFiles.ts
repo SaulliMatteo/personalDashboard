@@ -2,7 +2,7 @@ import { readFile } from "@tauri-apps/plugin-fs";
 import { extensionOf, isImageName } from "./attachmentUrls";
 import { sanitizeHtml } from "./html";
 import { markdownToHtml, parseFrontmatter, plainTextToHtml } from "./markdown";
-import { baseName } from "./vault";
+import { pickedFileName } from "../data/filesApi";
 
 /** File da mettere in una nota: nome e contenuto. */
 export interface IncomingFile {
@@ -32,7 +32,7 @@ export function formatBytes(size: number): string {
 /** Legge i file scelti o trascinati dal sistema (percorsi assoluti). */
 export async function readPaths(paths: string[]): Promise<IncomingFile[]> {
   const out: IncomingFile[] = [];
-  for (const path of paths) out.push({ name: baseName(path), bytes: await readFile(path) });
+  for (const path of paths) out.push({ name: await pickedFileName(path), bytes: await readFile(path) });
   return out;
 }
 

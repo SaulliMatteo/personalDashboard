@@ -7,6 +7,19 @@
   box-sizing: border-box;
 }
 
+/* Spazi da lasciare liberi sul telefono: barra di stato, foro della fotocamera, barra dei gesti, tastiera.
+   Il WebView di Android con env() dà solo il foro: barre e tastiera arrivano dall'app (core/system/androidInsets.ts). */
+:root {
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--android-inset-top, 0px));
+  --safe-right: max(env(safe-area-inset-right, 0px), var(--android-inset-right, 0px));
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--android-inset-bottom, 0px));
+  --safe-left: max(env(safe-area-inset-left, 0px), var(--android-inset-left, 0px));
+  --keyboard: var(--android-ime, 0px);
+  /* Area toccabile minima col dito: un ::after con inset: var(--hit) allarga a 44px un controllo più piccolo senza
+     cambiarne l'aspetto (le percentuali si risolvono sul controllo: in alto/basso sull'altezza, ai lati sulla larghezza). */
+  --hit: min(0px, (100% - 44px) / 2);
+}
+
 html,
 body,
 #root {
@@ -156,3 +169,17 @@ button {
 }
 
 select option { background: var(--bg-card); color: var(--text-primary); }
+/* Telefono: titolo e ← della pagina stanno nella barra in alto (ui/CompactBar), qui restano solo le azioni. */
+:root[data-compact] .dashboard-header > div:first-child:has(> h1),
+:root[data-compact] .detail-back-btn {
+  display: none;
+}
+
+:root[data-compact] .dashboard-header:has(> div:first-child > h1) {
+  justify-content: flex-end;
+}
+
+/* ...e se c'erano solo titolo e ←, l'intestazione sparisce del tutto */
+:root[data-compact] .dashboard-header:has(> div:first-child > h1):has(> .detail-back-btn:nth-child(2):last-child) {
+  display: none;
+}

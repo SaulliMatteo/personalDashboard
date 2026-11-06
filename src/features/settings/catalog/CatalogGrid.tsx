@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import "./catalogGrid.css";
 import { WIDGET_REGISTRY } from "../../../widgets/registry";
 import type { WidgetDefinition, WidgetSize } from "../../../core/widgets/types";
-import { useLayout } from "../../../core/layout/useLayout";
+import { useCompact } from "../../../core/layout/useCompact";
+import { widgetPigment } from "../../../widgets/registry";
+import { useCatalogLayout } from "./useCatalogLayout";
 import SettingsSection from "../../../core/settings/components/SettingsSection";
 import WidgetSettingsButton from "./WidgetSettingsButton";
 
@@ -11,8 +13,22 @@ import WidgetSettingsButton from "./WidgetSettingsButton";
  * le sue impostazioni (il `settingsGroup` dello schema) aperte dentro la card.
  * Usata dalla pagina catalogo e da Impostazioni > Widget.
  */
-function CatalogGrid({ initialOpenId = null }: { initialOpenId?: string | null }) {
-  const { layout, addWidget, removeWidget, findFreeSlot } = useLayout();
+/** Anteprima della card 1×1 nel catalogo del telefono: il widget vero, rimpicciolito e non cliccabile. */
+function CatalogPreview({ widget }: { widget: WidgetDefinition }) {
+  const WidgetComponent = widget.component;
+  return (
+    <div className="widget-catalog-preview" data-pigment={widgetPigment(widget.id)} aria-hidden="true" inert>
+      <div className="widget-catalog-preview-zoom">
+        <WidgetComponent w={1} h={1} />
+      </div>
+    </div>
+  );
+}
+
+/** `onAdded`: dopo "Aggiungi" (la pagina catalogo del telefono torna alla dashboard). */
+function CatalogGrid({ initialOpenId = null, onAdded }: { initialOpenId?: string | null; onAdded?: () => void }) {
+  const { currentSize, sizesOf, fits, add, remove } = useCatalogLayout();
+  const compact = useCompact();
 
   // Taglia selezionata per ogni widget NON ancora presente (chiave = id widget).
   const [selectedSizeKey, setSelectedSizeKey] = useState<Record<string, string>>({});
@@ -25,30 +41,29 @@ function CatalogGrid({ initialOpenId = null }: { initialOpenId?: string | null }
     initialCardRef.current?.scrollIntoView({ block: "nearest" });
   }, []);
 
-  const isPresent = (id: string) => layout.some((item) => item.i === id);
-
   function getSelectedSize(widget: WidgetDefinition): WidgetSize {
+    const sizes = sizesOf(widget);
     const key = selectedSizeKey[widget.id];
-    const found = key ? widget.sizes.find((s) => s.key === key) : undefined;
+    const found = key ? sizes.find((s) => s.key === key) : undefined;
     if (found) return found;
     // Di default proponiamo la prima taglia che ha davvero spazio libero,
     // così "Aggiungi" risulta già utilizzabile.
-    return widget.sizes.find((s) => findFreeSlot(s) !== null) ?? widget.sizes[0];
+    return sizes.find(fits) ?? sizes[0];
   }
 
   async function handleAdd(widget: WidgetDefinition) {
-    const size = getSelectedSize(widget);
-    await addWidget(widget.id, { w: size.w, h: size.h });
+    if (await add(widget.id, getSelectedSize(widget))) onAdded?.();
   }
 
   return (
     <div className="widget-catalog-grid">
       {WIDGET_REGISTRY.map((widget) => {
-        const present = isPresent(widget.id);
-        const currentItem = layout.find((item) => item.i === widget.id);
+        const currentItem = currentSize(widget.id);
+        const present = currentItem !== null;
+        const sizes = sizesOf(widget);
         const selectedSize = getSelectedSize(widget);
-        const hasAnyFreeSlot = widget.sizes.some((s) => findFreeSlot(s) !== null);
-        const selectedFits = findFreeSlot(selectedSize) !== null;
+        const hasAnyFreeSlot = sizes.some(fits);
+        const selectedFits = fits(selectedSize);
         const open = openId === widget.id && Boolean(widget.settingsGroup);
 
         return (
@@ -57,6 +72,7 @@ function CatalogGrid({ initialOpenId = null }: { initialOpenId?: string | null }
             className={`widget-catalog-card${open ? " is-open" : ""}`}
             ref={widget.id === initialOpenId ? initialCardRef : undefined}
           >
+            {compact && <CatalogPreview widget={widget} />}
             <div className="widget-catalog-card-head">
               <h2>{widget.name}</h2>
               <div className="widget-catalog-card-tools">
@@ -86,26 +102,26 @@ function CatalogGrid({ initialOpenId = null }: { initialOpenId?: string | null }
                     Taglia attuale: {currentItem.w}×{currentItem.h}
                   </span>
                 )}
-                <button className="widget-catalog-btn widget-catalog-btn--danger" onClick={() => removeWidget(widget.id)}>
+                <button className="widget-catalog-btn widget-catalog-btn--danger" onClick={() => remove(widget.id)}>
                   Rimuovi
                 </button>
               </div>
             ) : (
               <>
                 <div className="widget-catalog-sizes">
-                  {widget.sizes.map((size) => {
-                    const fits = findFreeSlot(size) !== null;
+                  {sizes.map((size) => {
+                    const sizeFits = fits(size);
                     const active = selectedSize.key === size.key;
                     return (
                       <button
                         key={size.key}
                         type="button"
-                        disabled={!fits}
+                        disabled={!sizeFits}
                         className={`widget-catalog-size-btn${active ? " active" : ""}`}
                         onClick={() => setSelectedSizeKey((prev) => ({ ...prev, [widget.id]: size.key }))}
-                        title={fits ? undefined : "Non c'è spazio libero per questa taglia"}
+                        title={sizeFits ? undefined : "Non c'è spazio libero per questa taglia"}
                       >
-                        {size.label}
+                        {compact ? `${size.w}×${size.h}` : size.label}
                       </button>
                     );
                   })}

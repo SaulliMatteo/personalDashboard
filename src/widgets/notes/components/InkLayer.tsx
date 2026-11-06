@@ -216,7 +216,8 @@ function InkLayer({ strokes, active, tool, color, size, shapes = false, onChange
   }
 
   function handleDown(e: PointerEvent<HTMLCanvasElement>) {
-    if (!active) return;
+    // un dito alla volta: un secondo dito (o il palmo) non apre un altro tratto
+    if (!active || !e.isPrimary) return;
     if (tool === "pin") {
       if (e.button === 0) onPlacePin?.(pointOf(e), { x: e.clientX, y: e.clientY });
       return;

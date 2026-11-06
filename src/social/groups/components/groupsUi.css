@@ -454,3 +454,16 @@
 button.grp-compact {
   cursor: pointer;
 }
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .grp-btn {
+    position: relative;
+  }
+
+  .grp-btn::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

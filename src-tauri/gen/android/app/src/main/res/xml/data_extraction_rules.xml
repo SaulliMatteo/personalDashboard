@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Backup automatico da Android 12: come backup_rules.xml, solo il database. Vale anche per il passaggio a un
+     telefono nuovo. -->
+<data-extraction-rules>
+  <cloud-backup>
+    <include domain="root" path="dashboard.db" />
+    <include domain="root" path="dashboard.db-wal" />
+  </cloud-backup>
+  <device-transfer>
+    <include domain="root" path="dashboard.db" />
+    <include domain="root" path="dashboard.db-wal" />
+  </device-transfer>
+</data-extraction-rules>

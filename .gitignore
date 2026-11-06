@@ -70,14 +70,12 @@ CLAUDE.local.md
 # Documentazione, mockup e prompt: solo in locale (vedi CLAUDE.md)
 docs
 
-# Progetto Android generato da Tauri (tauri android init lo ricrea), con i suoi output di Gradle
-src-tauri/gen/
+# Progetto Android (src-tauri/gen/android) versionato: i file che Tauri rigenera a ogni build e gli output di
+# Gradle li escludono i .gitignore che stanno dentro quella cartella.
 
 # Font della Lavagna copiati da node_modules (scripts/copy-excalidraw-assets.mjs)
 public/excalidraw-assets/
 
-src-tauri/gen/android/buildSrc/build/
-src-tauri/gen/android/buildSrc/.gradle/
-src-tauri/gen/android/app/src/main/jniLibs/
-supabase/.temp/
-supabase/.branches/
+# Chiavi di firma Android: stanno fuori dal repo (vedi src-tauri/gen/android/app/build.gradle.kts)
+*.jks
+*.keystore

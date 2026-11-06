@@ -805,6 +805,18 @@ textarea.yt-input {
   opacity: 1;
 }
 
+/* col dito non c'è il "passare sopra": play sulle miniature e modifica delle cartelle sempre visibili */
+@media (hover: none) {
+  .yt-thumb-play {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .yt-folder-card-edit {
+    opacity: 1;
+  }
+}
+
 .yt-folder-card-edit:hover {
   background: var(--accent);
   color: var(--on-accent);
@@ -1470,5 +1482,20 @@ textarea.yt-input {
 @media (max-width: 560px) {
   .yt-row-thumb {
     width: 88px;
+  }
+}
+
+/* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
+@media (pointer: coarse) {
+  .yt-tabs button,
+  .yt-btn {
+    position: relative;
+  }
+
+  .yt-tabs button::after,
+  .yt-btn::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
   }
 }

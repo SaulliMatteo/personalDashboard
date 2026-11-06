@@ -11,3 +11,20 @@ export function openChannels(hub: { setGroups: (groupIds: string[]) => void }, g
     // se nel frattempo il hub è stato fermato (uscita, cambio di account) setGroups non fa nulla
     .then(() => hub.setGroups(ids));
 }
+
+/**
+ * Al ritorno in primo piano (pagina di nuovo visibile) i canali caduti del hub riprovano subito, con il token della
+ * sessione appena riletto (scaduto mentre l'app era ferma: getSession lo rinnova). I limiti della presenza li tiene il
+ * hub. La connessione Realtime sotto si riallaccia da sola (heartbeat di realtime-js). Restituisce la funzione per
+ * smettere.
+ */
+export function retryOnReturn(hub: { retryNow: () => void }): () => void {
+  const onVisibility = () => {
+    if (document.hidden) return;
+    authorizeRealtime()
+      .catch(() => {})
+      .then(() => hub.retryNow());
+  };
+  document.addEventListener("visibilitychange", onVisibility);
+  return () => document.removeEventListener("visibilitychange", onVisibility);
+}
