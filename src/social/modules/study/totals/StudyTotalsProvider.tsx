@@ -112,7 +112,7 @@ export function StudyTotalsProvider({ children }: { children: ReactNode }) {
     const now = new Date();
     const weekStart = periodRange("week", 0, now).start;
     const monthStart = periodRange("month", 0, now).start;
-    getSessionSpansBetween(Math.min(weekStart, monthStart), now.getTime() + 1)
+    getSessionSpansBetween(Math.min(weekStart, monthStart), now.getTime() + 1, false)
       .then((spans) => {
         if (cancelled) return;
         const sum = (from: number) => spans.filter((s) => s.endedAt >= from).reduce((total, s) => total + s.durationSeconds, 0);

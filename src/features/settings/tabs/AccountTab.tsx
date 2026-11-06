@@ -3,6 +3,7 @@ import { useCloud } from "../../../core/cloud/useCloud";
 import { normalizeUsername, usernameProblem, USERNAME_RULES } from "../../../core/cloud/username";
 import ConfirmButton from "../../../ui/ConfirmButton";
 import ExpandableText from "../../../ui/ExpandableText";
+import SyncSection from "./SyncSection";
 
 /** Messaggio di un errore delle azioni di useCloud (sempre una frase nostra, mai il testo del server). */
 function messageOf(e: unknown): string {
@@ -146,8 +147,8 @@ function AccountActions({ canDelete }: { canDelete: boolean }) {
             <div className="settings-field-text">
               <span className="settings-field-label">Elimina account</span>
               <ExpandableText className="settings-field-description">
-                Cancella dal servizio online il tuo profilo, i dispositivi, le iscrizioni ai gruppi e i totali di studio
-                condivisi. Se sei owner, il gruppo passa al membro più anziano. Le sessioni di studio su questo computer
+                Cancella dal servizio online il tuo profilo, i dispositivi, le iscrizioni ai gruppi, i totali di studio
+                condivisi e i dati sincronizzati. Se sei owner, il gruppo passa al membro più anziano. Le sessioni di studio su questo computer
                 restano.
               </ExpandableText>
             </div>
@@ -175,7 +176,9 @@ function PrivacySection() {
       <p className="settings-field-description">
         Il nome della materia, le pose e le espressioni di Pixy (rivelano che tipo di app hai in primo piano) e i suoi
         fumetti solo se li attivi tu. Le singole sessioni, le materie, le note e tutto il resto non escono
-        dal computer. I dati online stanno su Supabase, in Europa; eliminando l'account vengono cancellati.
+        dal dispositivo, a meno che tu non accenda "Sincronizza i miei dati": allora studio, note, raccolte e
+        impostazioni vanno anche nel tuo spazio online, che vedi solo tu. I dati online stanno su Supabase, in Europa; eliminando
+        l'account vengono cancellati.
       </p>
     </div>
   );
@@ -254,6 +257,7 @@ function AccountTab() {
               />
             </div>
           </div>
+          {status.kind === "ready" && <SyncSection />}
           <PrivacySection />
           <AccountActions canDelete />
         </>

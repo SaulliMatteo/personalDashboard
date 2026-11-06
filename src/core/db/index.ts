@@ -37,5 +37,8 @@ async function runMigrations() {
     // PRAGMA non accetta parametri: il valore è una costante nostra, non input utente.
     await db.execute(`PRAGMA user_version = ${migration.version}`);
   }
+  // Se l'app si è chiusa mentre il sync applicava le modifiche del cloud, i trigger della migrazione 23 sarebbero
+  // rimasti zitti: all'avvio nessuno sta applicando niente.
+  await db.execute(`UPDATE sync_state SET value = 0 WHERE key = 'applying'`);
   await restoreKeptMeta(db);
 }

@@ -6,6 +6,7 @@ import { getCloudClient } from "./client";
 import { AUTH_STORAGE_KEY } from "./config";
 import { toCloudError } from "./errors";
 import { secureStorage } from "./secureStorage";
+import { clearSyncFiles } from "./syncFilesApi";
 import { CloudContext, type CloudContextValue, type CloudStatus } from "./useCloud";
 
 /** Ogni quanto si dice al server "sono connesso" (il "visto 5 min fa" dei compagni ha questa precisione). */
@@ -190,6 +191,8 @@ export function CloudProvider({ children }: { children: ReactNode }) {
 
   const deleteAccount = useCallback(async () => {
     try {
+      // i file del sync non se ne vanno a cascata con l'account: prima si cancellano (se manca la rete, niente)
+      if (userId) await clearSyncFiles(userId);
       await deleteAccountOnServer();
       await signOutLocal();
     } catch (e) {
@@ -197,7 +200,7 @@ export function CloudProvider({ children }: { children: ReactNode }) {
     }
     setUserId(null);
     setStatus({ kind: "signedOut" });
-  }, []);
+  }, [userId]);
 
   const retry = useCallback(() => {
     failures.current = 0;

@@ -79,13 +79,19 @@ reinstallare cancella i dati: esportali prima).
   e sostituisce quelli presenti. Sul computer basta anche copiare il file con l'app chiusa. Gli allegati delle note
   sono file a parte (cartella `Documenti/Notes`) e non entrano nel backup.
   Su Android c'è anche il backup automatico di Google (se attivo nel telefono): salva solo questo database.
+- **Stessi dati sul PC e sul telefono** (facoltativo): accedi ai Gruppi con lo stesso account Google su tutti e
+  due e accendi **Impostazioni › Account › I miei dispositivi › Sincronizza i miei dati** su ciascuno. Viaggiano
+  studio, note, raccolte (con allegati, immagini e PDF fino a 50 MB l'uno) e impostazioni; aspetto, suoni e
+  disposizione restano di ogni dispositivo. Se due dispositivi cambiano la stessa cosa vince l'ultima modifica.
+  I dati passano dal servizio online dei Gruppi e li vedi solo tu, nemmeno i membri dei tuoi gruppi. Non è un
+  backup: una cancellazione arriva anche sugli altri dispositivi.
 - L'app usa internet solo per quello che attivi tu:
   - il **Meteo**, se imposti una città (dati di [Open-Meteo](https://open-meteo.com));
   - i **video di YouTube**, quando li guardi;
-  - i **Gruppi**, solo se accedi con Google;
+  - i **Gruppi**, solo se accedi con Google (e il sync dei tuoi dati, solo se lo accendi);
   - gli **aggiornamenti**, solo quando premi "Controlla aggiornamenti" o "Aggiorna" (Release di GitHub).
 - **Gruppi**: gli altri membri vedono solo il tuo nome utente, se stai studiando o sei in pausa e il tempo totale di
-  studio per giorno. Email e nome Google non vengono mai mostrati; sessioni, note e video restano sul tuo computer.
+  studio per giorno. Email e nome Google non vengono mai mostrati; sessioni, note e video restano sul tuo computer (o, col sync acceso, solo nel tuo spazio privato).
   La materia che studi e le espressioni di Pixy si condividono solo se le attivi. Dalle impostazioni puoi uscire o
   eliminare l'account in qualsiasi momento.
 

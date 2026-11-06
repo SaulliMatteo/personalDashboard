@@ -4,6 +4,7 @@ import { useNav } from "../../../core/nav/useNav";
 import { createNote, listFolders, listNotes, type Folder, type NoteSummary } from "../data/notesRepository";
 import { htmlToText, relativeWhen } from "../lib/html";
 import { requestOpenNote } from "../lib/launch";
+import { onRemoteNotesChange } from "../lib/remoteChanges";
 import { formatDate, rowTitle, toDateString } from "../lib/collections";
 import { fieldsOf, loadCollections, rowsOf, useCollections, type CollectionsState } from "../lib/collectionsStore";
 
@@ -97,6 +98,9 @@ export function useNotesCard(): NotesCardData {
   }, []);
 
   const load = useCallback(() => Promise.all([listNotes(), listFolders()]).then(apply), [apply]);
+
+  // note arrivate da un altro dispositivo
+  useEffect(() => onRemoteNotesChange(() => void load().catch(() => undefined)), [load]);
 
   useEffect(() => {
     let cancelled = false;

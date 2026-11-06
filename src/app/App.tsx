@@ -3,6 +3,7 @@ import { LayoutProvider } from "../core/layout/LayoutContext";
 import { MobileLayoutProvider } from "../core/layout/MobileLayoutContext";
 import { useCompact } from "../core/layout/useCompact";
 import { CloudProvider } from "../core/cloud/CloudContext";
+import { SyncProvider } from "../core/sync/SyncContext";
 import { NavProvider } from "../core/nav/NavContext";
 import { useNav } from "../core/nav/useNav";
 import WidgetProviders from "../widgets/WidgetProviders";
@@ -81,14 +82,17 @@ function App() {
             <BootGate>
               {/* Account dei Gruppi: senza configurazione o offline resta inerte (app solo locale). */}
               <CloudProvider>
-                {/* Moduli dei Gruppi (es. invio dei totali di studio): lavorano solo con l'account pronto. */}
-                <SocialProviders>
-                  <WidgetProviders>
-                    <NavProvider>
-                      <CurrentView />
-                    </NavProvider>
-                  </WidgetProviders>
-                </SocialProviders>
+                {/* Sync dei propri dati tra i propri dispositivi: spento di default, serve l'account. */}
+                <SyncProvider>
+                  {/* Moduli dei Gruppi (es. invio dei totali di studio): lavorano solo con l'account pronto. */}
+                  <SocialProviders>
+                    <WidgetProviders>
+                      <NavProvider>
+                        <CurrentView />
+                      </NavProvider>
+                    </WidgetProviders>
+                  </SocialProviders>
+                </SyncProvider>
               </CloudProvider>
             </BootGate>
           </MobileLayoutProvider>

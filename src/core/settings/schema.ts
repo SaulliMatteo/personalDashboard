@@ -133,6 +133,8 @@ export const DEFAULT_SETTINGS = {
   groupsShowSubject: false,
   /** Il tempo delle materie abbinate e confermate entra nei report dei gruppi (spento di default). Senza effetto fino al report per materie. */
   groupsReportSubjects: false,
+  // Sync dei propri dati tra i propri dispositivi (core/sync/): spento finché non lo accendi in Account.
+  syncEnabled: false,
   /** Le pose vere di Pixy rivelano l'app in primo piano: ai compagni arrivano solo se attivo (spento di default). */
   groupsSharePixy: false,
   /** I fumetti di Pixy ai compagni (solo con le espressioni condivise). */
@@ -353,6 +355,47 @@ export const SETTING_DEFS: SettingDef[] = [
     description: "Sotto questa temperatura ogni tanto diventa un fiocco di neve.",
   },
 ];
+
+/**
+ * Impostazioni di questo dispositivo: il sync tra dispositivi (core/sync/) non le manda né le riceve. Sono quelle che
+ * dipendono dallo schermo, dal sistema o dall'hardware (layout del desktop, effetto luce, audio, segnali di sistema,
+ * stop automatico, che su Android vuol dire altro). Un'impostazione nuova si sincronizza, a meno di metterla qui.
+ */
+export const PER_DEVICE_SETTINGS: ReadonlySet<SettingKey> = new Set<SettingKey>([
+  "themeMode",
+  "animationsEnabled",
+  "sidebarPosition",
+  "headerSlot1",
+  "headerSlot2",
+  "gridRows",
+  "lockLayout",
+  "gridPushDelayMs",
+  "dragThreshold",
+  "openDetailOnClick",
+  "showDragGhost",
+  "ghostOpacity",
+  "ghostBlur",
+  "glowEnabled",
+  "glowSweepOnLoad",
+  "glowPalette",
+  "glowHue",
+  "glowIntensity",
+  "glowRadius",
+  "glowEdgeSensitivity",
+  "glowConeSpread",
+  "glowFillOpacity",
+  "studySoundEnabled",
+  "studyVolume",
+  "studyNotificationsEnabled",
+  "studyAutoStopEnabled",
+  "studyAutoStopMinutes",
+  "studyAutoStopGame",
+  "studyAutoStopVideo",
+  "studyAutoStopChat",
+  "companionWatchForegroundApp",
+  "companionAppCategories",
+  "syncEnabled",
+]);
 
 const DEFS_BY_KEY = new Map<SettingKey, SettingDef>(SETTING_DEFS.map((d) => [d.key, d]));
 

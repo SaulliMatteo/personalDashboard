@@ -25,7 +25,8 @@ export async function listLocalSubjects(): Promise<LocalSubject[]> {
 export async function getSubjectSessionsBetween(startMs: number, endMs: number): Promise<SubjectSessionSpan[]> {
   const db = await getDatabase();
   const rows = await db.select<{ ended_at: number; duration_seconds: number; subject_id: number }[]>(
-    `SELECT ended_at, duration_seconds, subject_id FROM study_sessions WHERE ended_at >= ? AND ended_at < ?`,
+    // solo quelle fatte qui, come i totali giornalieri (studyTotalsRepository.ts)
+    `SELECT ended_at, duration_seconds, subject_id FROM study_sessions WHERE ended_at >= ? AND ended_at < ? AND origin_device IS NULL`,
     [startMs, endMs]
   );
   return rows.map((r) => ({ endedAt: r.ended_at, durationSeconds: r.duration_seconds, subjectId: r.subject_id }));

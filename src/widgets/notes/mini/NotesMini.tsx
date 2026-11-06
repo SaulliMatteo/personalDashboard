@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { listNotes, type NoteSummary } from "../data/notesRepository";
 import { relativeWhen } from "../lib/html";
+import { onRemoteNotesChange } from "../lib/remoteChanges";
 import NoteTitle from "../components/NoteTitle";
 import "./NotesMini.css";
 
@@ -8,6 +9,10 @@ import "./NotesMini.css";
 function NotesMini() {
   const [notes, setNotes] = useState<NoteSummary[] | undefined>(undefined);
   const [failed, setFailed] = useState(false);
+
+  // si ricarica anche quando arrivano note da un altro dispositivo
+  const [rev, setRev] = useState(0);
+  useEffect(() => onRemoteNotesChange(() => setRev((r) => r + 1)), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,7 +28,7 @@ function NotesMini() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [rev]);
 
   if (failed) {
     return (

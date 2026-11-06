@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { BackupError, exportDatabase, exportFileName, importDatabase } from "../../../core/db/backup";
-import { isAndroid } from "../../../core/system/platform";
+import { BACKUP_FILE_FILTERS, BackupError, exportDatabase, exportFileName, importDatabase } from "../../../core/db/backup";
 import SettingsSection from "../../../core/settings/components/SettingsSection";
 import { useSettings } from "../../../core/settings/useSettings";
 import ConfirmButton from "../../../ui/ConfirmButton";
@@ -66,9 +65,6 @@ function BackupSection() {
   );
 }
 
-/** Filtro dei selettori: su Android i .db non hanno un tipo noto e il filtro li nasconderebbe. */
-const DB_FILTERS = isAndroid() ? undefined : [{ name: "Database", extensions: ["db"] }];
-
 /** Copia di tutti i dati (il database) in un file, e ripristino da una copia (core/db/backup.ts). */
 function DataSection() {
   const [busy, setBusy] = useState(false);
@@ -76,7 +72,7 @@ function DataSection() {
 
   async function handleExport() {
     setMessage(null);
-    const target = await save({ defaultPath: exportFileName(), filters: DB_FILTERS });
+    const target = await save({ defaultPath: exportFileName(), filters: BACKUP_FILE_FILTERS });
     if (!target) return;
     setBusy(true);
     try {
@@ -91,7 +87,7 @@ function DataSection() {
 
   async function handleImport() {
     setMessage(null);
-    const source = await open({ multiple: false, directory: false, filters: DB_FILTERS });
+    const source = await open({ multiple: false, directory: false, filters: BACKUP_FILE_FILTERS });
     if (typeof source !== "string") return;
     setBusy(true);
     try {

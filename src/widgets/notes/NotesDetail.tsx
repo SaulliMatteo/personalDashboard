@@ -44,6 +44,7 @@ import { createFileBlock, createImageBlock } from "./lib/blocks";
 import { imageSize, releaseAttachmentUrls } from "./lib/attachmentUrls";
 import { MAX_FILE_BYTES, classifyFile, readPaths, type IncomingFile } from "./lib/insertFiles";
 import { takePendingNote } from "./lib/launch";
+import { onRemoteNotesChange } from "./lib/remoteChanges";
 import {
   addAttachment,
   addFolder,
@@ -197,6 +198,23 @@ function NotesDetail() {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  // Note arrivate da un altro dispositivo (sync/NotesSyncProvider.tsx): elenco ricaricato, e una nota aperta che è
+  // cambiata si riapre (l'editor rilegge le pagine; le modifiche locali più nuove vincono comunque).
+  const [remoteRev, setRemoteRev] = useState<ReadonlyMap<number, number>>(new Map());
+  useEffect(
+    () =>
+      onRemoteNotesChange(({ noteIds }) => {
+        void reload();
+        if (noteIds.size === 0) return;
+        setRemoteRev((prev) => {
+          const next = new Map(prev);
+          for (const id of noteIds) next.set(id, (next.get(id) ?? 0) + 1);
+          return next;
+        });
+      }),
+    [reload]
+  );
 
   // Raccolte: cache condivisa (lib/collectionsStore.ts), caricata una volta.
   const collectionsState = useCollections();
@@ -1042,7 +1060,7 @@ function NotesDetail() {
         onStoreFiles={storeFiles}
         onStorePdf={storePdf}
         onOpenShortcuts={touchOnly ? undefined : () => setKeysOpen(true)}
-        key={`${onClosePane ? "side" : "main"}-${note.id}`}
+        key={`${onClosePane ? "side" : "main"}-${note.id}-${remoteRev.get(note.id) ?? 0}`}
         note={note}
         pathLabel={pathOf(note.folderId)}
         crumbs={[

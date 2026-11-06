@@ -16,6 +16,53 @@ export interface Migration {
   statements: string[];
 }
 
+// ---------------------------------------------------------------------------
+// Sync tra dispositivi (migrazione 23, core/sync/). Usati SOLO dalla 23: una migrazione rilasciata non si tocca,
+// quindi per cambiare i trigger se ne aggiunge una nuova (DROP TRIGGER + CREATE), senza modificare questi.
+// ---------------------------------------------------------------------------
+
+/** Uuid v4 casuale calcolato da SQLite (una volta per riga, anche dentro un SELECT). */
+const SQL_UUID =
+  "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || " +
+  "substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6)))";
+/** Adesso in millisecondi (come Date.now()), calcolato da SQLite. */
+const SQL_NOW_MS = "CAST(ROUND((julianday('now') - 2440587.5) * 86400000) AS INTEGER)";
+/** Falso mentre il sync applica le modifiche arrivate dal cloud: quelle non vanno rimandate indietro. */
+const SYNC_QUIET = "(SELECT value FROM sync_state WHERE key = 'applying') = 0";
+
+/**
+ * Trigger che segnano in sync_outbox ogni riga cambiata di `table` (una riga per elemento: le modifiche successive
+ * la sovrascrivono) e danno a ogni riga un id globale in sync_map, più gli id per le righe che ci sono già.
+ * `columns` sono le colonne sincronizzate: un UPDATE che tocca solo le altre (es. notes.synced_at) non conta.
+ * `uidFromKey`: l'id globale è la chiave stessa (settings: la stessa impostazione su due dispositivi è un elemento solo).
+ * Niente `INSERT OR IGNORE`/`OR REPLACE` nei trigger: se il trigger parte da un UPSERT (es. il salvataggio delle
+ * impostazioni) SQLite non li rispetta e l'istruzione fallisce; si usano `WHERE NOT EXISTS` e `ON CONFLICT DO UPDATE`.
+ */
+function syncTracking(table: string, key: string, columns: string[], uidFromKey = false): string[] {
+  const newUid = uidFromKey ? `NEW.${key}` : SQL_UUID;
+  const changed = columns.map((c) => `OLD.${c} IS NOT NEW.${c}`).join(" OR ");
+  const touch = (row: "NEW" | "OLD", deleted: 0 | 1) =>
+    `INSERT INTO sync_outbox (tbl, local_id, changed_at, deleted) VALUES ('${table}', ${row}.${key}, ${SQL_NOW_MS}, ${deleted})
+       ON CONFLICT (tbl, local_id) DO UPDATE SET changed_at = excluded.changed_at, deleted = excluded.deleted;`;
+  const mapRow = `INSERT INTO sync_map (tbl, local_id, uid) SELECT '${table}', NEW.${key}, ${newUid}
+       WHERE NOT EXISTS (SELECT 1 FROM sync_map WHERE tbl = '${table}' AND local_id = NEW.${key});`;
+  return [
+    `CREATE TRIGGER IF NOT EXISTS sync_${table}_ins AFTER INSERT ON ${table} WHEN ${SYNC_QUIET} BEGIN
+       ${mapRow}
+       ${touch("NEW", 0)}
+     END`,
+    `CREATE TRIGGER IF NOT EXISTS sync_${table}_upd AFTER UPDATE OF ${columns.join(", ")} ON ${table}
+     WHEN ${SYNC_QUIET} AND (${changed}) BEGIN
+       ${mapRow}
+       ${touch("NEW", 0)}
+     END`,
+    `CREATE TRIGGER IF NOT EXISTS sync_${table}_del AFTER DELETE ON ${table} WHEN ${SYNC_QUIET} BEGIN
+       ${touch("OLD", 1)}
+     END`,
+    `INSERT OR IGNORE INTO sync_map (tbl, local_id, uid) SELECT '${table}', ${key}, ${uidFromKey ? key : SQL_UUID} FROM ${table}`,
+  ];
+}
+
 export const MIGRATIONS: Migration[] = [
   {
     version: 1,
@@ -475,6 +522,62 @@ export const MIGRATIONS: Migration[] = [
       `CREATE INDEX IF NOT EXISTS idx_note_bookmarks_page ON note_bookmarks(page_id)`,
       `ALTER TABLE note_pages ADD COLUMN pdf TEXT`,
       `ALTER TABLE note_pages ADD COLUMN pdf_ink TEXT NOT NULL DEFAULT '{}'`,
+    ],
+  },
+  {
+    version: 23,
+    description: "Sync tra dispositivi: id globali, registro delle modifiche (trigger), origine delle sessioni",
+    statements: [
+      // Id globale (uuid; per settings la chiave) di ogni riga sincronizzata. local_id è la chiave della tabella:
+      // senza tipo, così tiene sia gli id numerici sia le chiavi di settings.
+      `CREATE TABLE IF NOT EXISTS sync_map (
+         tbl TEXT NOT NULL,
+         local_id NOT NULL,
+         uid TEXT NOT NULL,
+         PRIMARY KEY (tbl, local_id)
+       )`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_sync_map_uid ON sync_map(tbl, uid)`,
+      // Righe cambiate su questo dispositivo e non ancora mandate al cloud (deleted = eliminata).
+      `CREATE TABLE IF NOT EXISTS sync_outbox (
+         tbl TEXT NOT NULL,
+         local_id NOT NULL,
+         changed_at INTEGER NOT NULL,
+         deleted INTEGER NOT NULL DEFAULT 0,
+         PRIMARY KEY (tbl, local_id)
+       )`,
+      // applying = 1 mentre si applicano le modifiche arrivate dal cloud (i trigger tacciono). Una tabella e non una
+      // variabile perché plugin-sql usa più connessioni; torna 0 a ogni avvio (core/db/index.ts).
+      `CREATE TABLE IF NOT EXISTS sync_state (key TEXT PRIMARY KEY, value INTEGER NOT NULL)`,
+      `INSERT OR IGNORE INTO sync_state (key, value) VALUES ('applying', 0)`,
+      // Dispositivo (id dei Gruppi) che ha registrato la sessione; NULL = questo. I totali dei Gruppi contano solo
+      // le sessioni fatte qui, altrimenti PC e telefono caricherebbero due volte le stesse.
+      `ALTER TABLE study_sessions ADD COLUMN origin_device TEXT`,
+      ...syncTracking("subjects", "id", ["name", "created_at", "color", "mode", "work_minutes", "short_break_minutes", "long_break_minutes", "cycles_before_long_break", "archived_at"]),
+      ...syncTracking("study_sessions", "id", ["subject_id", "started_at", "ended_at", "duration_seconds"]),
+      ...syncTracking("note_folders", "id", ["parent_id", "name", "color", "icon", "created_at"]),
+      ...syncTracking("notes", "id", ["folder_id", "title", "tags", "starred", "created_at", "updated_at", "deleted_at", "font", "title_color"]),
+      ...syncTracking("note_pages", "id", ["note_id", "position", "content", "ink", "background", "color", "pdf", "pdf_ink", "pins"]),
+      ...syncTracking("note_attachments", "id", ["note_id", "name", "size", "created_at"]),
+      ...syncTracking("note_collections", "id", ["name", "icon", "color", "created_at", "deleted_at"]),
+      ...syncTracking("note_collection_fields", "id", ["collection_id", "name", "type", "options", "position"]),
+      ...syncTracking("note_collection_rows", "id", ["collection_id", "data", "position", "created_at", "updated_at", "deleted_at"]),
+      ...syncTracking("note_collection_views", "id", ["collection_id", "name", "layout", "filter", "sort", "fields", "group_field"]),
+      ...syncTracking("settings", "key", ["value"], true),
+    ],
+  },
+  {
+    version: 24,
+    description: "Sync tra dispositivi: file già allineati con il cloud (allegati delle note, file delle raccolte)",
+    statements: [
+      // Un file (per account) che c'è sia qui sia nel cloud. Serve a capire chi l'ha cancellato: sparito qui ma
+      // nell'elenco = cancellato qui (si toglie dal cloud); il suo riferimento sparito = cancellato altrove.
+      `CREATE TABLE IF NOT EXISTS sync_files (
+         user_id TEXT NOT NULL,
+         scope TEXT NOT NULL,
+         owner_uid TEXT NOT NULL,
+         name TEXT NOT NULL,
+         PRIMARY KEY (user_id, scope, owner_uid, name)
+       )`,
     ],
   },
 ];
