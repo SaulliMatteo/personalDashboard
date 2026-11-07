@@ -1499,3 +1499,16 @@ textarea.yt-input {
     inset: var(--hit);
   }
 }
+
+/* col dito le azioni delle righe e degli appunti sono sempre piene (senza mouse non c'è il "passare sopra") */
+@media (hover: none) {
+  .yt-row-actions,
+  .yt-note-actions {
+    opacity: 1;
+  }
+}
+
+/* Telefono (ritocchi.html, vista 17): miniature della coda più piccole, il titolo ha più spazio */
+:root[data-compact] .yt-queue-list .yt-row-thumb {
+  width: 96px;
+}

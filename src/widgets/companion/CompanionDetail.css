@@ -604,3 +604,8 @@
     inset: var(--hit);
   }
 }
+
+/* Telefono (ritocchi.html, vista 18): il palco più basso, così sotto si vede subito il resto della pagina */
+:root[data-compact] .companion-stage {
+  height: 190px;
+}

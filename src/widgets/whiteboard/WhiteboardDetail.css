@@ -140,3 +140,10 @@
   text-align: center;
   box-shadow: var(--card-shadow);
 }
+
+/* Telefono: a schermo intero la lavagna resta fra le barre di sistema (la barra degli strumenti non finisce sotto
+   l'orologio né la barra dei gesti); su desktop i --safe-* valgono 0. */
+:root[data-compact][data-theme] .wb-detail--full .wb-frame {
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  background: var(--bg);
+}
