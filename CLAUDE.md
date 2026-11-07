@@ -79,7 +79,10 @@ Leggibilità sul telefono (mockup `docs/design/mobile/ritocchi.html`): i caratte
 (card e mini della dashboard escluse, sono scalate). Sul telefono i dialoghi diventano fogli dal basso con la regola in
 `styles/base.css` (un dialogo nuovo va aggiunto alle sue liste di overlay/dialogo/azioni), i `.nq-menu` del Quaderno
 anche (`noteEditor.css`). Stanza comune in verticale: `RoomScene layout="column"` (sala a grandezza vera, 8 posti) e
-`RoomSidePanel sheet` (schede in un foglio con la maniglia, chiuso dall'indietro).
+`RoomSidePanel sheet` (schede in un foglio con la maniglia o trascinandolo, chiuso dall'indietro). La WebView di
+Android non conosce `scrollbar-width`: una barra di scorrimento stilizzata con `::-webkit-scrollbar` va tolta a mano
+sul telefono (come `.main` in `app/shell.css`). Uno "schermo intero" fatto con una classe (Lavagna) non lo vede
+`overlays.ts`: serve un suo `useBackHandler`.
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
 prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, quella dei consigli YouTube
 (`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts` e
