@@ -74,6 +74,12 @@ toccabili sotto i 44px si allargano con un `::after` invisibile e `inset: var(--
 (niente cambi d'aspetto); le scorciatoie da tastiera non si suggeriscono con `useTouchOnly()` (`core/layout/useCompact.ts`).
 Col dito si trascina solo dopo una pressione lunga (dashboard del telefono, Note, tabellone, griglia desktop sul tablet
 con `features/dashboard/useLongPressGridDrag.ts`): un tocco apre, uno scorrimento scorre.
+Leggibilità sul telefono (mockup `docs/design/mobile/ritocchi.html`): i caratteri piccoli delle pagine si scrivono
+`max(Npx, var(--fs-min))` (o `max(0.8em, var(--fs-min))`): `--fs-min` è 0 fuori dal telefono e 13px con `data-compact`
+(card e mini della dashboard escluse, sono scalate). Sul telefono i dialoghi diventano fogli dal basso con la regola in
+`styles/base.css` (un dialogo nuovo va aggiunto alle sue liste di overlay/dialogo/azioni), i `.nq-menu` del Quaderno
+anche (`noteEditor.css`). Stanza comune in verticale: `RoomScene layout="column"` (sala a grandezza vera, 8 posti) e
+`RoomSidePanel sheet` (schede in un foglio con la maniglia, chiuso dall'indietro).
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
 prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, quella dei consigli YouTube
 (`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts` e
