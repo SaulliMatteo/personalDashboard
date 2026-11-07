@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type TouchEvent } from "react";
 import { useBackHandler } from "../../core/nav/backHandlers";
 import { useSettings } from "../../core/settings/useSettings";
 import { DoneMarkIcon, OpenMarkIcon } from "../groups/components/icons";
@@ -101,6 +101,9 @@ function MemberDetails({ member, serverNow, sheet }: { member: RoomMember; serve
   );
 }
 
+/** Quanto va trascinato il foglio (px) per alzarlo o abbassarlo. */
+const SWIPE = 32;
+
 type PanelTab = "members" | "chat" | "todo";
 
 interface RoomSidePanelProps {
@@ -157,8 +160,44 @@ function RoomSidePanel({
   }
   useBackHandler(sheet && sheetOpen, () => setSheetOpen(false));
 
+  // Col dito sulla maniglia o sulle schede il foglio si trascina: segue il dito e al rilascio, oltre SWIPE px, si alza
+  // (verso l'alto) o si abbassa (verso il basso). Il click che segue uno scorrimento si ignora.
+  const asideRef = useRef<HTMLElement | null>(null);
+  const startRef = useRef<{ y: number; base: number } | null>(null);
+  const swipedRef = useRef(false);
+  const [drag, setDrag] = useState<{ dy: number; base: number } | null>(null);
+  const onTouchStart = (e: TouchEvent) => {
+    if (!sheet || e.touches.length !== 1 || !(e.target as Element).closest(".rsp-grip, .rsp-tabs")) return;
+    startRef.current = { y: e.touches[0].clientY, base: asideRef.current?.offsetHeight ?? 0 };
+  };
+  const onTouchMove = (e: TouchEvent) => {
+    const start = startRef.current;
+    if (!start) return;
+    const dy = e.touches[0].clientY - start.y;
+    setDrag({ dy, base: start.base });
+  };
+  const onTouchEnd = () => {
+    startRef.current = null;
+    if (!drag) return;
+    if (Math.abs(drag.dy) > 8) {
+      swipedRef.current = true;
+      setTimeout(() => (swipedRef.current = false), 400);
+    }
+    if (!sheetOpen && drag.dy < -SWIPE) setSheetOpen(true);
+    else if (sheetOpen && drag.dy > SWIPE) setSheetOpen(false);
+    setDrag(null);
+  };
+  const justSwiped = () => swipedRef.current;
+  // aperto scende col dito; chiuso cresce col dito
+  const dragStyle = !drag
+    ? undefined
+    : sheetOpen
+      ? { transform: `translateY(${Math.max(0, drag.dy)}px)` }
+      : { height: `${drag.base + Math.max(0, -drag.dy)}px` };
+
   // nel foglio chiuso una scheda lo apre; la scheda già aperta lo richiude
   const chooseTab = (id: PanelTab) => {
+    if (justSwiped()) return;
     if (sheet && sheetOpen && id === tab) setSheetOpen(false);
     else {
       setTab(id);
@@ -190,14 +229,23 @@ function RoomSidePanel({
   ];
 
   return (
-    <aside className={`rsp${sheet ? " rsp--sheet" : ""}${sheet && sheetOpen ? " is-open" : ""}`} aria-label="Persone e attività">
+    <aside
+      ref={asideRef}
+      className={`rsp${sheet ? " rsp--sheet" : ""}${sheet && sheetOpen ? " is-open" : ""}${drag ? " is-dragging" : ""}`}
+      aria-label="Persone e attività"
+      style={dragStyle}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchEnd}
+    >
       {sheet && (
         <button
           type="button"
           className="rsp-grip"
           aria-label={sheetOpen ? "Abbassa il pannello" : "Alza il pannello"}
           aria-expanded={sheetOpen}
-          onClick={() => setSheetOpen((v) => !v)}
+          onClick={() => !justSwiped() && setSheetOpen((v) => !v)}
         />
       )}
       <div role="tablist" aria-label="Colonna della stanza" className="rsp-tabs">

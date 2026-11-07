@@ -379,3 +379,17 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
+
+/* Col dito il foglio si trascina dalla maniglia o dalle schede (RoomSidePanel): lì niente scorrimento del browser. */
+.rsp--sheet .rsp-grip,
+.rsp--sheet .rsp-tabs {
+  touch-action: none;
+}
+
+.rsp--sheet {
+  transition: transform 0.2s ease;
+}
+
+.rsp--sheet.is-dragging {
+  transition: none;
+}
