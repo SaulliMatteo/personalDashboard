@@ -45,8 +45,8 @@ fn target(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
 }
 
 #[cfg(target_os = "android")]
-fn target(app: &tauri::AppHandle) -> Result<&tauri::AppHandle, String> {
-    Ok(app)
+fn target(app: &tauri::AppHandle) -> Result<tauri::AppHandle, String> {
+    Ok(app.clone())
 }
 
 #[tauri::command]
