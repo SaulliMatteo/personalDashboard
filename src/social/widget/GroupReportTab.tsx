@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchGroupSubjectReport, fetchGroupSubjects, type GroupSubject, type GroupSubjectReport } from "../../core/cloud/groupSubjectsApi";
 import type { CloudGroup } from "../../core/cloud/groupsApi";
+import { useCompact } from "../../core/layout/useCompact";
 import { buildBuckets, periodRange, type ReportPeriod, type TimedItem } from "../../core/report/periods";
 import { messageOf } from "../groups/messages";
 import { useGroups } from "../groups/useGroups";
@@ -51,6 +52,8 @@ interface Loaded {
 function GroupReportTab({ group, isOwner, onOpenSharing }: { group: CloudGroup; isOwner: boolean; onOpenSharing: () => void }) {
   const { members } = useGroups();
   const [period, setPeriod] = useState<ReportPeriod>("week");
+  // telefono: i mesi dell'anno a una lettera, altrimenti le etichette si accavallano
+  const compact = useCompact();
   const [offset, setOffset] = useState(0);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [subjects, setSubjects] = useState<GroupSubject[]>([]);
@@ -201,7 +204,7 @@ function GroupReportTab({ group, isOwner, onOpenSharing }: { group: CloudGroup; 
                     ))}
                 </div>
                 </div>
-                <span className={`grr-label${b.isCurrent ? " is-current" : ""}`}>{b.label}</span>
+                <span className={`grr-label${b.isCurrent ? " is-current" : ""}`}>{compact && period === "year" ? b.label.charAt(0).toUpperCase() : b.label}</span>
               </div>
             ))}
           </div>

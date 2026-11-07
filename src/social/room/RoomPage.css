@@ -328,3 +328,44 @@
     inset: var(--hit);
   }
 }
+
+/* ---------- Telefono in verticale (ritocchi.html, viste 14 e 15) ----------
+   La sala a grandezza vera scorre nel suo riquadro; le schede sono un foglio in fondo (RoomSidePanel sheet). */
+@media (orientation: portrait) {
+  :root[data-compact] .roomp-main {
+    gap: 0;
+  }
+
+  :root[data-compact] .roomp-room {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 0;
+    border-bottom: 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    box-shadow: none;
+  }
+
+  :root[data-compact] .rsp--sheet {
+    flex: none;
+    margin-top: -18px;
+    z-index: 2;
+  }
+
+  :root[data-compact] .rsp--sheet.is-open {
+    height: 56%;
+  }
+
+  /* con la tastiera aperta (si scrive un messaggio) restano solo le schede: il foglio prende tutto */
+  :root[data-compact][data-keyboard] .rsp--sheet.is-open {
+    flex: 1 1 0;
+    height: auto;
+    margin-top: 0;
+  }
+}
+
+.roomp-scene--column {
+  display: block;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}

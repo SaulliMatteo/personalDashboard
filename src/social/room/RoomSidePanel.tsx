@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useBackHandler } from "../../core/nav/backHandlers";
 import { useSettings } from "../../core/settings/useSettings";
 import { DoneMarkIcon, OpenMarkIcon } from "../groups/components/icons";
 import { useChat } from "../modules/chat/useChat";
@@ -113,6 +114,11 @@ interface RoomSidePanelProps {
   serverNow: number;
   /** Apre "Cosa vedono gli altri" nella pagina Gruppi. */
   onOpenSharing: () => void;
+  /**
+   * Telefono in verticale (docs/design/mobile/ritocchi.html, viste 14 e 15): un foglio in fondo alla pagina. Chiuso
+   * mostra solo le schede; un tocco su una scheda (o su un posto della sala) lo alza, l'indietro lo riabbassa.
+   */
+  sheet?: boolean;
 }
 
 /**
@@ -120,20 +126,45 @@ interface RoomSidePanelProps {
  * scorre dentro il riquadro), Messaggi (dal vivo) e Da fare (il foglietto della sessione). I badge contano i messaggi
  * non letti e le voci ancora da fare.
  */
-function RoomSidePanel({ groupId, meId, sections, members, selectedId, onToggle, serverNow, onOpenSharing }: RoomSidePanelProps) {
+function RoomSidePanel({
+  groupId,
+  meId,
+  sections,
+  members,
+  selectedId,
+  onToggle,
+  serverNow,
+  onOpenSharing,
+  sheet = false,
+}: RoomSidePanelProps) {
   const { settings } = useSettings();
   const { chats } = useChat();
   const { items, shared } = useTodo();
   const [tab, setTab] = useState<PanelTab>("members");
   const [shownSelection, setShownSelection] = useState(selectedId);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const expanded = !sheet || sheetOpen;
   const listRef = useRef<HTMLDivElement | null>(null);
   const openRef = useRef<HTMLDivElement | null>(null);
 
   // un posto scelto nella sala si vede nella lista Membri
   if (selectedId !== shownSelection) {
     setShownSelection(selectedId);
-    if (selectedId !== null) setTab("members");
+    if (selectedId !== null) {
+      setTab("members");
+      setSheetOpen(true);
+    }
   }
+  useBackHandler(sheet && sheetOpen, () => setSheetOpen(false));
+
+  // nel foglio chiuso una scheda lo apre; la scheda già aperta lo richiude
+  const chooseTab = (id: PanelTab) => {
+    if (sheet && sheetOpen && id === tab) setSheetOpen(false);
+    else {
+      setTab(id);
+      setSheetOpen(true);
+    }
+  };
 
   // La riga aperta (anche da un clic sul posto) si porta in vista, scorrendo solo la lista.
   useEffect(() => {
@@ -146,7 +177,7 @@ function RoomSidePanel({ groupId, meId, sections, members, selectedId, onToggle,
     else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight;
   }, [selectedId, tab]);
 
-  const unread = tab === "chat" ? 0 : (chats[groupId]?.unread ?? 0);
+  const unread = tab === "chat" && expanded ? 0 : (chats[groupId]?.unread ?? 0);
   const openTodos = items.filter((i) => !i.done).length;
   const names = new Map([...members.values()].map((m) => [m.userId, m.username]));
   const mySheet = settings.groupsShareTodo ? sharedOrder(items) : null;
@@ -159,7 +190,16 @@ function RoomSidePanel({ groupId, meId, sections, members, selectedId, onToggle,
   ];
 
   return (
-    <aside className="rsp" aria-label="Persone e attività">
+    <aside className={`rsp${sheet ? " rsp--sheet" : ""}${sheet && sheetOpen ? " is-open" : ""}`} aria-label="Persone e attività">
+      {sheet && (
+        <button
+          type="button"
+          className="rsp-grip"
+          aria-label={sheetOpen ? "Abbassa il pannello" : "Alza il pannello"}
+          aria-expanded={sheetOpen}
+          onClick={() => setSheetOpen((v) => !v)}
+        />
+      )}
       <div role="tablist" aria-label="Colonna della stanza" className="rsp-tabs">
         {tabs.map((t) => (
           <button
@@ -167,10 +207,10 @@ function RoomSidePanel({ groupId, meId, sections, members, selectedId, onToggle,
             type="button"
             role="tab"
             id={`rsp-tab-${t.id}`}
-            aria-selected={tab === t.id}
+            aria-selected={expanded && tab === t.id}
             aria-controls={`rsp-panel-${t.id}`}
-            className={`rsp-tab${tab === t.id ? " is-active" : ""}`}
-            onClick={() => setTab(t.id)}
+            className={`rsp-tab${expanded && tab === t.id ? " is-active" : ""}`}
+            onClick={() => chooseTab(t.id)}
           >
             <span>{t.label}</span>
             {t.badge > 0 && (
@@ -181,38 +221,40 @@ function RoomSidePanel({ groupId, meId, sections, members, selectedId, onToggle,
           </button>
         ))}
       </div>
-      <div role="tabpanel" id={`rsp-panel-${tab}`} aria-labelledby={`rsp-tab-${tab}`} className="rsp-panel">
-        {tab === "members" && (
-          <div ref={listRef} className="rsp-list">
-            {sections.map((section) => (
-              <div key={section.title} className="rsp-section">
-                <span className="rsp-section-title">
-                  {section.title} ({section.members.length})
-                </span>
-                {section.members.map(({ userId, room }) => {
-                  const member = members.get(userId);
-                  if (!member) return null;
-                  const open = userId === selectedId;
-                  return (
-                    <div key={userId} ref={open ? openRef : undefined} className={`rsp-row${open ? " is-open" : ""}`}>
-                      <button type="button" className="rsp-row-btn" aria-expanded={open} onClick={() => onToggle(userId)}>
-                        <span className={`grp-dot grp-dot--${member.kind}`} aria-hidden="true" />
-                        <span className="rsp-name">
-                          <MemberName username={member.username} isMe={member.isMe} />
-                        </span>
-                        <span className={`rsp-short rsp-short--${member.kind}`}>{shortText(member, room, serverNow)}</span>
-                      </button>
-                      {open && <MemberDetails member={member} serverNow={serverNow} sheet={sheetOf(member)} />}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        )}
-        {tab === "chat" && <RoomChat groupId={groupId} meId={meId} names={names} />}
-        {tab === "todo" && <RoomTodo onOpenSharing={onOpenSharing} />}
-      </div>
+      {expanded && (
+        <div role="tabpanel" id={`rsp-panel-${tab}`} aria-labelledby={`rsp-tab-${tab}`} className="rsp-panel">
+          {tab === "members" && (
+            <div ref={listRef} className="rsp-list">
+              {sections.map((section) => (
+                <div key={section.title} className="rsp-section">
+                  <span className="rsp-section-title">
+                    {section.title} ({section.members.length})
+                  </span>
+                  {section.members.map(({ userId, room }) => {
+                    const member = members.get(userId);
+                    if (!member) return null;
+                    const open = userId === selectedId;
+                    return (
+                      <div key={userId} ref={open ? openRef : undefined} className={`rsp-row${open ? " is-open" : ""}`}>
+                        <button type="button" className="rsp-row-btn" aria-expanded={open} onClick={() => onToggle(userId)}>
+                          <span className={`grp-dot grp-dot--${member.kind}`} aria-hidden="true" />
+                          <span className="rsp-name">
+                            <MemberName username={member.username} isMe={member.isMe} />
+                          </span>
+                          <span className={`rsp-short rsp-short--${member.kind}`}>{shortText(member, room, serverNow)}</span>
+                        </button>
+                        {open && <MemberDetails member={member} serverNow={serverNow} sheet={sheetOf(member)} />}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+          {tab === "chat" && <RoomChat groupId={groupId} meId={meId} names={names} />}
+          {tab === "todo" && <RoomTodo onOpenSharing={onOpenSharing} />}
+        </div>
+      )}
     </aside>
   );
 }

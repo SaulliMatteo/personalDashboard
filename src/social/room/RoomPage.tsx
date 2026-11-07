@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { useCloud } from "../../core/cloud/useCloud";
 import { useElementSize } from "../../core/hooks/useElementSize";
-import { useCompact } from "../../core/layout/useCompact";
+import { useCompact, useLandscape } from "../../core/layout/useCompact";
 import { useDrawer } from "../../core/nav/useDrawer";
 import { useNav } from "../../core/nav/useNav";
 import CompactBar from "../../ui/CompactBar";
@@ -55,10 +55,14 @@ function Arrow({ dir }: { dir: "prev" | "next" }) {
  * `controls`: i comandi dei widget per la stanza (`roomControls`, es. il timer dello Studio), passati da app/App.tsx.
  * Sul telefono (docs/design/mobile/viste.html, vista 8): nome del gruppo e sala nella barra in alto, sotto gruppi e
  * frecce delle sale, poi posto e timer, la sala a tutta larghezza e le schede sotto, dove scorre solo la lista.
+ * In verticale (docs/design/mobile/ritocchi.html, viste 14 e 15) la sala è a grandezza vera e girata (si scorre) e le
+ * schede stanno in un foglio in fondo che si alza.
  */
 function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode }) {
   const { openWidgetDetail } = useNav();
   const compact = useCompact();
+  const landscape = useLandscape();
+  const column = compact && !landscape;
   const { setOpen: openDrawer } = useDrawer();
   const { userId } = useCloud();
   const state = useGroupsState();
@@ -251,9 +255,10 @@ function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode
 
       <div className="roomp-main">
         <section className="roomp-room" aria-label="La stanza">
-          <div ref={setSceneBox} className="roomp-scene" data-pigment={pigment}>
+          <div ref={setSceneBox} className={`roomp-scene${column ? " roomp-scene--column" : ""}`} data-pigment={pigment}>
             <RoomScene
-              scale={sceneScale}
+              layout={column ? "column" : "stage"}
+              scale={column ? 1 : sceneScale}
               seats={seats}
               reservedSeat={reservedSeat}
               onSit={(seat) => setSeat(group.id, shown, seat)}
@@ -271,6 +276,7 @@ function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode
           key={group.id}
           groupId={group.id}
           meId={userId}
+          sheet={column}
           sections={sections}
           members={byId}
           selectedId={selectedId}

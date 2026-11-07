@@ -216,3 +216,17 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+/* Telefono: barre più vicine, il grafico prende tutta la larghezza */
+:root[data-compact] .grr-bars {
+  gap: 6px;
+}
+
+:root[data-compact] .grr-bars--year {
+  gap: 3px;
+}
+
+:root[data-compact] .grr-chart {
+  flex-basis: 100%;
+  padding: 12px 10px 8px;
+}

@@ -124,3 +124,29 @@
   font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
+
+/* Telefono (ritocchi.html, vista 12): posizione, nome e tempo sopra, la barra sotto a tutta larghezza */
+:root[data-compact] .gr-row {
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "rank name time"
+    ". bar bar";
+  gap: 4px 10px;
+  padding: 8px 10px;
+}
+
+:root[data-compact] .gr-rank {
+  grid-area: rank;
+}
+
+:root[data-compact] .gr-name {
+  grid-area: name;
+}
+
+:root[data-compact] .gr-bar {
+  grid-area: bar;
+}
+
+:root[data-compact] .gr-time {
+  grid-area: time;
+}

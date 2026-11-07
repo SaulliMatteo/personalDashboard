@@ -21,6 +21,11 @@ export const STAGE_HEIGHT = 470;
 interface RoomSceneProps {
   /** 1 = grandezza del mockup; meno quando lo spazio non basta, di più nelle finestre grandi. */
   scale: number;
+  /**
+   * "stage": la sala del mockup (720×470), scalata. "column": telefono in verticale (docs/design/mobile/ritocchi.html,
+   * vista 14), lo stesso disegno a grandezza vera: parete in alto, poi le 4 scrivanie una sotto l'altra (si scorre).
+   */
+  layout?: "stage" | "column";
   /** Chi siede in ogni posizione della scena (placeSeats); null = posto libero. */
   seats: (RoomMember | null)[];
   /** Il posto che ho scelto ma in cui non siedo ancora (timer fermo); null = nessuno. */
@@ -185,23 +190,39 @@ function RoomScene(props: RoomSceneProps) {
       <Seat position={first + 1} side="right" props={props} />
     </div>
   );
+  const defs = (
+    <svg width="0" height="0" className="rs-defs" aria-hidden="true">
+      <defs>
+        <pattern id="room-fz-a" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
+          <circle className="rs-dot-a" cx="1.6" cy="1.6" r="1" />
+        </pattern>
+        <pattern id="room-fz-b" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
+          <circle className="rs-dot-b" cx="1.6" cy="1.6" r="0.9" />
+        </pattern>
+        <pattern id="room-fz-r" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
+          <circle className="rs-dot-r" cx="1.6" cy="1.6" r="1.1" />
+        </pattern>
+      </defs>
+    </svg>
+  );
+  if (props.layout === "column") {
+    return (
+      <div className="rs-column">
+        {defs}
+        <div className="rs-wall rs-wall--column" aria-hidden="true">
+          <Shelf books={SHELF_LEFT} />
+          <Window moon stars={[[28, 50, 1.3], [38, 116, 1.1], [88, 122, 1.3]]} />
+          <Shelf books={SHELF_RIGHT} />
+        </div>
+        <div className="rs-floor-column">{[0, 2, 4, 6].map(table)}</div>
+      </div>
+    );
+  }
   const fit = { width: STAGE_WIDTH * props.scale, height: STAGE_HEIGHT * props.scale, "--rs-scale": props.scale } as CSSProperties;
   return (
     <div className="rs-fit" style={fit}>
       <div className="rs-stage">
-        <svg width="0" height="0" className="rs-defs" aria-hidden="true">
-          <defs>
-            <pattern id="room-fz-a" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
-              <circle className="rs-dot-a" cx="1.6" cy="1.6" r="1" />
-            </pattern>
-            <pattern id="room-fz-b" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
-              <circle className="rs-dot-b" cx="1.6" cy="1.6" r="0.9" />
-            </pattern>
-            <pattern id="room-fz-r" width="3.2" height="3.2" patternUnits="userSpaceOnUse">
-              <circle className="rs-dot-r" cx="1.6" cy="1.6" r="1.1" />
-            </pattern>
-          </defs>
-        </svg>
+        {defs}
 
         <div className="rs-floor" aria-hidden="true" />
 

@@ -319,3 +319,63 @@
     inset: var(--hit);
   }
 }
+
+/* ---------- Foglio in fondo alla Stanza comune sul telefono (RoomSidePanel sheet) ---------- */
+.rsp--sheet {
+  border: var(--modal-border);
+  border-bottom: 0;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  background: var(--modal-bg);
+  box-shadow: 0 -10px 30px color-mix(in srgb, var(--text-primary) 18%, transparent);
+}
+
+.rsp-grip {
+  position: relative;
+  flex: none;
+  align-self: center;
+  width: 64px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.rsp-grip::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 8px;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--text-muted);
+  opacity: 0.45;
+}
+
+.rsp--sheet .rsp-tabs {
+  padding-top: 0;
+}
+
+.rsp--sheet:not(.is-open) .rsp-tabs {
+  border-bottom: 0;
+  padding-bottom: 6px;
+}
+
+.rsp--sheet .rsp-tab {
+  height: 44px;
+}
+
+@media (pointer: coarse) {
+  .rsp-grip::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}
+
+/* Telefono: la nota del membro (materia, da quanto…) va a capo invece di essere tagliata */
+:root[data-compact] .rsp-note {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

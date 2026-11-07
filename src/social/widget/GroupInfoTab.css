@@ -276,3 +276,8 @@
     inset: var(--hit);
   }
 }
+
+/* Telefono (ritocchi.html, vista 11): una colonna sola (il minimo di 300px tagliava la scheda a 360dp) */
+:root[data-compact] .gi {
+  grid-template-columns: minmax(0, 1fr);
+}

@@ -5,9 +5,13 @@
   overflow: hidden;
 }
 
-.rs-stage {
+.rs-stage,
+.rs-column {
   --rs-pill-size: 13px;
   --rs-pill-weight: 500;
+}
+
+.rs-stage {
 
   position: relative;
   width: 720px;
@@ -17,16 +21,16 @@
   transform-origin: top left;
 }
 
-:root[data-theme="opaco"] .rs-stage {
+:root[data-theme="opaco"] :is(.rs-stage, .rs-column) {
   --rs-pill-weight: 700;
 }
 
-:root[data-theme="quaderno"] .rs-stage {
+:root[data-theme="quaderno"] :is(.rs-stage, .rs-column) {
   --rs-pill-size: 17px;
   --rs-pill-weight: 700;
 }
 
-:root[data-theme="fosforo"] .rs-stage {
+:root[data-theme="fosforo"] :is(.rs-stage, .rs-column) {
   --rs-pill-size: 15px;
   --rs-pill-weight: 900;
 }
@@ -356,4 +360,51 @@
 
 .rs-seat-btn.is-selected .rs-plate {
   border-color: var(--accent);
+}
+
+/* ---------- Telefono in verticale (RoomScene layout="column", ritocchi.html vista 14) ----------
+   Lo stesso disegno a grandezza vera: la parete con libreria e finestra, poi il pavimento con le 4 scrivanie da 2 posti
+   una sotto l'altra. Nomi e timer restano alla loro misura (13px e più); la pagina fa scorrere la sala. */
+.rs-column {
+  position: relative;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--scene-wall);
+}
+
+.rs-wall--column {
+  position: static;
+  gap: 18px;
+  padding: 18px 12px 0;
+}
+
+.rs-wall--column > svg:nth-child(odd) {
+  width: 72px;
+  height: auto;
+}
+
+.rs-wall--column > svg:nth-child(2) {
+  width: 92px;
+  height: auto;
+}
+
+.rs-floor-column {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0 18px;
+  background: var(--scene-floor);
+  border-top: 1.5px solid var(--scene-floor-line);
+}
+
+.rs-column .rs-plate {
+  max-width: 140px;
+  font-size: 13px;
+}
+
+.rs-column .rs-free {
+  font-size: 13px;
 }
