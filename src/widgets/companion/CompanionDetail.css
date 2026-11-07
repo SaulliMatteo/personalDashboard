@@ -609,3 +609,17 @@
 :root[data-compact] .companion-stage {
   height: 190px;
 }
+
+/* titolo del gruppo di pose sopra, i pulsanti sotto: a 360dp (Fosforo, carattere largo) uscivano a destra */
+:root[data-compact] .companion-group-head {
+  flex-wrap: wrap;
+}
+
+:root[data-compact] .companion-group-actions {
+  flex-shrink: 1;
+  justify-content: flex-start;
+}
+
+:root[data-compact] .companion-small-btn {
+  height: 36px;
+}
