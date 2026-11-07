@@ -164,3 +164,52 @@
 :root[data-theme="fosforo"] .nq-ctable td {
   border-bottom-style: dotted;
 }
+
+/* ---------- Telefono (ritocchi.html, vista 8): colonne larghe abbastanza da leggere, la tabella scorre di lato con il
+   titolo della riga fermo a sinistra nella pagina della raccolta (sfondo della card); pulsanti grandi. ---------- */
+:root[data-compact] .nq-ctable {
+  width: max-content;
+  min-width: 100%;
+  font-size: 14px;
+}
+
+:root[data-compact] .nq-ctable :is(th, td):not(.nq-ctable-tools) {
+  min-width: 128px;
+}
+
+:root[data-compact] .nq-coll .nq-ctable :is(th, td):first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  max-width: 44vw;
+  background: var(--card-bg);
+  box-shadow: 1px 0 0 var(--border-subtle);
+}
+
+:root[data-compact] .nq-coll .nq-ctable-addrow td:first-child {
+  box-shadow: none;
+}
+
+:root[data-compact] .nq-ctable-field {
+  min-height: 40px;
+}
+
+:root[data-compact] .nq-ctable-add,
+:root[data-compact] .nq-ctable-rowbtns button {
+  width: 36px;
+  height: 36px;
+}
+
+:root[data-compact] .nq-ctable-addrow button {
+  min-height: 44px;
+}
+
+/* i pulsanti della riga (apri la scheda…) restano fermi a destra, altrimenti finirebbero fuori dallo schermo */
+:root[data-compact] .nq-coll .nq-ctable td.nq-ctable-tools,
+:root[data-compact] .nq-coll .nq-ctable th.nq-ctable-tools {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: var(--card-bg);
+  box-shadow: -1px 0 0 var(--border-subtle);
+}

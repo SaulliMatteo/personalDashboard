@@ -394,7 +394,7 @@
   display: flex;
   justify-content: space-between;
   gap: 1em;
-  font-size: 0.68em;
+  font-size: max(0.68em, var(--fs-min));
   color: color-mix(in srgb, var(--note-page-ink) 60%, transparent);
 }
 
@@ -442,7 +442,7 @@
   align-items: center;
   gap: 0.55em;
   margin-top: 0.65em;
-  font-size: 0.8em;
+  font-size: max(0.8em, var(--fs-min));
   color: color-mix(in srgb, var(--note-page-ink) 65%, transparent);
 }
 
@@ -2823,4 +2823,46 @@
 :root[data-theme="fosforo"] .nq-ph-bar .nq-ink-colors {
   height: auto;
   border: 0;
+}
+
+/* Telefono: l'avviso sta sopra la barra dei gesti e la tastiera, e non esce dallo schermo */
+:root[data-compact] .nq-ref-gone {
+  bottom: calc(16px + var(--safe-bottom) + var(--keyboard));
+  max-width: calc(100vw - 24px);
+  flex-wrap: wrap;
+}
+
+/* Telefono: i menu agganciati a un pulsante (Ordina, campi e viste delle raccolte, tabelle…) uscivano dallo schermo;
+   diventano fogli dal basso come i dialoghi (quelli dell'editor stanno già nei fogli di BottomSheet.tsx). */
+:root[data-compact] .nq-menu-backdrop {
+  background: var(--overlay);
+}
+
+:root[data-compact] .nq-menu:not(.nq-menu--sheet, .nq-pdf-range) {
+  position: fixed;
+  top: auto;
+  left: 0;
+  right: 0;
+  bottom: var(--keyboard);
+  z-index: 61;
+  min-width: 0;
+  max-height: calc(100% - var(--safe-top) - 56px - var(--keyboard));
+  padding: 6px 10px calc(12px + var(--safe-bottom));
+  border-bottom: 0;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+}
+
+:root[data-compact] .nq-menu:not(.nq-menu--sheet, .nq-pdf-range)::before {
+  content: "";
+  flex: none;
+  width: 36px;
+  height: 4px;
+  margin: 4px auto 8px;
+  border-radius: 4px;
+  background: var(--text-muted);
+  opacity: 0.45;
+}
+
+:root[data-compact] .nq-menu:not(.nq-menu--sheet, .nq-pdf-range) > button {
+  min-height: 44px;
 }

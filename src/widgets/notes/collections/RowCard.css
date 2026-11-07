@@ -86,3 +86,18 @@
   border: 1.5px solid var(--accent);
   border-radius: 6px;
 }
+
+/* ---------- Telefono (ritocchi.html, vista 9): foglio dal basso (styles/base.css), etichetta sopra il valore ---------- */
+:root[data-compact] .nq-rowcard-field {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  font-size: 15px;
+}
+
+:root[data-compact] .nq-rowcard-foot small {
+  font-size: 13px;
+}
+
+:root[data-compact] .nq-rowcard-del {
+  min-height: 44px;
+}

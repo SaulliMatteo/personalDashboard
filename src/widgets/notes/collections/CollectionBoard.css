@@ -102,3 +102,24 @@
 :root[data-theme="fosforo"] .nq-bcol.is-over {
   border-color: var(--led);
 }
+
+/* Telefono (ritocchi.html, vista 10): una colonna occupa quasi tutto lo schermo e lo scorrimento si ferma su ognuna;
+   la colonna dopo si intravede al bordo. */
+:root[data-compact] .nq-board {
+  grid-auto-columns: 82%;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+}
+
+:root[data-compact] .nq-bcol {
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+:root[data-compact] .nq-bcol h4 {
+  font-size: 15px;
+}
+
+:root[data-compact] .nq-bcol-add {
+  min-height: 44px;
+}

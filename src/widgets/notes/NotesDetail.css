@@ -1599,6 +1599,56 @@ button.nq-crumb:hover {
   flex-wrap: wrap;
 }
 
+:root[data-compact] .nq-col-actions {
+  flex: 1 1 100%;
+}
+
+:root[data-compact] .nq-col-actions > :first-child {
+  flex: 1 1 auto;
+}
+
+:root[data-compact] .nq-col-titles h1 {
+  white-space: normal;
+}
+
+/* Pannello della cartella (330px fissi accanto alle note, che restavano a zero): sul telefono è un foglio dal basso
+   (ritocchi.html, vista 7). L'ombra larga fa da velo sopra la pagina. */
+:root[data-compact] .nq-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--keyboard);
+  z-index: 60;
+  max-height: calc(100% - var(--safe-top) - 56px - var(--keyboard));
+  border: var(--modal-border);
+  border-bottom: 0;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  background: var(--modal-bg);
+  box-shadow: 0 0 0 100vmax var(--overlay), var(--shadow-pop);
+  padding-bottom: var(--safe-bottom);
+}
+
+:root[data-compact] .nq-panel::before {
+  content: "";
+  flex: none;
+  width: 36px;
+  height: 4px;
+  margin: 8px auto 0;
+  border-radius: 4px;
+  background: var(--text-muted);
+  opacity: 0.45;
+}
+
+:root[data-compact] .nq-panel-head,
+:root[data-compact] .nq-panel-body {
+  padding-inline: 18px;
+}
+
+/* avvisi in basso: sopra la barra dei gesti */
+:root[data-compact] .nq-notice {
+  bottom: calc(20px + var(--safe-bottom) + var(--keyboard));
+}
+
 /* senza tastiera fisica i suggerimenti delle scorciatoie non servono */
 @media (hover: none) and (pointer: coarse) {
   .nq-search kbd {
