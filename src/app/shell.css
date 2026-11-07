@@ -144,6 +144,11 @@
   padding: 0 var(--safe-right) calc(var(--safe-bottom) + var(--keyboard)) var(--safe-left);
 }
 
+/* la WebView di Android non conosce scrollbar-width: senza questo la barra da 8px qui sopra toglie spazio a destra */
+.app--compact > .main::-webkit-scrollbar {
+  width: 0;
+}
+
 .app--compact::before {
   content: "";
   position: fixed;

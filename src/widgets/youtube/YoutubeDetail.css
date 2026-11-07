@@ -1512,3 +1512,19 @@ textarea.yt-input {
 :root[data-compact] .yt-queue-list .yt-row-thumb {
   width: 96px;
 }
+
+/* Telefono: il titolo del video proposto prende tutta la riga, i pulsanti vanno sotto (affiancati avrebbero stretto
+   il titolo in una colonna di poche lettere). */
+:root[data-compact] .yt-hero-bottom {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+:root[data-compact] .yt-hero-actions {
+  justify-content: flex-start;
+}
+
+:root[data-compact] .yt-hero-actions .yt-btn {
+  flex: 1 1 auto;
+  min-height: 44px;
+}
