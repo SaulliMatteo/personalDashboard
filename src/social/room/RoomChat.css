@@ -189,6 +189,12 @@
   padding-top: 3px;
 }
 
+/* nessuna reazione ancora: i "+" accanto al fumetto, senza riga propria */
+.rch-reactions--inline {
+  flex: 0 0 auto;
+  padding-top: 0;
+}
+
 .rch-react {
   height: 24px;
   display: flex;

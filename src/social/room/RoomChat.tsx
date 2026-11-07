@@ -79,6 +79,26 @@ function RoomChat({ groupId, meId, names }: RoomChatProps) {
     }
     const mine = m.author === meId;
     const cont = continuesPrevious(messages, i);
+    const hasReactions = REACTION_KINDS.some((kind) => m.reactions[kind].length > 0);
+    const reactionButtons = REACTION_KINDS.map((kind) => {
+      const who = m.reactions[kind];
+      const pressed = meId !== null && who.includes(meId);
+      const count = who.length;
+      return (
+        <button
+          key={kind}
+          type="button"
+          className={`rch-react${pressed ? " is-on" : ""}${count === 0 ? " rch-hover" : ""}`}
+          aria-pressed={pressed}
+          aria-label={`${REACTION_LABEL[kind]}${count ? `, ${count} ${count === 1 ? "persona" : "persone"}` : ""}`}
+          disabled={!online}
+          onClick={() => void react(groupId, m.id, kind, !pressed)}
+        >
+          {kind === "up" ? <ThumbUpIcon /> : <FireIcon />}
+          <span>{count || "+"}</span>
+        </button>
+      );
+    });
     return (
       <li key={m.id} className={`rch-msg${mine ? " is-mine" : ""}${cont ? " is-cont" : ""}`}>
         {!cont && !mine && (
@@ -95,28 +115,16 @@ function RoomChat({ groupId, meId, names }: RoomChatProps) {
               <TrashIcon />
             </button>
           )}
+          {/* senza reazioni i "+" stanno accanto al fumetto: una riga vuota sotto allargava lo spazio tra i messaggi */}
+          {!m.deleted && !hasReactions && (
+            <div role="group" aria-label="Reazioni" className="rch-reactions rch-reactions--inline">
+              {reactionButtons}
+            </div>
+          )}
         </div>
-        {!m.deleted && (
+        {!m.deleted && hasReactions && (
           <div role="group" aria-label="Reazioni" className="rch-reactions">
-            {REACTION_KINDS.map((kind) => {
-              const who = m.reactions[kind];
-              const pressed = meId !== null && who.includes(meId);
-              const count = who.length;
-              return (
-                <button
-                  key={kind}
-                  type="button"
-                  className={`rch-react${pressed ? " is-on" : ""}${count === 0 ? " rch-hover" : ""}`}
-                  aria-pressed={pressed}
-                  aria-label={`${REACTION_LABEL[kind]}${count ? `, ${count} ${count === 1 ? "persona" : "persone"}` : ""}`}
-                  disabled={!online}
-                  onClick={() => void react(groupId, m.id, kind, !pressed)}
-                >
-                  {kind === "up" ? <ThumbUpIcon /> : <FireIcon />}
-                  <span>{count || "+"}</span>
-                </button>
-              );
-            })}
+            {reactionButtons}
           </div>
         )}
       </li>
