@@ -9,3 +9,39 @@
 .wb-excalidraw .wb-fs-btn {
   pointer-events: all;
 }
+
+/* Telefono: al centro della riga in basso di Excalidraw (menu a sinistra, annulla/ripeti a destra). */
+/* Sta fuori da .excalidraw (niente stili della libreria): aspetto come i pulsanti della riga, coi token dell'app. */
+.wb-excalidraw .wb-fs-btn--bottom {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  z-index: 5;
+  width: 40px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--modal-bg);
+  color: var(--text-primary);
+  font-size: 22px;
+  transform: translateX(-50%);
+  cursor: pointer;
+}
+
+@media (pointer: coarse) {
+  .wb-excalidraw .wb-fs-btn--bottom::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}
+
+/* Telefono: con lo spazio di Excalidraw (4px) la barra degli strumenti è più larga della lavagna e taglia il primo e
+   l'ultimo strumento; con 1px ci sta anche a 360dp. */
+:root[data-compact] .wb-excalidraw .App-toolbar--mobile .Stack_horizontal {
+  gap: 1px;
+}

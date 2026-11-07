@@ -7,6 +7,7 @@ import { Excalidraw, MainMenu, THEME, isElementLink } from "@excalidraw/excalidr
 import type { ExcalidrawImperativeAPI, ExcalidrawProps, UIOptions } from "@excalidraw/excalidraw/types";
 // CSS della libreria: è tutto sotto .excalidraw (l'unica eccezione a "niente CSS globale").
 import "@excalidraw/excalidraw/index.css";
+import { useCompact } from "../../../core/layout/useCompact";
 import { useTheme } from "../../../core/theme/useTheme";
 import "./Board.css";
 
@@ -44,6 +45,7 @@ interface BoardProps {
  */
 function Board({ onHasDrawingChange, fullscreen, onToggleFullscreen }: BoardProps) {
   const { scheme } = useTheme();
+  const compact = useCompact();
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   const hasDrawingRef = useRef(false);
 
@@ -75,13 +77,14 @@ function Board({ onHasDrawingChange, fullscreen, onToggleFullscreen }: BoardProp
     }
   }, []);
 
-  // Pulsante dello schermo intero in alto a destra, accanto a "Libreria" e con il suo stesso aspetto.
-  const renderTopRightUI = useCallback(() => {
+  // Pulsante dello schermo intero in alto a destra, accanto a "Libreria" e con il suo stesso aspetto. Sul telefono
+  // la barra degli strumenti occupa già tutta la larghezza: il pulsante va al centro della riga in basso, che è vuota.
+  const fullscreenButton = useCallback(() => {
     const label = fullscreen ? "Esci da schermo intero" : "Schermo intero";
     return (
       <button
         type="button"
-        className="sidebar-trigger wb-fs-btn"
+        className={`sidebar-trigger wb-fs-btn${compact ? " wb-fs-btn--bottom" : ""}`}
         aria-label={label}
         title={label}
         onClick={(e) => {
@@ -92,7 +95,7 @@ function Board({ onHasDrawingChange, fullscreen, onToggleFullscreen }: BoardProp
         {fullscreen ? <MdFullscreenExit /> : <MdFullscreen />}
       </button>
     );
-  }, [fullscreen, onToggleFullscreen]);
+  }, [fullscreen, onToggleFullscreen, compact]);
 
   return (
     <div className="wb-excalidraw">
@@ -104,7 +107,7 @@ function Board({ onHasDrawingChange, fullscreen, onToggleFullscreen }: BoardProp
         validateEmbeddable={NO_EMBEDS}
         onChange={onChange}
         onLinkOpen={onLinkOpen}
-        renderTopRightUI={renderTopRightUI}
+        renderTopRightUI={compact ? undefined : fullscreenButton}
       >
         <MainMenu>
           <MainMenu.DefaultItems.SearchMenu />
@@ -115,6 +118,7 @@ function Board({ onHasDrawingChange, fullscreen, onToggleFullscreen }: BoardProp
           <MainMenu.DefaultItems.ChangeCanvasBackground />
         </MainMenu>
       </Excalidraw>
+      {compact && fullscreenButton()}
     </div>
   );
 }
