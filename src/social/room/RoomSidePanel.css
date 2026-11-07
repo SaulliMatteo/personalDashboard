@@ -76,7 +76,7 @@
   border-radius: 9px;
   background: var(--panel-bg);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: max(11px, var(--fs-min));
   font-weight: 700;
 }
 
@@ -114,7 +114,7 @@
 
 .rsp-section-title {
   padding: 0 10px 2px;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
 
@@ -159,7 +159,7 @@
 
 .rsp-short {
   flex: 0 0 auto;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -189,7 +189,7 @@
 
 .rsp-label,
 .rsp-totals dt {
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
 
@@ -212,7 +212,7 @@
 }
 
 .rsp-note {
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -252,7 +252,7 @@
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
 

@@ -67,7 +67,7 @@
 
 /* Titoletto in alto, valore grande, dettaglio sotto. */
 .study-stat-title {
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   font-weight: 500;
   color: var(--text-muted);
 }
@@ -93,7 +93,7 @@
 }
 
 .study-stat-sub {
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
 
@@ -117,7 +117,7 @@
 
 .study-empty {
   margin: 0;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   color: var(--text-muted);
   line-height: 1.6;
 }

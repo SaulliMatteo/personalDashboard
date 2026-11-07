@@ -28,7 +28,7 @@
 
 .nq-find-count {
   min-width: 62px;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-secondary);
   text-align: right;
   font-variant-numeric: tabular-nums;

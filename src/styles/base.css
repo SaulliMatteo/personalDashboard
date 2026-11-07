@@ -18,6 +18,13 @@
   /* Area toccabile minima col dito: un ::after con inset: var(--hit) allarga a 44px un controllo più piccolo senza
      cambiarne l'aspetto (le percentuali si risolvono sul controllo: in alto/basso sull'altezza, ai lati sulla larghezza). */
   --hit: min(0px, (100% - 44px) / 2);
+  /* Testo più piccolo ammesso: i CSS scrivono `font-size: max(11px, var(--fs-min))`. Su desktop e tablet vale 0 (nulla
+     cambia), sul telefono nessun testo scende sotto i 13px. Card e mini della dashboard ne sono fuori: lì c'è lo zoom. */
+  --fs-min: 0px;
+}
+
+:root[data-compact] {
+  --fs-min: 13px;
 }
 
 html,
@@ -181,5 +188,66 @@ select option { background: var(--bg-card); color: var(--text-primary); }
 
 /* ...e se c'erano solo titolo e ←, l'intestazione sparisce del tutto */
 :root[data-compact] .dashboard-header:has(> div:first-child > h1):has(> .detail-back-btn:nth-child(2):last-child) {
+  display: none;
+}
+
+/* ---------- Telefono: i dialoghi diventano fogli dal basso (docs/design/mobile/ritocchi.html, vista 13) ----------
+   Sono gli stessi dialoghi del desktop (stessi colori e bordi per tema, Esc e indietro come prima): cambia solo dove
+   stanno. Larghi quanto lo schermo, attaccati in basso sopra la barra dei gesti; con la tastiera aperta salgono sopra
+   di essa. I pulsanti vanno uno sotto l'altro, il principale per primo. */
+:root[data-compact] :is(.grp-overlay, .yt-dialog-overlay, .study-popup-overlay, .nq-modal-overlay, .nq-rowcard-bg, .nq-pdf-range-backdrop) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  padding: calc(var(--safe-top) + 24px) 0 var(--keyboard);
+}
+
+:root[data-compact] :is(.grp-dialog, .yt-dialog, .study-popup, .nq-modal, .nq-rowcard, .nq-menu.nq-pdf-range) {
+  width: 100% !important;
+  max-width: none;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-bottom: 0;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  padding-bottom: calc(20px + var(--safe-bottom));
+  animation: none;
+}
+
+/* .study-popup e .nq-modal hanno il riempimento nelle parti interne */
+:root[data-compact] :is(.study-popup, .nq-modal) {
+  padding-bottom: var(--safe-bottom);
+}
+
+:root[data-compact] :is(.grp-dialog, .yt-dialog, .study-popup, .nq-modal, .nq-rowcard, .nq-menu.nq-pdf-range)::before {
+  content: "";
+  display: block;
+  flex: none;
+  width: 36px;
+  height: 4px;
+  margin: -10px auto 2px;
+  border-radius: 4px;
+  background: var(--text-muted);
+  opacity: 0.45;
+}
+
+:root[data-compact] :is(.study-popup, .nq-modal)::before {
+  margin: 8px auto 0;
+}
+
+:root[data-compact] :is(.grp-actions, .yt-dialog-actions, .nq-modal-actions) {
+  flex-direction: column-reverse;
+  align-items: stretch;
+}
+
+:root[data-compact] :is(.grp-actions, .yt-dialog-actions, .nq-modal-actions) > * {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+  white-space: normal;
+}
+
+:root[data-compact] :is(.grp-actions, .yt-dialog-actions, .nq-modal-actions) > .yt-spacer {
   display: none;
 }

@@ -14,7 +14,7 @@
   border-radius: 999px;
   background: var(--nq-choice-bg);
   color: var(--nq-choice-ink);
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   font-weight: 600;
   line-height: 1.5;
   text-overflow: ellipsis;

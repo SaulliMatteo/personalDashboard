@@ -17,6 +17,6 @@
   border-radius: 10px;
   background: var(--nav-active-fg);
   color: var(--nav-active-bg);
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   font-weight: 600;
 }

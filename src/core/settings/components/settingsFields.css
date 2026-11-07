@@ -176,23 +176,49 @@
   cursor: default;
 }
 
-/* Telefono: interruttori a destra del testo; campi di testo, menu e cursori vanno sotto, a tutta larghezza. */
+/* Telefono: etichetta e descrizione sopra, controllo sotto a tutta larghezza. Interruttori, campi numerici e colori
+   restano a destra del testo (sono stretti); il testo ha tutto lo spazio che resta. */
 :root[data-compact] .settings-field {
   flex-wrap: wrap;
-  gap: 8px 16px;
+  gap: 10px 16px;
+  padding: 12px 0;
 }
 
 :root[data-compact] .settings-field-text {
-  flex: 1 1 160px;
-}
-
-:root[data-compact] .settings-field-control:has(input[type="text"], input:not([type]), input[type="range"], select, textarea) {
   flex: 1 1 100%;
 }
 
-:root[data-compact] .settings-field-control:has(input[type="text"], input:not([type]), input[type="range"], select, textarea) > * {
+:root[data-compact] .settings-field:has(> .settings-field-control > :is(.settings-switch, input[inputmode="numeric"], input[type="color"]):only-child) > .settings-field-text {
+  flex: 1 1 0;
+}
+
+:root[data-compact] .settings-field-description {
+  line-height: 1.5;
+}
+
+:root[data-compact] .settings-field-control {
+  flex: 1 1 100%;
+}
+
+:root[data-compact] .settings-field-control:has(> :is(.settings-switch, input[inputmode="numeric"], input[type="color"]):only-child) {
+  flex: 0 0 auto;
+}
+
+:root[data-compact] .settings-field-control > :is(select, input[type="text"], input[type="range"], textarea) {
   flex: 1 1 auto;
   min-width: 0;
+  width: auto;
+  height: 44px;
+}
+
+:root[data-compact] .settings-field-control > input[type="range"] {
+  height: 32px;
+}
+
+:root[data-compact] .settings-field input[inputmode="numeric"] {
+  width: 76px;
+  height: 44px;
+  text-align: center;
 }
 
 /* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css; ::after è il pallino) */

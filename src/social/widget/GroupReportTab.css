@@ -98,7 +98,7 @@
 .grr-chart-head {
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
 
@@ -151,7 +151,7 @@
 .grr-label {
   overflow: hidden;
   text-align: center;
-  font-size: 11px;
+  font-size: max(11px, var(--fs-min));
   white-space: nowrap;
   color: var(--text-muted);
 }
@@ -205,7 +205,7 @@
 }
 
 .grr-legend-who {
-  font-size: 11px;
+  font-size: max(11px, var(--fs-min));
   color: var(--text-muted);
 }
 

@@ -48,7 +48,7 @@
 .widget-catalog-status {
   flex-shrink: 0;
 
-  font-size: 11px;
+  font-size: max(11px, var(--fs-min));
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -97,7 +97,7 @@
 
   padding: 5px 10px;
 
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-secondary);
   cursor: pointer;
 
@@ -130,7 +130,7 @@
 }
 
 .widget-catalog-current-size {
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
 
@@ -241,4 +241,13 @@
     position: absolute;
     inset: var(--hit);
   }
+}
+
+/* Telefono: con le impostazioni aperte la card non aggiunge il suo margine a quello delle sezioni */
+:root[data-compact] .widget-catalog-card.is-open {
+  padding: 14px 12px;
+}
+
+:root[data-compact] .widget-catalog-card.is-open .settings-section {
+  padding: 4px 14px;
 }

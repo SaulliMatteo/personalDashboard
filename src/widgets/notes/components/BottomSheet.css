@@ -37,7 +37,7 @@
 /* titoletto di sezione */
 .nq-sheet h5 {
   margin: 14px 0 8px;
-  font-size: 11px;
+  font-size: max(11px, var(--fs-min));
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;

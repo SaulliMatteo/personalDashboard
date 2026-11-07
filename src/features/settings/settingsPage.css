@@ -435,7 +435,7 @@
   background: var(--surface-1);
   color: var(--text-primary);
   font-family: ui-monospace, monospace;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   resize: vertical;
   user-select: text;
 }
@@ -506,6 +506,48 @@
 :root[data-compact] .sp-themes {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+/* le schede scorrono di lato: il bordo sfuma, così si capisce che ce ne sono altre */
+:root[data-compact] .sp-nav {
+  mask-image: linear-gradient(to right, transparent 0, black var(--compact-side), black calc(100% - 28px), transparent 100%);
+}
+
+:root[data-compact] :is(.sp-block-head, .sp-head--row, .sp-info-row) {
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+:root[data-compact] .sp-block-sub {
+  display: block;
+  margin: 2px 0 0;
+}
+
+:root[data-compact] .sp-info-row > :first-child {
+  flex: 1 1 100%;
+}
+
+/* pulsanti: vanno a capo, alti quanto un dito, sotto il testo a tutta larghezza o a coppie */
+:root[data-compact] .sp-btn {
+  min-height: 44px;
+  height: auto;
+  padding: 8px 16px;
+  white-space: normal;
+}
+
+:root[data-compact] .settings-field-control:has(> .sp-btn),
+:root[data-compact] .settings-backup-actions {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+:root[data-compact] .settings-field-control > .sp-btn,
+:root[data-compact] .settings-backup-actions > .sp-btn {
+  flex: 1 1 140px;
+}
+
+:root[data-compact] .settings-backup-text {
+  font-size: 13px;
 }
 
 /* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */

@@ -32,7 +32,7 @@
   border-radius: 999px;
   background: var(--accent);
   color: var(--on-accent);
-  font-size: 10.5px;
+  font-size: max(10.5px, var(--fs-min));
   font-weight: 700;
   letter-spacing: 0.02em;
 }

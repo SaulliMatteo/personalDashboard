@@ -153,13 +153,13 @@
 }
 
 .gp-nav-sub {
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   opacity: 0.8;
 }
 
 .gp-nav-label {
   margin: 10px 12px 2px;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
 

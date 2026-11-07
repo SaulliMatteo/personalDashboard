@@ -115,7 +115,7 @@
 }
 
 .sidebar-goal-label {
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-secondary);
 }
 

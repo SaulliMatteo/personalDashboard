@@ -85,7 +85,7 @@
 }
 
 .gsl-done {
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
 }
 
 .gsl-select:focus-visible,

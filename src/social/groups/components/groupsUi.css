@@ -60,7 +60,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-secondary);
 }
 
@@ -73,7 +73,7 @@
 
 .grp-hint-row {
   margin-top: -10px;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
 }
 
 .grp-field {
@@ -127,7 +127,7 @@
 }
 
 .grp-muted {
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
 
@@ -141,7 +141,7 @@
 
 .grp-note {
   margin: 0;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
 
@@ -447,7 +447,7 @@
   background: transparent;
   color: var(--text-secondary);
   font: inherit;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   text-align: center;
 }
 

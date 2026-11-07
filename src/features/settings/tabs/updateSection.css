@@ -38,3 +38,13 @@
 .upd-error {
   color: var(--danger);
 }
+
+/* Telefono: titolo e data sopra, pulsante sotto */
+:root[data-compact] .upd-release-head {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+:root[data-compact] .upd-release-head > .sp-btn {
+  flex: 1 1 100%;
+}

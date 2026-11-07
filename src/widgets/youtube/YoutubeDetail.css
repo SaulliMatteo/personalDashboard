@@ -44,14 +44,14 @@
 }
 
 .yt-label {
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   font-weight: 500;
   color: var(--text-secondary);
 }
 
 .yt-muted {
   margin: 0;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   line-height: 1.5;
   color: var(--text-muted);
 }
@@ -80,7 +80,7 @@
   background: var(--surface-1);
   color: var(--text-primary);
   font: inherit;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
 }
 
 .yt-input:focus {
@@ -119,7 +119,7 @@ textarea.yt-input {
   border-radius: var(--radius-item);
   background: var(--surface-2);
   color: var(--text-secondary);
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   font-weight: 600;
   text-align: center;
   white-space: nowrap;
@@ -189,7 +189,7 @@ textarea.yt-input {
   padding: 0 6px;
   border-radius: var(--radius-item);
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
@@ -225,7 +225,7 @@ textarea.yt-input {
   align-items: center;
   gap: 5px;
   color: var(--accent);
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   font-weight: 600;
   cursor: pointer;
 }
@@ -248,7 +248,7 @@ textarea.yt-input {
   border-radius: var(--radius-panel);
   background: var(--accent-soft);
   color: var(--text-secondary);
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
 }
 
 .yt-banner--error {
@@ -261,7 +261,7 @@ textarea.yt-input {
   flex-shrink: 0;
   cursor: pointer;
   color: inherit;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
 }
 
 /* ---------- Barra superiore: tab, ricerca, aggiungi ---------- */
@@ -286,7 +286,7 @@ textarea.yt-input {
   box-sizing: border-box;
   padding: 6px 16px;
   border-radius: 6px;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   color: var(--text-muted);
   cursor: pointer;
   transition: background 150ms ease, color 150ms ease;
@@ -333,7 +333,7 @@ textarea.yt-input {
   background: var(--surface-1);
   color: var(--text-primary);
   font: inherit;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
 }
 
 .yt-search-input:focus {
@@ -385,7 +385,7 @@ textarea.yt-input {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11.5px;
+  font-size: max(11.5px, var(--fs-min));
 }
 
 .yt-search-empty {
@@ -465,7 +465,7 @@ textarea.yt-input {
   flex-wrap: wrap;
   gap: 2px;
   min-width: 0;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   color: var(--text-muted);
 }
 
@@ -578,7 +578,7 @@ textarea.yt-input {
   border-radius: 4px;
   background: var(--media-scrim);
   color: var(--media-fg);
-  font-size: 11px;
+  font-size: max(11px, var(--fs-min));
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -665,7 +665,7 @@ textarea.yt-input {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11.5px;
+  font-size: max(11.5px, var(--fs-min));
 }
 
 .yt-row-folder {
@@ -678,7 +678,7 @@ textarea.yt-input {
   border-radius: 4px;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 10.5px;
+  font-size: max(10.5px, var(--fs-min));
   font-weight: 600;
 }
 
@@ -786,7 +786,7 @@ textarea.yt-input {
   border-radius: 4px;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 10.5px;
+  font-size: max(10.5px, var(--fs-min));
   font-weight: 600;
 }
 
@@ -968,7 +968,7 @@ textarea.yt-input {
 /* Perché è proposto (lib/recommender.ts, describeReason). */
 .yt-hero-reason {
   margin: 4px 0 0;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   color: var(--text-muted);
 }
 
@@ -1051,7 +1051,7 @@ textarea.yt-input {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   color: var(--text-secondary);
   cursor: pointer;
 }
@@ -1106,7 +1106,7 @@ textarea.yt-input {
 
 .yt-saved-in {
   margin: 6px 0 0;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   color: var(--text-muted);
 }
 
@@ -1159,7 +1159,7 @@ textarea.yt-input {
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -1205,7 +1205,7 @@ textarea.yt-input {
   border-radius: 6px;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 11.5px;
+  font-size: max(11.5px, var(--fs-min));
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
@@ -1225,7 +1225,7 @@ textarea.yt-input {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   line-height: 1.45;
   color: var(--text-primary);
   white-space: pre-wrap;
@@ -1381,7 +1381,7 @@ textarea.yt-input {
 .yt-swatch--auto {
   background: var(--surface-2);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: max(11px, var(--fs-min));
   font-weight: 700;
 }
 
@@ -1398,7 +1398,7 @@ textarea.yt-input {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   color: var(--text-muted);
 }
 

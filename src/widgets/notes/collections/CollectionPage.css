@@ -164,7 +164,7 @@
 .nq-usedin-hint {
   margin: 0 0 12px;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
 }
 
 @container (max-width: 760px) {
@@ -217,7 +217,7 @@
 .nq-usedin-item small {
   display: block;
   color: var(--text-secondary);
-  font-size: 11.5px;
+  font-size: max(11.5px, var(--fs-min));
 }
 
 :root[data-theme="opaco"] .nq-usedin-item {

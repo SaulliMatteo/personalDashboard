@@ -79,7 +79,7 @@
 
 .nq-keys-note {
   margin: 14px 0 0;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-secondary);
 }
 

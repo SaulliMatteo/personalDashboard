@@ -48,7 +48,7 @@
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 11.5px;
+  font-size: max(11.5px, var(--fs-min));
   font-weight: 600;
 }
 
@@ -62,7 +62,7 @@
 
 .nq-dbv-meta {
   color: color-mix(in srgb, var(--note-page-ink) 60%, transparent);
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
 }
 
 .nq-dbv-sp {
@@ -127,7 +127,7 @@
 /* Testo della vista: colori della pagina, non del pannello */
 .nq-dbv .nq-ctable th {
   color: color-mix(in srgb, var(--note-page-ink) 55%, transparent);
-  font-size: 11.5px;
+  font-size: max(11.5px, var(--fs-min));
 }
 
 .nq-dbv .nq-ctable th,

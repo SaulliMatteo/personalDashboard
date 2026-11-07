@@ -17,7 +17,7 @@
 .fs-eyebrow {
   display: block;
   margin-bottom: 2px;
-  font-size: 10.5px;
+  font-size: max(10.5px, var(--fs-min));
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -51,7 +51,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-secondary);
 }
 
@@ -113,7 +113,7 @@
 }
 
 .fs-drop span {
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
 

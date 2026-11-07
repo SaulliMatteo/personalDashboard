@@ -56,12 +56,12 @@
 .nq-pdf-title em {
   flex: none;
   font-style: normal;
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
 
 .nq-pdf-counter {
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
@@ -133,7 +133,7 @@
 
 .nq-pdf-problem small {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
 }
 
 .nq-pdf-password {
@@ -220,7 +220,7 @@
   border-radius: 999px;
   background: var(--surface-2);
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: max(11px, var(--fs-min));
   font-variant-numeric: tabular-nums;
   pointer-events: none;
   opacity: 0.85;
@@ -355,7 +355,7 @@
   gap: 2px;
   background: var(--note-page-bg);
   color: var(--accent);
-  font-size: 9px;
+  font-size: max(9px, var(--fs-min));
 }
 
 .nq-thumb-box.nq-thumb-pdf svg {

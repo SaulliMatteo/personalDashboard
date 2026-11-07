@@ -36,7 +36,7 @@
 
 .nq-bcol-count {
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   font-weight: 500;
 }
 
@@ -57,7 +57,7 @@
   background: transparent;
   color: var(--text-secondary);
   font: inherit;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   text-align: left;
   cursor: pointer;
 }
@@ -81,7 +81,7 @@
   border-radius: 999px;
   background: var(--accent);
   color: var(--on-accent);
-  font-size: 12px;
+  font-size: max(12px, var(--fs-min));
   pointer-events: none;
 }
 

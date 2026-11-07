@@ -73,7 +73,7 @@
 /* Fosforo: barra del modulo con LED che lampeggia (sta dentro la cornice). */
 :root[data-theme="fosforo"] .wb-notice {
   padding: 9px 8px;
-  font-size: 12.5px;
+  font-size: max(12.5px, var(--fs-min));
   color: var(--text-secondary);
 }
 
