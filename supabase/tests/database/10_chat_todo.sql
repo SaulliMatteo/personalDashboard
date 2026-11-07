@@ -16,8 +16,10 @@ select ok((select enabled from public.group_features where group_id = pg_temp.gi
 select ok(not has_function_privilege('authenticated', 'private.enable_chat_todo_features()', 'execute'),
   'il client non chiama la funzione del trigger');
 select is((select count(*)::int from information_schema.tables
-  where table_schema = 'public' and (table_name ilike '%chat%' or table_name ilike '%todo%' or table_name ilike '%message%')), 0,
-  'nessuna tabella per messaggi o liste: non restano sul server');
+  where table_schema = 'public' and (table_name ilike '%chat%' or table_name ilike '%todo%' or table_name ilike '%message%')
+    -- i messaggi diretti tra amici sì (90 giorni, 13_amici.sql); quelli dei gruppi no
+    and table_name <> 'direct_messages'), 0,
+  'nessuna tabella per i messaggi dei gruppi o le liste: non restano sul server');
 
 select pg_temp.entra('bruno');
 select ok(private.can_access_channel('group:' || pg_temp.gid('g') || ':chat'), 'un membro entra nel canale chat');

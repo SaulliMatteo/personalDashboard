@@ -22,6 +22,12 @@ export type CloudErrorCode =
   | "subject_limit"
   | "rate_limited"
   | "invalid_subject"
+  | "not_friend"
+  | "no_request"
+  | "not_author"
+  | "invalid_message"
+  | "message_too_long"
+  | "payload_too_large"
   | "unknown";
 
 const MESSAGES: Record<CloudErrorCode, string> = {
@@ -41,6 +47,12 @@ const MESSAGES: Record<CloudErrorCode, string> = {
   subject_limit: "Il gruppo ha già 50 materie: il proprietario può unirle o eliminarne qualcuna.",
   rate_limited: "Troppe materie create di seguito. Riprova tra un po'.",
   invalid_subject: "Questa materia del gruppo non esiste più.",
+  not_friend: "Non siete più amici.",
+  no_request: "Questa richiesta di amicizia non c'è più.",
+  not_author: "Puoi eliminare solo i tuoi messaggi.",
+  invalid_message: "Messaggio vuoto o non valido.",
+  message_too_long: "Messaggio troppo lungo (al massimo 500 caratteri).",
+  payload_too_large: "Contenuto troppo grande da inviare (al massimo 512 KB).",
   unknown: "Qualcosa è andato storto. Riprova.",
 };
 
@@ -67,6 +79,12 @@ const SERVER_CODES: Partial<Record<string, CloudErrorCode>> = {
   subject_limit: "subject_limit",
   rate_limited: "rate_limited",
   invalid_subject: "invalid_subject",
+  not_friend: "not_friend",
+  no_request: "no_request",
+  not_author: "not_author",
+  invalid_message: "invalid_message",
+  message_too_long: "message_too_long",
+  payload_too_large: "payload_too_large",
 };
 
 /** Vincoli della tabella groups violati (nome o descrizione fuori misura). */
@@ -101,6 +119,8 @@ export function throwIfFailed(result: QueryResult): void {
   if (result.status === 401) throw new CloudError("auth");
   if (isGroupConstraint(message)) throw new CloudError("invalid_group");
   if (isSubjectNameConstraint(message)) throw new CloudError("invalid_subject_name");
+  // vincoli di direct_messages (tipo della scheda non valido…)
+  if (/direct_messages_/.test(message)) throw new CloudError("invalid_message");
   throw new CloudError(SERVER_CODES[message] ?? "unknown");
 }
 
