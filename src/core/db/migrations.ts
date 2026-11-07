@@ -580,4 +580,22 @@ export const MIGRATIONS: Migration[] = [
        )`,
     ],
   },
+  {
+    version: 25,
+    description: "Campanella della dashboard: cronologia delle notifiche dell'app (solo su questo dispositivo)",
+    statements: [
+      // open_json: dove porta il clic (NotificationOpen di core/notify/notifier.ts), NULL = da nessuna parte.
+      // read_at NULL = non letta. Non sincronizzata: ogni dispositivo ha le sue (core/notify/inbox.ts).
+      `CREATE TABLE IF NOT EXISTS app_notifications (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         kind TEXT NOT NULL,
+         title TEXT NOT NULL,
+         body TEXT NOT NULL DEFAULT '',
+         open_json TEXT,
+         created_at INTEGER NOT NULL,
+         read_at INTEGER
+       )`,
+      `CREATE INDEX IF NOT EXISTS idx_app_notifications_created ON app_notifications(created_at)`,
+    ],
+  },
 ];

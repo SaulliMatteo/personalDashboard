@@ -5,6 +5,7 @@ import { useCompact } from "../core/layout/useCompact";
 import { CloudProvider } from "../core/cloud/CloudContext";
 import { SyncProvider } from "../core/sync/SyncContext";
 import { NavProvider } from "../core/nav/NavContext";
+import { useAutoUpdateCheck } from "../core/updater/autoCheck";
 import { useNav } from "../core/nav/useNav";
 import WidgetProviders from "../widgets/WidgetProviders";
 import SocialProviders from "../social/SocialProviders";
@@ -24,6 +25,8 @@ const ROOM_CONTROLS = WIDGET_REGISTRY.flatMap((w) => (w.roomControls ? [{ id: w.
 function CurrentView() {
   const { view } = useNav();
   const compact = useCompact();
+  // una volta al giorno, se acceso: una versione nuova finisce nella campanella
+  useAutoUpdateCheck();
   // sul telefono ogni vista ha la sua barra in alto (la dashboard se la disegna da sé, con la matita)
   let bar: CompactBarSpec | undefined;
   const home = compact ? <MobileDashboard /> : <Dashboard />;

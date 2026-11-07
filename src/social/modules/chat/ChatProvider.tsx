@@ -3,6 +3,7 @@ import { getActivity } from "../../../core/activity/activityBus";
 import { joinBroadcastChannel } from "../../../core/cloud/broadcast";
 import { useCloud } from "../../../core/cloud/useCloud";
 import { useLatestRef } from "../../../core/hooks/useLatestRef";
+import { postInAppNotification } from "../../../core/notify/inbox";
 import { sendAppNotification } from "../../../core/notify/notifier";
 import { useSettings } from "../../../core/settings/useSettings";
 import { useGroups } from "../../groups/useGroups";
@@ -80,13 +81,24 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   const notify = useCallback(
     (groupId: string, event: ChatEvent) => {
-      if (event.t !== "msg" || !settingsRef.current.groupsNotifyMessages) return;
       if (viewingRef.current === groupId && document.hasFocus()) return;
+      const group = groupsRef.current.find((g) => g.id === groupId);
+      const author = (membersRef.current[groupId] ?? []).find((m) => m.userId === event.from)?.username ?? "";
+      // "è entrato", "ha studiato": niente avviso di sistema, solo la campanella della dashboard
+      if (event.t === "sys") {
+        const title = event.sys === "joined" ? `${author} è entrato in «${group?.name ?? "un gruppo"}»` : `${author} ha studiato ${event.hours === 1 ? "1 ora" : `${event.hours} ore`}`;
+        void postInAppNotification({
+          kind: event.sys === "joined" ? "groupJoined" : "groupStudied",
+          title,
+          body: event.sys === "joined" ? "Stanza comune" : (group?.name ?? ""),
+          open: { type: "room" },
+        });
+        return;
+      }
+      if (event.t !== "msg" || !settingsRef.current.groupsNotifyMessages) return;
       const now = Date.now();
       if (now - (notifiedRef.current[groupId] ?? -Infinity) < NOTIFY_INTERVAL_MS) return;
       notifiedRef.current[groupId] = now;
-      const group = groupsRef.current.find((g) => g.id === groupId);
-      const author = (membersRef.current[groupId] ?? []).find((m) => m.userId === event.from)?.username ?? "";
       const text = event.text.length > NOTIFY_BODY_MAX ? `${event.text.slice(0, NOTIFY_BODY_MAX - 1)}…` : event.text;
       void sendAppNotification({ kind: "groupMessage", title: group?.name ?? "Messaggi", body: `${author}: ${text}`, open: { type: "room" } });
     },

@@ -56,7 +56,9 @@ Dalla versione che include gli aggiornamenti automatici in poi, l'app si aggiorn
 3. premi **Aggiorna**: l'app scarica il pacchetto, controlla la firma, lo installa e si riavvia. Su Windows compare
    per un attimo la finestra dell'installer (con il `.msi` Windows può chiedere il permesso di amministratore).
 
-L'app non controlla gli aggiornamenti da sola all'avvio: va in internet solo quando premi il pulsante. I pacchetti
+In più, una volta al giorno l'app guarda da sola se c'è una versione nuova e, se c'è, te lo dice nella campanella in
+alto nella dashboard. Legge solo il numero della versione: scarica e installa soltanto quando premi **Aggiorna**. Il
+controllo automatico si spegne in **Impostazioni** › **Generale** › **Versione e aggiornamenti**. I pacchetti
 vengono dalle Release di questo repository e sono firmati: un pacchetto con una firma diversa viene rifiutato.
 I tuoi dati restano dove sono.
 
@@ -90,7 +92,8 @@ reinstallare cancella i dati: esportali prima).
   - il **Meteo**, se imposti una città (dati di [Open-Meteo](https://open-meteo.com));
   - i **video di YouTube**, quando li guardi;
   - i **Gruppi**, solo se accedi con Google (e il sync dei tuoi dati, solo se lo accendi);
-  - gli **aggiornamenti**, solo quando premi "Controlla aggiornamenti" o "Aggiorna" (Release di GitHub).
+  - gli **aggiornamenti** (Release di GitHub): il numero dell'ultima versione una volta al giorno, se non spegni il
+    controllo automatico, o quando premi "Controlla aggiornamenti"; il pacchetto solo quando premi "Aggiorna".
 - **Gruppi**: gli altri membri vedono solo il tuo nome utente, se stai studiando o sei in pausa e il tempo totale di
   studio per giorno. Email e nome Google non vengono mai mostrati; sessioni, note e video restano sul tuo computer (o, col sync acceso, solo nel tuo spazio privato).
   La materia che studi e le espressioni di Pixy si condividono solo se le attivi. Dalle impostazioni puoi uscire o

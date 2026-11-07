@@ -20,7 +20,11 @@ const APP_EMOJI: Partial<Record<AppCategory, string>> = { game: "🎮", video: "
 /** null: la notifica resta semplice (un messaggio di un compagno non va firmato da Pixy). */
 export function pixyLook(n: AppNotification): PixyLook | null {
   switch (n.kind) {
+    // messaggi dei compagni e avvisi solo della campanella: restano semplici
     case "groupMessage":
+    case "groupJoined":
+    case "groupStudied":
+    case "updateAvailable":
       return null;
     case "pomodoroDone":
       return { emotion: "proud", glyph: "star", emoji: "🍅", phrase: "pomodoro_done" };

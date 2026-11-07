@@ -39,6 +39,12 @@ export const DEFAULT_SETTINGS = {
   // ---- Generale ----
   userName: "",
   dashboardName: "Personal Dashboard",
+  /**
+   * Controllo automatico degli aggiornamenti, al massimo una volta al giorno (core/updater/autoCheck.ts): una versione
+   * nuova finisce nella campanella. L'interruttore sta in Impostazioni > Generale > Versione e aggiornamenti
+   * (UpdateSection), solo dove gli aggiornamenti funzionano: per questo non ha una voce in SETTING_DEFS.
+   */
+  autoCheckUpdates: true,
 
   // ---- Aspetto ----
   theme: "notte" as ThemeId,
@@ -362,6 +368,7 @@ export const SETTING_DEFS: SettingDef[] = [
  * stop automatico, che su Android vuol dire altro). Un'impostazione nuova si sincronizza, a meno di metterla qui.
  */
 export const PER_DEVICE_SETTINGS: ReadonlySet<SettingKey> = new Set<SettingKey>([
+  "autoCheckUpdates",
   "themeMode",
   "animationsEnabled",
   "sidebarPosition",

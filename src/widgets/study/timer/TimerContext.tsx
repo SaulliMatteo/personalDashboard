@@ -24,6 +24,7 @@ import { emitActivityEvent, publishActivity } from "../../../core/activity/activ
 import { readSystemSnapshot } from "../../../core/system/systemApi";
 import { onAppReturn, reportsAppReturn } from "../../../core/system/androidAway";
 import { onSyncApplied } from "../../../core/sync/syncEvents";
+import { postInAppNotification } from "../../../core/notify/inbox";
 import {
   canScheduleNotifications,
   scheduleAppNotifications,
@@ -297,7 +298,11 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       if (!last) return;
       emitActivityEvent({ type: last.kind });
       if (cfg.studySoundEnabled && now - last.at < CHIME_FRESH_MS) playChime(cfg.studyVolume);
-      if (cfg.studyNotificationsEnabled && !canScheduleNotifications()) void sendAppNotification(phaseEndNotification(last));
+      if (cfg.studyNotificationsEnabled) {
+        // su Android quella di sistema era già pianificata: nella campanella va all'ora in cui la fase è finita
+        if (canScheduleNotifications()) void postInAppNotification(phaseEndNotification(last), last.at);
+        else void sendAppNotification(phaseEndNotification(last));
+      }
     } finally {
       completingRef.current = false;
     }

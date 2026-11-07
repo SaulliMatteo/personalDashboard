@@ -10,6 +10,7 @@ import { useNav } from "../../core/nav/useNav";
 import { useSettings } from "../../core/settings/useSettings";
 import { getWidget, widgetPigment } from "../../widgets/registry";
 import CompactBar from "../../ui/CompactBar";
+import NotificationBell from "./NotificationBell";
 import { fromInnerControl } from "./fromInnerControl";
 import { useGreeting } from "./useGreeting";
 import "./mobileDashboard.css";
@@ -377,9 +378,12 @@ function MobileDashboard() {
       title={showHeader ? greeting : "Dashboard"}
       subtitle={showHeader ? new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" }) : undefined}
       actions={
-        <button type="button" className="cbar-btn" onClick={() => setEditing(true)} aria-label="Modifica la dashboard">
-          <MdEdit />
-        </button>
+        <>
+          <NotificationBell compact />
+          <button type="button" className="cbar-btn" onClick={() => setEditing(true)} aria-label="Modifica la dashboard">
+            <MdEdit />
+          </button>
+        </>
       }
     />
   );

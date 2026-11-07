@@ -3,6 +3,7 @@ import { getMeta, setMeta } from "../db/meta";
 import type { AppCategory } from "../system/appCategory";
 import { isAndroid } from "../system/platform";
 import { onNotificationTap } from "../system/androidTaps";
+import { postInAppNotification } from "./inbox";
 import { pluginNotify, showNotificationWithImage } from "./notifyApi";
 
 /**
@@ -12,6 +13,9 @@ import { pluginNotify, showNotificationWithImage } from "./notifyApi";
  * che `core` o il widget che notifica lo conoscano. Senza decoratore, o se
  * fallisce, parte la notifica semplice.
  *
+ * Ogni notifica mandata finisce anche nella campanella della dashboard (core/notify/inbox.ts); quelle minori, che non
+ * meritano un avviso di sistema, ci vanno da sole con `postInAppNotification`.
+ *
  * Su Android in più:
  * - ogni tipo ha il suo canale (regolabile a parte nelle impostazioni di Android);
  * - il tocco sulla notifica apre la vista giusta (`open`, vedi `onNotificationOpen`): la vista è scritta nell'ultima
@@ -19,11 +23,26 @@ import { pluginNotify, showNotificationWithImage } from "./notifyApi";
  * - le notifiche che devono arrivare ad app chiusa o congelata si pianificano (`scheduleAppNotifications`): le mostra
  *   Android all'ora giusta (AlarmManager, esatto con USE_EXACT_ALARM / SCHEDULE_EXACT_ALARM del manifest).
  */
-/** groupMessage: un messaggio dei Gruppi (il testo è di un compagno, nessun decoratore lo veste). */
-export type AppNotificationKind = "pomodoroDone" | "breakOver" | "autoStopWarning" | "autoStopped" | "groupMessage";
+/**
+ * groupMessage: un messaggio dei Gruppi (il testo è di un compagno, nessun decoratore lo veste).
+ * Solo nella campanella (`postInAppNotification`): updateAvailable (controllo giornaliero degli aggiornamenti),
+ * groupJoined e groupStudied (i messaggi di sistema della chat dei Gruppi).
+ */
+export type AppNotificationKind =
+  | "pomodoroDone"
+  | "breakOver"
+  | "autoStopWarning"
+  | "autoStopped"
+  | "groupMessage"
+  | "groupJoined"
+  | "groupStudied"
+  | "updateAvailable";
 
-/** Dove porta il tocco sulla notifica: la pagina di un widget o la Stanza comune. */
-export type NotificationOpen = { type: "widget"; widgetId: string } | { type: "room" };
+/**
+ * Dove porta il clic sulla notifica: la pagina di un widget, la Stanza comune o una sezione delle Impostazioni.
+ * Il tocco sulle notifiche di sistema di Android sa aprire solo quelle in OPEN_TARGETS; la campanella tutte.
+ */
+export type NotificationOpen = { type: "widget"; widgetId: string } | { type: "room" } | { type: "settings"; section: string };
 
 export interface AppNotification {
   kind: AppNotificationKind;
@@ -74,6 +93,9 @@ const CHANNEL_OF: Record<AppNotificationKind, ChannelId> = {
   autoStopWarning: "avvisi",
   autoStopped: "avvisi",
   groupMessage: "gruppi",
+  groupJoined: "gruppi",
+  groupStudied: "gruppi",
+  updateAvailable: "avvisi",
 };
 
 let channelsReady: Promise<void> | null = null;
@@ -120,7 +142,7 @@ function ensureChannels(): Promise<void> {
 const OPEN_TARGETS = ["room", "widget:study"] as const;
 
 function openCode(open: NotificationOpen | undefined): number {
-  if (!open) return 0;
+  if (!open || open.type === "settings") return 0;
   const key = open.type === "room" ? "room" : `widget:${open.widgetId}`;
   const index = (OPEN_TARGETS as readonly string[]).indexOf(key);
   return index < 0 ? 0 : index + 1;
@@ -161,6 +183,7 @@ export async function ensureNotificationPermission(): Promise<boolean> {
 /* ---------- Invio subito ---------- */
 
 export async function sendAppNotification(n: AppNotification) {
+  void postInAppNotification({ kind: n.kind, title: n.title, body: n.body, open: n.open });
   const decorated = await decorate(n, true);
   if (decorated.imageDataUrl && (await showNotificationWithImage(decorated.title, decorated.lines, decorated.imageDataUrl))) return;
   if (!(await ensureNotificationPermission())) return;

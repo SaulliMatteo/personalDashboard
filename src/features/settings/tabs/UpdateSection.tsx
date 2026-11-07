@@ -1,4 +1,6 @@
 import { useUpdater, type UpdaterStatus } from "../../../core/updater/useUpdater";
+import type { SettingDef } from "../../../core/settings/schema";
+import SettingsField from "../../../core/settings/components/SettingsField";
 import { isAndroid } from "../../../core/system/platform";
 import ExpandableText from "../../../ui/ExpandableText";
 import ProgressBar from "../../../ui/ProgressBar";
@@ -38,9 +40,19 @@ function formatDate(iso: string | null): string | null {
   return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 }
 
+/** Il controllo giornaliero (core/updater/autoCheck.ts): qui e non in SETTING_DEFS, solo dove gli aggiornamenti ci sono. */
+const AUTO_CHECK_DEF: SettingDef = {
+  key: "autoCheckUpdates",
+  group: "general",
+  section: "Versione e aggiornamenti",
+  type: "boolean",
+  label: "Controlla da solo una volta al giorno",
+  description: "Una versione nuova compare nella campanella della dashboard. Non scarica nulla finché non premi «Aggiorna».",
+};
+
 /**
- * Impostazioni > Generale: versione installata e aggiornamenti (core/updater/). Va in rete solo quando si preme
- * "Controlla aggiornamenti" o "Aggiorna".
+ * Impostazioni > Generale: versione installata e aggiornamenti (core/updater/). Va in rete quando si preme
+ * "Controlla aggiornamenti" o "Aggiorna", e una volta al giorno se il controllo automatico è acceso.
  */
 function UpdateSection() {
   const { currentVersion, status, check, install, canRetryInstall } = useUpdater();
@@ -65,6 +77,8 @@ function UpdateSection() {
             </button>
           </div>
         </div>
+
+        {status.kind !== "unsupported" && <SettingsField def={AUTO_CHECK_DEF} />}
 
         {release && (
           <div className="settings-field upd-release">

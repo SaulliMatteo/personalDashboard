@@ -24,7 +24,8 @@ function HeaderSlots() {
   // Gli spazi si scelgono comunque da Impostazioni > Dashboard.
   useEffect(() => {
     const slots = slotsRef.current;
-    const header = slots?.parentElement;
+    // l'intestazione intera: gli spazi stanno in .dh-end, accanto alla campanella
+    const header = slots?.closest<HTMLElement>(".dh");
     if (!slots || !header) return;
     const title = header.querySelector("h1");
     const observer = new ResizeObserver(() => {

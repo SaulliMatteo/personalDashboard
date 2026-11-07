@@ -4,7 +4,7 @@ import { FIELD_TYPES, type CellValue, type Field, type FieldType, type Row, type
 import CellEditor, { type NoteRef } from "./CellEditor";
 import FieldMenu from "./FieldMenu";
 import FieldIcon from "./FieldIcon";
-import Popover from "./Popover";
+import Popover from "../../../ui/Popover";
 import "./CollectionTable.css";
 
 interface CollectionTableProps {

@@ -5,7 +5,7 @@ import { onNotificationOpen } from "../notify/notifier";
 import { useLatestRef } from "../hooks/useLatestRef";
 import { runBackHandler, useBackHandlerCount } from "./backHandlers";
 import { closeTopOverlay, useOverlayOpen } from "./overlays";
-import { NavContext, type NavContextValue, type AppView } from "./useNav";
+import { NavContext, viewOfNotification, type NavContextValue, type AppView } from "./useNav";
 
 export function NavProvider({ children }: { children: ReactNode }) {
   const [view, setView] = useState<AppView>({ type: "dashboard" });
@@ -18,6 +18,7 @@ export function NavProvider({ children }: { children: ReactNode }) {
       openRoom: () => setView({ type: "room" }),
       openSettings: (section = "appearance") => setView({ type: "settings", section }),
       openWidgetDetail: (widgetId) => setView({ type: "widgetDetail", widgetId }),
+      openNotification: (open) => setView(viewOfNotification(open)),
     }),
     [view]
   );
@@ -26,7 +27,7 @@ export function NavProvider({ children }: { children: ReactNode }) {
   useEffect(
     () =>
       onNotificationOpen((open) => {
-        setView(open.type === "room" ? { type: "room" } : { type: "widgetDetail", widgetId: open.widgetId });
+        setView(viewOfNotification(open));
       }),
     []
   );

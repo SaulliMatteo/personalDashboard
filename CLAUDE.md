@@ -199,6 +199,9 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
   pieno negli altri temi), disegnati da `core/pixy/PixyFace.tsx`. Motore e disegno stanno in `core/pixy` perché li usano
   anche i Gruppi (i Pixy dei compagni nella Stanza comune); il cervello resta nel widget.
 - Notifiche: tutte da `core/notify/notifier.ts` (`sendAppNotification` con un `kind`), mai dal plugin direttamente.
+  Ognuna finisce anche nella campanella della dashboard (`core/notify/inbox.ts`, tabella locale `app_notifications`,
+  ultime 200 per 30 giorni, prova `node scripts/notify/inbox.test.mts`); gli avvisi minori, senza notifica di
+  sistema, ci vanno con `postInAppNotification`. Il clic apre `open` con `openNotification` di `useNav`.
   Il Companion registra un decoratore che le firma Pixy (faccia nello stile del tema, emoji, frase della personalità,
   `widgets/companion/notify/`); su Windows il toast con l'immagine lo mostra il comando `notify_with_image`
   (`src/notify.rs`, `tauri-winrt-notification`), altrove si ripiega sul plugin senza immagine.
@@ -262,9 +265,10 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
   - i Gruppi (Supabase, regione UE), solo se la build ha `VITE_SUPABASE_URL`/`VITE_SUPABASE_PUBLISHABLE_KEY` e l'utente
     accede con Google. Senza, l'app resta solo locale ("Gruppi non configurati"); con il server irraggiungibile
     funziona tutto il resto. Tutta questa rete passa da `core/cloud/`. Segreti mai nel repo: vedi `docs/GRUPPI.md`;
-  - gli aggiornamenti dell'app (`latest.json` e pacchetto dalle Release di GitHub), solo quando l'utente preme
-    "Controlla aggiornamenti" / "Aggiorna" in Impostazioni > Generale: nessun controllo automatico all'avvio. Tutte
-    le chiamate passano da `core/updater/updaterApi.ts` (la rete la fa il plugin in Rust, non la webview: niente CSP).
+  - gli aggiornamenti dell'app (`latest.json` e pacchetto dalle Release di GitHub): `latest.json` al massimo una volta
+    al giorno se è acceso il controllo automatico (`autoCheckUpdates`, `core/updater/autoCheck.ts`: la versione nuova
+    va nella campanella), oppure quando l'utente preme "Controlla aggiornamenti"; il pacchetto solo con "Aggiorna".
+    Tutte le chiamate passano da `core/updater/updaterApi.ts` (la rete la fa il plugin in Rust, non la webview: niente CSP).
 
 ## Design
 

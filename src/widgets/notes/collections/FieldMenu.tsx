@@ -3,7 +3,7 @@ import { MdAdd, MdChevronLeft, MdChevronRight, MdClose, MdDeleteOutline } from "
 import { CHOICE_COLORS, FIELD_TYPES, type Choice, type Field, type FieldType, type ValueContext } from "../lib/collections";
 import { changeFieldType, deleteField, moveField, newChoiceId, nextChoiceColor, renameField, setFieldChoices } from "../lib/collectionsStore";
 import ChoiceChip from "./ChoiceChip";
-import Popover from "./Popover";
+import Popover from "../../../ui/Popover";
 import "./FieldMenu.css";
 
 interface FieldMenuProps {

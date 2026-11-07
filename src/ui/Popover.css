@@ -1,11 +1,11 @@
-/* Sopra tutto, anche sopra la scheda di una riga (80). */
-.nq-pop-backdrop {
+/* Menu a comparsa (ui/Popover.tsx): sopra tutto, anche sopra la scheda di una riga delle Raccolte (80). */
+.ui-pop-backdrop {
   position: fixed;
   inset: 0;
   z-index: 89;
 }
 
-.nq-pop {
+.ui-pop {
   position: fixed;
   top: 0;
   left: 0;

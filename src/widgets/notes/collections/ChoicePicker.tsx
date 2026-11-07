@@ -3,7 +3,7 @@ import { MdAdd, MdCheck } from "react-icons/md";
 import { choiceOf, type CellValue, type Field } from "../lib/collections";
 import { addChoice } from "../lib/collectionsStore";
 import ChoiceChip from "./ChoiceChip";
-import Popover from "./Popover";
+import Popover from "../../../ui/Popover";
 import "./ChoicePicker.css";
 
 interface ChoicePickerProps {

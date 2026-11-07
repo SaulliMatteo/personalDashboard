@@ -1,13 +1,17 @@
 import { useSettings } from "../../core/settings/useSettings";
 import { useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
 import HeaderSlots from "./HeaderSlots";
+import NotificationBell from "./NotificationBell";
 import { useGreeting } from "./useGreeting";
 import "./dashboardHeader.css";
 
 /** Classe per tema: le forme dei mockup stanno in dashboardHeader.css. */
 const HEADER_CLASS: ThemeVariants<string> = { notte: "dh--notte", opaco: "dh--opaco", quaderno: "dh--quaderno", fosforo: "dh--fosforo" };
 
-/** Intestazione della dashboard: il saluto e, a destra, i mini scelti in Impostazioni > Dashboard. */
+/**
+ * Intestazione della dashboard: il saluto e, a destra, i mini scelti in Impostazioni > Dashboard e la campanella
+ * delle notifiche (docs/design/amici-notifiche.html). Con la finestra stretta cedono i mini, la campanella resta.
+ */
 function DashboardHeader() {
   const { settings } = useSettings();
   const title = useGreeting();
@@ -18,7 +22,11 @@ function DashboardHeader() {
   return (
     <header className={`dh ${headerClass}`}>
       <h1>{title}</h1>
-      <HeaderSlots />
+      <div className="dh-end">
+        <HeaderSlots />
+        <span className="dh-sep" aria-hidden="true" />
+        <NotificationBell />
+      </div>
     </header>
   );
 }

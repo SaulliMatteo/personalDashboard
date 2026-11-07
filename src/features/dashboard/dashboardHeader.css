@@ -24,6 +24,16 @@
   white-space: nowrap;
 }
 
+/* A destra: i mini (HeaderSlots), un separatore e la campanella. */
+.dh-end {
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  margin-left: auto;
+}
+
 /* ---------- Notte: saluto sottile; a destra gli spazi (di default la giornata di studio) ---------- */
 .dh--notte {
   align-items: flex-end;
@@ -97,7 +107,8 @@
 }
 
 @container (max-width: 480px) {
-  .dh-slots {
+  .dh-slots,
+  .dh-sep {
     display: none;
   }
 }

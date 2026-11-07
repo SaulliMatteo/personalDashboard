@@ -22,7 +22,7 @@ import type { CollectionUse } from "../data/collectionsRepository";
 import CollectionBoard from "./CollectionBoard";
 import CollectionCards from "./CollectionCards";
 import CollectionTable from "./CollectionTable";
-import Popover from "./Popover";
+import Popover from "../../../ui/Popover";
 import RowCard from "./RowCard";
 import ViewBar from "./ViewBar";
 import "./CollectionPage.css";

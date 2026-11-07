@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import type { NotificationOpen } from "../notify/notifier";
 
 /* Contesto e hook separati dal provider: così l'aggiornamento a caldo di Vite non crea
    un secondo contesto quando cambia il file del provider (o qualcosa che importa). */
@@ -24,6 +25,15 @@ export interface NavContextValue {
   /** Apre la pagina Impostazioni su una sezione (default "appearance"; per un widget "widget:<id>"). */
   openSettings: (section?: string) => void;
   openWidgetDetail: (widgetId: string) => void;
+  /** Apre ciò di cui parla una notifica (tocco su Android, clic nella campanella). */
+  openNotification: (open: NotificationOpen) => void;
+}
+
+/** La vista che apre una notifica. */
+export function viewOfNotification(open: NotificationOpen): AppView {
+  if (open.type === "room") return { type: "room" };
+  if (open.type === "settings") return { type: "settings", section: open.section };
+  return { type: "widgetDetail", widgetId: open.widgetId };
 }
 
 export const NavContext = createContext<NavContextValue | undefined>(undefined);

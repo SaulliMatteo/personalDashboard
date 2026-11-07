@@ -53,10 +53,10 @@ function Popover({ anchor, onClose, align = "start", className, role = "dialog",
   return createPortal(
     <>
       {/* Il clic fuori fa perdere il focus ai campi (che così si salvano), poi chiude. */}
-      <div className="nq-pop-backdrop" onClick={onClose} />
+      <div className="ui-pop-backdrop" onClick={onClose} />
       <div
         ref={ref}
-        className={`nq-pop${className ? ` ${className}` : ""}`}
+        className={`ui-pop${className ? ` ${className}` : ""}`}
         role={role}
         aria-label={label}
         onKeyDown={(e) => {

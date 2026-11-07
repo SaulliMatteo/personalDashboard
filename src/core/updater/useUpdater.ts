@@ -51,16 +51,23 @@ const getSnapshot = () => state;
 
 const busy = () => ["checking", "downloading", "installing"].includes(state.status.kind);
 
-async function check() {
-  if (!UPDATES_SUPPORTED || busy()) return;
+/**
+ * Cerca una versione nuova. `quiet` (il controllo automatico, core/updater/autoCheck.ts): un errore non resta scritto
+ * in Impostazioni, si torna allo stato di prima. Restituisce lo stato finale.
+ */
+async function check(options: { quiet?: boolean } = {}): Promise<UpdaterStatus> {
+  if (!UPDATES_SUPPORTED || busy()) return state.status;
+  const before = state.status;
+  const fail = (message: string) =>
+    setState({ status: options.quiet ? (before.kind === "error" ? { kind: "idle" } : before) : { kind: "error", during: "check", message } });
   if (pending) {
     void discardUpdate(pending);
     pending = null;
   }
   setState({ status: { kind: "checking" } });
   if (typeof navigator !== "undefined" && !navigator.onLine) {
-    setState({ status: { kind: "error", during: "check", message: "Nessuna connessione a internet." } });
-    return;
+    fail("Nessuna connessione a internet.");
+    return state.status;
   }
   try {
     const update = await checkForUpdate();
@@ -71,9 +78,13 @@ async function check() {
         : { kind: "upToDate" },
     });
   } catch (error) {
-    setState({ status: { kind: "error", during: "check", message: describeUpdaterError(error) } });
+    fail(describeUpdaterError(error));
   }
+  return state.status;
 }
+
+/** Il controllo senza React (core/updater/autoCheck.ts). */
+export const checkForUpdates = check;
 
 async function install() {
   const update = pending;
@@ -104,7 +115,7 @@ export function useUpdater() {
 
   return {
     ...current,
-    check,
+    check: () => check(),
     install,
     /** Dopo un errore di installazione si può ancora riprovare la stessa versione. */
     canRetryInstall: current.status.kind === "error" && current.status.during === "install" && pending !== null,
