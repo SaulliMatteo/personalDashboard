@@ -8,6 +8,8 @@ interface GroupsDialogProps {
   /** Riga sotto il titolo. */
   intro?: string;
   onClose: () => void;
+  /** Più larga (es. la scelta di cosa mandare a un amico). */
+  wide?: boolean;
   children: ReactNode;
 }
 
@@ -16,7 +18,7 @@ interface GroupsDialogProps {
  * Aperta da un widget, i suoi click non devono arrivare alla cella: col portale gli eventi React risalgono
  * comunque l'albero dei componenti, quindi si fermano qui (niente dettaglio aperto da un doppio click).
  */
-function GroupsDialog({ title, intro, onClose, children }: GroupsDialogProps) {
+function GroupsDialog({ title, intro, onClose, wide = false, children }: GroupsDialogProps) {
   const titleId = useId();
   const boxRef = useRef<HTMLDivElement | null>(null);
   const closeRef = useLatestRef(onClose);
@@ -46,7 +48,7 @@ function GroupsDialog({ title, intro, onClose, children }: GroupsDialogProps) {
       onClick={stop}
       onDoubleClick={stop}
     >
-      <div ref={boxRef} className="grp-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div ref={boxRef} className={wide ? "grp-dialog grp-dialog--wide" : "grp-dialog"} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <div className="grp-dialog-head">
           <h2 id={titleId}>{title}</h2>
           {intro && <p>{intro}</p>}

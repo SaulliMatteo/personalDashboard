@@ -1,0 +1,54 @@
+/* Quaderno nella chat degli amici: anteprima della pagina nella scheda, riga d'aiuto nella scelta. */
+.nqc-page {
+  margin: 8px 12px 0;
+  padding: 10px 12px;
+  border: var(--note-page-border, 1px solid var(--divider));
+  border-radius: calc(var(--radius-panel) - 4px);
+  background: var(--note-page-bg, var(--surface-2));
+  color: var(--note-page-ink, var(--text-secondary));
+  font-size: max(12px, var(--fs-min));
+  line-height: 1.45;
+}
+
+:root[data-theme="quaderno"] .nqc-page {
+  background-image: linear-gradient(var(--border-subtle) 1px, transparent 1px);
+  background-size: 100% 18px;
+  line-height: 18px;
+}
+
+.nqc-page b {
+  display: block;
+  margin-bottom: 4px;
+  font-size: max(15px, var(--fs-min));
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+:root[data-theme="quaderno"] .nqc-page b {
+  font: 700 22px/22px var(--font-title);
+  color: var(--accent);
+}
+
+.nqc-page span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.nqc-meta {
+  margin: 6px 12px 0;
+  font-size: max(11.5px, var(--fs-min));
+  color: var(--text-secondary);
+}
+
+:root[data-theme="opaco"] .nqc-meta {
+  opacity: 0.7;
+}
+
+.nqc-hint {
+  margin: 0;
+  font-size: max(12px, var(--fs-min));
+  color: var(--text-secondary);
+}

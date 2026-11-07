@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react";
 import type { FriendRequestResult } from "../../core/cloud/friendsApi";
 import type { FriendsPanelRequest } from "../../core/nav/friendsPanel";
+import type { PlacedChatAction } from "../../core/widgets/chatActions";
 import type { FriendsData } from "./friendsStore";
 
 /* Contesto e hook separati dal provider (FriendsProvider.tsx). */
@@ -37,7 +38,12 @@ export interface FriendsContextValue {
   closeAdd: () => void;
   /** Le azioni qui sotto lanciano un CloudError con un messaggio già in italiano. */
   sendText: (friendId: string, text: string) => Promise<void>;
-  sendCard: (friendId: string, kind: string, body: string, payload: unknown) => Promise<void>;
+  /** Manda una scheda di un widget; restituisce l'id del messaggio. */
+  sendCard: (friendId: string, kind: string, body: string, payload: unknown) => Promise<string>;
+  /** Le azioni dei widget (il "+" della chat). */
+  actions: readonly PlacedChatAction[];
+  /** Una riga per l'anteprima di una scheda, null se sconosciuta o non valida. */
+  describeCard: (kind: string, payload: unknown) => string | null;
   deleteMessage: (id: string) => Promise<void>;
   requestFriend: (code: string) => Promise<FriendRequestResult>;
   answerRequest: (userId: string, accept: boolean) => Promise<void>;

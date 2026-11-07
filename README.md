@@ -102,7 +102,9 @@ reinstallare cancella i dati: esportali prima).
   personale (o il link `personaldashboard://amici/…`) e solo se accetta. Un amico vede il tuo nome utente e quando sei
   stato in linea l'ultima volta. Le chat con gli amici, a differenza di quella dei gruppi, **restano sul servizio online
   per 90 giorni** (così le ritrovi su tutti i tuoi dispositivi): le leggete solo tu e quell'amico, e spariscono se
-  togli l'amico o elimini l'account. "Nuovo codice" rende inutilizzabile quello vecchio.
+  togli l'amico o elimini l'account. "Nuovo codice" rende inutilizzabile quello vecchio. Con il **+** della chat
+  puoi consigliare un video di YouTube, mandare la **copia** di una nota (testo, tabelle e scrittura a mano: niente
+  PDF né allegati) o invitare a studiare: viaggiano come i messaggi e restano sul servizio online per 90 giorni.
 
 ## Disinstallare
 

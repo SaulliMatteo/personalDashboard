@@ -674,8 +674,179 @@
   cursor: default;
 }
 
+/* ---------- Schede dei widget e "+" (viste 3, 4, 9) ---------- */
+.frp-card {
+  max-width: 100%;
+  border-radius: var(--radius-panel);
+}
+
+.is-me .frp-card {
+  cursor: pointer;
+}
+
+.frp-card.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* il messaggio sotto la scheda */
+.frp-card + .frp-bub {
+  margin-top: 2px;
+}
+
+.frp-plus-anchor {
+  position: relative;
+  flex: none;
+  display: flex;
+}
+
+.frp-plus {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  color: var(--accent);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.frp-plus.is-open {
+  background: var(--btn-primary-bg, var(--accent));
+  color: var(--btn-primary-fg, var(--on-accent));
+}
+
+:root[data-theme="opaco"] .frp-plus {
+  color: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .frp-plus.is-open {
+  background: var(--text-primary);
+  color: var(--bg);
+}
+
+.frp-plus:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.frp-plus-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  z-index: 2;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border: var(--modal-border);
+  border-radius: var(--radius-panel);
+  background: var(--modal-bg);
+  box-shadow: 0 14px 40px rgb(0 0 0 / 0.35);
+}
+
+:root[data-theme="quaderno"] .frp-plus-menu {
+  border: 1.5px solid var(--accent);
+}
+
+.frp-plus-head {
+  padding: 6px 10px 4px;
+  font: 700 max(10.5px, var(--fs-min)) var(--font-family);
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="quaderno"] .frp-plus-head {
+  font: 700 18px var(--font-title);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.frp-plus-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: max(13.5px, var(--fs-min));
+  text-align: left;
+  cursor: pointer;
+}
+
+.frp-plus-item:hover,
+.frp-plus-item:focus-visible {
+  background: var(--row-active-bg, var(--surface-2));
+  outline: none;
+}
+
+.frp-plus-ic {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  color: var(--accent);
+  font-size: 18px;
+}
+
+:root[data-theme="opaco"] .frp-plus-ic {
+  background: var(--pg-bg);
+  color: var(--pg-ink);
+}
+
+.frp-plus-text small {
+  display: block;
+  font-size: max(11.5px, var(--fs-min));
+  color: var(--text-secondary);
+}
+
+/* telefono: le azioni in un foglio dal basso, come nell'editor del Quaderno */
+.frp--full .frp-plus-backdrop {
+  background: var(--overlay);
+}
+
+.frp--full .frp-plus-menu {
+  position: fixed;
+  top: auto;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  padding: 10px 10px calc(14px + var(--safe-bottom) + var(--keyboard));
+  border-bottom: 0;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+}
+
+.frp--full .frp-plus-menu::before {
+  content: "";
+  display: block;
+  width: 36px;
+  height: 4px;
+  margin: 0 auto 6px;
+  border-radius: 4px;
+  background: var(--text-muted);
+  opacity: 0.45;
+}
+
+.frp--full .frp-plus-item {
+  min-height: 56px;
+}
+
 .frp-icon-btn:focus-visible,
 .frp-pill:focus-visible,
+.frp-plus:focus-visible,
 .frp-send:focus-visible,
 .frp-req:focus-visible {
   outline: var(--focus-ring);
@@ -685,6 +856,7 @@
 @media (pointer: coarse) {
   .frp-icon-btn::after,
   .frp-pill::after,
+  .frp-plus::after,
   .frp-send::after {
     content: "";
     position: absolute;

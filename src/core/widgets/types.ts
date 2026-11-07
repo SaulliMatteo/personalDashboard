@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 import type { SettingsGroup } from "../settings/schema";
+import type { ChatAction } from "./chatActions";
 
 /** Taglia ammessa, in unità di griglia (colonne × righe), non pixel. */
 export interface WidgetSize {
@@ -49,6 +50,8 @@ export interface WidgetDefinition {
   mini?: ComponentType;
   /** Comandi da mostrare nell'intestazione della Stanza comune dei Gruppi (es. il timer dello Studio). */
   roomControls?: ComponentType;
+  /** Cose che il widget sa mandare nella chat degli amici (video, nota, invito…), vedi chatActions.ts. */
+  chatActions?: ChatAction[];
   /** Provider di contesto che il widget richiede (sempre montato, anche se il widget non è in dashboard). */
   provider?: ComponentType<{ children: ReactNode }>;
 }

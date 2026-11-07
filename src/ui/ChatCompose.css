@@ -1,0 +1,244 @@
+/* Finestra "scegli cosa mandare" della chat degli amici (docs/design/amici-notifiche.html, vista 5). */
+.chc-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+}
+
+.chc-tabs button {
+  position: relative;
+  flex: 1;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--text-secondary);
+  font: 600 max(12.5px, var(--fs-min)) var(--font-family);
+  cursor: pointer;
+}
+
+.chc-tabs button.is-on {
+  background: var(--modal-bg);
+  color: var(--text-primary);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+}
+
+:root[data-theme="opaco"] .chc-tabs button.is-on {
+  background: var(--text-primary);
+  color: var(--bg);
+}
+
+.chc-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  color: var(--text-secondary);
+}
+
+.chc-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: max(13px, var(--fs-min));
+  outline: none;
+}
+
+.chc-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 120px;
+  max-height: min(300px, 45vh);
+  margin: 0 -26px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.chc-empty {
+  margin: auto;
+  padding: 16px;
+  text-align: center;
+  font-size: max(13px, var(--fs-min));
+  color: var(--text-secondary);
+}
+
+.chc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 6px 26px;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chc-row:hover {
+  background: var(--row-active-bg, var(--surface-2));
+}
+
+.chc-row.is-on {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.chc-row:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.chc-radio {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  border: 2px solid var(--text-secondary);
+  border-radius: 50%;
+}
+
+.chc-radio.is-on {
+  border: 5px solid var(--accent);
+}
+
+.chc-row-text {
+  flex: 1;
+  min-width: 0;
+  font-size: max(13px, var(--fs-min));
+}
+
+.chc-row-text b,
+.chc-row-text span {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chc-row-text span {
+  font-size: max(11.5px, var(--fs-min));
+  color: var(--text-secondary);
+}
+
+.chc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: max(12.5px, var(--fs-min));
+  color: var(--text-secondary);
+}
+
+.chc-field :is(input, select) {
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: var(--field-border, 1px solid var(--divider));
+  border-radius: var(--radius-item);
+  background: var(--field-bg, var(--surface-2));
+  color: var(--text-primary);
+  color-scheme: inherit;
+  font: inherit;
+  font-size: max(13.5px, var(--fs-min));
+}
+
+.chc-field option {
+  background: var(--modal-bg);
+}
+
+.chc-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--divider);
+}
+
+.chc-error {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: max(12.5px, var(--fs-min));
+  color: var(--danger);
+}
+
+.chc-comment {
+  flex: 1 1 200px;
+  min-width: 0;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: max(13px, var(--fs-min));
+}
+
+.chc-comment:focus,
+.chc-field :is(input, select):focus {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.chc-foot-btns {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.chc-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border: var(--btn-ghost-border);
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--btn-ghost-fg, var(--text-primary));
+  font: 600 max(13px, var(--fs-min)) var(--font-family);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+:root[data-theme="opaco"] .chc-btn {
+  border: 0;
+  background: var(--panel-bg);
+}
+
+.chc-btn--primary,
+:root[data-theme="opaco"] .chc-btn--primary {
+  border: var(--btn-primary-border, 0);
+  background: var(--btn-primary-bg, var(--accent));
+  color: var(--btn-primary-fg, var(--on-accent));
+}
+
+.chc-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.chc-btn:focus-visible,
+.chc-tabs button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .chc-tabs button::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

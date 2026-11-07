@@ -1,10 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode, type RefObject } from "react";
+import { createElement, useEffect, useLayoutEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import {
   MdArrowBack,
   MdClose,
   MdCloudOff,
   MdMoreHoriz,
+  MdAdd,
   MdOutlineForum,
   MdPersonAddAlt,
   MdSearch,
@@ -12,11 +13,14 @@ import {
   MdWifiOff,
 } from "react-icons/md";
 import type { DirectMessage, FriendProfile } from "../../core/cloud/friendsApi";
+import type { PlacedChatAction } from "../../core/widgets/chatActions";
 import { useCloud } from "../../core/cloud/useCloud";
 import { useNav } from "../../core/nav/useNav";
 import { dayLabel } from "../../core/notify/inboxStore";
 import Popover from "../../ui/Popover";
 import GroupsDialog from "../groups/components/GroupsDialog";
+import { useGroups } from "../groups/useGroups";
+import { cleanMessageText } from "../modules/chat/payload";
 import { messageOf } from "../groups/messages";
 import AddFriendDialog from "./AddFriendDialog";
 import FriendAvatar from "./FriendAvatar";
@@ -102,7 +106,7 @@ function FriendsPanel({ anchor, full, onClose }: FriendsPanelProps) {
 /* ---------- Elenco ---------- */
 
 function FriendList({ full, onClose }: { full: boolean; onClose: () => void }) {
-  const { status, me, data, panel, openChat, openPanel } = useFriends();
+  const { status, me, data, panel, openChat, openPanel, describeCard } = useFriends();
   const now = useMinuteClock();
   const [query, setQuery] = useState("");
   const rows = me ? filterFriendRows(friendRows(data, me), query) : [];
@@ -169,7 +173,7 @@ function FriendList({ full, onClose }: { full: boolean; onClose: () => void }) {
                       <span className="frp-row-text">
                         <b>{friend.username}</b>
                         <span className={unread > 0 ? "is-unread" : undefined}>
-                          {last && me ? previewText(last, me) : "Scrivi il primo messaggio"}
+                          {last && me ? previewText(last, me, describeCard) : "Scrivi il primo messaggio"}
                         </span>
                       </span>
                       <span className="frp-row-meta">
@@ -276,7 +280,9 @@ function ChatPane({ full, onClose }: { full: boolean; onClose: () => void }) {
 }
 
 function Chat({ me, friend, full, onClose }: { me: string; friend: FriendProfile; full: boolean; onClose: () => void }) {
-  const { status, data, openChat, sendText, deleteMessage, removeFriend } = useFriends();
+  const { status, data, openChat, sendText, sendCard, deleteMessage, removeFriend, actions } = useFriends();
+  const { members, selectGroup } = useGroups();
+  const { openRoom } = useNav();
   const now = useMinuteClock();
   const messages = conversation(data.messages, me, friend.userId);
   const [text, setText] = useState("");
@@ -285,6 +291,8 @@ function Chat({ me, friend, full, onClose }: { me: string; friend: FriendProfile
   const [selected, setSelected] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState(false);
+  const [plusOpen, setPlusOpen] = useState(false);
+  const [composing, setComposing] = useState<PlacedChatAction | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const online = isOnline(friend.lastSeenAt, now);
   const canSend = status === "ready";
@@ -308,6 +316,30 @@ function Chat({ me, friend, full, onClose }: { me: string; friend: FriendProfile
       setError(messageOf(err));
     }
     setSending(false);
+  }
+
+  // un gruppo in cui ci siamo tutti e due: gli inviti a studiare aprono la sua Stanza comune
+  const sharedGroup = Object.entries(members).find(
+    ([, list]) => list.some((x) => x.userId === me) && list.some((x) => x.userId === friend.userId)
+  )?.[0];
+  const openSharedRoom = sharedGroup
+    ? () => {
+        selectGroup(sharedGroup);
+        openRoom();
+      }
+    : null;
+
+  /** Manda la scheda di un widget (per Compose): l'errore torna già in italiano. */
+  async function sendWidgetCard(kind: string, payload: Record<string, unknown>, comment: string): Promise<string> {
+    try {
+      return await sendCard(friend.userId, kind, cleanMessageText(comment).slice(0, DM_TEXT_MAX), payload);
+    } catch (err) {
+      throw new Error(messageOf(err));
+    }
+  }
+
+  function toggleSelected(m: DirectMessage) {
+    setSelected((s) => (s === m.id ? null : m.id));
   }
 
   async function handleDelete(m: DirectMessage) {
@@ -399,18 +431,21 @@ function Chat({ me, friend, full, onClose }: { me: string; friend: FriendProfile
                 ) : m.kind === "text" ? (
                   <div
                     className={`frp-bub${selected === m.id ? " is-selected" : ""}`}
-                    onClick={mine ? () => setSelected((s) => (s === m.id ? null : m.id)) : undefined}
+                    onClick={mine ? () => toggleSelected(m) : undefined}
                   >
                     {m.body}
                   </div>
                 ) : (
-                  <div
-                    className={`frp-bub frp-bub--unknown${selected === m.id ? " is-selected" : ""}`}
-                    onClick={mine ? () => setSelected((s) => (s === m.id ? null : m.id)) : undefined}
-                  >
-                    Contenuto non supportato da questa versione dell'app.
-                    {m.body && <span>{m.body}</span>}
-                  </div>
+                  <WidgetCard
+                    message={m}
+                    mine={mine}
+                    selected={selected === m.id}
+                    friendName={friend.username}
+                    actions={actions}
+                    onSelect={mine ? () => toggleSelected(m) : undefined}
+                    closePanel={onClose}
+                    openRoom={openSharedRoom}
+                  />
                 )}
                 <time dateTime={new Date(m.createdAt).toISOString()}>
                   {messageTime(m.createdAt)}
@@ -438,6 +473,33 @@ function Chat({ me, friend, full, onClose }: { me: string; friend: FriendProfile
         </p>
       )}
       <form className="frp-compose" onSubmit={handleSubmit}>
+        {actions.length > 0 && (
+          <span className="frp-plus-anchor">
+            <button
+              type="button"
+              className={`frp-plus${plusOpen ? " is-open" : ""}`}
+              aria-label="Manda dai widget"
+              title="Manda dai widget"
+              aria-haspopup="menu"
+              aria-expanded={plusOpen}
+              disabled={!canSend}
+              onClick={() => setPlusOpen((v) => !v)}
+            >
+              <MdAdd aria-hidden="true" />
+            </button>
+            {plusOpen && (
+              <PlusMenu
+                actions={actions}
+                onClose={() => setPlusOpen(false)}
+                onPick={(a) => {
+                  setPlusOpen(false);
+                  setError(null);
+                  setComposing(a);
+                }}
+              />
+            )}
+          </span>
+        )}
         <input
           type="text"
           className="frp-field"
@@ -456,6 +518,16 @@ function Chat({ me, friend, full, onClose }: { me: string; friend: FriendProfile
           <MdSend aria-hidden="true" />
         </button>
       </form>
+
+      {composing && (
+        <GroupsDialog title={composing.composeTitle(friend.username)} wide onClose={() => setComposing(null)}>
+          {createElement(composing.Compose, {
+            friendName: friend.username,
+            send: (payload, comment) => sendWidgetCard(composing.kind, payload, comment),
+            onClose: () => setComposing(null),
+          })}
+        </GroupsDialog>
+      )}
 
       {confirmRemove && (
         <GroupsDialog
@@ -481,6 +553,87 @@ function Chat({ me, friend, full, onClose }: { me: string; friend: FriendProfile
         </GroupsDialog>
       )}
     </div>
+  );
+}
+
+/** Menu del "+" (vista 4): le azioni dei widget. Sul telefono è un foglio dal basso. */
+function PlusMenu({
+  actions,
+  onPick,
+  onClose,
+}: {
+  actions: readonly PlacedChatAction[];
+  onPick: (a: PlacedChatAction) => void;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <span className="frp-menu-backdrop frp-plus-backdrop" onClick={onClose} />
+      <div
+        className="frp-plus-menu"
+        role="menu"
+        aria-label="Manda dai widget"
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.stopPropagation();
+            onClose();
+          }
+        }}
+      >
+        <span className="frp-plus-head">Dai widget</span>
+        {actions.map((a, i) => (
+          <button key={a.kind} type="button" role="menuitem" className="frp-plus-item" autoFocus={i === 0} onClick={() => onPick(a)}>
+            <span className="frp-plus-ic" data-pigment={a.pigment} aria-hidden="true">
+              {createElement(a.icon)}
+            </span>
+            <span className="frp-plus-text">
+              {a.label}
+              <small>{a.hint}</small>
+            </span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+interface WidgetCardProps {
+  message: DirectMessage;
+  mine: boolean;
+  selected: boolean;
+  friendName: string;
+  actions: readonly PlacedChatAction[];
+  onSelect?: () => void;
+  closePanel: () => void;
+  openRoom: (() => void) | null;
+}
+
+/**
+ * La scheda di un widget (video, nota, invito…) con il messaggio sotto. Un `kind` sconosciuto (versione più nuova
+ * dell'app) o un payload non valido diventano la scheda di ripiego, mai un errore.
+ */
+function WidgetCard({ message: m, mine, selected, friendName, actions, onSelect, closePanel, openRoom }: WidgetCardProps) {
+  const action = actions.find((a) => a.kind === m.kind);
+  const card = action?.renderCard({ payload: m.payload, mine, messageId: m.id, friendName, closePanel, openRoom }) ?? null;
+  if (!action || !card) {
+    return (
+      <div className={`frp-bub frp-bub--unknown${selected ? " is-selected" : ""}`} onClick={onSelect}>
+        {action ? "Contenuto non valido." : "Contenuto non supportato da questa versione dell'app."}
+        {m.body && <span>{m.body}</span>}
+      </div>
+    );
+  }
+  return (
+    <>
+      <div className={`frp-card${selected ? " is-selected" : ""}`} data-pigment={action.pigment} onClick={onSelect}>
+        {card}
+      </div>
+      {m.body && (
+        <div className={`frp-bub${selected ? " is-selected" : ""}`} onClick={onSelect}>
+          {m.body}
+        </div>
+      )}
+    </>
   );
 }
 

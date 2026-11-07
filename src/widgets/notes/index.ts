@@ -4,6 +4,7 @@ import NotesWidget from "./NotesWidget";
 import NotesDetail from "./NotesDetail";
 import NotesMini from "./mini/NotesMini";
 import { NotesSyncProvider } from "./sync/NotesSyncProvider";
+import { noteChatAction } from "./chat";
 
 export const notesWidget: WidgetDefinition = {
   id: "notes",
@@ -17,4 +18,5 @@ export const notesWidget: WidgetDefinition = {
   mini: NotesMini,
   // Note arrivate dagli altri dispositivi: cartelle su disco, segni e avviso a chi le mostra, anche a pagina chiusa.
   provider: NotesSyncProvider,
+  chatActions: [noteChatAction],
 };

@@ -32,6 +32,11 @@
   line-height: 1.5;
 }
 
+/* la scelta di cosa mandare a un amico (elenco di video o note) */
+.grp-dialog--wide {
+  width: 480px;
+}
+
 .grp-dialog-head {
   display: flex;
   flex-direction: column;

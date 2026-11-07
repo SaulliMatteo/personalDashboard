@@ -22,6 +22,8 @@ import BootGate from "./BootGate";
 
 // i comandi che i widget mettono nella Stanza comune (social non può importare i widget)
 const ROOM_CONTROLS = WIDGET_REGISTRY.flatMap((w) => (w.roomControls ? [{ id: w.id, Controls: w.roomControls }] : []));
+// ciò che i widget sanno mandare nella chat degli amici (il "+"), col pigmento del widget per Opaco
+const CHAT_ACTIONS = WIDGET_REGISTRY.flatMap((w) => (w.chatActions ?? []).map((a) => ({ ...a, pigment: widgetPigment(w.id) })));
 
 function CurrentView() {
   const { view } = useNav();
@@ -94,7 +96,7 @@ function App() {
                 {/* Sync dei propri dati tra i propri dispositivi: spento di default, serve l'account. */}
                 <SyncProvider>
                   {/* Moduli dei Gruppi (es. invio dei totali di studio): lavorano solo con l'account pronto. */}
-                  <SocialProviders>
+                  <SocialProviders chatActions={CHAT_ACTIONS}>
                     <WidgetProviders>
                       <NavProvider>
                         <CurrentView />

@@ -6,6 +6,7 @@ import * as api from "../../core/cloud/friendsApi";
 import { authorizeRealtime } from "../../core/cloud/presence";
 import { useCloud } from "../../core/cloud/useCloud";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
+import type { PlacedChatAction } from "../../core/widgets/chatActions";
 import { onFriendsPanelRequest, requestFriendsPanel, type FriendsPanelRequest } from "../../core/nav/friendsPanel";
 import { postInAppNotification } from "../../core/notify/inbox";
 import { sendAppNotification } from "../../core/notify/notifier";
@@ -37,7 +38,13 @@ const CLOSED_PANEL: FriendsPanelState = { open: false, chat: null, add: false, a
  * Nessun messaggio va perso: oltre al tempo reale si rilegge tutto all'avvio, al rientro in primo piano, quando torna
  * la rete e quando la casella si riallaccia.
  */
-export function FriendsProvider({ children }: { children: ReactNode }) {
+interface FriendsProviderProps {
+  /** Le azioni dei widget nella chat (le raccoglie app/App.tsx: social non importa i widget). */
+  actions: readonly PlacedChatAction[];
+  children: ReactNode;
+}
+
+export function FriendsProvider({ actions, children }: FriendsProviderProps) {
   const cloud = useCloud();
   const me = cloud.status.kind === "ready" ? cloud.userId : null;
   const [data, setData] = useState<FriendsData>(EMPTY_FRIENDS);
@@ -49,6 +56,12 @@ export function FriendsProvider({ children }: { children: ReactNode }) {
   const panelRef = useLatestRef(panel);
   const visibleRef = useLatestRef(visible);
   const lastLoadRef = useRef(0);
+  // una riga per anteprime e notifiche delle schede (null = scheda sconosciuta o non valida)
+  const describeCard = useCallback(
+    (kind: string, payload: unknown) => actions.find((a) => a.kind === kind)?.describe(payload) ?? null,
+    [actions]
+  );
+  const describeRef = useLatestRef(describeCard);
   const loadSeq = useRef(0);
 
   /* ---------- Lettura ---------- */
@@ -120,7 +133,7 @@ export function FriendsProvider({ children }: { children: ReactNode }) {
             void sendAppNotification({
               kind: "friendMessage",
               title: usernameOf(m.sender) || "Un amico",
-              body: previewText(m, me),
+              body: previewText(m, me, describeRef.current),
               open: { type: "friends", userId: m.sender },
               // i messaggi di testo restano nella chat; le schede (video, note, inviti) anche nella campanella
               inbox: m.kind !== "text",
@@ -168,7 +181,7 @@ export function FriendsProvider({ children }: { children: ReactNode }) {
           await loadRef.current();
       }
     },
-    [me, dataRef, isViewing, usernameOf, loadRef]
+    [me, dataRef, describeRef, isViewing, usernameOf, loadRef]
   );
   const onEventRef = useLatestRef(onEvent);
 
@@ -302,6 +315,7 @@ export function FriendsProvider({ children }: { children: ReactNode }) {
         try {
           const m = await api.sendDirectMessage(friendId, kind, body, payload);
           setData((d) => ({ ...d, messages: upsertMessage(d.messages, m) }));
+          return m.id;
         } catch (e) {
           const err = toCloudError(e);
           throw err.code === "rate_limited" ? new CloudError("dm_rate_limited") : err;
@@ -403,6 +417,8 @@ export function FriendsProvider({ children }: { children: ReactNode }) {
       closeAdd,
       sendText,
       sendCard,
+      actions,
+      describeCard,
       deleteMessage,
       requestFriend,
       answerRequest,
@@ -425,6 +441,8 @@ export function FriendsProvider({ children }: { children: ReactNode }) {
       closeAdd,
       sendText,
       sendCard,
+      actions,
+      describeCard,
       deleteMessage,
       requestFriend,
       answerRequest,

@@ -187,7 +187,15 @@ Debito noto: `widgets/youtube/screens/WatchScreen.tsx` importa `study/data/study
   (rilegge tutto all'avvio, al rientro, col ritorno della rete e quando la casella si riallaccia: il tempo reale da
   solo può perdere eventi). Il pulsante `social/friends/FriendsButton.tsx` lo passa `app/App.tsx` alla dashboard
   (`headerActions`). Link `personaldashboard://amici/<codice>` (deep link, anche in `tauri.android.conf.json`).
-  Un `kind` nuovo di messaggio (le schede dei widget) non va validato dal server: lo controlla chi lo disegna.
+  Schede dei widget nella chat (il "+"): un widget le dichiara con `chatActions` nella sua `WidgetDefinition`
+  (`defineChatAction` di `core/widgets/chatActions.ts`: `kind`, `Compose` che sceglie cosa mandare, `Card` che la disegna,
+  `parse` che valida il payload); `app/App.tsx` le raccoglie col pigmento e le passa a `SocialProviders`. Oggi: video
+  (`widgets/youtube/chat/`), nota (`widgets/notes/chat/`, una copia senza PDF né allegati in "Ricevute") e invito a
+  studiare (`widgets/study/chat/`). Il payload arriva da un'altra persona e il server non lo guarda: `parse` lo
+  ripulisce a ogni lettura (l'HTML delle note con `sanitizeHtml` `source: "esterno"`, la miniatura del video solo dall'id),
+  un payload non valido o un `kind` sconosciuto diventano la scheda di ripiego. Il `kind` non si cambia dopo il
+  rilascio; prova `scripts/gruppi/chatCards.test.mts` (bundle con rolldown). Cornice e finestra di scelta comuni:
+  `ui/ChatCard.tsx`, `ui/ChatCompose.tsx`.
 
 **Backend nativo** (`src-tauri/`): `src/lib.rs` registra plugin (sql, notification, fs/dialog/opener usati dal
 Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.json` ha `create: false`).

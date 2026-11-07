@@ -5,6 +5,7 @@ import StudyDetail from "./StudyDetail";
 import { TimerProvider } from "./timer/TimerContext";
 import StudyMini from "./mini/StudyMini";
 import RoomTimerControls from "./room/RoomTimerControls";
+import { inviteChatAction } from "./chat";
 
 export const studyWidget: WidgetDefinition = {
   id: "study",
@@ -18,6 +19,8 @@ export const studyWidget: WidgetDefinition = {
   mini: StudyMini,
   // nella Stanza comune: avviare e fermare il timer senza uscire
   roomControls: RoomTimerControls,
+  // nella chat degli amici: invito a studiare insieme
+  chatActions: [inviteChatAction],
   // Il timer deve continuare a girare anche se il widget non è in dashboard.
   provider: TimerProvider,
 };

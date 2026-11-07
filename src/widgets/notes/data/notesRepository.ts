@@ -384,6 +384,23 @@ export async function updateNote(id: number, patch: NotePatch, touch = true): Pr
   await db.execute(`UPDATE notes SET ${sets.join(", ")} WHERE id = ?`, [...values, id]);
 }
 
+/** La nota c'è ancora e non è nel cestino. */
+export async function noteExists(id: number): Promise<boolean> {
+  const db = await getDatabase();
+  const rows = await db.select<{ id: number }[]>(`SELECT id FROM notes WHERE id = ? AND deleted_at IS NULL`, [id]);
+  return rows.length > 0;
+}
+
+/** La cartella di primo livello con quel nome (senza maiuscole), creata se manca. */
+export async function ensureTopFolder(name: string): Promise<number> {
+  const db = await getDatabase();
+  const rows = await db.select<{ id: number }[]>(
+    `SELECT id FROM note_folders WHERE parent_id IS NULL AND name = ? COLLATE NOCASE ORDER BY id LIMIT 1`,
+    [name]
+  );
+  return rows[0]?.id ?? addFolder(name, null);
+}
+
 export async function trashNote(id: number): Promise<void> {
   const db = await getDatabase();
   await db.execute(`UPDATE notes SET deleted_at = ?, synced_at = NULL WHERE id = ?`, [Date.now(), id]);

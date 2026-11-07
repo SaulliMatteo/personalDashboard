@@ -1,0 +1,65 @@
+/* Studio nella chat degli amici: la riga dell'invito nella scheda e i campi della scelta. */
+.stc-invite {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 12px 0;
+  padding: 10px 12px;
+  border-radius: calc(var(--radius-panel) - 4px);
+  background: var(--surface-2);
+}
+
+:root[data-theme="opaco"] .stc-invite {
+  background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+.stc-invite i {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.stc-invite b {
+  min-width: 0;
+  font-size: max(14px, var(--fs-min));
+  overflow-wrap: anywhere;
+}
+
+.stc-invite span {
+  margin-left: auto;
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: 22px;
+  letter-spacing: var(--display-tracking);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+:root[data-theme="quaderno"] .stc-invite span {
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .stc-invite span {
+  color: var(--led);
+}
+
+.stc-who {
+  margin: 6px 12px 0;
+  font-size: max(12px, var(--fs-min));
+  color: var(--text-secondary);
+}
+
+:root[data-theme="opaco"] .stc-who {
+  opacity: 0.7;
+}
+
+.stc-fields {
+  display: grid;
+  grid-template-columns: 1fr 160px;
+  gap: 12px;
+}
+
+:root[data-compact] .stc-fields {
+  grid-template-columns: 1fr;
+}

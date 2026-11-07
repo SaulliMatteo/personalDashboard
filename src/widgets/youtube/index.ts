@@ -4,6 +4,7 @@ import YoutubeWidget from "./YoutubeWidget";
 import YoutubeDetail from "./YoutubeDetail";
 import YoutubeMini from "./mini/YoutubeMini";
 import { YoutubeProvider } from "./YoutubeContext";
+import { videoChatAction } from "./chat";
 
 export const youtubeWidget: WidgetDefinition = {
   id: "youtube",
@@ -18,4 +19,5 @@ export const youtubeWidget: WidgetDefinition = {
   provider: YoutubeProvider,
   detailComponent: YoutubeDetail,
   mini: YoutubeMini,
+  chatActions: [videoChatAction],
 };

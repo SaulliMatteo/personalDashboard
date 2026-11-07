@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { listAllVideos, listFolders, type SavedVideo, type VideoFolder } from "../data/youtubeRepository";
+import { onLibraryChanged } from "../lib/libraryEvents";
 
 /**
  * Cartelle e video, tutti in memoria: la libreria di una persona è piccola (decine o
@@ -14,6 +15,9 @@ export function useYoutubeData() {
   const [version, setVersion] = useState(0);
 
   const reload = useCallback(() => setVersion((v) => v + 1), []);
+
+  // un video salvato dalla chat degli amici
+  useEffect(() => onLibraryChanged(reload), [reload]);
 
   useEffect(() => {
     let cancelled = false;
