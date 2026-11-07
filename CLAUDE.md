@@ -232,6 +232,8 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
   Il build per macOS si fa solo su un Mac o in CI, non da Windows. I valori dei Gruppi la CI li legge dai Secrets
   `SUPABASE_URL` e `SUPABASE_PUBLISHABLE_KEY` (senza, la build esce in solo locale), la firma degli aggiornamenti da
   `TAURI_SIGNING_PRIVATE_KEY` e `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (senza, la build si ferma).
+  Installer Windows (NSIS): `src-tauri/windows/hooks.nsh` (`bundle.windows.nsis.installerHooks`) dopo l'installazione
+  avvisa Explorer (`SHChangeNotify`), altrimenti dopo un aggiornamento l'app fissata sulla barra resta un quadrato bianco.
 
 **Temi e stile**: 4 temi (`core/theme/themes.ts`), scelti con `data-theme` su `<html>`; ogni tema ridefinisce i
 token di `src/styles/tokens.css` (colori, `--card-*`, `--panel-*`, `--radius-*`, `--font-display`, `--btn-*`…).

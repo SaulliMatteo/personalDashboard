@@ -69,6 +69,11 @@
     "resources": {
       "filetransfer/public/": "filetransfer-public/"
     },
+    "windows": {
+      "nsis": {
+        "installerHooks": "./windows/hooks.nsh"
+      }
+    },
     "macOS": {
       "signingIdentity": "-",
       "minimumSystemVersion": "11.0"
