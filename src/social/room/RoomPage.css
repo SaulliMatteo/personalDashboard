@@ -299,10 +299,32 @@
   display: none;
 }
 
-/* posto e timer: uno sotto l'altro, tutti e due a destra */
-.roomp-header--compact .roomp-row + .roomp-row {
-  flex-direction: column;
-  align-items: flex-end;
+/* in orizzontale l'altezza è poca: gruppi e frecce a sinistra, posto e timer a destra sulla stessa riga */
+@media (orientation: landscape) {
+  .roomp-header--compact {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .roomp-header--compact .roomp-row {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .roomp-header--compact .roomp-row + .roomp-row {
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+/* in verticale posto e timer stanno uno sotto l'altro, tutti e due a destra */
+@media (orientation: portrait) {
+  .roomp-header--compact .roomp-row + .roomp-row {
+    flex-direction: column;
+    align-items: flex-end;
+  }
 }
 
 .roomp-header--compact .roomp-seat {

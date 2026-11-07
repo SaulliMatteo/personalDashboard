@@ -106,3 +106,20 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* Telefono: "Unisci a…" prende lo spazio libero (stessa larghezza in ogni riga) e i controlli sono alti 44px. */
+:root[data-compact] .gsm-merge {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+:root[data-compact] .gsm-select {
+  width: 100%;
+  max-width: none;
+}
+
+:root[data-compact] .gsm-input,
+:root[data-compact] .gsm-select,
+:root[data-compact] .gsm-row .grp-btn--sm {
+  height: 44px;
+}

@@ -54,6 +54,7 @@
 
 .gsl-select-wrap {
   flex: 1 1 160px;
+  min-width: 0;
   display: flex;
 }
 
