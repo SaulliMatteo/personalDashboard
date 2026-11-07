@@ -60,7 +60,8 @@ function Popover({ anchor, onClose, align = "start", className, role = "dialog",
         role={role}
         aria-label={label}
         onKeyDown={(e) => {
-          if (e.key === "Escape") {
+          // solo da dentro: un dialogo aperto sopra (in un altro portale) fa risalire qui il suo Esc nell'albero React
+          if (e.key === "Escape" && ref.current?.contains(e.target as Node)) {
             e.stopPropagation();
             onClose();
             anchor.current?.focus();

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { MdCheck, MdEdit } from "react-icons/md";
 import { useMobileLayout } from "../../core/layout/useMobileLayout";
 import { useLandscape } from "../../core/layout/useCompact";
@@ -98,7 +98,7 @@ interface Swipe {
 }
 
 /** Dashboard del telefono: pagine 2×4 da scorrere (4×2 in orizzontale), con la modifica dalla matita. */
-function MobileDashboard() {
+function MobileDashboard({ headerActions }: { headerActions?: ReactNode }) {
   const { items, ready, pages: usedPages, sizesOf, removeWidget, moveWidget, resizeWidget, addPage, finishEditing } = useMobileLayout();
   const { openWidgetDetail, goToCatalog } = useNav();
   const { setOpen: setDrawerOpen } = useDrawer();
@@ -380,6 +380,7 @@ function MobileDashboard() {
       actions={
         <>
           <NotificationBell compact />
+          {headerActions}
           <button type="button" className="cbar-btn" onClick={() => setEditing(true)} aria-label="Modifica la dashboard">
             <MdEdit />
           </button>

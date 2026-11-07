@@ -1,0 +1,147 @@
+/* "Aggiungi un amico" (docs/design/amici-notifiche.html, vista 6): dentro la finestra dei Gruppi (groupsUi.css),
+   che sul telefono diventa un foglio dal basso. */
+
+.grp-dialog:has(.afd-section) {
+  width: 460px;
+}
+
+.afd-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.afd-cap {
+  margin: 0;
+  font-size: max(10.5px, var(--fs-min));
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="quaderno"] .afd-cap {
+  font-family: var(--font-title);
+  font-size: 19px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.afd-code {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--radius-panel);
+  background: var(--surface-2);
+}
+
+.afd-code b {
+  flex: 1;
+  min-width: 9ch;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+}
+
+:root[data-theme="quaderno"] .afd-code b {
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .afd-code b {
+  color: var(--led);
+  text-shadow: 0 0 8px var(--led);
+}
+
+.afd-code .grp-btn svg {
+  font-size: 15px;
+}
+
+.afd-hint {
+  margin: 0;
+}
+
+.afd-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-strong, var(--accent));
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:root[data-theme="opaco"] .afd-link {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.afd-confirm {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.afd-confirm span {
+  flex: 1 1 180px;
+}
+
+.afd-row {
+  display: flex;
+  gap: 8px;
+}
+
+.afd-field {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  font-size: 20px;
+}
+
+.afd-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.afd-req {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.afd-req-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: max(13px, var(--fs-min));
+}
+
+.afd-req-text b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.afd-req-text span {
+  font-size: max(11.5px, var(--fs-min));
+  color: var(--text-secondary);
+}
+
+@media (pointer: coarse) {
+  .afd-link {
+    position: relative;
+  }
+
+  .afd-link::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

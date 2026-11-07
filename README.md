@@ -98,6 +98,11 @@ reinstallare cancella i dati: esportali prima).
   studio per giorno. Email e nome Google non vengono mai mostrati; sessioni, note e video restano sul tuo computer (o, col sync acceso, solo nel tuo spazio privato).
   La materia che studi e le espressioni di Pixy si condividono solo se le attivi. Dalle impostazioni puoi uscire o
   eliminare l'account in qualsiasi momento.
+- **Amici** (icona accanto alla campanella, stesso account dei Gruppi): diventi amico di qualcuno con il suo codice
+  personale (o il link `personaldashboard://amici/…`) e solo se accetta. Un amico vede il tuo nome utente e quando sei
+  stato in linea l'ultima volta. Le chat con gli amici, a differenza di quella dei gruppi, **restano sul servizio online
+  per 90 giorni** (così le ritrovi su tutti i tuoi dispositivi): le leggete solo tu e quell'amico, e spariscono se
+  togli l'amico o elimini l'account. "Nuovo codice" rende inutilizzabile quello vecchio.
 
 ## Disinstallare
 

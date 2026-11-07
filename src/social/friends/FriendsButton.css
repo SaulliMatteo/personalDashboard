@@ -1,0 +1,57 @@
+/* Pulsante degli amici nell'intestazione (docs/design/amici-notifiche.html, vista 1), gemello della campanella.
+   Sul telefono è un cbar-btn della barra in alto e prende la sua forma. */
+
+.fbtn {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: var(--btn-ghost-border);
+  border-radius: var(--radius-item);
+  background: var(--btn-ghost-bg, var(--surface-2));
+  color: var(--btn-ghost-fg, var(--text-primary));
+  font-size: 21px;
+  cursor: pointer;
+}
+
+.fbtn--compact {
+  position: relative;
+}
+
+.fbtn[aria-expanded="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.fbtn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.fbtn-pip {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: var(--led);
+  pointer-events: none;
+}
+
+:root[data-theme="fosforo"] .fbtn-pip {
+  box-shadow: 0 0 8px var(--led);
+}
+
+@media (pointer: coarse) {
+  .fbtn::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}

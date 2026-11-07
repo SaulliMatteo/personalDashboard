@@ -33,6 +33,8 @@ export interface NavContextValue {
 export function viewOfNotification(open: NotificationOpen): AppView {
   if (open.type === "room") return { type: "room" };
   if (open.type === "settings") return { type: "settings", section: open.section };
+  // il pannello degli amici si apre dalla dashboard (lo chiede NavContext con requestFriendsPanel)
+  if (open.type === "friends") return { type: "dashboard" };
   return { type: "widgetDetail", widgetId: open.widgetId };
 }
 

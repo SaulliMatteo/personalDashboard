@@ -25,6 +25,9 @@ export function pixyLook(n: AppNotification): PixyLook | null {
     case "groupJoined":
     case "groupStudied":
     case "updateAvailable":
+    case "friendRequest":
+    case "friendAccepted":
+    case "friendMessage":
       return null;
     case "pomodoroDone":
       return { emotion: "proud", glyph: "star", emoji: "🍅", phrase: "pomodoro_done" };

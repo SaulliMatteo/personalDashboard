@@ -93,6 +93,9 @@ test("open salvato: destinazioni conosciute, il resto null", () => {
   assert.deepEqual(parseOpen('{"type":"room"}'), { type: "room" });
   assert.deepEqual(parseOpen('{"type":"widget","widgetId":"study"}'), { type: "widget", widgetId: "study" });
   assert.deepEqual(parseOpen('{"type":"settings","section":"general"}'), { type: "settings", section: "general" });
+  assert.deepEqual(parseOpen('{"type":"friends"}'), { type: "friends" });
+  assert.deepEqual(parseOpen('{"type":"friends","userId":"abc"}'), { type: "friends", userId: "abc" });
+  assert.deepEqual(parseOpen('{"type":"friends","userId":""}'), { type: "friends" });
   assert.equal(parseOpen(null), null);
   assert.equal(parseOpen("non json"), null);
   assert.equal(parseOpen('{"type":"widget","widgetId":""}'), null);

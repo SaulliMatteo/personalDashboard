@@ -8,6 +8,12 @@
           "host": "auth",
           "path": ["/callback"],
           "appLink": false
+        },
+        {
+          "scheme": ["personaldashboard"],
+          "host": "amici",
+          "pathPrefix": ["/"],
+          "appLink": false
         }
       ]
     }

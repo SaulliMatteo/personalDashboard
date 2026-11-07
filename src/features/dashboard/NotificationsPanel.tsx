@@ -5,6 +5,7 @@ import {
   MdArrowBack,
   MdChatBubbleOutline,
   MdNotificationsNone,
+  MdPeopleOutline,
   MdPersonAddAlt,
   MdStarOutline,
   MdSystemUpdateAlt,
@@ -27,6 +28,9 @@ const ICON_OF: Record<string, IconType> = {
   groupJoined: MdPersonAddAlt,
   groupStudied: MdStarOutline,
   updateAvailable: MdSystemUpdateAlt,
+  friendRequest: MdPersonAddAlt,
+  friendAccepted: MdPeopleOutline,
+  friendMessage: MdChatBubbleOutline,
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -97,7 +101,7 @@ function NotificationsPanel({ anchor, full, onClose }: NotificationsPanelProps) 
         <div className="ntf-empty">
           <MdNotificationsNone aria-hidden="true" />
           <p>Nessuna notifica.</p>
-          <small>Qui trovi gli avvisi dell'app: timer dello Studio, Gruppi, aggiornamenti.</small>
+          <small>Qui trovi gli avvisi dell'app: timer dello Studio, Gruppi, amici, aggiornamenti.</small>
         </div>
       ) : (
         <div className="ntf-list">

@@ -5,7 +5,15 @@ import { onNotificationOpen } from "../notify/notifier";
 import { useLatestRef } from "../hooks/useLatestRef";
 import { runBackHandler, useBackHandlerCount } from "./backHandlers";
 import { closeTopOverlay, useOverlayOpen } from "./overlays";
+import { onFriendsPanelShow, requestFriendsPanel } from "./friendsPanel";
 import { NavContext, viewOfNotification, type NavContextValue, type AppView } from "./useNav";
+import type { NotificationOpen } from "../notify/notifier";
+
+/** La vista della notifica; per gli amici anche il pannello (che sta nella dashboard: ci si torna da soli). */
+function showNotification(open: NotificationOpen, setView: (view: AppView) => void) {
+  setView(viewOfNotification(open));
+  if (open.type === "friends") requestFriendsPanel(open.userId ? { userId: open.userId } : { add: true });
+}
 
 export function NavProvider({ children }: { children: ReactNode }) {
   const [view, setView] = useState<AppView>({ type: "dashboard" });
@@ -18,16 +26,19 @@ export function NavProvider({ children }: { children: ReactNode }) {
       openRoom: () => setView({ type: "room" }),
       openSettings: (section = "appearance") => setView({ type: "settings", section }),
       openWidgetDetail: (widgetId) => setView({ type: "widgetDetail", widgetId }),
-      openNotification: (open) => setView(viewOfNotification(open)),
+      openNotification: (open) => showNotification(open, setView),
     }),
     [view]
   );
 
-  // Tocco su una notifica (Android): apre la pagina che la notifica indica (Studio, Stanza comune).
+  // Il pannello degli amici (link, notifica) si apre dalla dashboard.
+  useEffect(() => onFriendsPanelShow(() => setView({ type: "dashboard" })), []);
+
+  // Tocco su una notifica (Android): apre la pagina che la notifica indica (Studio, Stanza comune, amici).
   useEffect(
     () =>
       onNotificationOpen((open) => {
-        setView(viewOfNotification(open));
+        showNotification(open, setView);
       }),
     []
   );

@@ -28,6 +28,7 @@ export type CloudErrorCode =
   | "invalid_message"
   | "message_too_long"
   | "payload_too_large"
+  | "dm_rate_limited"
   | "unknown";
 
 const MESSAGES: Record<CloudErrorCode, string> = {
@@ -53,6 +54,7 @@ const MESSAGES: Record<CloudErrorCode, string> = {
   invalid_message: "Messaggio vuoto o non valido.",
   message_too_long: "Messaggio troppo lungo (al massimo 500 caratteri).",
   payload_too_large: "Contenuto troppo grande da inviare (al massimo 512 KB).",
+  dm_rate_limited: "Troppi messaggi di seguito: aspetta un minuto.",
   unknown: "Qualcosa è andato storto. Riprova.",
 };
 

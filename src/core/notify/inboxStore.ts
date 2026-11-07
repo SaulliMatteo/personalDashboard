@@ -86,6 +86,7 @@ export function parseOpen(json: string | null): NotificationOpen | null {
     if (raw.type === "room") return { type: "room" };
     if (raw.type === "widget" && typeof raw.widgetId === "string" && raw.widgetId !== "") return { type: "widget", widgetId: raw.widgetId };
     if (raw.type === "settings" && typeof raw.section === "string" && raw.section !== "") return { type: "settings", section: raw.section };
+    if (raw.type === "friends") return typeof raw.userId === "string" && raw.userId !== "" ? { type: "friends", userId: raw.userId } : { type: "friends" };
     return null;
   } catch {
     return null;

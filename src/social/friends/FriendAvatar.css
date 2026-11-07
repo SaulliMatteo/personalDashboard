@@ -1,0 +1,64 @@
+/* Faccina di un amico (docs/design/amici-notifiche.html, vista 3): occhi di Pixy su una tinta del tema. */
+
+.fav {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: var(--fav-bg, var(--surface-3, var(--surface-2)));
+  color: var(--fav-ink, var(--text-primary));
+}
+
+.fav--sm {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+}
+
+.fav[data-tint="salvia"] {
+  --fav-bg: var(--tint-salvia);
+  --fav-ink: var(--tint-salvia-ink);
+}
+.fav[data-tint="blu"] {
+  --fav-bg: var(--tint-blu);
+  --fav-ink: var(--tint-blu-ink);
+}
+.fav[data-tint="senape"] {
+  --fav-bg: var(--tint-senape);
+  --fav-ink: var(--tint-senape-ink);
+}
+.fav[data-tint="malva"] {
+  --fav-bg: var(--tint-malva);
+  --fav-ink: var(--tint-malva-ink);
+}
+
+.fav svg {
+  width: 62%;
+  height: 62%;
+}
+
+.fav svg rect {
+  fill: currentColor;
+}
+
+/* Fosforo: schermo spento con gli occhi a LED */
+:root[data-theme="fosforo"] .fav {
+  background: var(--surface-1, var(--bg));
+  border: 1px solid var(--divider);
+  color: var(--led);
+}
+
+.fav-on {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 11px;
+  height: 11px;
+  box-sizing: border-box;
+  border: 2px solid var(--modal-bg);
+  border-radius: 50%;
+  background: var(--led);
+}

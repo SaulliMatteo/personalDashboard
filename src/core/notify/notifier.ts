@@ -26,7 +26,8 @@ import { pluginNotify, showNotificationWithImage } from "./notifyApi";
 /**
  * groupMessage: un messaggio dei Gruppi (il testo è di un compagno, nessun decoratore lo veste).
  * Solo nella campanella (`postInAppNotification`): updateAvailable (controllo giornaliero degli aggiornamenti),
- * groupJoined e groupStudied (i messaggi di sistema della chat dei Gruppi).
+ * groupJoined e groupStudied (i messaggi di sistema della chat dei Gruppi), friendAccepted.
+ * friendRequest e friendMessage: dagli amici (social/friends); i messaggi di testo non vanno nella campanella (`inbox: false`).
  */
 export type AppNotificationKind =
   | "pomodoroDone"
@@ -36,13 +37,21 @@ export type AppNotificationKind =
   | "groupMessage"
   | "groupJoined"
   | "groupStudied"
-  | "updateAvailable";
+  | "updateAvailable"
+  | "friendRequest"
+  | "friendAccepted"
+  | "friendMessage";
 
 /**
  * Dove porta il clic sulla notifica: la pagina di un widget, la Stanza comune o una sezione delle Impostazioni.
  * Il tocco sulle notifiche di sistema di Android sa aprire solo quelle in OPEN_TARGETS; la campanella tutte.
  */
-export type NotificationOpen = { type: "widget"; widgetId: string } | { type: "room" } | { type: "settings"; section: string };
+export type NotificationOpen =
+  | { type: "widget"; widgetId: string }
+  | { type: "room" }
+  | { type: "settings"; section: string }
+  /** Il pannello degli amici: la chat con `userId`, oppure le richieste. */
+  | { type: "friends"; userId?: string };
 
 export interface AppNotification {
   kind: AppNotificationKind;
@@ -51,8 +60,10 @@ export interface AppNotification {
   /** Solo per lo stop automatico e il suo preavviso: cosa l'ha fatto scattare. */
   reason?: "idle" | "app" | "away";
   category?: AppCategory | null;
-  /** Cosa aprire al tocco (solo Android). */
+  /** Cosa aprire al tocco (Android) e al clic nella campanella. */
   open?: NotificationOpen;
+  /** false: solo notifica di sistema, niente voce nella campanella (i messaggi di testo degli amici). */
+  inbox?: boolean;
 }
 
 export interface DecoratedNotification {
@@ -85,7 +96,7 @@ async function decorate(n: AppNotification, image: boolean): Promise<DecoratedNo
 
 /* ---------- Canali (Android) ---------- */
 
-type ChannelId = "studio" | "avvisi" | "gruppi";
+type ChannelId = "studio" | "avvisi" | "gruppi" | "amici";
 
 const CHANNEL_OF: Record<AppNotificationKind, ChannelId> = {
   pomodoroDone: "studio",
@@ -96,6 +107,9 @@ const CHANNEL_OF: Record<AppNotificationKind, ChannelId> = {
   groupJoined: "gruppi",
   groupStudied: "gruppi",
   updateAvailable: "avvisi",
+  friendRequest: "amici",
+  friendAccepted: "amici",
+  friendMessage: "amici",
 };
 
 let channelsReady: Promise<void> | null = null;
@@ -128,6 +142,14 @@ function ensureChannels(): Promise<void> {
         visibility: Visibility.Private,
         vibration: true,
       });
+      await createChannel({
+        id: "amici",
+        name: "Amici",
+        description: "Messaggi e richieste di amicizia, quando l'app è aperta",
+        importance: Importance.Default,
+        visibility: Visibility.Private,
+        vibration: true,
+      });
     } catch (error) {
       console.error("Canali delle notifiche non creati:", error);
     }
@@ -139,11 +161,11 @@ function ensureChannels(): Promise<void> {
  * Viste che una notifica può aprire, nell'ordine: il codice è la posizione + 1 e diventa l'ultima cifra dell'id
  * (0 = nessuna). Una vista nuova si aggiunge in fondo (al massimo 9).
  */
-const OPEN_TARGETS = ["room", "widget:study"] as const;
+const OPEN_TARGETS = ["room", "widget:study", "friends"] as const;
 
 function openCode(open: NotificationOpen | undefined): number {
   if (!open || open.type === "settings") return 0;
-  const key = open.type === "room" ? "room" : `widget:${open.widgetId}`;
+  const key = open.type === "widget" ? `widget:${open.widgetId}` : open.type;
   const index = (OPEN_TARGETS as readonly string[]).indexOf(key);
   return index < 0 ? 0 : index + 1;
 }
@@ -151,7 +173,9 @@ function openCode(open: NotificationOpen | undefined): number {
 function openFromId(id: number): NotificationOpen | null {
   const key = OPEN_TARGETS[(id % 10) - 1];
   if (key === undefined) return null;
-  return key === "room" ? { type: "room" } : { type: "widget", widgetId: key.slice("widget:".length) };
+  if (key === "room") return { type: "room" };
+  if (key === "friends") return { type: "friends" };
+  return { type: "widget", widgetId: key.slice("widget:".length) };
 }
 
 /** Id di una notifica mandata subito: a caso (sotto il miliardo, sopra stanno le pianificate) con la vista in fondo. */
@@ -183,7 +207,7 @@ export async function ensureNotificationPermission(): Promise<boolean> {
 /* ---------- Invio subito ---------- */
 
 export async function sendAppNotification(n: AppNotification) {
-  void postInAppNotification({ kind: n.kind, title: n.title, body: n.body, open: n.open });
+  if (n.inbox !== false) void postInAppNotification({ kind: n.kind, title: n.title, body: n.body, open: n.open });
   const decorated = await decorate(n, true);
   if (decorated.imageDataUrl && (await showNotificationWithImage(decorated.title, decorated.lines, decorated.imageDataUrl))) return;
   if (!(await ensureNotificationPermission())) return;

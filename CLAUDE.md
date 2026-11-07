@@ -174,6 +174,17 @@ Debito noto: `widgets/youtube/screens/WatchScreen.tsx` importa `study/data/study
   `core/cloud/syncFilesApi.ts`). Cosa caricare, scaricare o togliere lo decide `filePlan.ts` (puro) dalle righe che li
   citano e da `sync_files` (migrazione 24: i file già sia qui sia nel cloud). Un riferimento nuovo a un file va in
   `listFileReferences` di `notesRepository.ts`. Lo Storage non si svuota da SQL: `deleteAccount` cancella prima i file.
+- Amici (mockup `docs/design/amici-notifiche.html`): un elenco a parte dai gruppi, sullo stesso account. Server in
+  `supabase/migrations/…_amici.sql` (test `13_amici.sql`): codice personale in `private.friend_codes`, richieste,
+  amicizie, `direct_messages` (gli unici messaggi salvati sul server: **90 giorni**, filtro nella policy e pulizia in
+  `send_dm`), `direct_reads` per le ✓✓; scritture solo dalle RPC, limiti 20 richieste/ora e 30 messaggi/minuto.
+  Tempo reale: le RPC fanno `realtime.send` sulla casella privata `inbox:<user_id>`, che legge solo il proprietario e
+  in cui nessun client scrive (`can_access_channel` non la conosce). Client: rete in `core/cloud/friendsApi.ts`, parte
+  pura in `social/friends/friendsStore.ts` (prova `scripts/gruppi/friends.test.mts`), stato in `FriendsProvider.tsx`
+  (rilegge tutto all'avvio, al rientro, col ritorno della rete e quando la casella si riallaccia: il tempo reale da
+  solo può perdere eventi). Il pulsante `social/friends/FriendsButton.tsx` lo passa `app/App.tsx` alla dashboard
+  (`headerActions`). Link `personaldashboard://amici/<codice>` (deep link, anche in `tauri.android.conf.json`).
+  Un `kind` nuovo di messaggio (le schede dei widget) non va validato dal server: lo controlla chi lo disegna.
 
 **Backend nativo** (`src-tauri/`): `src/lib.rs` registra plugin (sql, notification, fs/dialog/opener usati dal
 Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.json` ha `create: false`).
@@ -201,7 +212,9 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
 - Notifiche: tutte da `core/notify/notifier.ts` (`sendAppNotification` con un `kind`), mai dal plugin direttamente.
   Ognuna finisce anche nella campanella della dashboard (`core/notify/inbox.ts`, tabella locale `app_notifications`,
   ultime 200 per 30 giorni, prova `node scripts/notify/inbox.test.mts`); gli avvisi minori, senza notifica di
-  sistema, ci vanno con `postInAppNotification`. Il clic apre `open` con `openNotification` di `useNav`.
+  sistema, ci vanno con `postInAppNotification`; `inbox: false` la manda solo come notifica di sistema (i messaggi di
+  testo degli amici). Il clic apre `open` con `openNotification` di `useNav` (`{ type: "friends" }` apre il pannello
+  degli amici con `requestFriendsPanel` di `core/nav/friendsPanel.ts`, perché il pannello sta in `social`).
   Il Companion registra un decoratore che le firma Pixy (faccia nello stile del tema, emoji, frase della personalità,
   `widgets/companion/notify/`); su Windows il toast con l'immagine lo mostra il comando `notify_with_image`
   (`src/notify.rs`, `tauri-winrt-notification`), altrove si ripiega sul plugin senza immagine.

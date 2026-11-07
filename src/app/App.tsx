@@ -15,6 +15,7 @@ import MobileDashboard from "../features/dashboard/MobileDashboard";
 import WidgetCatalog from "../features/settings/catalog/WidgetCatalog";
 import SettingsPage from "../features/settings/SettingsPage";
 import RoomPage from "../social/room/RoomPage";
+import FriendsButton from "../social/friends/FriendsButton";
 import DatabaseGate from "./DatabaseGate";
 import AppShell, { type CompactBarSpec } from "./AppShell";
 import BootGate from "./BootGate";
@@ -29,7 +30,12 @@ function CurrentView() {
   useAutoUpdateCheck();
   // sul telefono ogni vista ha la sua barra in alto (la dashboard se la disegna da sé, con la matita)
   let bar: CompactBarSpec | undefined;
-  const home = compact ? <MobileDashboard /> : <Dashboard />;
+  // gli amici (social) nell'intestazione della dashboard (features non importa social)
+  const home = compact ? (
+    <MobileDashboard headerActions={<FriendsButton compact />} />
+  ) : (
+    <Dashboard headerActions={<FriendsButton />} />
+  );
 
   let content;
   if (view.type === "dashboard") {

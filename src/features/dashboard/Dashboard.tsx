@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import GridLayout, { useContainerWidth } from "react-grid-layout";
 import { calcGridItemPosition } from "react-grid-layout/core";
 import "react-grid-layout/css/styles.css"; // CSS base della libreria: SEMPRE prima del nostro
@@ -54,7 +54,12 @@ function useGridMetrics(element: HTMLElement | null, themeId: string) {
   return metrics;
 }
 
-function Dashboard() {
+interface DashboardProps {
+  /** Pulsanti in più nell'intestazione, dopo la campanella (gli amici: li passa app/App.tsx). */
+  headerActions?: ReactNode;
+}
+
+function Dashboard({ headerActions }: DashboardProps) {
   // width: larghezza del contenitore (px), ricalcolata al resize della finestra.
   // mounted: evita di renderizzare la griglia con width 0 al primo frame.
   const { width, containerRef, mounted } = useContainerWidth();
@@ -157,7 +162,7 @@ function Dashboard() {
 
   return (
     <>
-      <DashboardHeader />
+      <DashboardHeader actions={headerActions} />
 
       {/* position: relative (vedi .grid-container): ghost e slot si posizionano rispetto a questo contenitore. */}
       <div
