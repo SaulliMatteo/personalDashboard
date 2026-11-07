@@ -299,17 +299,20 @@
   display: none;
 }
 
-/* posto e timer: se non stanno sulla stessa riga, il timer va sotto, a destra */
+/* posto e timer: uno sotto l'altro, tutti e due a destra */
 .roomp-header--compact .roomp-row + .roomp-row {
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .roomp-header--compact .roomp-seat {
-  flex: 0 1 auto;
+  max-width: 100%;
+  justify-content: flex-end;
 }
 
 .roomp-header--compact .roomp-controls {
-  flex: 1 1 150px;
+  flex: none;
+  max-width: 100%;
   min-width: 0;
   margin-left: 0;
   justify-content: flex-end;
