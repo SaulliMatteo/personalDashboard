@@ -33,7 +33,6 @@ function WhiteboardDetail() {
   // Indietro (Android, o ← sul telefono) con un disegno: il primo avvisa, il secondo entro 3 s esce e lo cancella,
   // come "Esci e cancella" qui sotto (che sul telefono è nascosto).
   const [backArmed, setBackArmed] = useState(false);
-  useBackHandler(hasDrawing, () => (backArmed ? goToDashboard() : setBackArmed(true)));
   useEffect(() => {
     if (!backArmed) return;
     const t = window.setTimeout(() => setBackArmed(false), 3000);
@@ -53,6 +52,13 @@ function WhiteboardDetail() {
         windowFullscreenRef.current = false;
       });
   }, [fullscreen]);
+
+  // Un solo gestore (l'ultimo registrato vince): a schermo intero l'indietro esce solo da lì, anche con un disegno.
+  useBackHandler(hasDrawing || fullscreen, () => {
+    if (fullscreen) toggleFullscreen();
+    else if (backArmed) goToDashboard();
+    else setBackArmed(true);
+  });
 
   useEffect(() => {
     // Uscita dallo schermo intero senza il pulsante (es. macOS): la pagina si riallinea.

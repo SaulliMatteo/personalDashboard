@@ -161,8 +161,9 @@ function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode
 
   const seatStatus = (
     <>
+      {/* seduto davvero solo col timer avviato; prima la sala è solo scelta e il posto resta libero */}
       {isMyRoom ? (
-        <span className="roomp-here">Sei seduto qui</span>
+        <span className="roomp-here">{mySeatRoom === shown ? "Sei seduto qui" : "Ti siedi qui quando studi"}</span>
       ) : roomFull ? (
         <span className="roomp-full">Sala piena</span>
       ) : (

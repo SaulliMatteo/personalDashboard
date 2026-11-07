@@ -63,3 +63,21 @@
   font-size: 13px;
   color: var(--text-muted);
 }
+
+/* Sul telefono il timer sta nella sua riga a destra: va a capo e il select si restringe invece di uscire. */
+:root[data-compact] .rtc {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+  max-width: 100%;
+}
+
+:root[data-compact] .rtc-select {
+  flex: 1 1 120px;
+  min-width: 0;
+  height: 44px;
+}
+
+:root[data-compact] .rtc-btn {
+  height: 44px;
+}
