@@ -140,3 +140,22 @@
     inset: var(--hit);
   }
 }
+
+/* Telefono: riquadri più compatti, il nome della materia va a capo invece di essere tagliato. */
+:root[data-compact] .study-stat {
+  padding: 12px 14px;
+}
+
+:root[data-compact] .study-stat-value {
+  font-size: 26px;
+}
+
+:root[data-compact] .study-stat-value--text {
+  font-size: 17px;
+  line-height: 1.3;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}

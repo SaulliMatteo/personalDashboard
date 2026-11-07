@@ -298,3 +298,77 @@
     inset: var(--hit);
   }
 }
+
+/* ---------- Telefono (docs/design/mobile/ritocchi.html, vista 5) ---------- */
+/* Riepilogo: totale e media affiancati, la materia più studiata sotto a tutta larghezza. */
+:root[data-compact] .study-report-summary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+:root[data-compact] .study-report-summary > .study-stat--top {
+  grid-column: 1 / -1;
+  order: 1;
+}
+
+:root[data-compact] .study-bars {
+  gap: 4px;
+  height: 180px;
+}
+
+/* Anno: 12 colonne strette, il valore resta solo sul mese in corso (gli altri nel tocco/tooltip). */
+:root[data-compact] .study-bars--year .study-bar-col:not(.is-current) .study-bar-value {
+  visibility: hidden;
+}
+
+:root[data-compact] .study-bars--year .study-bar-col.is-current .study-bar-value {
+  overflow: visible;
+}
+
+/* Materie su due livelli: nome, tempo e quota sopra, barra sotto a tutta larghezza. */
+:root[data-compact] .study-report-row {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    "name time share"
+    "bar bar bar";
+  gap: 6px 12px;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+:root[data-compact] .study-report-row-name {
+  grid-area: name;
+  white-space: normal;
+}
+
+:root[data-compact] .study-report-row-bar {
+  grid-area: bar;
+}
+
+:root[data-compact] .study-report-row-time {
+  grid-area: time;
+  color: var(--text-primary);
+}
+
+:root[data-compact] .study-report-row-share {
+  grid-area: share;
+  min-width: 3ch;
+}
+
+/* Periodo in alto a tutta larghezza, poi il periodo mostrato con le frecce. */
+:root[data-compact] .study-period-toggle {
+  order: -1;
+  flex: 1 1 100%;
+}
+
+:root[data-compact] .study-period-toggle button {
+  flex: 1;
+  padding: 9px 8px;
+  text-align: center;
+}
+
+:root[data-compact] .study-report-nav {
+  flex: 1 1 100%;
+  justify-content: space-between;
+}

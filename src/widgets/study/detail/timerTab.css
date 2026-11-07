@@ -371,3 +371,45 @@
     inset: var(--hit);
   }
 }
+
+/* Riepilogo sul telefono (ritocchi.html, vista 4): "Studiato oggi" largo con l'obiettivo accanto, sotto gli altri due. */
+:root[data-compact] .study-detail-recap {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+:root[data-compact] .study-detail-recap > .study-stat:first-child {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-auto-flow: column;
+  grid-template-rows: auto auto;
+  align-items: end;
+  column-gap: 20px;
+}
+
+:root[data-compact] .study-detail-recap > .study-stat:first-child > .study-stat-sub {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+:root[data-compact] .study-detail-recap > .study-stat:first-child > .study-goal-bar {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+}
+
+/* Materie sul telefono: il nome va a capo (due righe) invece di diventare "Analisi mate…"; il resto più stretto. */
+:root[data-compact] .study-subject-row {
+  gap: 8px;
+  padding: 6px 4px;
+}
+
+:root[data-compact] .study-subject-name {
+  font-size: 15px;
+  line-height: 1.3;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}

@@ -8,7 +8,8 @@ import {
   type Subject,
 } from "../data/studyRepository";
 import { colorForSubject } from "../lib/colors";
-import { formatHoursMinutes } from "../lib/format";
+import { useCompact } from "../../../core/layout/useCompact";
+import { formatHoursMinutes, formatHoursMinutesCompact } from "../lib/format";
 import { buildBuckets, periodRange, type ReportPeriod } from "../lib/report";
 import { useTimer } from "../timer/useTimer";
 import "./reportTab.css";
@@ -26,6 +27,9 @@ function ReportTab() {
   // `subjects` = solo le materie ATTIVE (come nel timer): servono per mantenere i colori
   // uguali a quelli del timer. Nomi e colori delle ARCHIVIATE si leggono da `allSubjects`.
   const { subjects, todayBySubject } = useTimer();
+  // Telefono: valori delle barre nella forma corta ("2h05") e mesi dell'anno a una lettera, altrimenti si accavallano.
+  const compact = useCompact();
+  const barValue = compact ? formatHoursMinutesCompact : formatHoursMinutes;
   const [period, setPeriod] = useState<ReportPeriod>("week");
   const [offset, setOffset] = useState(0); // 0 = periodo in corso, -1 = il precedente…
   const [sessions, setSessions] = useState<StudySession[]>([]);
@@ -166,7 +170,7 @@ function ReportTab() {
             className={`study-bar-col${b.isCurrent ? " is-current" : ""}`}
             title={`${b.title}: ${b.seconds > 0 ? formatHoursMinutes(b.seconds) : "nessuno studio"}`}
           >
-            <span className="study-bar-value">{b.seconds > 0 ? formatHoursMinutes(b.seconds) : ""}</span>
+            <span className="study-bar-value">{b.seconds > 0 ? barValue(b.seconds) : ""}</span>
             <div className="study-bar-track">
               <div className="study-bar-stack" style={{ height: `${(b.seconds / maxBucketSeconds) * 100}%` }}>
                 {Object.entries(b.bySubject)
@@ -181,7 +185,7 @@ function ReportTab() {
                   ))}
               </div>
             </div>
-            <span className="study-bar-label">{b.label}</span>
+            <span className="study-bar-label">{compact && period === "year" ? b.label.charAt(0).toUpperCase() : b.label}</span>
           </div>
         ))}
       </div>

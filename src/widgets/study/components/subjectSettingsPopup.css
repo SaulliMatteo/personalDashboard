@@ -236,3 +236,45 @@
 .study-name-input[aria-invalid="true"] {
   border-color: var(--danger);
 }
+
+/* ---------- Telefono (ritocchi.html, vista 6): foglio dal basso (regola in styles/base.css), un campo per riga ---------- */
+:root[data-compact] .study-subject-settings {
+  gap: 16px;
+  padding: 4px 18px 20px;
+}
+
+:root[data-compact] .study-popup-header h3 {
+  font-size: 17px;
+  white-space: normal;
+}
+
+:root[data-compact] .study-setting-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+
+:root[data-compact] .study-setting-grid label {
+  min-height: 48px;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+:root[data-compact] .study-setting-grid input {
+  width: 72px;
+  height: 44px;
+  font-size: 15px;
+}
+
+:root[data-compact] .study-swatches {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+:root[data-compact] .study-swatch {
+  width: 32px;
+  height: 32px;
+}
+
+:root[data-compact] .study-mode-toggle button {
+  padding: 9px 14px;
+}
