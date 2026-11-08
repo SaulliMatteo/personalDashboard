@@ -3,7 +3,6 @@ import type { SizeKey } from "../../../core/widgets/sizes";
 import type { SubjectMode } from "../data/studyRepository";
 import { MODE_LABEL, formatHoursMinutes, formatHoursMinutesCompact } from "../lib/format";
 import { DialFit, DotDial } from "../components/dial/Dials";
-import DoneCheck from "./DoneCheck";
 import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
@@ -137,7 +136,6 @@ function Side({ data, withCycles }: { data: StudyCardData; withCycles: boolean }
           >
             <span className="sf-row-name">{row.subject.name}</span>
             <span className="sf-row-time">
-              {row.isDone && <DoneCheck className="sf-check" />}
               {formatHoursMinutes(row.seconds)}
               {row.goalSeconds > 0 && <span className="sf-muted"> / {formatHoursMinutes(row.goalSeconds)}</span>}
             </span>

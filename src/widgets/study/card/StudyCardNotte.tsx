@@ -2,7 +2,6 @@ import type { CSSProperties, MouseEvent } from "react";
 import type { SizeKey } from "../../../core/widgets/sizes";
 import { MODE_LABEL, formatHoursMinutes } from "../lib/format";
 import { DialFit, TickDial } from "../components/dial/Dials";
-import DoneCheck from "./DoneCheck";
 import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
@@ -126,7 +125,6 @@ function Subjects({ data, max, withTotal, withNextPhase }: { data: StudyCardData
               {row.subject.name}
             </span>
             <span className="sn-row-time">
-              {row.isDone && <DoneCheck className="sn-check" />}
               {formatHoursMinutes(row.seconds)}
               {row.goalSeconds > 0 && <span className="sn-muted"> / {formatHoursMinutes(row.goalSeconds)}</span>}
             </span>

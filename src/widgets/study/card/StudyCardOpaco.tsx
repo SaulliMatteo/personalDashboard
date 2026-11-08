@@ -1,7 +1,6 @@
 import type { CSSProperties, MouseEvent } from "react";
 import type { SizeKey } from "../../../core/widgets/sizes";
 import { formatGoal, formatHoursMinutes, formatHoursMinutesCompact } from "../lib/format";
-import DoneCheck from "./DoneCheck";
 import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
@@ -117,7 +116,6 @@ function Chips({ data }: { data: StudyCardData }) {
             void data.switchSubject(row.subject.id);
           }}
         >
-          {row.isDone && <DoneCheck className="so-check" />}
           {chipText(row)}
         </button>
       ))}

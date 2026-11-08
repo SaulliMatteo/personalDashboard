@@ -226,12 +226,6 @@
   color: var(--text-muted);
 }
 
-.sq-check {
-  margin-right: 5px;
-  vertical-align: -1px;
-  color: var(--success-text);
-}
-
 /* "Altre materie": scritto a mano, come un appunto; apre il pop-up con le materie non di oggi. */
 .sq-others-toggle {
   flex: 0 0 auto;

@@ -147,14 +147,6 @@
   gap: 6px;
 }
 
-.so-check {
-  color: var(--success-text);
-}
-
-.so-chip.is-active .so-check {
-  color: currentColor;
-}
-
 /* "+N altre": solo contorno; apre il pop-up con le materie non di oggi. */
 .so-chip--toggle {
   background: transparent;

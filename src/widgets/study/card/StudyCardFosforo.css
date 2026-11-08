@@ -228,12 +228,6 @@
   color: var(--text-muted);
 }
 
-.sf-check {
-  margin-right: 5px;
-  vertical-align: -1px;
-  color: var(--success-text);
-}
-
 /* "Altre materie": pulsante a contorno come quelli del modulo; apre il pop-up con le materie non di oggi. */
 .sf-others-toggle {
   flex: 0 0 auto;

@@ -247,12 +247,6 @@
   color: var(--text-muted);
 }
 
-.sn-check {
-  margin-right: 5px;
-  vertical-align: -1px;
-  color: var(--success-text);
-}
-
 .sn-row.is-done .sn-row-bar > span {
   background: var(--success);
 }
