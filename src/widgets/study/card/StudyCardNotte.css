@@ -243,6 +243,42 @@
   background: var(--subject-color);
 }
 
+.sn-muted {
+  color: var(--text-muted);
+}
+
+.sn-check {
+  margin-right: 5px;
+  vertical-align: -1px;
+  color: var(--success-text);
+}
+
+.sn-row.is-done .sn-row-bar > span {
+  background: var(--success);
+}
+
+/* "Altre materie": pulsante in fondo; apre il pop-up con le materie non di oggi. */
+.sn-others-toggle {
+  flex: 0 0 auto;
+  width: 100%;
+  padding: 8px 12px;
+  border: var(--slot-border);
+  border-radius: var(--radius-item);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sn-others-toggle:hover {
+  background: var(--surface-1);
+}
+
+
+
+
+
 .sn-next {
   margin-top: 4px;
   font-size: 12px;

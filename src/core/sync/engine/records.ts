@@ -191,7 +191,7 @@ export function dataToRow(kind: SyncKind, data: Row, ctx: PullContext): PullResu
   const spec = specOf(kind);
   const missing = new Set<string>();
   const row: Row = {};
-  for (const column of spec.columns) row[column] = data[column] ?? null;
+  for (const column of spec.columns) row[column] = data[column] ?? spec.defaults?.[column] ?? null;
   for (const [column, ref] of Object.entries(spec.refs)) {
     const uid = row[column];
     if (typeof uid !== "string" || !uid) {

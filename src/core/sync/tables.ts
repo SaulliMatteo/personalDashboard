@@ -44,6 +44,11 @@ export interface TableSpec {
    * DB (es. la cartella su disco di una nota): arrivano in `deleted` dell'evento di syncEvents.ts.
    */
   localColumns?: readonly string[];
+  /**
+   * Valori per le colonne aggiunte dopo: un elemento mandato da una versione dell'app che non le conosce arriva senza,
+   * e una colonna NOT NULL non può diventare NULL.
+   */
+  defaults?: Readonly<Record<string, unknown>>;
 }
 
 /** In ordine di dipendenza: al pull un elemento si applica dopo quelli a cui punta. */
@@ -52,8 +57,10 @@ export const SYNC_TABLES: readonly TableSpec[] = [
     kind: "subject",
     table: "subjects",
     key: "id",
-    columns: ["name", "created_at", "color", "mode", "work_minutes", "short_break_minutes", "long_break_minutes", "cycles_before_long_break", "archived_at"],
+    columns: ["name", "created_at", "color", "mode", "work_minutes", "short_break_minutes", "long_break_minutes", "cycles_before_long_break", "archived_at", "study_days", "daily_goal_minutes"],
     refs: {},
+    // migrazione 26: senza giorni = ogni giorno, senza obiettivo = 0
+    defaults: { study_days: 0, daily_goal_minutes: 0 },
   },
   {
     kind: "session",

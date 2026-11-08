@@ -28,6 +28,12 @@ export function formatHoursMinutes(totalSeconds: number): string {
   return `${h}h ${String(m).padStart(2, "0")}m`;
 }
 
+/** Secondi -> "3h" per le ore piene, altrimenti come formatHoursMinutes ("1h 30m"): per gli obiettivi. */
+export function formatGoal(totalSeconds: number): string {
+  const totalMinutes = Math.round(totalSeconds / 60);
+  return totalMinutes > 0 && totalMinutes % 60 === 0 ? `${totalMinutes / 60}h` : formatHoursMinutes(totalSeconds);
+}
+
 /** Secondi -> "2h05" oppure "45m": la forma compatta dei numeri a puntini (Fosforo). */
 export function formatHoursMinutesCompact(totalSeconds: number): string {
   const totalMinutes = Math.round(totalSeconds / 60);

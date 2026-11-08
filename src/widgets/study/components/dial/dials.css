@@ -80,3 +80,14 @@
 .dot-dial circle.is-led {
   fill: var(--led);
 }
+
+/* ---------- Opaco ---------- */
+.ring-dial-track {
+  fill: none;
+  stroke: var(--pg-dark);
+}
+.ring-dial-ink {
+  fill: none;
+  stroke: var(--pg-ink);
+  stroke-linecap: round;
+}

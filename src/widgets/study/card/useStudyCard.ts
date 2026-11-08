@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useSettings } from "../../../core/settings/useSettings";
 import { getDailyTotals, type Subject } from "../data/studyRepository";
 import { colorForSubject } from "../lib/colors";
 import { formatHoursMinutes } from "../lib/format";
+import { dayName, daysLabel, isScheduledOn, isTodaySubject } from "../lib/schedule";
 import { useTimerView } from "../timer/useTimerView";
 
 /** Iniziale del giorno della settimana, indicizzata come Date.getDay() (0 = domenica). */
@@ -12,8 +12,26 @@ export interface SubjectRow {
   subject: Subject;
   color: string;
   seconds: number;
-  /** Tempo di oggi rispetto alla materia più studiata oggi (0..1): lunghezza della barra. */
+  /** Obiettivo della materia in secondi (0 = nessuno). */
+  goalSeconds: number;
+  /** Avanzamento verso l'obiettivo (0..1; 0 senza obiettivo). */
+  goalProgress: number;
+  /** Obiettivo presente e raggiunto. */
+  isDone: boolean;
+  /**
+   * Lunghezza della barra (0..1): l'avanzamento verso l'obiettivo se la materia ne ha uno,
+   * altrimenti il tempo di oggi rispetto alla materia più studiata oggi.
+   */
   share: number;
+  isActive: boolean;
+}
+
+/** Una materia non prevista oggi, sotto "Altre materie". */
+export interface OtherRow {
+  subject: Subject;
+  color: string;
+  /** I suoi giorni, es. "lun, mer". */
+  daysText: string;
   isActive: boolean;
 }
 
@@ -43,30 +61,55 @@ export interface CycleInfo {
  */
 export function useStudyCard({ withWeek = false }: { withWeek?: boolean } = {}) {
   const view = useTimerView();
-  const { settings } = useSettings();
   const {
-    subjects, todayBySubject, subjectId, activeSubject, isIdle, isWork, isBreak, isRunning, isStopwatch,
-    cycleCount, displaySeconds, phase, startWork, pause, resume, stopOrSkip, switchSubject,
+    subjects, todayBySubject, dayStart, todayGoalSeconds, subjectId, activeSubject, isIdle, isWork, isBreak, isRunning,
+    isStopwatch, cycleCount, displaySeconds, phase, startWork, pause, resume, stopOrSkip, switchSubject,
   } = view;
-
-  // Materia di riferimento: quella del timer o, da fermo, la prima dell'elenco.
-  const currentSubject = activeSubject ?? subjects[0] ?? null;
+  // Pop-up "Altre materie" aperto o chiuso: solo in memoria, ogni card ha il suo.
+  const [othersOpen, setOthersOpen] = useState(false);
 
   const todaySeconds = Object.values(todayBySubject).reduce((sum, v) => sum + v, 0);
-  const goalSeconds = settings.studyDailyGoalMinutes * 60;
+  // L'obiettivo di oggi lo calcola TimerContext (lib/schedule.ts), lo stesso per dettaglio e barra laterale.
+  const goalSeconds = todayGoalSeconds;
   const goalProgress = goalSeconds > 0 ? Math.min(1, todaySeconds / goalSeconds) : 0;
 
+  // Di oggi: le previste oggi, più quelle già studiate oggi (il totale deve tornare con le righe) e quella in corso.
+  // Le ultime due non contano nell'obiettivo del giorno. Il colore usa l'indice nell'elenco completo.
+  const today = new Date(dayStart);
   const maxSubjectSeconds = Math.max(0, ...subjects.map((s) => todayBySubject[s.id] ?? 0));
-  const rows: SubjectRow[] = subjects.map((subject, index) => {
+  const rows: SubjectRow[] = [];
+  const otherRows: OtherRow[] = [];
+  subjects.forEach((subject, index) => {
     const seconds = todayBySubject[subject.id] ?? 0;
-    return {
+    const color = colorForSubject(subject, index);
+    const isActive = subject.id === subjectId;
+    if (!isTodaySubject(subject, today, seconds, isActive)) {
+      otherRows.push({ subject, color, daysText: daysLabel(subject.studyDays), isActive });
+      return;
+    }
+    const subjectGoal = subject.dailyGoalMinutes * 60;
+    const subjectProgress = subjectGoal > 0 ? Math.min(1, seconds / subjectGoal) : 0;
+    rows.push({
       subject,
-      color: colorForSubject(subject, index),
+      color,
       seconds,
-      share: maxSubjectSeconds > 0 ? seconds / maxSubjectSeconds : 0,
-      isActive: subject.id === subjectId,
-    };
+      goalSeconds: subjectGoal,
+      goalProgress: subjectProgress,
+      isDone: subjectGoal > 0 && seconds >= subjectGoal,
+      share: subjectGoal > 0 ? subjectProgress : maxSubjectSeconds > 0 ? seconds / maxSubjectSeconds : 0,
+      isActive,
+    });
   });
+  // Materie di oggi con un obiettivo proprio (le altre non lo hanno o non contano).
+  const goalSubjectCount = subjects.filter((s) => s.dailyGoalMinutes > 0 && isScheduledOn(s, today)).length;
+
+  // Materia di riferimento: quella del timer o, da fermo, la prima di oggi (poi la prima delle altre).
+  const currentSubject = activeSubject ?? rows[0]?.subject ?? otherRows[0]?.subject ?? null;
+
+  /** Le righe di oggi che ci stanno in una card da `max` righe: il pulsante "Altre" (se c'è) ne prende una. */
+  function fitRows(max: number): SubjectRow[] {
+    return visibleRows(rows, otherRows.length > 0 ? max - 1 : max);
+  }
 
   let cycles: CycleInfo | null = null;
   if (!isIdle && !isStopwatch && currentSubject) {
@@ -134,7 +177,19 @@ export function useStudyCard({ withWeek = false }: { withWeek?: boolean } = {}) 
     todayText: formatHoursMinutes(todaySeconds),
     goalSeconds,
     goalProgress,
+    /** "4h 00m"; null senza obiettivo. */
+    goalText: goalSeconds > 0 ? formatHoursMinutes(goalSeconds) : null,
+    goalSubjectCount,
+    /** Nome del giorno, es. "mercoledì". */
+    todayName: dayName(today),
     rows,
+    otherRows,
+    fitRows,
+    /** Testo dell'elenco vuoto: nessuna materia, oppure nessuna prevista oggi (le altre restano sotto "Altre"). */
+    emptyText: !view.ready ? "" : otherRows.length > 0 ? "Nessuna materia prevista oggi." : "Aggiungi materie dai dettagli del widget.",
+    othersOpen,
+    openOthers: () => setOthersOpen(true),
+    closeOthers: () => setOthersOpen(false),
     cycles,
     nextPhaseText,
     nextPhaseShort,

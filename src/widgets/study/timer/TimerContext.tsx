@@ -37,6 +37,7 @@ import { classifyApp, parseAppCategories, type AppCategory } from "../../../core
 import type { AppSettings } from "../../../core/settings/schema";
 import { colorForSubject, pickUnusedColor } from "../lib/colors";
 import { formatHoursMinutes } from "../lib/format";
+import { todayGoalSeconds as computeTodayGoal } from "../lib/schedule";
 import { playChime } from "./alerts";
 import { AutoStopTracker, type AutoStopResult } from "./autoStop";
 import { IDLE_TIMER, advanceTo, isStopwatch, upcomingEnds, type PhaseEnd } from "./phases";
@@ -112,6 +113,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<TimerState>(IDLE_STATE);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [todayBySubject, setTodayBySubject] = useState<Record<number, number>>({});
+  const [dayStart, setDayStart] = useState(() => todayRangeMs().start);
   const [, forceTick] = useState(0);
 
   // Ref sempre allineati all'ultimo valore: servono dentro il setInterval e
@@ -140,6 +142,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       total += session.durationSeconds;
     }
     setTodayBySubject(totals);
+    // Stesso numero = nessun nuovo render; a mezzanotte cambia e con lui materie di oggi e obiettivo.
+    setDayStart(start);
     // Per intestazione e barra laterale della dashboard, che non conoscono lo Studio.
     publishActivity({
       studyTodaySeconds: total,
@@ -204,17 +208,24 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     });
   }, [state.phase, state.runningSince, state.phaseTotalSeconds, state.remainingSeconds]);
 
+  // L'unico posto dove si calcola l'obiettivo di oggi: lo leggono le card, il dettaglio e (dal bus) la barra laterale.
+  const todayGoalSeconds = computeTodayGoal(subjects, new Date(dayStart), settings.studyDailyGoalMinutes);
+  useEffect(() => {
+    publishActivity({ studyTodayGoalSeconds: todayGoalSeconds });
+  }, [todayGoalSeconds]);
+
   // Obiettivo giornaliero superato: evento UNA volta, nel momento in cui si passa la soglia
   // (non al caricamento se era già superato).
   const prevTodayTotalRef = useRef<number | null>(null);
   useEffect(() => {
     if (!ready) return;
     const total = Object.values(todayBySubject).reduce((sum, v) => sum + v, 0);
-    const goal = settings.studyDailyGoalMinutes * 60;
     const prev = prevTodayTotalRef.current;
     prevTodayTotalRef.current = total;
-    if (prev !== null && goal > 0 && prev < goal && total >= goal) emitActivityEvent({ type: "goalReached" });
-  }, [ready, todayBySubject, settings.studyDailyGoalMinutes]);
+    if (prev !== null && todayGoalSeconds > 0 && prev < todayGoalSeconds && total >= todayGoalSeconds) {
+      emitActivityEvent({ type: "goalReached" });
+    }
+  }, [ready, todayBySubject, todayGoalSeconds]);
 
   // Materie e sessioni arrivate dagli altri dispositivi (core/sync/): si rileggono.
   useEffect(
@@ -645,6 +656,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         cycleCount: state.cycleCount,
         subjects,
         todayBySubject,
+        dayStart,
+        todayGoalSeconds,
         startWork,
         switchSubject,
         pause,

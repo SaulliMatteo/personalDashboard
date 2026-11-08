@@ -173,6 +173,17 @@ test("vista senza ordinamento: resta null", () => {
 
 // ---------------------------------------------------------------- pull
 
+test("materia da una versione vecchia (senza giorni né obiettivo): valori di ripiego, non NULL", () => {
+  const result = dataToRow("subject", { name: "Analisi", created_at: 1, color: "#fff", mode: "pomodoro", work_minutes: 25, short_break_minutes: 5, long_break_minutes: 15, cycles_before_long_break: 4, archived_at: null }, pull("B"));
+  assert.ok(result.ok);
+  assert.equal(result.row.study_days, 0);
+  assert.equal(result.row.daily_goal_minutes, 0);
+  const nuova = dataToRow("subject", { name: "Fisica", created_at: 1, study_days: 5, daily_goal_minutes: 60 }, pull("B"));
+  assert.ok(nuova.ok);
+  assert.equal(nuova.row.study_days, 5);
+  assert.equal(nuova.row.daily_goal_minutes, 60);
+});
+
 test("elemento arrivato prima di quello a cui punta: rimandato con l'id che manca", () => {
   const result = dataToRow("page", { note_id: "u-nuova", position: 0, content: '<div data-view="u-vista-nuova"></div>', ink: "[]", background: "dots", pdf_ink: "{}", pins: "[]" }, pull("B"));
   assert.deepEqual(result, { ok: false, missing: ["u-nuova", "u-vista-nuova"] });

@@ -429,8 +429,8 @@ export const MIGRATIONS: Migration[] = [
       `ALTER TABLE notes ADD COLUMN title_color TEXT`,
     ],
   },
-  // La 18 è dello Studio (giorni e obiettivi per materia, branch non ancora in dev): qui si salta apposta, così un
-  // DB già passato dalla 18 riceve comunque questa. Il runner applica le versioni > user_version, i buchi non contano.
+  // La 18 era dello Studio (giorni e obiettivi per materia, sul suo ramo): resta vuota apposta, quelle colonne sono
+  // nella 26. Il runner applica le versioni > user_version, i buchi non contano.
   {
     version: 19,
     description: "YouTube: rinvii dei video consigliati e scarti per canale",
@@ -596,6 +596,23 @@ export const MIGRATIONS: Migration[] = [
          read_at INTEGER
        )`,
       `CREATE INDEX IF NOT EXISTS idx_app_notifications_created ON app_notifications(created_at)`,
+    ],
+  },
+  {
+    version: 26,
+    description: "Studio: giorni della settimana e obiettivo giornaliero per materia (con il sync)",
+    statements: [
+      // Erano la 18 del ramo dello Studio, mai rilasciata: un DB già oltre la 18 la salterebbe, quindi stanno qui.
+      // Su un DB passato da quella 18 non fanno nulla (duplicate column ignorato in core/db/index.ts).
+      // Bitmask dei giorni: bit 0 = lunedì … bit 6 = domenica (widgets/study/lib/schedule.ts); 0 = ogni giorno.
+      `ALTER TABLE subjects ADD COLUMN study_days INTEGER NOT NULL DEFAULT 0`,
+      // Minuti al giorno, uguali in ogni giorno della materia; 0 = nessun obiettivo.
+      `ALTER TABLE subjects ADD COLUMN daily_goal_minutes INTEGER NOT NULL DEFAULT 0`,
+      // Trigger del sync rifatti con le due colonne nuove (core/sync/tables.ts), altrimenti non viaggerebbero.
+      `DROP TRIGGER IF EXISTS sync_subjects_ins`,
+      `DROP TRIGGER IF EXISTS sync_subjects_upd`,
+      `DROP TRIGGER IF EXISTS sync_subjects_del`,
+      ...syncTracking("subjects", "id", ["name", "created_at", "color", "mode", "work_minutes", "short_break_minutes", "long_break_minutes", "cycles_before_long_break", "archived_at", "study_days", "daily_goal_minutes"]),
     ],
   },
 ];

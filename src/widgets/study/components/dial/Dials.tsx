@@ -4,7 +4,7 @@ import "./dials.css";
 
 const TICKS = 60;
 
-interface DialProps {
+export interface DialProps {
   /** Lato del quadrante in px. */
   size: number;
   /** Avanzamento della fase, 0..1. */
@@ -86,6 +86,39 @@ export function DotDial({ size, progress, running, children }: DialProps & { run
           const cls = isLed ? "is-led" : i < lit ? "is-on" : "is-off";
           return <circle key={i} className={cls} cx={cx} cy={cy} r={isLed ? 4 : 2.5} />;
         })}
+      </svg>
+      <div className="dial-center">{children}</div>
+    </div>
+  );
+}
+
+/** Spessore dell'anello di Opaco: lo stesso della barra .so-bar del widget. */
+const RING_STROKE = 16;
+
+/**
+ * Opaco: il timer non ha un quadrante (tempo enorme e barra), qui serve un anello pieno
+ * con lo spessore della barra. Il progresso parte da ore 12, con le estremità arrotondate.
+ */
+export function RingDial({ size, progress, children }: DialProps) {
+  const p = Math.min(1, Math.max(0, progress)) * 100;
+  const c = size / 2;
+  const r = c - RING_STROKE / 2;
+  return (
+    <div className="dial ring-dial" style={{ width: size, height: size }}>
+      <svg className="dial-svg" viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+        <circle className="ring-dial-track" cx={c} cy={c} r={r} strokeWidth={RING_STROKE} />
+        {p > 0 && (
+          <circle
+            className="ring-dial-ink"
+            cx={c}
+            cy={c}
+            r={r}
+            strokeWidth={RING_STROKE}
+            pathLength={100}
+            strokeDasharray={`${p} 100`}
+            transform={`rotate(-90 ${c} ${c})`}
+          />
+        )}
       </svg>
       <div className="dial-center">{children}</div>
     </div>

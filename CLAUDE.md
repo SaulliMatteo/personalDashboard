@@ -90,14 +90,17 @@ prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabas
 quando si tocca `widgets/study/timer/phases.ts`, `scripts/sync/records.test.mts`, `scripts/sync/schema.test.mts` (questa
 su SQLite vero con `node:sqlite`, tutte le migrazioni da zero) e `scripts/sync/round.test.mts` (due dispositivi su SQLite
 vero e un server finto) quando si tocca `core/sync/` o una tabella sincronizzata, `node scripts/sync/files.test.mts`
-quando si tocca `widgets/notes/sync/filePlan.ts`.
+quando si tocca `widgets/notes/sync/filePlan.ts`, quelle dello Studio (`scripts/studio/`: piano settimanale e Prospettiva)
+quando si tocca `widgets/study/lib/`.
 
 ```bash
-# Prove pure (scripts/gruppi/<nome>.test.mts e scripts/youtube/<nome>.test.mts, nessun server); una alla volta:
+# Prove pure (scripts/gruppi/, scripts/youtube/ e scripts/studio/<nome>.test.mts, nessun server); una alla volta:
 npx rolldown scripts/gruppi/chat.test.mts --file node_modules/.tmp/gruppi-chat.test.mjs --platform node
 node node_modules/.tmp/gruppi-chat.test.mjs
 npx rolldown scripts/youtube/recommender.test.mts --file node_modules/.tmp/youtube-recommender.test.mjs --platform node
 node node_modules/.tmp/youtube-recommender.test.mjs
+npx rolldown scripts/studio/schedule.test.mts --file node_modules/.tmp/studio-schedule.test.mjs --platform node
+node node_modules/.tmp/studio-schedule.test.mjs
 # Server dei Gruppi (Supabase locale, serve Docker): migrazioni in supabase/migrations/, test pgTAP in
 # supabase/tests/database/ (helper condivisi in _aiuti.psql)
 npx supabase start

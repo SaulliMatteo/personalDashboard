@@ -1,0 +1,117 @@
+/* Scheda Prospettiva: card, intestazione e selettore periodo vengono da reportTab.css. */
+
+.study-persp-intro {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.study-persp-intro strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.study-persp-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 640px) {
+  .study-persp-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.study-persp-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  padding: 22px 18px 18px;
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+  text-align: center;
+}
+
+.study-persp-dial {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 240px;
+}
+
+/* Percentuale al centro, nel carattere display del tema; i cqw seguono il quadrante. */
+.study-persp-value {
+  font-family: var(--font-display);
+  font-size: 23cqw;
+  font-weight: var(--display-weight);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.study-persp-caption {
+  margin-top: max(4px, 2.5cqw);
+  max-width: 62%;
+  font-size: max(11px, 5cqw);
+  line-height: 1.25;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="quaderno"] .study-persp-value {
+  font-size: 30cqw;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .study-persp-value {
+  font-weight: 900;
+  color: var(--dot-on);
+}
+
+.study-persp-title {
+  margin: 16px 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.study-persp-detail {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.study-persp-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 16px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.study-persp-settings {
+  all: unset;
+  box-sizing: border-box;
+  font-size: 12.5px;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.study-persp-settings:hover {
+  text-decoration: underline;
+}
+
+.study-persp-settings:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

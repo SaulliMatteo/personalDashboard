@@ -216,6 +216,39 @@
   color: var(--text-secondary);
 }
 
+.sq-goal {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.sq-muted {
+  color: var(--text-muted);
+}
+
+.sq-check {
+  margin-right: 5px;
+  vertical-align: -1px;
+  color: var(--success-text);
+}
+
+/* "Altre materie": scritto a mano, come un appunto; apre il pop-up con le materie non di oggi. */
+.sq-others-toggle {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1.2;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+
+
+
 /* ---------- 3×3 ---------- */
 .sq-head {
   display: flex;

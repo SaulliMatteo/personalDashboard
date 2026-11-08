@@ -16,16 +16,28 @@ export interface Subject {
   cyclesBeforeLongBreak: number;
   /** null = materia attiva; altrimenti quando è stata archiviata (ms). Le archiviate restano nel report. */
   archivedAt: number | null;
+  /** Giorni in cui va studiata: bit 0 = lunedì … bit 6 = domenica (lib/schedule.ts); 0 = ogni giorno. */
+  studyDays: number;
+  /** Obiettivo in minuti, uguale in ogni suo giorno; 0 = nessun obiettivo. */
+  dailyGoalMinutes: number;
 }
 
-/** Valori con cui nasce una materia (derivati dalle impostazioni dell'app). */
+/** Valori con cui nasce una materia (derivati dalle impostazioni dell'app). Giorni e obiettivo nascono a 0. */
 export type NewSubjectInput = Pick<
   Subject,
   "name" | "color" | "mode" | "workMinutes" | "shortBreakMinutes" | "longBreakMinutes" | "cyclesBeforeLongBreak"
 >;
 
 /** Campi modificabili di una materia già esistente (tutti tranne id/nome/data). */
-export type SubjectSettingsPatch = Partial<Omit<NewSubjectInput, "name">>;
+export type SubjectSettingsPatch = Partial<Omit<NewSubjectInput, "name"> & Pick<Subject, "studyDays" | "dailyGoalMinutes">>;
+
+/** Limiti di giorni (7 bit) e obiettivo (come l'obiettivo globale, 12 h). */
+export const STUDY_DAYS_MAX = 127;
+export const DAILY_GOAL_MAX_MINUTES = 720;
+
+function clampInt(value: number, min: number, max: number): number {
+  return Number.isFinite(value) ? Math.min(max, Math.max(min, Math.round(value))) : min;
+}
 
 interface SubjectRow {
   id: number;
@@ -38,10 +50,12 @@ interface SubjectRow {
   long_break_minutes: number;
   cycles_before_long_break: number;
   archived_at: number | null;
+  study_days: number;
+  daily_goal_minutes: number;
 }
 
 const SUBJECT_COLUMNS = `id, name, created_at, color, mode, work_minutes, short_break_minutes,
-  long_break_minutes, cycles_before_long_break, archived_at`;
+  long_break_minutes, cycles_before_long_break, archived_at, study_days, daily_goal_minutes`;
 
 function mapSubjectRow(r: SubjectRow): Subject {
   return {
@@ -55,6 +69,8 @@ function mapSubjectRow(r: SubjectRow): Subject {
     longBreakMinutes: r.long_break_minutes,
     cyclesBeforeLongBreak: r.cycles_before_long_break,
     archivedAt: r.archived_at,
+    studyDays: clampInt(r.study_days, 0, STUDY_DAYS_MAX),
+    dailyGoalMinutes: clampInt(r.daily_goal_minutes, 0, DAILY_GOAL_MAX_MINUTES),
   };
 }
 
@@ -144,9 +160,14 @@ const PATCH_COLUMNS: Record<keyof SubjectSettingsPatch, string> = {
   shortBreakMinutes: "short_break_minutes",
   longBreakMinutes: "long_break_minutes",
   cyclesBeforeLongBreak: "cycles_before_long_break",
+  studyDays: "study_days",
+  dailyGoalMinutes: "daily_goal_minutes",
 };
 
-export async function updateSubject(id: number, patch: SubjectSettingsPatch): Promise<void> {
+export async function updateSubject(id: number, input: SubjectSettingsPatch): Promise<void> {
+  const patch = { ...input };
+  if (patch.studyDays !== undefined) patch.studyDays = clampInt(patch.studyDays, 0, STUDY_DAYS_MAX);
+  if (patch.dailyGoalMinutes !== undefined) patch.dailyGoalMinutes = clampInt(patch.dailyGoalMinutes, 0, DAILY_GOAL_MAX_MINUTES);
   const keys = (Object.keys(patch) as (keyof SubjectSettingsPatch)[]).filter((k) => k in PATCH_COLUMNS);
   if (keys.length === 0) return;
   const db = await getDatabase();

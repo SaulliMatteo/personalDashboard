@@ -1,10 +1,12 @@
 import type { MouseEvent } from "react";
 import type { SizeKey } from "../../../core/widgets/sizes";
-import { MODE_LABEL, formatHoursMinutes } from "../lib/format";
+import { MODE_LABEL, formatGoal, formatHoursMinutes } from "../lib/format";
 import { DialFit, PenDial } from "../components/dial/Dials";
+import DoneCheck from "./DoneCheck";
+import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
-import { useStudyCard, visibleRows, type StudyCardData } from "./useStudyCard";
+import { useStudyCard, type StudyCardData } from "./useStudyCard";
 import "./StudyCardQuaderno.css";
 
 // Linea "a penna" sotto il tempo della 1×1.
@@ -78,14 +80,17 @@ function StudyCardQuaderno({ size }: { size: SizeKey }) {
 }
 
 function Subjects({ data }: { data: StudyCardData }) {
-  const rows = visibleRows(data.rows, 5);
+  const rows = data.fitRows(5);
   return (
     <div className="sq-subjects">
       <div className="sq-subjects-head">
-        <span>Oggi</span>
-        <span className="sq-total">{data.todayText}</span>
+        <span>Oggi, {data.todayName}</span>
+        <span>
+          <span className="sq-total">{data.todayText}</span>
+          {data.goalSeconds > 0 && <span className="sq-goal"> su {formatGoal(data.goalSeconds)}</span>}
+        </span>
       </div>
-      {rows.length === 0 && <p className="sq-empty">{data.ready ? "Aggiungi materie dai dettagli del widget." : ""}</p>}
+      {rows.length === 0 && <p className="sq-empty">{data.emptyText}</p>}
       <div className="sq-rows">
         {rows.map((row) => (
           <button
@@ -102,10 +107,15 @@ function Subjects({ data }: { data: StudyCardData }) {
             <span className="sq-row-name">
               <span>{row.subject.name}</span>
             </span>
-            <span className="sq-row-time">{formatHoursMinutes(row.seconds)}</span>
+            <span className="sq-row-time">
+              {row.isDone && <DoneCheck className="sq-check" />}
+              {formatHoursMinutes(row.seconds)}
+              {row.goalSeconds > 0 && <span className="sq-muted"> / {formatHoursMinutes(row.goalSeconds)}</span>}
+            </span>
           </button>
         ))}
       </div>
+      <OthersToggle data={data} className="sq-others-toggle" label={`+ altre ${data.otherRows.length} materie`} />
     </div>
   );
 }

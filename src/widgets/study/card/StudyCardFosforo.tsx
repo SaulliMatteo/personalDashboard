@@ -3,9 +3,11 @@ import type { SizeKey } from "../../../core/widgets/sizes";
 import type { SubjectMode } from "../data/studyRepository";
 import { MODE_LABEL, formatHoursMinutes, formatHoursMinutesCompact } from "../lib/format";
 import { DialFit, DotDial } from "../components/dial/Dials";
+import DoneCheck from "./DoneCheck";
+import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
-import { useStudyCard, visibleRows, type StudyCardData } from "./useStudyCard";
+import { useStudyCard, type StudyCardData } from "./useStudyCard";
 import "./StudyCardFosforo.css";
 
 /** Celle della barra dell'obiettivo di oggi. */
@@ -97,7 +99,7 @@ function ModeSwitch({ data }: { data: StudyCardData }) {
 }
 
 function Side({ data, withCycles }: { data: StudyCardData; withCycles: boolean }) {
-  const rows = visibleRows(data.rows, 5);
+  const rows = data.fitRows(5);
   const lit = Math.round(data.goalProgress * GOAL_CELLS);
   return (
     <div className="sf-side">
@@ -106,13 +108,20 @@ function Side({ data, withCycles }: { data: StudyCardData; withCycles: boolean }
         <span className="sf-total">{formatHoursMinutesCompact(data.todaySeconds)}</span>
       </div>
       {data.goalSeconds > 0 && (
-        <div className="sf-goal" title={`Obiettivo ${formatHoursMinutes(data.goalSeconds)}`}>
-          {Array.from({ length: GOAL_CELLS }, (_, i) => (
-            <span key={i} aria-hidden="true" className={i < lit ? "is-on" : ""} />
-          ))}
-        </div>
+        <>
+          <div className="sf-goal" title={`Obiettivo ${formatHoursMinutes(data.goalSeconds)}`}>
+            {Array.from({ length: GOAL_CELLS }, (_, i) => (
+              <span key={i} aria-hidden="true" className={i < lit ? "is-on" : ""} />
+            ))}
+          </div>
+          <div className="sf-sec">
+            Obiettivo {formatHoursMinutesCompact(data.goalSeconds)}
+            {data.goalSubjectCount > 0 &&
+              ` · ${data.goalSubjectCount} ${data.goalSubjectCount === 1 ? "materia" : "materie"}`}
+          </div>
+        </>
       )}
-      {rows.length === 0 && <p className="sf-sec sf-empty">{data.ready ? "Aggiungi materie dai dettagli del widget." : ""}</p>}
+      {rows.length === 0 && <p className="sf-sec sf-empty">{data.emptyText}</p>}
       <div className="sf-rows">
         {rows.map((row) => (
           <button
@@ -127,10 +136,15 @@ function Side({ data, withCycles }: { data: StudyCardData; withCycles: boolean }
             }}
           >
             <span className="sf-row-name">{row.subject.name}</span>
-            <span className="sf-row-time">{formatHoursMinutes(row.seconds)}</span>
+            <span className="sf-row-time">
+              {row.isDone && <DoneCheck className="sf-check" />}
+              {formatHoursMinutes(row.seconds)}
+              {row.goalSeconds > 0 && <span className="sf-muted"> / {formatHoursMinutes(row.goalSeconds)}</span>}
+            </span>
           </button>
         ))}
       </div>
+      <OthersToggle data={data} className="sf-others-toggle" label={`Altre materie · ${data.otherRows.length}`} />
       {withCycles && data.cycles && (
         <div className="sf-sec sf-cycles">
           {data.cycles.label}.{data.nextPhaseShort ? ` ${data.nextPhaseShort}` : ""}

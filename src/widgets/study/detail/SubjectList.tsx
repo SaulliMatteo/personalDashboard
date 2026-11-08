@@ -15,12 +15,18 @@ import SubjectSettingsPopup from "../components/SubjectSettingsPopup";
 import { listArchivedSubjects, type Subject, type SubjectMode } from "../data/studyRepository";
 import { colorForSubject } from "../lib/colors";
 import { formatHoursMinutes } from "../lib/format";
+import { dayName, daysLabel, isTodaySubject } from "../lib/schedule";
 import { useTimer } from "../timer/useTimer";
 
-/** Elenco materie (avvio, impostazioni, archiviazione) + materie archiviate + form per aggiungerne. */
+/**
+ * Elenco materie (avvio, impostazioni, archiviazione): quelle di oggi, poi "Altre materie" richiudibile
+ * (stessa divisione della card, `isTodaySubject`), le archiviate e il form per aggiungerne.
+ */
 function SubjectList() {
-  const { phase, subjectId, subjects, todayBySubject, startWork, addSubject, updateSubject, renameSubject, archiveSubject, restoreSubject } =
-    useTimer();
+  const {
+    phase, subjectId, subjects, todayBySubject, dayStart, startWork, addSubject, updateSubject, renameSubject, archiveSubject,
+    restoreSubject,
+  } = useTimer();
   const { settings } = useSettings();
 
   const [newName, setNewName] = useState("");
@@ -30,6 +36,7 @@ function SubjectList() {
   const [settingsId, setSettingsId] = useState<number | null>(null);
   const [archived, setArchived] = useState<Subject[]>([]);
   const [showArchived, setShowArchived] = useState(false);
+  const [showOthers, setShowOthers] = useState(false);
 
   // `subjects` cambia identità dopo ogni archiviazione/ripristino: da lì si rilegge l'elenco delle archiviate.
   useEffect(() => {
@@ -49,6 +56,61 @@ function SubjectList() {
   const settingsIndex = subjects.findIndex((s) => s.id === settingsId);
   const settingsSubject = settingsIndex >= 0 ? subjects[settingsIndex] : null;
 
+  // Di oggi e altre; il colore usa l'indice nell'elenco completo, come nella card.
+  const today = new Date(dayStart);
+  const indexed = subjects.map((subject, index) => ({ subject, index }));
+  const todaySubjects = indexed.filter(({ subject }) =>
+    isTodaySubject(subject, today, todayBySubject[subject.id] ?? 0, subject.id === subjectId)
+  );
+  const otherSubjects = indexed.filter((item) => !todaySubjects.includes(item));
+
+  function renderRow(subject: Subject, index: number, isOther = false) {
+    const isActive = subject.id === subjectId;
+    const daysText = isOther ? daysLabel(subject.studyDays) : "";
+    return (
+      <div key={subject.id} className={`study-subject-row${isActive ? " is-active" : ""}`}>
+        <button
+          type="button"
+          className={`study-row-gear${settingsId === subject.id ? " is-open" : ""}`}
+          onClick={() => setSettingsId(subject.id)}
+          aria-label={`Impostazioni ${subject.name}`}
+          title="Impostazioni materia"
+        >
+          <MdSettings />
+        </button>
+        <span className="study-subject-dot" style={{ background: colorForSubject(subject, index) }} />
+        <span className="study-subject-name">
+          <span>{subject.name}</span>
+          {daysText && <span className="study-subject-days"> · di {daysText}</span>}
+        </span>
+        <span className="study-subject-mode" title={subject.mode === "stopwatch" ? "Cronometro" : "Pomodoro"}>
+          {subject.mode === "stopwatch" ? <MdOutlineAvTimer /> : <MdOutlineHourglassBottom />}
+        </span>
+        <span className="study-subject-time">{formatHoursMinutes(todayBySubject[subject.id] ?? 0)}</span>
+        <button
+          type="button"
+          className="study-icon-btn study-icon-btn--small"
+          disabled={!canStart}
+          onClick={() => startWork(subject.id)}
+          aria-label={`Studia ${subject.name}`}
+          title={canStart ? `Studia ${subject.name}` : "Ferma la sessione in corso per cambiare materia"}
+        >
+          <MdPlayArrow />
+        </button>
+        <button
+          type="button"
+          className="study-icon-btn study-icon-btn--small study-icon-btn--muted"
+          disabled={isActive}
+          onClick={() => archiveSubject(subject.id)}
+          aria-label={`Archivia ${subject.name}`}
+          title={isActive ? "Non puoi archiviare la materia in corso di studio" : "Archivia: sparisce dal timer, il tempo studiato resta nel report"}
+        >
+          <MdOutlineArchive />
+        </button>
+      </div>
+    );
+  }
+
   async function handleAdd(e: FormEvent) {
     e.preventDefault();
     setAddError(null);
@@ -63,55 +125,31 @@ function SubjectList() {
 
   return (
     <section className="study-subjects-card">
-      <h2 className="study-section-title">Materie</h2>
+      <h2 className="study-section-title">{subjects.length > 0 ? `Materie di ${dayName(today)}` : "Materie"}</h2>
 
       <div className="study-subjects-list">
         {subjects.length === 0 && <p className="study-empty">Nessuna materia ancora. Aggiungine una qui sotto per iniziare.</p>}
+        {subjects.length > 0 && todaySubjects.length === 0 && <p className="study-empty">Nessuna materia prevista oggi.</p>}
 
-        {subjects.map((subject, index) => {
-          const isActive = subject.id === subjectId;
-          return (
-            <div key={subject.id} className={`study-subject-row${isActive ? " is-active" : ""}`}>
-              <button
-                type="button"
-                className={`study-row-gear${settingsId === subject.id ? " is-open" : ""}`}
-                onClick={() => setSettingsId(subject.id)}
-                aria-label={`Impostazioni ${subject.name}`}
-                title="Impostazioni materia"
-              >
-                <MdSettings />
-              </button>
-              <span className="study-subject-dot" style={{ background: colorForSubject(subject, index) }} />
-              <span className="study-subject-name">
-                <span>{subject.name}</span>
-              </span>
-              <span className="study-subject-mode" title={subject.mode === "stopwatch" ? "Cronometro" : "Pomodoro"}>
-                {subject.mode === "stopwatch" ? <MdOutlineAvTimer /> : <MdOutlineHourglassBottom />}
-              </span>
-              <span className="study-subject-time">{formatHoursMinutes(todayBySubject[subject.id] ?? 0)}</span>
-              <button
-                type="button"
-                className="study-icon-btn study-icon-btn--small"
-                disabled={!canStart}
-                onClick={() => startWork(subject.id)}
-                aria-label={`Studia ${subject.name}`}
-                title={canStart ? `Studia ${subject.name}` : "Ferma la sessione in corso per cambiare materia"}
-              >
-                <MdPlayArrow />
-              </button>
-              <button
-                type="button"
-                className="study-icon-btn study-icon-btn--small study-icon-btn--muted"
-                disabled={isActive}
-                onClick={() => archiveSubject(subject.id)}
-                aria-label={`Archivia ${subject.name}`}
-                title={isActive ? "Non puoi archiviare la materia in corso di studio" : "Archivia: sparisce dal timer, il tempo studiato resta nel report"}
-              >
-                <MdOutlineArchive />
-              </button>
-            </div>
-          );
-        })}
+        {todaySubjects.map(({ subject, index }) => renderRow(subject, index))}
+
+        {otherSubjects.length > 0 && (
+          <div className="study-archived study-others">
+            <button
+              type="button"
+              className="study-archived-toggle"
+              onClick={() => setShowOthers((open) => !open)}
+              aria-expanded={showOthers}
+            >
+              {showOthers ? <MdExpandLess /> : <MdExpandMore />}
+              Altre materie ({otherSubjects.length})
+            </button>
+
+            {showOthers && (
+              <div className="study-archived-list">{otherSubjects.map(({ subject, index }) => renderRow(subject, index, true))}</div>
+            )}
+          </div>
+        )}
       </div>
 
       <form className="study-add-subject" onSubmit={handleAdd}>

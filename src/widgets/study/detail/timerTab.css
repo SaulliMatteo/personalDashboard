@@ -413,3 +413,14 @@
   -webkit-box-orient: vertical;
   overflow-wrap: anywhere;
 }
+
+/* "Altre materie": le non previste oggi, sotto quelle di oggi; scorrono con l'elenco. */
+.study-others {
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.study-subject-days {
+  font-size: max(12px, var(--fs-min));
+  color: var(--text-muted);
+}

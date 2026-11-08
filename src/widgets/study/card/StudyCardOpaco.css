@@ -141,6 +141,33 @@
   cursor: pointer;
 }
 
+.so-chip.is-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.so-check {
+  color: var(--success-text);
+}
+
+.so-chip.is-active .so-check {
+  color: currentColor;
+}
+
+/* "+N altre": solo contorno; apre il pop-up con le materie non di oggi. */
+.so-chip--toggle {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--pg-dark);
+}
+
+
+
+
+.so-focus-today {
+  flex: 0 0 auto;
+}
+
 .so-chip.is-active {
   background: var(--pg-ink);
   color: var(--pg-light);
