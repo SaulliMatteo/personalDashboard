@@ -16,11 +16,15 @@ npm install
 npm run tauri dev      # sviluppo (finestra Tauri, compila anche Rust e C)
 npm run tauri build    # installer
 npm run build          # tsc -b + vite build: è il controllo dei tipi
-npm run lint           # oxlint (plugin react/typescript/oxc, vedi .oxlintrc.json)
+npm run lint           # oxlint (plugin react/typescript/oxc, vedi .oxlintrc.json); ~600 avvisi già noti
+                       # (quasi tutti della pagina iPad impacchettata): il controllo è "nessun avviso nuovo"
 cd src-tauri && cargo check   # dopo modifiche a Rust o C
 ```
 
 Servono Node (LTS), Rust e i prerequisiti di Tauri v2 per il sistema.
+
+## Android e telefono
+
 Android (`npx tauri android dev` / `npx tauri android build --debug --apk --target x86_64` per l'emulatore): servono
 `ANDROID_HOME`, `NDK_HOME` e un `JAVA_HOME` su una JDK che Gradle 8.14.3 supporti (21 o 23), **non** la JBR 25 di
 Android Studio: con quella Gradle si ferma su `A problem occurred configuring project ':buildSrc'. > 25.0.4`.
@@ -59,7 +63,10 @@ alto `ui/CompactBar` (titolo e ← della pagina; i `.dashboard-header` dei detta
 dashboard `features/dashboard/MobileDashboard.tsx` a pagine 2×4 (4×2 in orizzontale) con i widget scalati con `zoom`.
 Il suo layout è separato: tabella `dashboard_layout_mobile` (`core/layout/mobileLayout.ts` puro, prova
 `scripts/layout/mobileLayout.test.mts`), mai scritto su `dashboard_layout`; il catalogo passa da
-`features/settings/catalog/useCatalogLayout.ts`. Impostazioni solo desktop: `desktopOnly` in `SETTING_DEFS`;
+`features/settings/catalog/useCatalogLayout.ts`. Taglie che esistono solo sul telefono (es. 2×1 di Studio e Gruppi):
+`phoneSizes` nella `WidgetDefinition`, non in `sizes` (che vale anche per il desktop); le unisce solo `phoneSizes()` di
+`mobileLayout.ts`. I dati di quelle card stanno in hook/funzioni senza UI (`useStudyCard`, `previewFaces`), pensati per
+un futuro widget della Home di Android. Impostazioni solo desktop: `desktopOnly` in `SETTING_DEFS`;
 solo dove ci sono i segnali di sistema (app in primo piano, Windows e macOS): `systemSignals`; testi diversi su Android:
 `android: { label, description }`. Uscite dall'app su Android (stop automatico dello Studio): `MainActivity.kt` manda
 `pd-away` (uscita, rientro, tempo a schermo acceso fuori dall'app), letto solo da `core/system/androidAway.ts`.
@@ -83,8 +90,13 @@ anche (`noteEditor.css`). Stanza comune in verticale: `RoomScene layout="column"
 Android non conosce `scrollbar-width`: una barra di scorrimento stilizzata con `::-webkit-scrollbar` va tolta a mano
 sul telefono (come `.main` in `app/shell.css`). Uno "schermo intero" fatto con una classe (Lavagna) non lo vede
 `overlays.ts`: serve un suo `useBackHandler`.
+
+## Verifica e prove
+
 Non c'è un test runner né la CI di test: si verifica con `npm run build` + `npm run lint` (+ `cargo check`), più le
-prove dei Gruppi qui sotto quando si toccano `social/`, `core/cloud/` o `supabase/`, quella dei consigli YouTube
+prove dei Gruppi quando si toccano `social/`, `core/cloud/` o `supabase/` (in `scripts/gruppi/` c'è un
+`<modulo>.test.mts` per modulo: chat, presence, room, leaderboard, friends, chatCards, sync, subjects, todo, pixy; i
+test pgTAP se si tocca il server), quella dei consigli YouTube
 (`scripts/youtube/recommender.test.mts`) quando si tocca `widgets/youtube/lib/recommender.ts` e
 `node scripts/layout/mobileLayout.test.mts` quando si tocca `core/layout/mobileLayout.ts`, `node scripts/study/phases.test.mts`
 quando si tocca `widgets/study/timer/phases.ts`, `scripts/sync/records.test.mts`, `scripts/sync/schema.test.mts` (questa
@@ -156,7 +168,7 @@ Debito noto: `widgets/youtube/screens/WatchScreen.tsx` importa `study/data/study
   Se le opzioni dipendono dal registry (che `core` non può importare) la chiave è `text` nello schema e la pagina
   passa a `SettingsSection` un `overrides` con il select (es. `headerSlot1/2` in `tabs/DashboardTab.tsx`).
 - Metadati interni dell'app: store chiave/valore `core/db/meta.ts`, non le impostazioni.
-- Sync tra dispositivi (`core/sync/`, in corso sul ramo `feat/sync`): le tabelle sincronizzate (`SYNC_TABLES` in
+- Sync tra dispositivi (`core/sync/`): le tabelle sincronizzate (`SYNC_TABLES` in
   `core/sync/tables.ts`: Studio, Note, Raccolte, impostazioni) hanno trigger SQLite (migrazione 23) che danno a ogni riga
   un id globale (`sync_map`) e segnano le righe cambiate (`sync_outbox`); tacciono con `sync_state.applying = 1`. Una
   colonna nuova in una di quelle tabelle va aggiunta ai trigger (migrazione nuova con DROP/CREATE TRIGGER) e in
@@ -299,20 +311,18 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
 
 ## Design
 
-- I mockup approvati sono in `temi-dashboard/docs/design/temi/` e sono la fonte di verità per la grafica:
-  l'app deve risultare identica. Se codice e mockup non concordano, vale il mockup.
+- I mockup approvati sono in `docs/design/` (`temi/`, `mobile/` per il telefono, `amici-notifiche.html`) e sono la
+  fonte di verità per la grafica: l'app deve risultare identica. Se codice e mockup non concordano, vale il mockup.
 - Ogni colore viene dai token del tema: niente esadecimali nei componenti (eccezione: colori scelti dall'utente,
   come materie e cartelle).
 - Ogni nuovo widget deve funzionare in tutti e 4 i temi (Notte, Opaco, Quaderno, Fosforo), giorno e notte, e avere una taglia 1×1
-  ultra minimal (vedi `temi-dashboard/docs/design/temi/widget-1x1.html`).
+  ultra minimal.
 - Anche le pagine di dettaglio dei widget usano il linguaggio completo del tema (parti per tema, non solo colori).
 
-## Lavori in corso
+## Documenti di riferimento
 
-- Redesign dei temi (branch `feat/temi`): istruzioni complete in `temi-dashboard/docs/prompt-temi-claude-code.md`.
-  Leggilo solo quando lavori su questo redesign.
-- Gruppi (branch `online-version`): richiesta originale in `docs/prompt-gruppi.md`, stato e decisioni in
-  `docs/GRUPPI.md` (vale questo se i due non concordano). Leggili solo quando lavori sui Gruppi.
+- Gruppi: richiesta originale in `docs/prompt-gruppi.md`, stato e decisioni in `docs/GRUPPI.md` (vale questo se i due
+  non concordano). Leggili solo quando lavori sui Gruppi.
 
 ## Convenzioni e insidie
 
