@@ -181,3 +181,21 @@
   -webkit-box-orient: vertical;
   overflow-wrap: anywhere;
 }
+
+/* ---------- Telefono (docs/design/mobile/novita.html, vista 4): schede uguali a tutta larghezza, alte 44 px ---------- */
+:root[data-compact] .study-detail-header-actions {
+  flex: 1 1 auto;
+}
+
+:root[data-compact] .study-tabs {
+  flex: 1 1 auto;
+  padding: 4px;
+}
+
+:root[data-compact] .study-tabs button {
+  flex: 1 1 0;
+  justify-content: center;
+  height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+}

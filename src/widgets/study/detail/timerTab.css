@@ -424,3 +424,18 @@
   font-size: max(12px, var(--fs-min));
   color: var(--text-muted);
 }
+
+/* Telefono: l'ingranaggio della riga è un tocco da 44 px senza cambiare aspetto (come le altre aree in base.css). */
+@media (pointer: coarse) {
+  .study-row-gear,
+  .study-archived-toggle {
+    position: relative;
+  }
+
+  .study-row-gear::after,
+  .study-archived-toggle::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}
