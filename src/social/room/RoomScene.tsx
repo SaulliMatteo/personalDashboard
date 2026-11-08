@@ -77,7 +77,7 @@ function Window({ stars, moon = false }: { stars: [number, number, number][]; mo
   );
 }
 
-/** Come mostrare il posto: studia (testa china sul libro) o in pausa (appoggiato, con la tazza). */
+/** Come mostrare il posto: studia (testa china sul libro) o in pausa e in compagnia (appoggiato, con la tazza). */
 function seatLook(member: RoomMember | null) {
   if (!member) return "empty" as const;
   return member.kind === "studying" ? ("work" as const) : ("break" as const);
@@ -86,6 +86,8 @@ function seatLook(member: RoomMember | null) {
 function seatClock(member: RoomMember, serverNow: number): string {
   const p = member.presence;
   if (!p) return "";
+  // seduto col timer fermo, solo per compagnia
+  if (member.kind === "online") return "in compagnia";
   if (member.kind === "studying") return formatClock(phaseElapsedSeconds(p, serverNow));
   // in pausa: da quanto (pausa del pomodoro = tempo della fase, timer fermato = dall'ultimo cambio)
   const seconds = member.kind === "break" ? phaseElapsedSeconds(p, serverNow) : Math.max(0, (serverNow - p.changedAt) / 1000);
@@ -149,7 +151,7 @@ function Seat({
         <button
           type="button"
           className={`rs-free${position === props.reservedSeat ? " is-mine" : ""}`}
-          aria-label={position === props.reservedSeat ? "Il tuo posto, libero finché non studi" : "Posto libero, siediti qui"}
+          aria-label={position === props.reservedSeat ? "Il tuo posto, siediti qui" : "Posto libero, siediti qui"}
           onClick={() => props.onSit(position)}
         >
           <span className="rs-free-idle">{position === props.reservedSeat ? "il tuo posto" : "posto libero"}</span>
@@ -160,7 +162,7 @@ function Seat({
           type="button"
           className={`rs-seat-btn${selected ? " is-selected" : ""}`}
           aria-pressed={selected}
-          aria-label={`${member.username}${member.isMe ? ", sei tu" : ""}, ${member.kind === "studying" ? "sta studiando" : "in pausa"}`}
+          aria-label={`${member.username}${member.isMe ? ", sei tu" : ""}, ${member.kind === "studying" ? "sta studiando" : member.kind === "online" ? "in compagnia" : "in pausa"}`}
           onClick={() => props.onSelect(member.userId)}
         >
           <span className="rs-face-slot">

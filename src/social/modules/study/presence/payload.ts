@@ -39,6 +39,8 @@ export interface StudyPresence {
   room?: number;
   /** Posto scelto in quella sala (0..ROOM_SEATS-1, posizione nella scena); solo insieme a room. */
   seat?: number;
+  /** Seduto nella stanza comune col timer fermo, per compagnia (solo con phase "idle"; assente = fuori). */
+  sit?: true;
 }
 
 export interface BuildOptions {
@@ -51,6 +53,8 @@ export interface BuildOptions {
   room: number | null;
   /** Posto scelto nella sala (null o assente = posto automatico). */
   seat?: number | null;
+  /** Col timer fermo resta seduto nella stanza comune (impostazione groupsSitInRoom). */
+  sit?: boolean;
 }
 
 function cleanSubject(subject: string | null): string | undefined {
@@ -92,6 +96,7 @@ export function buildPresence(timer: StudyTimerSnapshot | null, options: BuildOp
   // la materia ha senso solo mentre si studia
   const subject = timer?.phase === "work" ? cleanSubject(options.subject) : undefined;
   if (subject) base.subject = subject;
+  if (base.phase === "idle" && options.sit === true) base.sit = true;
   if (validRoom(options.room)) {
     base.room = options.room;
     if (validSeat(options.seat)) base.seat = options.seat;
@@ -125,6 +130,7 @@ export function parsePresence(raw: unknown, serverNow: number): StudyPresence | 
   if (p.subject !== undefined && (typeof p.subject !== "string" || p.subject.length > SUBJECT_MAX_LENGTH)) return null;
   if (p.room !== undefined && !validRoom(p.room)) return null;
   if (p.seat !== undefined && !validSeat(p.seat)) return null;
+  if (p.sit !== undefined && p.sit !== true) return null;
 
   const presence: StudyPresence = {
     v: 1,
@@ -137,6 +143,8 @@ export function parsePresence(raw: unknown, serverNow: number): StudyPresence | 
   };
   const subject = typeof p.subject === "string" ? p.subject.trim() : "";
   if (subject && p.phase === "work") presence.subject = subject;
+  // seduto per compagnia ha senso solo col timer fermo: chi studia siede comunque
+  if (p.sit === true && p.phase === "idle") presence.sit = true;
   if (validRoom(p.room)) {
     presence.room = p.room;
     // un posto senza sala non vuol dire niente: si scarta
@@ -148,7 +156,9 @@ export function parsePresence(raw: unknown, serverNow: number): StudyPresence | 
 /** Quanto "conta" uno stato quando lo stesso utente ha più dispositivi connessi. */
 function rank(p: StudyPresence): number {
   if (p.phase === "work") return p.runningSince !== null ? 3 : 2;
-  return p.phase === "break" ? 1 : 0;
+  if (p.phase === "break") return 1;
+  // col timer fermo conta di più il dispositivo seduto nella stanza
+  return p.sit ? 0.5 : 0;
 }
 
 /** Lo stato di un utente dai payload dei suoi dispositivi: vince chi studia, a pari merito il più recente. */

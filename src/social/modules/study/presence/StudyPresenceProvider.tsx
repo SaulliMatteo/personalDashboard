@@ -32,6 +32,7 @@ export function StudyPresenceProvider({ children }: { children: ReactNode }) {
   const { rooms, seats } = choices;
   const hubRef = useRef<StudyPresenceHub | null>(null);
   const showSubject = settings.groupsShowSubject;
+  const sit = settings.groupsSitInRoom;
   // gruppi con lo Studio attivo, come stringa: l'effetto dei canali riparte solo se l'elenco cambia davvero
   const groupKey = groups
     .filter((g) => g.features.includes(STUDY_FEATURE_KEY))
@@ -42,8 +43,8 @@ export function StudyPresenceProvider({ children }: { children: ReactNode }) {
   // Lo stato da mandare: timer e materia dal bus, più le scelte dell'utente.
   const readLocal = useCallback((): LocalStudyState => {
     const activity = getActivity();
-    return { timer: activity.studyTimer, subject: showSubject ? activity.studySubjectName : null, rooms, seats };
-  }, [showSubject, rooms, seats]);
+    return { timer: activity.studyTimer, subject: showSubject ? activity.studySubjectName : null, rooms, seats, sit };
+  }, [showSubject, rooms, seats, sit]);
   const readLocalRef = useLatestRef(readLocal);
 
   useEffect(() => {

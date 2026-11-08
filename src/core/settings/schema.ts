@@ -148,6 +148,8 @@ export const DEFAULT_SETTINGS = {
   groupsSharePixyBubbles: false,
   /** Chi guarda può non vedere i fumetti degli altri anche se li mandano. */
   groupsShowOthersBubbles: true,
+  /** Nella Stanza comune si siede anche col timer fermo, per compagnia; "Alzati" lo spegne (acceso di default). */
+  groupsSitInRoom: true,
   /** Il foglietto Da fare ai compagni, solo dal vivo (spento di default). */
   groupsShareTodo: false,
   /** Notifica di sistema per i messaggi nuovi dei gruppi. */
@@ -316,6 +318,10 @@ export const SETTING_DEFS: SettingDef[] = [
   {
     key: "groupsNotifyMessages", group: "groups", section: "Stanza comune", type: "boolean", label: "Notifica i messaggi nuovi",
     description: "Quando l'app non è in primo piano o la scheda Messaggi è chiusa.",
+  },
+  {
+    key: "groupsSitInRoom", group: "groups", section: "Stanza comune", type: "boolean", label: "Siediti nella stanza anche col timer fermo",
+    description: "Spento: in sala ci sei solo mentre studi. Si cambia anche con \"Alzati\" e \"Siediti in questa sala\".",
   },
   {
     key: "groupsShowOthersBubbles", group: "groups", section: "Stanza comune", type: "boolean", label: "Mostra i fumetti degli altri",

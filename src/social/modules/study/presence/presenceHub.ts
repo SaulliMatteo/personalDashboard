@@ -26,6 +26,8 @@ export interface LocalStudyState {
   rooms: Record<string, number>;
   /** Posto scelto nella sala scelta, per gruppo (assente = posto automatico). */
   seats: Record<string, number>;
+  /** Col timer fermo resta seduto nella stanza comune, per compagnia. */
+  sit: boolean;
 }
 
 interface StudyLocal extends LocalStudyState {
@@ -49,10 +51,11 @@ export class StudyPresenceHub {
             subject: local.subject,
             room: local.rooms[groupId] ?? null,
             seat: local.seats[groupId] ?? null,
+            sit: local.sit,
           }),
         parse: parseChannelState,
       },
-      { timer: null, subject: null, rooms: {}, seats: {}, idleSince: deps.now() },
+      { timer: null, subject: null, rooms: {}, seats: {}, sit: false, idleSince: deps.now() },
       options
     );
   }

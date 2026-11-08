@@ -22,12 +22,13 @@ function pauseSeconds(member: RoomMember, serverNow: number): number {
   return member.kind === "break" ? phaseElapsedSeconds(p, serverNow) : Math.max(0, (serverNow - p.changedAt) / 1000);
 }
 
-/** Il testo breve a destra della riga: timer, "pausa mm:ss", "online" o da quanto non si vede. */
+/** Il testo breve a destra della riga: timer, "pausa mm:ss", "in compagnia", "online" o da quanto non si vede. */
 function shortText(member: RoomMember, room: number | null, serverNow: number): string {
   const where = room === null ? "" : `Sala ${room + 1}, `;
   const p = member.presence;
   if (p && member.kind === "studying") return where + formatClock(phaseElapsedSeconds(p, serverNow));
   if (isInRoom(member.kind)) return `${where}pausa ${formatClock(pauseSeconds(member, serverNow))}`;
+  if (member.seated) return `${where}in compagnia`;
   return where + (member.kind === "online" ? "online" : lastSeenText(member.lastSeen, serverNow));
 }
 
@@ -74,6 +75,10 @@ function MemberDetails({ member, serverNow, sheet }: { member: RoomMember; serve
     label = "In pausa da";
     clock = formatClock(pauseSeconds(member, serverNow));
     note = "In pausa";
+  } else if (member.seated) {
+    label = "In compagnia";
+    clock = "ora";
+    note = "Timer fermo";
   } else if (member.kind === "online") {
     label = "Connesso";
     clock = "ora";

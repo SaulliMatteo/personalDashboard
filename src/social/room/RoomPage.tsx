@@ -4,6 +4,7 @@ import { useElementSize } from "../../core/hooks/useElementSize";
 import { useCompact, useLandscape } from "../../core/layout/useCompact";
 import { useDrawer } from "../../core/nav/useDrawer";
 import { useNav } from "../../core/nav/useNav";
+import { useSettings } from "../../core/settings/useSettings";
 import CompactBar from "../../ui/CompactBar";
 import GroupsStatus from "../groups/components/GroupsStatus";
 import { useGroupsState } from "../groups/groupsState";
@@ -47,7 +48,8 @@ function Arrow({ dir }: { dir: "prev" | "next" }) {
 
 /**
  * La Stanza comune (voce della barra laterale, docs/mockup-gruppi/gruppi/stanza-comune.html): chi studia siede ai
- * tavoli col suo Pixy, a gruppi di 8 per sala; chi è connesso col timer fermo o offline sta "fuori dalla stanza".
+ * tavoli col suo Pixy, a gruppi di 8 per sala; col timer fermo si resta seduti per compagnia (groupsSitInRoom,
+ * "Alzati" lo spegne), e "fuori dalla stanza" sta chi si è alzato o è offline.
  * La pagina sta tutta nella finestra (.main qui non scorre): la sala si adatta allo spazio e scorre solo la lista
  * Membri. Posto e riga della lista condividono la selezione. Creare un gruppo o entrarci si fa dalla pagina Gruppi
  * (dettaglio del widget) o dagli stati senza gruppi, non da qui.
@@ -65,6 +67,7 @@ function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode
   const column = compact && !landscape;
   const { setOpen: openDrawer } = useDrawer();
   const { userId } = useCloud();
+  const { settings, updateSetting } = useSettings();
   const state = useGroupsState();
   const { groups, selectedGroup, selectGroup } = useGroups();
   const { rooms: chosenRooms, seats: chosenSeats, setRoom, setSeat } = useStudyPresence();
@@ -122,8 +125,8 @@ function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode
     );
   }
 
-  const present = members.filter((m) => isInRoom(m.kind));
-  const away = members.filter((m) => !isInRoom(m.kind));
+  const present = members.filter((m) => m.seated);
+  const away = members.filter((m) => !m.seated);
   const byId = new Map(members.map((m) => [m.userId, m]));
   const rooms = assignRooms(
     present.map((m) => ({ userId: m.userId, joinedAt: m.joinedAt, room: m.presence?.room ?? null })),
@@ -143,10 +146,9 @@ function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode
   const order = seatOrder(inShown, userId, (id) => byId.get(id)?.kind === "studying");
   const places = placeSeats(inShown, chosenSeat, order);
   const seats = places.map((id) => (id === null ? null : (byId.get(id) ?? null)));
-  // scelto ma non seduto (timer fermo): il posto resta libero, segnato come mio
+  // scelto ma alzato (timer fermo): il posto resta libero, segnato come mio
   const reservedSeat = mySeat !== null && mySeatRoom !== shown && places[mySeat] === null ? mySeat : null;
-  const isMyRoom = mySeatRoom >= 0 ? shown === mySeatRoom : myChoice === shown;
-  const roomFull = !isMyRoom && inShown.length >= ROOM_SEATS;
+  const roomFull = mySeatRoom !== shown && inShown.length >= ROOM_SEATS;
   const selectedId = viewState.selected;
   const sections = memberSections(
     rooms,
@@ -155,23 +157,43 @@ function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode
     away.map((m) => m.userId)
   );
 
+  const me = userId ? byId.get(userId) : undefined;
+  // alzarsi si può solo col timer fermo: chi studia siede comunque
+  const canStand = me !== undefined && me.seated && !isInRoom(me.kind);
+  // sedersi in una sala o su un posto vale anche col timer fermo: si resta seduti per compagnia
+  const sitDown = () => {
+    if (!settings.groupsSitInRoom) updateSetting("groupsSitInRoom", true);
+  };
+
   const update = (patch: Partial<typeof viewState>) => setView({ ...viewState, ...patch });
   // un clic apre la riga (o il posto), un secondo clic sullo stesso la chiude
   const toggle = (id: string) => update({ selected: id === selectedId ? null : id });
 
   const seatStatus = (
     <>
-      {/* seduto davvero solo col timer avviato; prima la sala è solo scelta e il posto resta libero */}
-      {isMyRoom ? (
-        <span className="roomp-here">{mySeatRoom === shown ? "Sei seduto qui" : "Ti siedi qui quando studi"}</span>
+      {/* seduto di default anche col timer fermo, per compagnia; "Alzati" porta fuori dalla stanza finché non studi */}
+      {mySeatRoom === shown ? (
+        <span className="roomp-here">Sei seduto qui</span>
       ) : roomFull ? (
         <span className="roomp-full">Sala piena</span>
       ) : (
-        <button type="button" className="grp-btn roomp-fill" onClick={() => setRoom(group.id, shown)}>
+        <button
+          type="button"
+          className="grp-btn roomp-fill"
+          onClick={() => {
+            setRoom(group.id, shown);
+            sitDown();
+          }}
+        >
           Siediti in questa sala
         </button>
       )}
-      {isMyRoom && chosenSeats[group.id] !== undefined && (
+      {mySeatRoom === shown && canStand && (
+        <button type="button" className="grp-btn grp-btn--ghost" onClick={() => updateSetting("groupsSitInRoom", false)}>
+          Alzati
+        </button>
+      )}
+      {mySeatRoom === shown && chosenSeats[group.id] !== undefined && (
         <button type="button" className="grp-btn grp-btn--ghost" onClick={() => setRoom(group.id, shown)}>
           Posto automatico
         </button>
@@ -262,7 +284,10 @@ function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode
               scale={column ? 1 : sceneScale}
               seats={seats}
               reservedSeat={reservedSeat}
-              onSit={(seat) => setSeat(group.id, shown, seat)}
+              onSit={(seat) => {
+                setSeat(group.id, shown, seat);
+                sitDown();
+              }}
               pixies={pixyMembers[group.id] ?? {}}
               offsetMs={offsetMs}
               serverNow={serverNow}
