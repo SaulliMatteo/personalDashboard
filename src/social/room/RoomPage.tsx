@@ -200,6 +200,50 @@ function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode
       )}
     </>
   );
+  // sul telefono il posto è una riga a sé, con una frase che dice perché sei seduto o no (novita.html, viste 7 e 8)
+  const seatedHere = mySeatRoom === shown;
+  const seatTitle = seatedHere ? "Sei seduto qui" : mySeatRoom >= 0 ? `Sei nella Sala ${mySeatRoom + 1}` : "Sei fuori dalla stanza";
+  const seatSub = seatedHere
+    ? me && isInRoom(me.kind)
+      ? "Stai studiando"
+      : "In compagnia, timer fermo"
+    : roomFull
+      ? "Questa sala è piena"
+      : mySeatRoom >= 0
+        ? "Puoi spostarti in questa sala"
+        : "Ti risiedi da solo quando avvii il timer";
+  const seatBar = (
+    <div className={`roomp-seatbar${seatedHere ? " is-seated" : ""}`}>
+      <span className="roomp-seatbar-dot" aria-hidden="true" />
+      <div className="roomp-seatbar-text">
+        <span className="roomp-seatbar-title">{seatTitle}</span>
+        <span className="roomp-seatbar-sub">{seatSub}</span>
+        {seatedHere && chosenSeats[group.id] !== undefined && (
+          <button type="button" className="roomp-seatbar-link" onClick={() => setRoom(group.id, shown)}>
+            Posto automatico
+          </button>
+        )}
+      </div>
+      {seatedHere
+        ? canStand && (
+            <button type="button" className="grp-btn grp-btn--ghost" onClick={() => updateSetting("groupsSitInRoom", false)}>
+              Alzati
+            </button>
+          )
+        : !roomFull && (
+            <button
+              type="button"
+              className="grp-btn roomp-fill"
+              onClick={() => {
+                setRoom(group.id, shown);
+                sitDown();
+              }}
+            >
+              {mySeatRoom >= 0 ? "Siediti qui" : "Siediti"}
+            </button>
+          )}
+    </div>
+  );
   const groupChips = groups.length > 0 && (
     <div className="roomp-groups" role="group" aria-label="I miei gruppi">
       {groups.map((g) => (
@@ -253,8 +297,9 @@ function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode
             {groupChips}
             {roomArrows}
           </div>
-          <div className="roomp-row">
-            <div className="roomp-seat">{seatStatus}</div>
+          {seatBar}
+          <div className="roomp-timer">
+            <span className="roomp-timer-label">Timer dello Studio</span>
             <div className="roomp-controls">{controls}</div>
           </div>
         </header>

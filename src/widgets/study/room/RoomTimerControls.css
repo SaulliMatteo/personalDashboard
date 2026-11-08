@@ -64,9 +64,9 @@
   color: var(--text-muted);
 }
 
-/* Sul telefono il timer sta nella sua riga a destra: va a capo e il select si restringe invece di uscire. */
+/* Sul telefono il timer ha la sua riga (RoomPage, .roomp-timer): tutto su una riga, il select si restringe. */
 :root[data-compact] .rtc {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
   min-width: 0;
   max-width: 100%;

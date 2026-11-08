@@ -251,14 +251,6 @@
   height: 44px;
 }
 
-.roomp-seat {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
 .roomp-header--compact .grp-btn {
   height: 44px;
 }
@@ -299,7 +291,93 @@
   display: none;
 }
 
-/* in orizzontale l'altezza è poca: gruppi e frecce a sinistra, posto e timer a destra sulla stessa riga */
+/* riga del posto (novita.html, viste 7 e 8): pallino, cosa succede e un solo pulsante */
+.roomp-seatbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+}
+
+.roomp-seatbar-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--text-muted);
+}
+
+.roomp-seatbar.is-seated .roomp-seatbar-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.roomp-seatbar-text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.roomp-seatbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.roomp-seatbar-sub {
+  font-size: max(12px, var(--fs-min));
+  color: var(--text-muted);
+}
+
+.roomp-seatbar-link {
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent-strong);
+  font: inherit;
+  font-size: max(12px, var(--fs-min));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.roomp-seatbar > .grp-btn {
+  flex: none;
+}
+
+/* il timer dello Studio ha la sua riga: etichetta a sinistra, materia e Studia a destra */
+.roomp-timer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.roomp-timer-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: max(12px, var(--fs-min));
+  color: var(--text-muted);
+}
+
+.roomp-header--compact .roomp-controls {
+  flex: 1 0 auto;
+  min-width: 0;
+  margin-left: 0;
+  justify-content: flex-end;
+}
+
+/* in orizzontale l'altezza è poca: gruppi e frecce, posto e timer si dividono le righe */
 @media (orientation: landscape) {
   .roomp-header--compact {
     flex-direction: row;
@@ -308,46 +386,34 @@
   }
 
   .roomp-header--compact .roomp-row {
-    flex: 1 1 0;
+    flex: 0 1 auto;
     min-width: 0;
   }
 
-  .roomp-header--compact .roomp-row + .roomp-row {
+  .roomp-header--compact .roomp-seatbar {
+    flex: 1 1 280px;
+    padding-block: 4px;
+  }
+
+  .roomp-header--compact .roomp-timer {
     flex: 0 1 auto;
-    flex-wrap: wrap;
-    justify-content: flex-end;
   }
-}
 
-/* in verticale posto e timer stanno uno sotto l'altro, tutti e due a destra */
-@media (orientation: portrait) {
-  .roomp-header--compact .roomp-row + .roomp-row {
-    flex-direction: column;
-    align-items: flex-end;
+  /* qui l'altezza conta più delle parole: il select dice già che è il timer dello Studio */
+  .roomp-header--compact .roomp-timer-label {
+    display: none;
   }
-}
-
-.roomp-header--compact .roomp-seat {
-  max-width: 100%;
-  justify-content: flex-end;
-}
-
-.roomp-header--compact .roomp-controls {
-  flex: none;
-  max-width: 100%;
-  min-width: 0;
-  margin-left: 0;
-  justify-content: flex-end;
-  text-align: right;
 }
 
 /* col dito l'area toccabile arriva a 44px senza cambiare l'aspetto (--hit in styles/base.css) */
 @media (pointer: coarse) {
-  .roomp-groups button {
+  .roomp-groups button,
+  .roomp-seatbar-link {
     position: relative;
   }
 
-  .roomp-groups button::after {
+  .roomp-groups button::after,
+  .roomp-seatbar-link::after {
     content: "";
     position: absolute;
     inset: var(--hit);
