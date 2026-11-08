@@ -35,10 +35,13 @@ export interface Cell {
   y: number;
 }
 
-/** Le taglie di un widget che stanno sul telefono (al massimo 2×2), senza doppioni, nell'ordine del widget. */
-export function phoneSizes(sizes: readonly Size[]): Size[] {
+/**
+ * Le taglie di un widget che stanno sul telefono (al massimo 2×2), senza doppioni, nell'ordine del widget; `extra`
+ * sono quelle che esistono solo sul telefono (`phoneSizes` della WidgetDefinition), messe in fondo.
+ */
+export function phoneSizes(sizes: readonly Size[], extra: readonly Size[] = []): Size[] {
   const out: Size[] = [];
-  for (const s of sizes) {
+  for (const s of [...sizes, ...extra]) {
     if (s.w <= PHONE_COLS && s.h <= 2 && !out.some((o) => o.w === s.w && o.h === s.h)) out.push({ w: s.w, h: s.h });
   }
   return out.length > 0 ? out : [{ w: 1, h: 1 }];

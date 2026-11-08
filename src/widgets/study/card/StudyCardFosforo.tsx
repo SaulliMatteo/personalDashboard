@@ -6,6 +6,7 @@ import { DialFit, DotDial } from "../components/dial/Dials";
 import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
+import StudyWide from "./StudyWide";
 import { useStudyCard, type StudyCardData } from "./useStudyCard";
 import "./StudyCardFosforo.css";
 
@@ -27,6 +28,15 @@ function StudyCardFosforo({ size }: { size: SizeKey }) {
           <span className="sf-cell-time">{data.clockText}</span>
           {data.isRunning && <span className="sf-led sf-cell-led" aria-hidden="true" />}
         </StudyCell>
+      </article>
+    );
+  }
+
+  // 2×1, solo sul telefono
+  if (size === "W") {
+    return (
+      <article className="widget sf sf--W">
+        <StudyWide data={data} prefix="sf" />
       </article>
     );
   }

@@ -5,6 +5,7 @@ import { DialFit, TickDial } from "../components/dial/Dials";
 import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
+import StudyWide from "./StudyWide";
 import { useStudyCard, type StudyCardData } from "./useStudyCard";
 import "./StudyCardNotte.css";
 
@@ -21,6 +22,15 @@ function StudyCardNotte({ size }: { size: SizeKey }) {
             <span style={{ width: `${data.progress * 100}%` }} />
           </span>
         </StudyCell>
+      </article>
+    );
+  }
+
+  // 2×1, solo sul telefono
+  if (size === "W") {
+    return (
+      <article className="widget sn sn--W">
+        <StudyWide data={data} prefix="sn" />
       </article>
     );
   }

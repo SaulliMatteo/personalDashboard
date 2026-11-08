@@ -4,6 +4,7 @@ import { formatGoal, formatHoursMinutes, formatHoursMinutesCompact } from "../li
 import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
+import StudyWide from "./StudyWide";
 import { useStudyCard, type StudyCardData, type SubjectRow } from "./useStudyCard";
 import "./StudyCardOpaco.css";
 
@@ -21,6 +22,15 @@ function StudyCardOpaco({ size }: { size: SizeKey }) {
         <StudyCell data={data} className="so-cell">
           <span className="so-cell-time">{data.clockText}</span>
         </StudyCell>
+      </article>
+    );
+  }
+
+  // 2×1, solo sul telefono
+  if (size === "W") {
+    return (
+      <article className="widget so so--W">
+        <StudyWide data={data} prefix="so" />
       </article>
     );
   }

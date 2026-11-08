@@ -289,3 +289,80 @@
 .sf-mode:disabled {
   cursor: default;
 }
+
+/* ---------- 2×1 (solo telefono, docs/design/mobile/novita.html) ---------- */
+.widget.sf--W {
+  padding: 0;
+}
+
+.sf-wide {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+}
+
+.sf-wide-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sf-wide-what {
+  overflow: hidden;
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+}
+
+.sf-wide-what b {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sf .sf-wide-btn {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+}
+
+.sf-wide {
+  margin: 10px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  padding: 12px 16px;
+  border-radius: var(--radius-display);
+  border: var(--display-border);
+  background: var(--display-texture), var(--display-bg);
+}
+
+.sf-wide-time {
+  font-family: var(--font-display);
+  font-size: min(50px, calc((100cqw - 110px) / (var(--chars) * 0.62)));
+  font-weight: 900;
+  line-height: 1;
+  color: var(--dot-on);
+}
+
+.sf-wide-line {
+  height: 4px;
+  background: repeating-linear-gradient(90deg, var(--dot-off) 0 4px, transparent 4px 6px);
+}
+
+.sf-wide-line > span {
+  display: block;
+  height: 100%;
+  background: repeating-linear-gradient(90deg, var(--dot-on) 0 4px, transparent 4px 6px);
+}
+
+.sf .sf-wide-btn.is-running {
+  color: var(--led);
+  border-color: var(--led);
+}

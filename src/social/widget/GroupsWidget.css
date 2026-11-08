@@ -68,6 +68,104 @@
   margin-top: 10px;
 }
 
+/* ---------- 2×1, solo telefono (docs/design/mobile/novita.html) ---------- */
+.widget.groupsw--W:not(.groupsw--state) {
+  padding: 0;
+}
+
+.groupsw-wide {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px 18px 22px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.groupsw-wide .groupsw-big {
+  flex: 0 0 auto;
+  min-width: 0.6em;
+  text-align: center;
+}
+
+.groupsw-wide-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.groupsw-wide-title {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.groupsw-faces {
+  --groupsw-ring: var(--modal-bg);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.groupsw-face {
+  position: relative;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--track);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.groupsw-face.is-me {
+  box-shadow: 0 0 0 1.5px var(--accent);
+}
+
+.groupsw-face .grp-dot {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  box-shadow: 0 0 0 2px var(--groupsw-ring);
+}
+
+.groupsw-more {
+  margin-left: 2px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.groupsw-chev {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="opaco"] .groupsw-faces {
+  --groupsw-ring: var(--pg-bg);
+}
+
+:root[data-theme="opaco"] .groupsw-face {
+  background: var(--pg-mid);
+}
+
+:root[data-theme="quaderno"] .groupsw-wide .groupsw-big {
+  color: var(--accent);
+}
+
 /* ---------- Classifica (M e L) ---------- */
 .groupsw-head {
   display: flex;

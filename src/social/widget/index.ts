@@ -1,4 +1,4 @@
-import { SIZE_L, SIZE_M, SIZE_S } from "../../core/widgets/sizes";
+import { SIZE_L, SIZE_M, SIZE_S, SIZE_W } from "../../core/widgets/sizes";
 import type { WidgetDefinition } from "../../core/widgets/types";
 import GroupsWidget from "./GroupsWidget";
 import GroupsPage from "./GroupsPage";
@@ -13,6 +13,8 @@ export const groupsWidget: WidgetDefinition = {
   description: "Chi dei tuoi amici sta studiando adesso e la classifica di oggi, della settimana e del mese (serve un account).",
   component: GroupsWidget,
   sizes: [SIZE_M, SIZE_S, SIZE_L],
+  // sul telefono anche larga: chi studia ora, su una riga
+  phoneSizes: [SIZE_W],
   detailComponent: GroupsPage,
   settingsGroup: "groups",
 };

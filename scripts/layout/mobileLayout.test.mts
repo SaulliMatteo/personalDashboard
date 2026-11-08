@@ -60,6 +60,8 @@ const M = { w: 2, h: 2 };
 test("taglie del telefono: solo fino a 2×2, senza doppioni", () => {
   assert.deepEqual(phoneSizes([{ w: 2, h: 2 }, { w: 1, h: 1 }, { w: 3, h: 2 }, { w: 3, h: 3 }]), [M, S]);
   assert.deepEqual(phoneSizes([{ w: 3, h: 1 }]), [S]);
+  // taglie solo del telefono: in fondo, senza doppioni
+  assert.deepEqual(phoneSizes([{ w: 2, h: 2 }, { w: 1, h: 1 }], [{ w: 2, h: 1 }, { w: 1, h: 1 }]), [M, S, { w: 2, h: 1 }]);
 });
 
 test("taglia di partenza: la stessa, altrimenti la più grande che non la supera", () => {

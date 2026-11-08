@@ -73,6 +73,20 @@ export function studyingCount(rows: LeaderboardRow[]): number {
   return rows.filter((r) => r.kind === "studying").length;
 }
 
+/** Ordine delle facce nel widget largo: prima chi studia, poi chi è in pausa, poi i connessi, infine gli offline. */
+const FACE_ORDER: Record<MemberKind, number> = { studying: 0, break: 1, paused: 2, online: 3, offline: 4 };
+
+/**
+ * Le facce del widget Gruppi 2×1 (docs/design/mobile/novita.html): al massimo `max` membri, chi studia per primo e
+ * a pari stato in ordine di classifica; `more` = quanti restano fuori. Senza interfaccia, come i dati della
+ * classifica: potrà servire anche a un widget della Home di Android.
+ */
+export function previewFaces(rows: LeaderboardRow[], max: number): { faces: LeaderboardRow[]; more: number } {
+  const ordered = [...rows].sort((a, b) => FACE_ORDER[a.kind] - FACE_ORDER[b.kind] || a.rank - b.rank);
+  const faces = ordered.slice(0, Math.max(0, max));
+  return { faces, more: rows.length - faces.length };
+}
+
 /** "2h 05m", "45m": come la barra laterale. */
 export function formatStudyTime(seconds: number): string {
   const minutes = Math.floor(seconds / 60);

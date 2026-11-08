@@ -37,6 +37,11 @@ export interface WidgetDefinition {
   component: ComponentType<WidgetProps>;
   /** Taglie ammesse. La prima è quella proposta di default nel catalogo. */
   sizes: WidgetSize[];
+  /**
+   * Taglie in più che esistono solo nella dashboard del telefono (es. Studio e Gruppi 2×1): il catalogo e la griglia
+   * del desktop non le vedono. Il componente le riceve come le altre (`sizeKey`).
+   */
+  phoneSizes?: WidgetSize[];
   /** Se presente, il widget fa parte del layout iniziale (primo avvio / reset). */
   defaultPlacement?: WidgetPlacement;
   /** Pagina a schermo intero aperta cliccando il widget in dashboard. */

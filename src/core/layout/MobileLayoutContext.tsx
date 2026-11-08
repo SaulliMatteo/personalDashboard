@@ -26,7 +26,7 @@ const MOBILE_LAYOUT_INITIALIZED_KEY = "mobile_layout_initialized";
 
 function sizesOf(id: string): Size[] | null {
   const widget = getWidget(id);
-  return widget ? phoneSizes(widget.sizes) : null;
+  return widget ? phoneSizes(widget.sizes, widget.phoneSizes) : null;
 }
 
 /** Layout di partenza del telefono: quello di default del desktop, in ordine di lettura, con le taglie tradotte. */

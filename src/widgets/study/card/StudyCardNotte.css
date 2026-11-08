@@ -400,3 +400,68 @@
 .sn-week-day.is-today .sn-week-initial {
   color: var(--text-primary);
 }
+
+/* ---------- 2×1 (solo telefono, docs/design/mobile/novita.html) ---------- */
+.widget.sn--W {
+  padding: 0;
+}
+
+.sn-wide {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+}
+
+.sn-wide-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sn-wide-what {
+  overflow: hidden;
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+}
+
+.sn-wide-what b {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sn .sn-wide-btn {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+}
+
+.sn-wide-time {
+  font-size: min(54px, calc((100cqw - 120px) / (var(--chars) * 0.58)));
+  font-weight: 200;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.sn-wide-line {
+  height: 2px;
+  border-radius: 2px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.sn-wide-line > span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+}

@@ -30,8 +30,8 @@ export function useCatalogLayout(): CatalogLayout {
     return {
       currentSize: (id) => mobile.items.find((item) => item.i === id) ?? null,
       sizesOf: (widget) => {
-        const allowed = phoneSizes(widget.sizes);
-        const sizes = widget.sizes.filter((s) => allowed.some((a) => a.w === s.w && a.h === s.h));
+        const allowed = phoneSizes(widget.sizes, widget.phoneSizes);
+        const sizes = [...widget.sizes, ...(widget.phoneSizes ?? [])].filter((s) => allowed.some((a) => a.w === s.w && a.h === s.h));
         return sizes.length > 0 ? sizes : [SIZE_S];
       },
       fits: (size) => mobile.hasRoomFor(size),

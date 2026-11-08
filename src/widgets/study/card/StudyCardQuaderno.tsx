@@ -5,6 +5,7 @@ import { DialFit, PenDial } from "../components/dial/Dials";
 import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
+import StudyWide from "./StudyWide";
 import { useStudyCard, type StudyCardData } from "./useStudyCard";
 import "./StudyCardQuaderno.css";
 
@@ -26,6 +27,25 @@ function StudyCardQuaderno({ size }: { size: SizeKey }) {
             {p > 0 && <path className="sq-line-ink" d={PEN_LINE} pathLength={100} strokeDasharray={`${p} 100`} />}
           </svg>
         </StudyCell>
+      </article>
+    );
+  }
+
+  // 2×1, solo sul telefono: la riga è il tratto di penna della 1×1
+  if (size === "W") {
+    const p = data.progress * 100;
+    return (
+      <article className="widget sq sq--W">
+        <StudyWide
+          data={data}
+          prefix="sq"
+          line={
+            <svg width="110" height="10" viewBox="0 0 110 10" preserveAspectRatio="none" aria-hidden="true" className="sq-wide-line">
+              <path className="sq-line-track" d={PEN_LINE} />
+              {p > 0 && <path className="sq-line-ink" d={PEN_LINE} pathLength={100} strokeDasharray={`${p} 100`} />}
+            </svg>
+          }
+        />
       </article>
     );
   }

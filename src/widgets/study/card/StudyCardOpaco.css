@@ -228,3 +228,77 @@
   margin-left: 0;
   font-size: min(150px, calc((100cqw - 56px) / (var(--chars) * 0.56)), calc(100cqh - 160px));
 }
+
+/* ---------- 2×1 (solo telefono, docs/design/mobile/novita.html) ---------- */
+.widget.so--W {
+  padding: 0;
+}
+
+.so-wide {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+}
+
+.so-wide-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.so-wide-what {
+  overflow: hidden;
+  font-size: 13px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+}
+
+.so-wide-what b {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.so .so-wide-btn {
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+}
+
+.so-wide-what {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.so-wide-what b {
+  color: inherit;
+}
+
+.so-wide-time {
+  font-size: min(58px, calc((100cqw - 120px) / (var(--chars) * 0.56)));
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+.so-wide-line {
+  height: 8px;
+  border-radius: 8px;
+  background: var(--pg-dark);
+  overflow: hidden;
+}
+
+.so-wide-line > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--pg-ink);
+}

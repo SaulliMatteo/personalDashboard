@@ -9,6 +9,7 @@ import { formatInviteCode, isInviteCodeComplete, normalizeInviteCode } from "../
 import {
   buildLeaderboard,
   formatStudyTime,
+  previewFaces,
   studyingCount,
   visibleRows,
   type LeaderboardInput,
@@ -185,6 +186,17 @@ test("mese: completo, parziale (dal primo giorno con dati) o senza dati, mai uno
   assert.deepEqual(monthCoverage("2026-09-28", "2026-10-01"), { kind: "full" });
   assert.deepEqual(monthCoverage("2026-10-12", "2026-10-01"), { kind: "partial", from: "2026-10-12" });
   assert.deepEqual(monthCoverage(undefined, "2026-10-01"), { kind: "none" });
+});
+
+await test("facce del widget largo: prima chi studia, poi in pausa, connessi, offline; il resto in more", () => {
+  const row = (userId: string, rank: number, kind: "studying" | "paused" | "break" | "online" | "offline") =>
+    ({ userId, username: userId, isMe: false, rank, seconds: 0, kind });
+  const rows = [row("a", 1, "offline"), row("b", 2, "online"), row("c", 3, "studying"), row("d", 4, "break"), row("e", 5, "studying")];
+  const { faces, more } = previewFaces(rows, 3);
+  assert.deepEqual(faces.map((f) => f.userId), ["c", "e", "d"]);
+  assert.equal(more, 2);
+  assert.deepEqual(previewFaces(rows, 0), { faces: [], more: 5 });
+  assert.equal(previewFaces([], 4).more, 0);
 });
 
 console.log(`OK: ${passed} prove superate`);
