@@ -22,7 +22,8 @@
         "resizable": true,
         "fullscreen": false,
         "theme": "Dark",
-        "backgroundColor": "#0b0b0e"
+        "backgroundColor": "#0b0b0e",
+        "acceptFirstMouse": true
       }
     ],
     "security": {

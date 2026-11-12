@@ -99,8 +99,9 @@ function YoutubeWidget({ w, h }: WidgetProps) {
             type="button"
             data-cell-action
             className="ytw-cell"
-            onClick={onCellClick}
-            disabled={!hero}
+            // aria-disabled e non disabled: su WebKit un pulsante disabilitato si mangia il doppio click del dettaglio
+            onClick={hero ? onCellClick : (e) => e.stopPropagation()}
+            aria-disabled={!hero || undefined}
             aria-label={hero ? label : "Nessun video da guardare"}
             title={hero ? label : "Nessun video da guardare"}
           >

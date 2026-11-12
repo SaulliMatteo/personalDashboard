@@ -28,6 +28,22 @@ const DRAG_CLICK_GUARD_MS = 400;
 const STUCK_DRAG_CHECK_MS = 50;
 /** Margine oltre il ritardo di spinta prima di ricalcolare col mouse fermo. */
 const PUSH_RETRY_EXTRA_MS = 30;
+/**
+ * Un "trascinamento" che non ha spostato nulla e non è andato oltre questi px è un click tremolante (il trackpad del
+ * Mac si muove di qualche px premendo): non arma la protezione dei click, altrimenti su WebKit, che manda il doppio
+ * click solo dopo il secondo click, il dettaglio non si aprirebbe.
+ */
+const CLICK_JITTER_PX = 12;
+
+/** Posizione del mouse o del dito in un evento di trascinamento della libreria (null se non c'è). */
+function pointerOf(event: Event | null | undefined): { x: number; y: number } | null {
+  if (event instanceof MouseEvent) return { x: event.clientX, y: event.clientY };
+  if (typeof TouchEvent !== "undefined" && event instanceof TouchEvent) {
+    const touch = event.touches[0] ?? event.changedTouches[0];
+    return touch ? { x: touch.clientX, y: touch.clientY } : null;
+  }
+  return null;
+}
 
 function justDragged(dragEndedAt: number): boolean {
   return performance.now() - dragEndedAt < DRAG_CLICK_GUARD_MS;
@@ -105,18 +121,24 @@ function Dashboard({ headerActions }: DashboardProps) {
 
   // Ultimo layout e posizione del mouse visti durante il drag (spinta col mouse fermo, rete di sicurezza).
   const lastDragRef = useRef<{ layout: LayoutItem[]; x: number; y: number } | null>(null);
+  // Layout e mouse all'inizio del drag, e quanto si è allontanato al massimo: per riconoscere un click tremolante.
+  const dragStartRef = useRef<{ layout: LayoutItem[]; x: number; y: number; maxDistance: number } | null>(null);
   const pushTimerRef = useRef<number | undefined>(undefined);
   // Cambiarla rimonta la griglia: solo per sbloccarla se la libreria perde un rilascio.
   const [gridKey, setGridKey] = useState(0);
 
   const finishDrag = (finalItems: LayoutItem[]) => {
     window.clearTimeout(pushTimerRef.current);
-    dragEndedAtRef.current = performance.now();
+    const start = dragStartRef.current;
+    const unchanged = start !== null && sameLayout(finalItems, start.layout);
+    // un click tremolante non è un trascinamento: niente protezione dei click e niente salvataggio
+    if (!unchanged || start.maxDistance > CLICK_JITTER_PX) dragEndedAtRef.current = performance.now();
     lastDragRef.current = null;
+    dragStartRef.current = null;
     dragCompactor.endDrag();
     clearGhost();
     setLayout(finalItems);
-    saveLayout(finalItems).catch((error) => console.error("Errore nel salvataggio del layout:", error));
+    if (!unchanged) saveLayout(finalItems).catch((error) => console.error("Errore nel salvataggio del layout:", error));
   };
 
   const recoverStuckDrag = useLatestRef(() => {
@@ -189,15 +211,22 @@ function Dashboard({ headerActions }: DashboardProps) {
             dragConfig={{ enabled: !settings.lockLayout, bounded: true, threshold: settings.dragThreshold }}
             width={width}
             compactor={dragCompactor.compactor}
-            onDragStart={(evLayout, oldItem, newItem, placeholder) => {
+            onDragStart={(evLayout, oldItem, newItem, placeholder, event) => {
               const id = newItem?.i ?? oldItem?.i ?? null;
               if (id) dragCompactor.startDrag(id, evLayout);
+              const pointer = pointerOf(event);
+              dragStartRef.current = { layout: layout.map((item) => ({ ...item })), x: pointer?.x ?? 0, y: pointer?.y ?? 0, maxDistance: pointer ? 0 : Infinity };
               captureGhost(evLayout, oldItem, newItem, placeholder);
             }}
             onDrag={(evLayout, oldItem, newItem, placeholder, event) => {
               captureGhost(evLayout, oldItem, newItem, placeholder);
               const mouse = event as MouseEvent;
               lastDragRef.current = { layout: evLayout as LayoutItem[], x: mouse.clientX, y: mouse.clientY };
+              const start = dragStartRef.current;
+              const pointer = pointerOf(event);
+              if (start && pointer) {
+                start.maxDistance = Math.max(start.maxDistance, Math.hypot(pointer.x - start.x, pointer.y - start.y));
+              }
               // La spinta "matura" solo quando la libreria ricalcola, cioè a ogni movimento:
               // col mouse fermo sopra un widget si rimanda lo stesso movimento dopo il ritardo.
               // Solo per i movimenti veri, così il movimento rimandato non si ripete all'infinito.

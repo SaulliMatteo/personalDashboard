@@ -1,8 +1,11 @@
 import { useEffect, useRef, type MouseEvent } from "react";
 import { useLatestRef } from "./useLatestRef";
 
-/** Oltre questo intervallo due click non sono più un doppio click (valore tipico dei sistemi operativi). */
-const DOUBLE_CLICK_MS = 250;
+/**
+ * Oltre questo intervallo due click non sono più un doppio click. Windows e macOS di serie ne ammettono circa 500
+ * (col trackpad del Mac i doppi tocchi sono lenti): con 250 il primo click partiva prima del secondo.
+ */
+const DOUBLE_CLICK_MS = 450;
 
 /**
  * Click singolo che non scatta se l'utente sta facendo un doppio click.
