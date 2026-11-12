@@ -334,7 +334,12 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
   va chiamata dal `mouseup` in capture su `window` *prima* della libreria, e `onDragStop` deve usare il layout che
   riceve, non calcolarne uno diverso (la libreria non si riallinea a props uguali alle precedenti).
 - Dopo un drag i click sulla cella si ignorano per un attimo: il rilascio genera un click sul pulsante trascinato
-  (es. aprirebbe un video o una nota).
+  (es. aprirebbe un video o una nota). Un drag che non sposta nulla ed è entro `CLICK_JITTER_PX` non conta (trackpad
+  del Mac): WebKit manda `dblclick` solo dopo il secondo `click`, quindi ciò che ferma il click (la protezione, un
+  `<button disabled>`: si usa `aria-disabled`) su macOS si mangia anche il doppio click del dettaglio.
+- Su macOS `on_navigation` (`src/lib.rs`) vede anche le navigazioni degli iframe: un iframe nuovo da un altro host va
+  in `is_embed_url`, altrimenti viene annullato e aperto nel browser. I click sui link esterni li apre
+  `core/system/externalLinks.ts`. Testi con "Ctrl": `modKeyLabel()` di `core/system/platform.ts`.
 - react-grid-layout (react-draggable) annulla ogni `touchstart` sulle celle e col dito non arriverebbe nessun click:
   sui tablet senza mouse `useLongPressGridDrag` lo ferma prima e glielo ripassa dopo la pressione lunga. Non toglierlo.
 - `<select>` nativi: il menu aperto lo disegna il sistema, quindi `color-scheme: inherit` sul select e sfondo pieno
