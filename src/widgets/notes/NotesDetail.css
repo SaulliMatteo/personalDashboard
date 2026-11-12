@@ -1189,8 +1189,13 @@ button.nq-crumb:hover {
 :root[data-theme="opaco"] .nq-nav-item.is-active em,
 :root[data-theme="opaco"] .nq-tree-row.is-active .nq-tree-main,
 :root[data-theme="opaco"] .nq-tree-row.is-active .nq-tree-count,
-:root[data-theme="opaco"] .nq-tree-row.is-active .nq-tree-chevron {
+:root[data-theme="opaco"] .nq-tree-row.is-active .nq-tree-chevron,
+:root[data-theme="opaco"] .nq-tree-row.is-active .nq-tree-add {
   color: inherit;
+}
+
+:root[data-theme="opaco"] .nq-tree-row.is-active .nq-tree-add:hover {
+  background: color-mix(in srgb, var(--on-accent) 20%, transparent);
 }
 
 :root[data-theme="opaco"] .nq kbd {
@@ -1279,8 +1284,13 @@ button.nq-crumb:hover {
 :root[data-theme="fosforo"] .nq-nav-item.is-active em,
 :root[data-theme="fosforo"] .nq-tree-row.is-active .nq-tree-main,
 :root[data-theme="fosforo"] .nq-tree-row.is-active .nq-tree-count,
-:root[data-theme="fosforo"] .nq-tree-row.is-active .nq-tree-chevron {
+:root[data-theme="fosforo"] .nq-tree-row.is-active .nq-tree-chevron,
+:root[data-theme="fosforo"] .nq-tree-row.is-active .nq-tree-add {
   color: inherit;
+}
+
+:root[data-theme="fosforo"] .nq-tree-row.is-active .nq-tree-add:hover {
+  background: color-mix(in srgb, var(--on-accent) 20%, transparent);
 }
 
 :root[data-theme="fosforo"] .nq kbd {

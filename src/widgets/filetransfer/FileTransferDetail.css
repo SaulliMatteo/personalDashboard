@@ -369,6 +369,12 @@
   color: var(--on-accent);
 }
 
+/* l'icona ha lo stesso inchiostro della riga scelta: rovesciata, altrimenti l'estensione sparisce */
+:root[data-theme="opaco"] .ft-file-row.is-selected .ft-file-icon {
+  background: var(--on-accent);
+  color: var(--accent);
+}
+
 :root[data-theme="quaderno"] .ft-file-row.is-selected {
   background: transparent;
 }

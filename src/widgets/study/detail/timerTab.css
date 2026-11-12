@@ -306,6 +306,10 @@
   color: var(--on-accent);
 }
 
+:root[data-theme="opaco"] .study-subject-row.is-active .study-row-gear:hover {
+  background: color-mix(in srgb, var(--on-accent) 20%, transparent);
+}
+
 /* Quaderno: righe sul foglio, la materia attiva passata con l'evidenziatore. */
 :root[data-theme="quaderno"] .study-subjects-list {
   gap: 0;

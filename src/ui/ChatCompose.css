@@ -85,7 +85,7 @@
 }
 
 .chc-row:hover {
-  background: var(--row-active-bg, var(--surface-2));
+  background: var(--surface-2);
 }
 
 .chc-row.is-on {

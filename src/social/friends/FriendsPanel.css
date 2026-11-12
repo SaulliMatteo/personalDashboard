@@ -131,7 +131,11 @@
 }
 
 .frp-icon-btn:hover {
-  background: var(--row-active-bg, var(--surface-2));
+  background: var(--surface-2);
+}
+
+.frp-icon-btn--fill:hover {
+  background: var(--surface-3);
 }
 
 .frp-offline {
@@ -238,7 +242,28 @@
 
 .frp-row:hover,
 .frp-row.is-on {
-  background: var(--row-active-bg, var(--surface-2));
+  background: var(--surface-2);
+}
+
+/* In Opaco la chat aperta è un blocco d'inchiostro, come la voce attiva dei Gruppi (testo rovesciato). */
+:root[data-theme="opaco"] .frp-row.is-on {
+  background: var(--nav-active-bg);
+  color: var(--nav-active-fg);
+}
+
+:root[data-theme="opaco"] .frp-row.is-on .frp-row-text span,
+:root[data-theme="opaco"] .frp-row.is-on .frp-row-meta {
+  color: inherit;
+  opacity: 0.8;
+}
+
+:root[data-theme="opaco"] .frp-row.is-on .frp-row-text span.is-unread {
+  opacity: 1;
+}
+
+:root[data-theme="opaco"] .frp-row.is-on .frp-count {
+  background: var(--nav-active-fg);
+  color: var(--nav-active-bg);
 }
 
 :root[data-theme="quaderno"] .frp-row.is-on {
@@ -478,7 +503,7 @@
 
 .frp-menu-item:hover,
 .frp-menu-item:focus-visible {
-  background: var(--row-active-bg, var(--surface-2));
+  background: var(--surface-2);
   outline: none;
 }
 
@@ -785,7 +810,7 @@
 
 .frp-plus-item:hover,
 .frp-plus-item:focus-visible {
-  background: var(--row-active-bg, var(--surface-2));
+  background: var(--surface-2);
   outline: none;
 }
 
