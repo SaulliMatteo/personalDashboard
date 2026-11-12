@@ -173,6 +173,8 @@ import Crumbs, { type Crumb } from "./Crumbs";
 import BottomSheet from "./BottomSheet";
 import ToolButton from "./ToolButton";
 import "./noteEditor.css";
+import { modKeyLabel } from "../../../core/system/platform";
+import { useFieldSizing } from "../lib/fieldSizing";
 
 interface NoteEditorProps {
   note: NoteSummary;
@@ -329,6 +331,8 @@ function NoteEditor({
   const [titleColor, setTitleColor] = useState<string | null>(note.titleColor);
   const [titleAdjusted, setTitleAdjusted] = useState(false);
   const titleInputRef = useRef<HTMLTextAreaElement | null>(null);
+  // il titolo va a capo: su Safari prima della 26 field-sizing non c'è e il textarea resterebbe di una riga
+  useFieldSizing(titleInputRef, title, "height");
   /** Colore del titolo ancora da scrivere nel DB (lo scrive flush, anche uscendo dall'editor). */
   const titleColorDirty = useRef(false);
   const titleColorRef = useLatestRef(titleColor);
@@ -1401,7 +1405,7 @@ async function changePageColor(color: string | null) {
   /** Taglia/Copia dal menu: gli stessi eventi di Ctrl+X/C (i segni passano da PageSurface). */
   function clipboardCommand(command: "cut" | "copy") {
     editorRef.current?.focus({ preventScroll: true });
-    if (!document.execCommand(command)) showToast(command === "cut" ? "Usa Ctrl+X per tagliare" : "Usa Ctrl+C per copiare");
+    if (!document.execCommand(command)) showToast(command === "cut" ? `Usa ${modKeyLabel()}+X per tagliare` : `Usa ${modKeyLabel()}+C per copiare`);
   }
 
   /** Incolla dal menu: dagli appunti di sistema (se il sistema lo permette), altrimenti si chiede Ctrl+V. */
@@ -1438,7 +1442,7 @@ async function changePageColor(color: string | null) {
       commitEditor();
     } catch (error) {
       console.error("Incolla dal menu non riuscito:", error);
-      showToast("Qui l'incolla dal menu non è permesso: usa Ctrl+V");
+      showToast(`Qui l'incolla dal menu non è permesso: usa ${modKeyLabel()}+V`);
     }
   }
 
@@ -1709,7 +1713,7 @@ async function changePageColor(color: string | null) {
     { id: "view", label: "Tabella da una raccolta", icon: <MdOutlineStorage />, hint: "vista", keywords: "raccolta vista collegata database dati" },
     { id: "ref", label: "Riferimento a una riga", icon: <MdAlternateEmail />, hint: "@", keywords: "riferimento riga raccolta menzione chiocciola" },
     { id: "divider", label: "Divisore", icon: <MdHorizontalRule />, keywords: "linea separatore riga" },
-    { id: "image", label: "Immagine", icon: <MdOutlineImage />, hint: "Ctrl V", keywords: "foto figura png jpg" },
+    { id: "image", label: "Immagine", icon: <MdOutlineImage />, hint: `${modKeyLabel()} V`, keywords: "foto figura png jpg" },
     { id: "file", label: "File", icon: <MdOutlineAttachFile />, hint: "nella pagina", keywords: "allegato documento pdf scheda" },
   ];
   const slashItems = slash ? filterInsertItems(insertItems, slash.query) : [];
@@ -2401,9 +2405,9 @@ async function changePageColor(color: string | null) {
     return [
       [{ label: "Inserisci un segno qui", icon: <MdOutlineBookmarkAdd />, hint: shortcutLabel("bookmark"), onSelect: insertBookmark }],
       [
-        { label: "Taglia", icon: <MdContentCut />, hint: "Ctrl X", disabled: !hasSelection, onSelect: () => clipboardCommand("cut") },
-        { label: "Copia", icon: <MdContentCopy />, hint: "Ctrl C", disabled: !hasSelection, onSelect: () => clipboardCommand("copy") },
-        { label: "Incolla", icon: <MdContentPaste />, hint: "Ctrl V", onSelect: () => void pasteFromMenu() },
+        { label: "Taglia", icon: <MdContentCut />, hint: `${modKeyLabel()} X`, disabled: !hasSelection, onSelect: () => clipboardCommand("cut") },
+        { label: "Copia", icon: <MdContentCopy />, hint: `${modKeyLabel()} C`, disabled: !hasSelection, onSelect: () => clipboardCommand("copy") },
+        { label: "Incolla", icon: <MdContentPaste />, hint: `${modKeyLabel()} V`, onSelect: () => void pasteFromMenu() },
       ],
       [
         { label: "Annulla", icon: <MdUndo />, hint: shortcutLabel("undo"), onSelect: handleUndo },
@@ -2602,7 +2606,7 @@ async function changePageColor(color: string | null) {
         <input type="checkbox" checked={codeDetectOn} onChange={toggleCodeDetect} />
         <span>
           Riconosci il codice incollato
-          {!phone && <small>Ctrl+Shift+V incolla sempre come testo</small>}
+          {!phone && <small>{modKeyLabel()}+Shift+V incolla sempre come testo</small>}
         </span>
       </label>
       {!phone && trashButton}

@@ -14,6 +14,7 @@ import HomeScreen from "./screens/HomeScreen";
 import LibraryScreen, { type LibraryLocation } from "./screens/LibraryScreen";
 import WatchScreen from "./screens/WatchScreen";
 import "./YoutubeDetail.css";
+import { modKeyLabel } from "../../core/system/platform";
 
 type Screen =
   | { name: "home" }
@@ -156,7 +157,7 @@ function YoutubeDetail() {
                 searchRef.current?.blur();
               }
             }}
-            placeholder={touchOnly ? "Cerca video o cartelle…" : "Cerca video o cartelle…  (Ctrl+K)"}
+            placeholder={touchOnly ? "Cerca video o cartelle…" : `Cerca video o cartelle…  (${modKeyLabel()}+K)`}
             aria-label="Cerca nella libreria"
           />
           {query.trim() && (

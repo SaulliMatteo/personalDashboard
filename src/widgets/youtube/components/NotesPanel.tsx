@@ -8,6 +8,7 @@ import { notesToMarkdown, sortNotes, splitNote, type NoteSort } from "../lib/not
 import { formatTimestamp } from "../lib/youtube";
 import type { PlayerHandle } from "./VideoPlayer";
 import type { RefObject } from "react";
+import { modKeyLabel } from "../../../core/system/platform";
 
 interface NotesPanelProps {
   video: SavedVideo;
@@ -130,7 +131,7 @@ function NotesPanel({ video, playerRef, onError, onChanged }: NotesPanelProps) {
               void submit();
             }
           }}
-          placeholder={touchOnly ? "Scrivi un appunto… (la prima riga è il titolo)" : "Scrivi un appunto… (la prima riga è il titolo; Ctrl+Invio per salvare)"}
+          placeholder={touchOnly ? "Scrivi un appunto… (la prima riga è il titolo)" : `Scrivi un appunto… (la prima riga è il titolo; ${modKeyLabel()}+Invio per salvare)`}
           rows={3}
           aria-label="Testo della nota"
         />

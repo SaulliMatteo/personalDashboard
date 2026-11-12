@@ -23,6 +23,7 @@ import CollectionBoard from "./CollectionBoard";
 import CollectionCards from "./CollectionCards";
 import CollectionTable from "./CollectionTable";
 import Popover from "../../../ui/Popover";
+import { useFieldSizing } from "../lib/fieldSizing";
 import RowCard from "./RowCard";
 import ViewBar from "./ViewBar";
 import "./CollectionPage.css";
@@ -75,6 +76,9 @@ function CollectionPage({ collectionId, notes, onOpenNote, onNotice, onTrashed }
   const fields = fieldsOf(store, collectionId);
   const allRows = rowsOf(store, collectionId);
   const view = pageViewOf(store, collectionId);
+  // il nome si allarga col testo: su Safari prima della 26 field-sizing non c'è
+  const titleRef = useRef<HTMLInputElement | null>(null);
+  useFieldSizing(titleRef, title ?? collection?.name ?? "", "width");
 
   if (!store.loaded) return <p className="nq-coll-msg">Caricamento…</p>;
   if (store.error) return <p className="nq-coll-msg">{store.error}</p>;
@@ -134,6 +138,7 @@ function CollectionPage({ collectionId, notes, onOpenNote, onNotice, onTrashed }
       <div className="nq-coll-main">
         <div className="nq-coll-h">
           <input
+            ref={titleRef}
             className="nq-coll-title"
             aria-label="Nome della raccolta"
             value={title ?? collection.name}

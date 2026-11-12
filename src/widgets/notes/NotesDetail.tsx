@@ -38,7 +38,7 @@ import {
   subscribeCollections,
   useCollections,
 } from "./lib/collectionsStore";
-import { fromFormField, matchShortcut, shortcutLabel } from "./lib/shortcuts";
+import { fromFormField, isMacPlatform, matchShortcut, shortcutLabel } from "./lib/shortcuts";
 import type { EditorApi, ScreenPoint, StoredFile } from "./lib/editorApi";
 import { createFileBlock, createImageBlock } from "./lib/blocks";
 import { imageSize, releaseAttachmentUrls } from "./lib/attachmentUrls";
@@ -1018,11 +1018,13 @@ function NotesDetail() {
     let cancelled = false;
     let unlisten: (() => void) | null = null;
     let count = 0;
-    // Tauri dà la posizione in pixel fisici della finestra: in px CSS si divide per devicePixelRatio.
-    const toCss = (pos: { x: number; y: number }): ScreenPoint => ({
-      x: pos.x / (window.devicePixelRatio || 1),
-      y: pos.y / (window.devicePixelRatio || 1),
-    });
+    // Tauri dà la posizione in pixel fisici della finestra: in px CSS si divide per devicePixelRatio. Su macOS
+    // wry la passa già in punti (px CSS) anche se il tipo dice "fisici": dividere la dimezzava sui Mac Retina.
+    const mac = isMacPlatform();
+    const toCss = (pos: { x: number; y: number }): ScreenPoint => {
+      const scale = mac ? 1 : window.devicePixelRatio || 1;
+      return { x: pos.x / scale, y: pos.y / scale };
+    };
     getCurrentWebview()
       .onDragDropEvent((event) => {
         const payload = event.payload;

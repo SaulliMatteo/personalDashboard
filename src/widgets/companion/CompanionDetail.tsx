@@ -12,6 +12,7 @@ import { ANIMATIONS, ANIMATION_CATEGORIES, ANIMATION_GALLERY, type AnimationCate
 import { PERSONALITIES, PERSONALITY_IDS } from "../../core/pixy/engine/personalities";
 import { APP_CATEGORIES, type AppCategory } from "../../core/system/appCategory";
 import { systemSignalsAvailable } from "../../core/system/systemApi";
+import { isMac } from "../../core/system/platform";
 import "./CompanionDetail.css";
 
 const CATEGORY_LABELS: Record<AppCategory, string> = {
@@ -400,7 +401,7 @@ function CompanionDetail() {
                           <span className="companion-anim-text">
                             <span className="companion-anim-label">{app.label}</span>
                             <span className="companion-anim-desc">
-                              {app.processKey}.exe · {chosen ? `scelta tua (da solo: ${CATEGORY_LABELS[app.autoCategory]})` : "riconosciuta da sola"}
+                              {app.processKey}{isMac() ? ".app" : ".exe"} · {chosen ? `scelta tua (da solo: ${CATEGORY_LABELS[app.autoCategory]})` : "riconosciuta da sola"}
                             </span>
                           </span>
                           <select

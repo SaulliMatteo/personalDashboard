@@ -9,6 +9,8 @@
  * Su macOS Ctrl diventa Cmd.
  */
 
+import { isMac } from "../../../core/system/platform";
+
 export type ShortcutAction =
   | "undo"
   | "redo"
@@ -75,6 +77,14 @@ interface ShortcutDef {
 }
 
 const digit = (n: number) => [{ code: `Digit${n}` }, { code: `Numpad${n}` }];
+/**
+ * Ctrl+Alt+lettera (⌘⌥ su macOS). Sul Mac Opzione cambia il carattere (⌥T = "†", ⌥C = "ç"), quindi lì conta il
+ * tasto fisico; altrove il carattere, così AltGr che scrive un simbolo non scatta (vedi matchShortcut).
+ */
+const optionLetter = (letter: string): Combo[] => [
+  { key: letter, mod: true, alt: true, mac: false },
+  { code: `Key${letter.toUpperCase()}`, mod: true, alt: true, mac: true },
+];
 
 export const SHORTCUTS: Record<ShortcutAction, ShortcutDef> = {
   undo: { label: "Annulla", group: "Modifica", combos: [{ key: "z", mod: true }] },
@@ -109,8 +119,8 @@ export const SHORTCUTS: Record<ShortcutAction, ShortcutDef> = {
   indent: { label: "Aumenta il rientro (nelle tabelle: cella dopo)", group: "Testo", combos: [{ code: "Tab" }] },
   outdent: { label: "Riduci il rientro (nelle tabelle: cella prima)", group: "Testo", combos: [{ code: "Tab", shift: true }] },
 
-  table: { label: "Nuova tabella", group: "Tabelle", combos: [{ key: "t", mod: true, alt: true }] },
-  code: { label: "Blocco di codice", group: "Testo", combos: [{ key: "c", mod: true, alt: true }] },
+  table: { label: "Nuova tabella", group: "Tabelle", combos: optionLetter("t") },
+  code: { label: "Blocco di codice", group: "Testo", combos: optionLetter("c") },
 
   find: { label: "Cerca nella nota", group: "Navigazione", combos: [{ key: "f", mod: true }] },
   findAll: { label: "Cerca in tutte le note", group: "Navigazione", combos: [{ key: "f", mod: true, shift: true }] },
@@ -132,7 +142,7 @@ export const SHORTCUTS: Record<ShortcutAction, ShortcutDef> = {
   },
   escape: { label: "Chiudi, deseleziona", group: "Navigazione", combos: [{ code: "Escape" }] },
 
-  bookmark: { label: "Inserisci un segno", group: "Segni", combos: [{ key: "b", mod: true, alt: true }] },
+  bookmark: { label: "Inserisci un segno", group: "Segni", combos: optionLetter("b") },
   nextBookmark: { label: "Segno successivo", group: "Segni", combos: [{ code: "PageDown", alt: true }] },
   prevBookmark: { label: "Segno precedente", group: "Segni", combos: [{ code: "PageUp", alt: true }] },
 
@@ -146,11 +156,7 @@ export const SHORTCUTS: Record<ShortcutAction, ShortcutDef> = {
 /** Azioni delle lettere senza modificatori: valgono solo in modalità disegno. */
 export const INK_ACTIONS: ReadonlySet<ShortcutAction> = new Set(["pen", "highlighter", "eraser", "textMode", "pinTool"]);
 
-export function isMacPlatform(): boolean {
-  const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
-  const platform = nav.userAgentData?.platform ?? navigator.platform ?? "";
-  return /mac/i.test(platform);
-}
+export const isMacPlatform = isMac;
 
 export interface KeyLike {
   key: string;

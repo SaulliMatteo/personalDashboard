@@ -7,6 +7,8 @@ import { bookmarkColorVar, bookmarkIcon } from "./bookmarkIcons";
 import NoteTitle from "./NoteTitle";
 import PageMenu from "./PageMenu";
 import "./BookmarkPanel.css";
+import { modKeyLabel } from "../../../core/system/platform";
+import { shortcutLabel } from "../lib/shortcuts";
 
 interface BookmarkPanelProps {
   bookmarks: BookmarkRow[];
@@ -159,7 +161,7 @@ function BookmarkPanel({ bookmarks, notes, childrenOf, folderById, openNoteId, o
           <button
             type="button"
             className="nq-tree-main"
-            title={`${kindLabel(b.kind)}: ${b.name}${b.place === "pagina" ? " (sulla pagina)" : ""}\nCtrl+clic: nell'altro lato dello schermo diviso`}
+            title={`${kindLabel(b.kind)}: ${b.name}${b.place === "pagina" ? " (sulla pagina)" : ""}\n${modKeyLabel()}+clic: nell'altro lato dello schermo diviso`}
             onClick={(e: MouseEvent) => onOpen(b, e.ctrlKey || e.metaKey)}
             onContextMenu={(e) => {
               e.preventDefault();
@@ -317,7 +319,7 @@ function BookmarkPanel({ bookmarks, notes, childrenOf, folderById, openNoteId, o
               renderNoteMarks(openNote.id, 0, true)
             ) : (
               <p className="nq-side-hint">
-                {hasFilters ? "Nessun segno con questi filtri." : "Nessun segno in questa nota. Mettine uno con il tasto destro o con Ctrl+Alt+B."}
+                {hasFilters ? "Nessun segno con questi filtri." : `Nessun segno in questa nota. Mettine uno con il tasto destro o con ${shortcutLabel("bookmark")}.`}
               </p>
             )
           ) : (
@@ -352,7 +354,7 @@ function BookmarkPanel({ bookmarks, notes, childrenOf, folderById, openNoteId, o
           groups={[
             [
               { label: "Vai al segno", icon: bookmarkIcon(menu.b.kind), onSelect: () => onOpen(menu.b, false) },
-              { label: "Apri nell'altro lato", icon: <MdOutlineDescription />, hint: "Ctrl clic", onSelect: () => onOpen(menu.b, true) },
+              { label: "Apri nell'altro lato", icon: <MdOutlineDescription />, hint: `${modKeyLabel()} clic`, onSelect: () => onOpen(menu.b, true) },
             ],
             // Un collegamento a un PDF si toglie dal testo, non da qui (le sue pagine restano nella nota).
             menu.b.kind === "pdf"

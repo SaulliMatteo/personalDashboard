@@ -13,6 +13,9 @@ scarica il file per il tuo sistema.
 
 ### macOS (11 o successivo, Intel e Apple Silicon)
 
+Serve Safari 16.4 o più recente (l'app usa il suo motore): con macOS 13.3 c'è già, su 11 e 12 basta aggiornare Safari
+da Aggiornamento Software. Con un Safari più vecchio la finestra resta vuota.
+
 1. Scarica il file `.dmg`, aprilo e trascina l'app in **Applicazioni**.
 2. L'app non è firmata da Apple, quindi al primo avvio macOS la blocca. Per sbloccarla, una volta sola:
    1. prova ad aprirla e chiudi l'avviso;
