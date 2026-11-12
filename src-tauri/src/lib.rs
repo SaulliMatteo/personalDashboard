@@ -43,6 +43,34 @@ fn is_app_url(url: &tauri::Url) -> bool {
     }
 }
 
+/// Host del player di YouTube e di ciò che il player carica dentro di sé (accesso, pubblicità, immagini).
+/// Su macOS wry passa a `on_navigation` anche le navigazioni degli iframe (su Windows e Android solo quelle
+/// della pagina principale): senza questa eccezione l'iframe del player veniva annullato e aperto nel browser,
+/// e la sonda nascosta delle durate (`widgets/youtube/lib/durationFill.ts`) apriva una scheda ogni pochi secondi.
+/// Queste pagine non hanno accesso ai comandi (l'ACL ammette solo l'origine dell'app), e i click sui link della
+/// pagina principale li apre nel browser il frontend (`core/system/externalLinks.ts`).
+#[cfg(target_os = "macos")]
+fn is_embed_url(url: &tauri::Url) -> bool {
+    const HOSTS: [&str; 9] = [
+        "youtube.com",
+        "youtube-nocookie.com",
+        "google.com",
+        "googlevideo.com",
+        "ytimg.com",
+        "gstatic.com",
+        "doubleclick.net",
+        "googlesyndication.com",
+        "googleadservices.com",
+    ];
+    if url.scheme() != "https" {
+        return false;
+    }
+    let host = url.host_str().unwrap_or("");
+    HOSTS
+        .iter()
+        .any(|h| host == *h || host.strip_suffix(*h).is_some_and(|rest| rest.ends_with('.')))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default();
@@ -140,6 +168,10 @@ pub fn run() {
             tauri::WebviewWindowBuilder::from_config(app.handle(), &config)?
                 .on_navigation(move |url| {
                     if is_app_url(url) {
+                        return true;
+                    }
+                    #[cfg(target_os = "macos")]
+                    if is_embed_url(url) {
                         return true;
                     }
                     if matches!(url.scheme(), "http" | "https" | "mailto") {

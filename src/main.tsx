@@ -19,9 +19,12 @@ import "./styles/base.css";
 
 import App from "./app/App";
 import { installAndroidInsets } from "./core/system/androidInsets";
+import { installExternalLinks } from "./core/system/externalLinks";
 
 // Su Android: barre di sistema e tastiera nelle variabili CSS (--safe-*, --keyboard), prima del primo render.
 installAndroidInsets();
+// Link esterni nel browser di sistema, non nella finestra dell'app.
+installExternalLinks();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
