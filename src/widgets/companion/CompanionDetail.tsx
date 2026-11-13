@@ -21,6 +21,7 @@ const CATEGORY_LABELS: Record<AppCategory, string> = {
   design: "grafica",
   game: "gioco",
   chat: "chat",
+  social: "social",
   video: "video",
   music: "musica",
   browser: "navigazione",

@@ -1,0 +1,243 @@
+/* Tempo al PC in dashboard (docs/design/temi/tempo-pc.html). Il tempo si colora per CLASSE (focus / svago / neutro)
+   con tre colori presi dai token; le parti per tema in fondo, l'anello della Piccola in card/rings.tsx.
+   Le classi st-* (pezzi colorati, linea del giorno) servono anche alla pagina di dettaglio. */
+
+/* ---------- Colori delle classi (per tema) ---------- */
+:root {
+  --st-focus: var(--accent);
+  --st-fun: var(--warn);
+  --st-neutral: color-mix(in srgb, var(--text-muted) 55%, transparent);
+  --st-track: var(--track);
+  --st-warn: var(--warn);
+}
+:root[data-theme="opaco"] [data-pigment] {
+  --st-focus: var(--pg-ink);
+  --st-fun: var(--pg-half);
+  --st-neutral: var(--pg-light);
+  --st-track: var(--pg-dark);
+  --st-warn: var(--pg-ink);
+}
+:root[data-theme="quaderno"] {
+  --st-neutral: var(--text-muted);
+}
+:root[data-theme="fosforo"] {
+  --st-focus: var(--dot-on);
+  --st-fun: var(--led);
+  --st-neutral: var(--text-muted);
+  --st-track: var(--dot-off);
+  --st-warn: var(--led);
+}
+
+/* Un pezzo colorato (barre, colonne, pallini). */
+.st-seg {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  background: var(--c);
+}
+.st-seg.is-focus { --c: var(--st-focus); }
+.st-seg.is-fun { --c: var(--st-fun); }
+.st-seg.is-neutral { --c: var(--st-neutral); }
+:root[data-theme="quaderno"] .st-seg.is-neutral { background: repeating-linear-gradient(-45deg, var(--accent) 0 1.5px, transparent 1.5px 4px); }
+:root[data-theme="quaderno"] .st-seg.is-fun { background: repeating-linear-gradient(45deg, var(--st-fun) 0 2px, transparent 2px 3.5px); }
+:root[data-theme="fosforo"] .st-seg { background: radial-gradient(circle, var(--c) 2.2px, transparent 2.6px) 0 0 / 7px 7px repeat; }
+
+/* ---------- Linea del giorno ---------- */
+.st-day {
+  display: grid;
+  grid-template-columns: repeat(24, minmax(0, 1fr));
+  gap: 2px;
+  align-items: end;
+  height: var(--h, 58px);
+}
+.st-hour {
+  height: 100%;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 1px;
+  border-radius: 3px 3px 0 0;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--st-track) 45%, transparent);
+}
+.st-hour.is-now { outline: 1.5px dashed var(--text-muted); outline-offset: 1px; }
+.st-hour > .st-seg { flex: none; height: var(--v); }
+.st-axis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr) auto;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.st-axis span:last-child { text-align: right; }
+
+/* ==========================================================================
+   WIDGET
+   ========================================================================== */
+.stw {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: min(var(--widget-padding), 16px) min(var(--widget-padding), 18px);
+  color: var(--text-primary);
+  container-type: size;
+}
+.stw-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 18px; }
+.stw-title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.stw-sub { margin-left: auto; font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stw-num {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking, 0);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.stw-unit { font-family: var(--font-family); font-weight: 500; font-size: 0.48em; color: var(--text-muted); letter-spacing: 0; margin: 0 3px 0 1px; }
+.stw-mono { font-family: "JetBrains Mono Variable", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.stw-label { font-size: 11px; color: var(--text-secondary); }
+
+/* Barra delle classi */
+.stw-split {
+  display: flex;
+  gap: 2px;
+  height: var(--st-bar-h, 8px);
+  border-radius: 99px;
+  overflow: hidden;
+  background: var(--st-track);
+}
+.stw-split > .st-seg { flex: var(--v) 1 0; }
+.stw-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11px; color: var(--text-secondary); }
+.stw-legend span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.stw-legend i { width: 8px; height: 8px; border-radius: 50%; }
+.stw-legend b { font-weight: 600; color: var(--text-primary); }
+
+/* Più usati */
+.stw-top-box { flex: 1; min-height: 0; overflow: hidden; }
+.stw-top { display: flex; flex-direction: column; gap: 6px; }
+.stw-top-row {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  height: 16px;
+  font-size: 12px;
+}
+.stw-top-row i { width: 8px; height: 8px; border-radius: 50%; }
+.stw-top-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stw-top-row .stw-mono { color: var(--text-secondary); font-size: 11.5px; }
+
+/* Piccola 1×1: solo l'anello col totale */
+.stw--S .stw-hero { flex: 1; min-height: 0; display: grid; place-items: center; }
+.stw-ring { position: relative; width: min(118px, 68cqh, 80cqw); aspect-ratio: 1; }
+.stw-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stw-ring-val { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.stw-ring-val .stw-num { font-size: 24px; }
+.stw-ring-val small { display: block; margin-top: 4px; font-size: 10.5px; color: var(--text-muted); }
+
+/* Larga 2×1 */
+.stw--W .stw-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+.stw--W .stw-top-box { height: 100%; display: flex; align-items: center; }
+.stw--W .stw-top { width: 100%; }
+.stw-total { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.stw-total > .stw-num { font-size: 34px; }
+
+/* Alta 1×2 */
+.stw--T .stw-total > .stw-num { font-size: 32px; }
+.stw--T .stw-top { gap: 6px; }
+.stw-sep { height: 1px; flex: none; background: var(--divider); }
+
+/* Media 2×2 */
+.stw--M { gap: 9px; }
+.stw-total-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.stw-total-row > .stw-num { font-size: 34px; }
+.stw-focus { text-align: right; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.stw-focus .stw-num { font-size: 22px; }
+.stw-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 14px; }
+.stw-col { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 7px; }
+.stw-col h3 { margin: 0; font-size: 11px; font-weight: 600; color: var(--text-muted); }
+.stw-limit { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.stw-limit-top { display: flex; justify-content: space-between; gap: 6px; }
+.stw-limit-top span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stw-limit-top .stw-mono { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
+.stw-bar { position: relative; height: var(--st-bar-h, 6px); border-radius: 99px; background: var(--st-track); overflow: hidden; }
+.stw-bar > i { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--st-focus); }
+.stw-bar.is-near > i { background: var(--st-warn); }
+.stw-pause { display: flex; align-items: center; gap: 6px; margin-top: auto; font-size: 11px; color: var(--text-secondary); }
+.stw-pause svg { flex: none; color: var(--text-muted); }
+
+/* Celle basse (più righe in griglia): via quello che non entra. */
+@container (max-height: 300px) {
+  .stw--M .stw-day-box { display: none; }
+}
+@container (max-height: 150px) {
+  .stw--W .stw-legend { display: none; }
+  .stw--W .stw-total > .stw-num { font-size: 28px; }
+}
+@container (max-height: 280px) {
+  .stw--T .stw-legend { display: none; }
+}
+
+/* Messaggi (telefono, conteggio spento, primo avvio) */
+.stw-na { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+.stw-na p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--text-secondary); }
+.stw-na svg { color: var(--text-muted); }
+
+/* ---------- Le parti per tema ---------- */
+/* NOTTE: pezzi arrotondati e staccati, con un alone. */
+:root[data-theme="notte"] .stw-split { gap: 3px; background: transparent; }
+:root[data-theme="notte"] .stw-split > .st-seg { border-radius: 99px; box-shadow: 0 0 10px color-mix(in srgb, var(--c) 40%, transparent); }
+
+/* OPACO: pigmento, barre piene e squadrate, testo pieno. */
+:root[data-theme="opaco"] { --st-bar-h: 12px; }
+:root[data-theme="opaco"] .stw-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
+:root[data-theme="opaco"] .stw-split { border-radius: 4px; gap: 0; }
+:root[data-theme="opaco"] .st-hour { border-radius: 2px; background: var(--pg-mid, var(--surface-1)); }
+:root[data-theme="opaco"] .stw-legend,
+:root[data-theme="opaco"] .stw-label,
+:root[data-theme="opaco"] .stw-top-row .stw-mono,
+:root[data-theme="opaco"] .st-axis { color: var(--text-primary); }
+:root[data-theme="opaco"] .stw-bar { border-radius: 4px; }
+
+/* QUADERNO: matita, tratteggi, titoli e numeri a mano. */
+:root[data-theme="quaderno"] { --st-bar-h: 11px; }
+:root[data-theme="quaderno"] .stw-title { font-size: 20px; font-weight: 600; color: var(--accent); letter-spacing: 0; line-height: 1; }
+:root[data-theme="quaderno"] .stw-num { color: var(--accent); }
+:root[data-theme="quaderno"] .stw-split { border-radius: 2px; background: transparent; border: 1.5px solid var(--accent); gap: 0; }
+:root[data-theme="quaderno"] .stw-split > .st-seg + .st-seg { border-left: 1.5px solid var(--accent); }
+:root[data-theme="quaderno"] .st-hour { border-radius: 0; background: transparent; border-bottom: 1.5px solid var(--sheet-rule); }
+:root[data-theme="quaderno"] .stw-bar { border-radius: 2px; background: transparent; border: 1.5px solid var(--accent); }
+:root[data-theme="quaderno"] .stw-bar > i { background: repeating-linear-gradient(-45deg, var(--accent) 0 1.5px, transparent 1.5px 4px); }
+:root[data-theme="quaderno"] .stw-bar.is-near { border-color: var(--st-warn); }
+:root[data-theme="quaderno"] .stw-bar.is-near > i { background: repeating-linear-gradient(-45deg, var(--st-warn) 0 1.5px, transparent 1.5px 4px); }
+
+/* FOSFORO: tutto a punti, svago in LED. */
+:root[data-theme="fosforo"] { --st-bar-h: 7px; }
+:root[data-theme="fosforo"] .stw-title { font-size: 11px; font-weight: 400; text-transform: lowercase; letter-spacing: 0.04em; }
+:root[data-theme="fosforo"] .stw-split { border-radius: 0; background: transparent; gap: 7px; }
+:root[data-theme="fosforo"] .stw-split > .st-seg { background-position: 0 50%; background-repeat: repeat-x; }
+:root[data-theme="fosforo"] .st-hour { border-radius: 0; background: radial-gradient(circle, var(--dot-off) 1.6px, transparent 2px) 50% 100% / 7px 7px repeat-y; gap: 0; }
+:root[data-theme="fosforo"] .st-hour > .st-seg { background-position: 50% 100%; background-repeat: repeat-y; }
+:root[data-theme="fosforo"] .stw-bar { border-radius: 0; background: radial-gradient(circle, var(--dot-off) 2.2px, transparent 2.6px) 0 50% / 7px 7px repeat-x; }
+:root[data-theme="fosforo"] .stw-bar > i { border-radius: 0; background: radial-gradient(circle, var(--dot-on) 2.2px, transparent 2.6px) 0 50% / 7px 7px repeat-x; }
+:root[data-theme="fosforo"] .stw-bar.is-near > i { background: radial-gradient(circle, var(--led) 2.2px, transparent 2.6px) 0 50% / 7px 7px repeat-x; }
+:root[data-theme="fosforo"] .stw-legend i,
+:root[data-theme="fosforo"] .stw-top-row i { border-radius: 0; width: 6px; height: 6px; }
+:root[data-theme="fosforo"] .stw-unit,
+:root[data-theme="fosforo"] .stw-mono { font-family: var(--font-family); }

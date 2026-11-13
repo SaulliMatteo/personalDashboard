@@ -615,4 +615,41 @@ export const MIGRATIONS: Migration[] = [
       ...syncTracking("subjects", "id", ["name", "created_at", "color", "mode", "work_minutes", "short_break_minutes", "long_break_minutes", "cycles_before_long_break", "archived_at", "study_days", "daily_goal_minutes"]),
     ],
   },
+  {
+    version: 27,
+    description: "Tempo al PC: secondi per ora, app e sito; sessioni senza pausa; limiti (solo su questo computer)",
+    statements: [
+      // Una riga per giorno locale (YYYY-MM-DD), ora, app e sito ('' fuori dal browser). Mai il titolo della finestra.
+      // category: quella automatica al momento del conteggio; le scelte a mano si applicano leggendo
+      // (widgets/screentime/lib/classify.ts). first_at/last_at (ms): primo e ultimo secondo contato in quella riga.
+      // Non sincronizzate: sono i dati di questo computer (non in core/sync/tables.ts).
+      `CREATE TABLE IF NOT EXISTS screentime_usage (
+         day TEXT NOT NULL,
+         hour INTEGER NOT NULL,
+         app_key TEXT NOT NULL,
+         site TEXT NOT NULL DEFAULT '',
+         app_label TEXT NOT NULL,
+         category TEXT NOT NULL,
+         seconds INTEGER NOT NULL DEFAULT 0,
+         first_at INTEGER NOT NULL,
+         last_at INTEGER NOT NULL,
+         PRIMARY KEY (day, hour, app_key, site)
+       )`,
+      // Tratti al PC senza pause di almeno 5 minuti (start_at = inizio, ms): pause e sessione più lunga.
+      `CREATE TABLE IF NOT EXISTS screentime_sessions (
+         start_at INTEGER PRIMARY KEY,
+         end_at INTEGER NOT NULL
+       )`,
+      // kind: 'app' (target = app_key), 'site' (target = nome del sito), 'category' (target = categoria).
+      `CREATE TABLE IF NOT EXISTS screentime_limits (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         kind TEXT NOT NULL,
+         target TEXT NOT NULL,
+         label TEXT NOT NULL,
+         minutes INTEGER NOT NULL,
+         warn INTEGER NOT NULL DEFAULT 1,
+         created_at INTEGER NOT NULL
+       )`,
+    ],
+  },
 ];

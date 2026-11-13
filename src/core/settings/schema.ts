@@ -45,6 +45,12 @@ export const DEFAULT_SETTINGS = {
    * (UpdateSection), solo dove gli aggiornamenti funzionano: per questo non ha una voce in SETTING_DEFS.
    */
   autoCheckUpdates: true,
+  /**
+   * La X nasconde la finestra e l'app resta vicino all'orologio (src-tauri/src/app_tray.rs), così Tempo al PC continua
+   * a contare. Si cambia in Impostazioni > Generale > Finestra e avvio (WindowSection), solo sul desktop: per questo
+   * non ha una voce in SETTING_DEFS. L'avvio col computer non è un'impostazione: lo stato vero lo tiene il sistema.
+   */
+  closeToTray: true,
 
   // ---- Aspetto ----
   theme: "notte" as ThemeId,
@@ -142,6 +148,18 @@ export const DEFAULT_SETTINGS = {
   /** Ogni quanti secondi si aggiorna (widget e pagina). */
   sysmonInterval: "2" as "1" | "2" | "5",
 
+  // ---- Widget: Tempo al PC (per dispositivo: conta le app di questo computer) ----
+  screentimeEnabled: true,
+  /** Minuti senza mouse né tastiera dopo cui sei "via dal PC" (tranne video, musica e chiamate). */
+  screentimeIdleMinutes: 3,
+  /** Promemoria dopo tanti minuti al PC senza una pausa di 5; 0 = spento. */
+  screentimeBreakMinutes: 50,
+  /** Obiettivo giornaliero di tempo in focus (minuti); 0 = nessun obiettivo. */
+  screentimeFocusGoalMinutes: 240,
+  /** Classe di ogni categoria, "categoria=focus|fun|neutral;…" (widgets/screentime/lib/focus.ts); vuota = i default.
+   *  Si modifica dalla pagina del widget: nessuna voce in SETTING_DEFS. */
+  screentimeFocusClasses: "",
+
   // ---- Gruppi ----
   /** Il nome della materia in corso arriva ai compagni di gruppo solo se attivo (spento di default). */
   groupsShowSubject: false,
@@ -165,7 +183,7 @@ export const DEFAULT_SETTINGS = {
 
 export type AppSettings = typeof DEFAULT_SETTINGS;
 export type SettingKey = keyof AppSettings;
-export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion" | "weather" | "sysmon" | "groups";
+export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion" | "weather" | "sysmon" | "screentime" | "groups";
 
 interface BaseDef {
   key: SettingKey;
@@ -307,6 +325,24 @@ export const SETTING_DEFS: SettingDef[] = [
     description: "Il monitor misura solo mentre il widget è in dashboard o la sua pagina è aperta. Vale solo per questo computer.",
   },
 
+  // ======================= WIDGET: TEMPO AL PC =======================
+  {
+    key: "screentimeEnabled", systemSignals: true, group: "screentime", section: "Conteggio", type: "boolean", label: "Conta il tempo al PC",
+    description: "Guarda l'app in primo piano e, nel browser, il titolo della scheda per capire il sito. Su disco restano solo app, sito e minuti, mai i titoli. Niente esce dal computer.",
+  },
+  {
+    key: "screentimeIdleMinutes", systemSignals: true, group: "screentime", section: "Conteggio", type: "number", control: "input", min: 1, max: 30, step: 1, dependsOn: "screentimeEnabled",
+    label: "Via dal PC dopo (min)", description: "Minuti senza mouse né tastiera. Video, musica e chiamate contano lo stesso.",
+  },
+  {
+    key: "screentimeBreakMinutes", systemSignals: true, group: "screentime", section: "Pause e obiettivi", type: "number", control: "input", min: 0, max: 240, step: 5, dependsOn: "screentimeEnabled",
+    label: "Ricordami una pausa dopo (min)", description: "Minuti al PC senza una pausa di almeno 5. 0 = nessun promemoria.",
+  },
+  {
+    key: "screentimeFocusGoalMinutes", systemSignals: true, group: "screentime", section: "Pause e obiettivi", type: "number", control: "input", min: 0, max: 960, step: 15, dependsOn: "screentimeEnabled",
+    label: "Obiettivo di focus al giorno (min)", description: "Quali categorie sono focus si sceglie nella pagina del widget. 0 = nessun obiettivo.",
+  },
+
   // ======================= GRUPPI =======================
   {
     key: "groupsShowSubject", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Mostra la materia che sto studiando",
@@ -391,6 +427,7 @@ export const SETTING_DEFS: SettingDef[] = [
  */
 export const PER_DEVICE_SETTINGS: ReadonlySet<SettingKey> = new Set<SettingKey>([
   "autoCheckUpdates",
+  "closeToTray",
   "themeMode",
   "animationsEnabled",
   "sidebarPosition",
@@ -425,6 +462,11 @@ export const PER_DEVICE_SETTINGS: ReadonlySet<SettingKey> = new Set<SettingKey>(
   "companionAppCategories",
   "sysmonMetrics",
   "sysmonInterval",
+  "screentimeEnabled",
+  "screentimeIdleMinutes",
+  "screentimeBreakMinutes",
+  "screentimeFocusGoalMinutes",
+  "screentimeFocusClasses",
   "syncEnabled",
 ]);
 

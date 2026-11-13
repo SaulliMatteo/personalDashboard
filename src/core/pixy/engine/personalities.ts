@@ -18,6 +18,9 @@ export type PhraseKey =
   | "autostop_warning"
   | "autostop_idle"
   | "autostop_app"
+  | "screen_limit_near"
+  | "screen_limit"
+  | "screen_break"
   | "goal_reached"
   | "video_start"
   | "video_end"
@@ -126,6 +129,9 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       autostop_warning: ["Ehi{,name}, ci sei ancora? 👀", "Psst! Sto per fermare il timer!", "Muovi il mouse se ci sei!"],
       autostop_idle: ["Ti ho aspettato, poi ho fermato tutto!", "Sparito{,name}? Ho salvato io il tuo studio!"],
       autostop_app: ["Beccato! Ho fermato il timer 😄", "Pausa vera allora! Timer fermato."],
+      screen_limit_near: ["Occhio, il tempo sta per finire!", "Ancora un pochino e basta{,name}!"],
+      screen_limit: ["Tempo scaduto! Chiudiamo?", "Limite raggiunto: l'avevi deciso tu!"],
+      screen_break: ["Pausa! Sgranchisciti un po'.", "Alzati{,name}, guarda lontano e bevi un sorso d'acqua!"],
       goal_reached: ["OBIETTIVO RAGGIUNTO! 🎉", "Ce l'hai fatta! Sono fiero di te!"],
       video_start: ["Cosa guardiamo?", "Popcorn pronti!"],
       video_end: ["Finito! Bello?", "E il prossimo?"],
@@ -195,6 +201,9 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       autostop_warning: ["Tutto bene{,name}? Tra poco fermo il timer.", "Mi sembri lontano. Fermo il timer tra poco."],
       autostop_idle: ["Ho fermato il timer con calma, mentre eri via.", "Eri via: ho salvato lo studio fatto."],
       autostop_app: ["Ho fermato il timer: ti stai prendendo una pausa.", "Va bene staccare. Timer fermato."],
+      screen_limit_near: ["Manca poco al limite che ti sei dato.", "Tra poco è ora di smettere."],
+      screen_limit: ["Il tempo che ti eri dato è finito.", "Limite raggiunto. Con calma, chiudi pure."],
+      screen_break: ["Respira. Cinque minuti lontano dallo schermo.", "Una pausa ti farà bene."],
       goal_reached: ["Obiettivo raggiunto. Bravo.", "Ce l'hai fatta, con costanza."],
       video_start: ["Buona visione."],
       video_end: ["Finito."],
@@ -264,6 +273,9 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       autostop_warning: ["Anche tu ti sei addormentato…? Tra poco fermo il timer.", "Mmh… ci sei? …sto per fermare tutto."],
       autostop_idle: ["Zzz… ho fermato il timer. Dormivi anche tu?", "Eri sparito… ho fermato il timer e mi sono appisolato."],
       autostop_app: ["Timer fermato… tanto ormai giochi.", "Ho fermato il timer. Pausa per tutti e due."],
+      screen_limit_near: ["Mmh… quasi finito il tempo.", "Ancora poco… poi riposino?"],
+      screen_limit: ["Tempo finito. Andiamo a dormire?", "Basta così… sono stanco io per te."],
+      screen_break: ["Pausa? Io la faccio di sicuro.", "Chiudi gli occhi cinque minuti… come me."],
       goal_reached: ["Obiettivo! Mi sono pure svegliato per festeggiare!"],
       video_start: ["Se mi addormento svegliami a metà."],
       video_end: ["Ah, è già finito? Dormivo."],
@@ -333,6 +345,9 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       autostop_warning: ["Ehi. Sei ancora lì o devo fermare tutto?", "Ultimo avviso: tra poco fermo il timer."],
       autostop_idle: ["Te ne sei andato senza fermare il timer. L'ho fatto io.", "Timer lasciato acceso. Di nuovo. Fermato."],
       autostop_app: ["Studiare, eh? Timer fermato.", "Ti ho visto. Timer fermato."],
+      screen_limit_near: ["Il limite è vicino. Lo so che lo sai.", "Ancora un po' e ci siamo. Di nuovo."],
+      screen_limit: ["Limite superato. L'hai deciso tu, non io.", "Tempo finito. Chiudi."],
+      screen_break: ["Alzati. Sul serio.", "Da quanto sei lì? Pausa."],
       goal_reached: ["Obiettivo raggiunto. Ok, sono colpito.", "Non lo dirò due volte: bravo."],
       video_start: ["Studio o svago? Non dirmelo."],
       video_end: ["E adesso torniamo a cose serie?"],

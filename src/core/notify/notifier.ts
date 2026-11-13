@@ -28,6 +28,8 @@ import { pluginNotify, showNotificationWithImage } from "./notifyApi";
  * Solo nella campanella (`postInAppNotification`): updateAvailable (controllo giornaliero degli aggiornamenti),
  * groupJoined e groupStudied (i messaggi di sistema della chat dei Gruppi), friendAccepted.
  * friendRequest e friendMessage: dagli amici (social/friends); i messaggi di testo non vanno nella campanella (`inbox: false`).
+ * screenLimitNear/screenLimitReached/screenBreak: Tempo al PC (limiti e promemoria della pausa); trayHidden: la prima
+ * volta che la X nasconde la finestra (solo notifica di sistema).
  */
 export type AppNotificationKind =
   | "pomodoroDone"
@@ -40,7 +42,11 @@ export type AppNotificationKind =
   | "updateAvailable"
   | "friendRequest"
   | "friendAccepted"
-  | "friendMessage";
+  | "friendMessage"
+  | "screenLimitNear"
+  | "screenLimitReached"
+  | "screenBreak"
+  | "trayHidden";
 
 /**
  * Dove porta il clic sulla notifica: la pagina di un widget, la Stanza comune o una sezione delle Impostazioni.
@@ -110,6 +116,10 @@ const CHANNEL_OF: Record<AppNotificationKind, ChannelId> = {
   friendRequest: "amici",
   friendAccepted: "amici",
   friendMessage: "amici",
+  screenLimitNear: "avvisi",
+  screenLimitReached: "avvisi",
+  screenBreak: "avvisi",
+  trayHidden: "avvisi",
 };
 
 let channelsReady: Promise<void> | null = null;

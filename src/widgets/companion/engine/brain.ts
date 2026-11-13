@@ -352,6 +352,7 @@ export class CompanionBrain {
       case "game":
         return "app_game";
       case "chat":
+      case "social":
         return "app_chat";
       case "music":
         return "app_music";

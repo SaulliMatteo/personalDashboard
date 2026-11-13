@@ -6,6 +6,7 @@ import { CloudProvider } from "../core/cloud/CloudContext";
 import { SyncProvider } from "../core/sync/SyncContext";
 import { NavProvider } from "../core/nav/NavContext";
 import { useAutoUpdateCheck } from "../core/updater/autoCheck";
+import { useAppWindowBridge } from "../core/system/useAppWindowBridge";
 import { useNav } from "../core/nav/useNav";
 import WidgetProviders from "../widgets/WidgetProviders";
 import SocialProviders from "../social/SocialProviders";
@@ -30,6 +31,8 @@ function CurrentView() {
   const compact = useCompact();
   // una volta al giorno, se acceso: una versione nuova finisce nella campanella
   useAutoUpdateCheck();
+  // icona vicino all'orologio: la X nasconde la finestra, "Esci" salva prima di uscire
+  useAppWindowBridge();
   // sul telefono ogni vista ha la sua barra in alto (la dashboard se la disegna da sé, con la matita)
   let bar: CompactBarSpec | undefined;
   // gli amici (social) nell'intestazione della dashboard (features non importa social)

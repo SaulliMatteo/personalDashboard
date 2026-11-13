@@ -28,7 +28,14 @@ export function pixyLook(n: AppNotification): PixyLook | null {
     case "friendRequest":
     case "friendAccepted":
     case "friendMessage":
+    case "trayHidden":
       return null;
+    case "screenLimitNear":
+      return { emotion: "surprised", glyph: "exclaim", emoji: "⏳", phrase: "screen_limit_near" };
+    case "screenLimitReached":
+      return { emotion: "serious", glyph: null, emoji: "⏰", phrase: "screen_limit" };
+    case "screenBreak":
+      return { emotion: "relaxed", glyph: null, emoji: "🧘", phrase: "screen_break" };
     case "pomodoroDone":
       return { emotion: "proud", glyph: "star", emoji: "🍅", phrase: "pomodoro_done" };
     case "breakOver":

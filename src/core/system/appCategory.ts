@@ -13,7 +13,7 @@
  *
  * Il titolo serve SOLO a capire cosa c'è nel browser: non viene salvato né mostrato.
  */
-export const APP_CATEGORIES = ["coding", "office", "design", "game", "chat", "video", "music", "browser", "other"] as const;
+export const APP_CATEGORIES = ["coding", "office", "design", "game", "chat", "social", "video", "music", "browser", "other"] as const;
 export type AppCategory = (typeof APP_CATEGORIES)[number];
 
 /** App con una posa dedicata del Companion (vedi widgets/companion/engine/poses.ts). */
@@ -122,6 +122,7 @@ const SITE_RULES: { test: RegExp; category: AppCategory; label: string; appId?: 
   { test: /chatgpt|claude|gemini|copilot|perplexity/i, category: "chat", label: "l'assistente IA", appId: "ai" },
   { test: /google meet|zoom meeting|microsoft teams/i, category: "chat", label: "la videochiamata", appId: "call" },
   { test: /whatsapp|telegram/i, category: "chat", label: "i messaggi", appId: "messages" },
+  { test: /instagram|tiktok|reddit|facebook|bluesky|linkedin|pinterest|\/ x( |$)|twitter/i, category: "social", label: "i social" },
   { test: /discord/i, category: "chat", label: "Discord", appId: "discord" },
   { test: /fogli google|google sheets/i, category: "office", label: "i fogli di calcolo", appId: "excel" },
   { test: /presentazioni google|google slides|canva/i, category: "office", label: "le presentazioni", appId: "slides" },
