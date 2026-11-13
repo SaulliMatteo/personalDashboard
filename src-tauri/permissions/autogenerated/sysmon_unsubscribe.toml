@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-sysmon-unsubscribe"
+description = "Enables the sysmon_unsubscribe command without any pre-configured scope."
+commands.allow = ["sysmon_unsubscribe"]
+
+[[permission]]
+identifier = "deny-sysmon-unsubscribe"
+description = "Denies the sysmon_unsubscribe command without any pre-configured scope."
+commands.deny = ["sysmon_unsubscribe"]

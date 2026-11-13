@@ -5,6 +5,7 @@ mod file_send;
 mod file_transfer;
 mod notify;
 mod secure_store;
+mod system_monitor;
 mod updater;
 
 use tauri::Manager;
@@ -110,6 +111,7 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_deep_link::init())
         .manage(file_transfer::FileTransferState::default())
+        .manage(system_monitor::SysmonState::default())
         .invoke_handler(tauri::generate_handler![
             file_transfer::ft_start_server,
             file_transfer::ft_stop_server,
@@ -131,13 +133,20 @@ pub fn run() {
             db_backup::db_import_stage,
             db_backup::db_import_apply,
             updater::updater_prepare_install,
+            system_monitor::sysmon_capabilities,
+            system_monitor::sysmon_subscribe,
+            system_monitor::sysmon_unsubscribe,
+            system_monitor::sysmon_reset,
+            system_monitor::sysmon_set_interval,
         ])
         .on_window_event(|window, event| {
             // Chiudendo la finestra il server C va fermato, altrimenti la
             // porta resta occupata fino alla morte del processo. Su Android
             // CloseRequested non arriva, ma lì il server C non c'è.
+            // Si ferma anche il campionatore del monitor di sistema.
             if let tauri::WindowEvent::CloseRequested { .. } = event {
                 file_transfer::shutdown(window.app_handle());
+                system_monitor::shutdown(window.app_handle());
             }
         })
         .setup(|app| {
@@ -191,6 +200,7 @@ pub fn run() {
             // questo evento: lì la pulizia la fa `updater_prepare_install` (src/updater.rs).
             if let tauri::RunEvent::Exit = event {
                 file_transfer::shutdown(app);
+                system_monitor::shutdown(app);
             }
         });
 }

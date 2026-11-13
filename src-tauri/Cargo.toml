@@ -6,7 +6,7 @@ authors = ["you"]
 license = ""
 repository = ""
 edition = "2021"
-rust-version = "1.77.2"
+rust-version = "1.95"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -46,8 +46,14 @@ base64 = "0.22"
 # 0.59 è già nel Cargo.lock come dipendenza di tauri su Windows.
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = [
+  "Wdk_Graphics_Direct3D",
   "Win32_Foundation",
+  "Win32_Security",
   "Win32_Storage_FileSystem",
+  "Win32_System_IO",
+  "Win32_System_Ioctl",
+  "Win32_System_Performance",
+  "Win32_System_Power",
   "Win32_System_SystemInformation",
   "Win32_System_Threading",
   "Win32_UI_Input_KeyboardAndMouse",
@@ -67,11 +73,19 @@ objc2-foundation = { version = "0.3", default-features = false, features = ["std
 # (errore 153). Pinnata ESATTA: la 2.4.0 richiede tauri ^2.12 (come la notification).
 tauri-plugin-localhost = "=2.3.1"
 objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "libc", "NSRunningApplication", "NSWorkspace"] }
+# Monitor di sistema su macOS: sensori (temperatura CPU, via IOHID/SMC) e utilizzo GPU (IOAccelerator) da sysinfo.
+# Su Windows la GPU si legge in src/system_monitor/windows.rs: sysinfo somma tutti i motori e supera il 100%.
+sysinfo = { version = "0.40.3", default-features = false, features = ["component", "gpu"] }
 
 # Gruppi: su Windows e Linux il deep link apre una seconda istanza, che inoltra l'URL a quella
 # già aperta e si chiude. Pinnata ESATTA: dalla 2.5.0 richiede tauri ^2.12 (verificato su crates.io).
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-single-instance = { version = "=2.4.5", features = ["deep-link"] }
+# Monitor di sistema (src/system_monitor/): CPU, memoria, dischi, rete, processi e (su macOS) GPU e sensori.
+# Senza driver né privilegi: su Windows GPU e SSD si leggono da PDH, D3DKMT e IOCTL (windows-sys qui sopra).
+# sysinfo 0.40 vuole Rust 1.95 (rust-version del pacchetto). Solo desktop: Android non le compila.
+sysinfo = { version = "0.40.3", default-features = false, features = ["system", "disk", "network", "multithread"] }
+starship-battery = "0.12.0"
 # Aggiornamenti dell'app (Impostazioni > Generale, src/core/updater/): vanno in rete solo quando
 # l'utente preme "Controlla aggiornamenti". Pinnate ESATTE: updater dalla 2.13.0 e process dalla
 # 2.4.0 richiedono tauri ^2.12 (verificato sui manifesti di crates.io). Stesse versioni anche su npm.

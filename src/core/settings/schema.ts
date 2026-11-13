@@ -135,6 +135,13 @@ export const DEFAULT_SETTINGS = {
   /** Vuota = meteo spento: nessuna richiesta in rete. */
   weatherCity: "",
 
+  // ---- Widget: Monitor di sistema (per dispositivo: hardware diverso su ogni computer) ----
+  /** Metriche del widget, "cpu,gpu,…" (widgets/sysmon/lib/metrics.ts); vuota = la scelta di default. Si modifica dal
+   *  dialog del widget: nessuna voce in SETTING_DEFS. */
+  sysmonMetrics: "",
+  /** Ogni quanti secondi si aggiorna (widget e pagina). */
+  sysmonInterval: "2" as "1" | "2" | "5",
+
   // ---- Gruppi ----
   /** Il nome della materia in corso arriva ai compagni di gruppo solo se attivo (spento di default). */
   groupsShowSubject: false,
@@ -158,7 +165,7 @@ export const DEFAULT_SETTINGS = {
 
 export type AppSettings = typeof DEFAULT_SETTINGS;
 export type SettingKey = keyof AppSettings;
-export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion" | "weather" | "groups";
+export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion" | "weather" | "sysmon" | "groups";
 
 interface BaseDef {
   key: SettingKey;
@@ -293,6 +300,13 @@ export const SETTING_DEFS: SettingDef[] = [
     description: "Il meteo usa internet (Open-Meteo, gratuito e senza account) solo se il widget o il suo mini sono in uso e la città è impostata.",
   },
 
+  // ======================= WIDGET: MONITOR DI SISTEMA =======================
+  {
+    key: "sysmonInterval", group: "sysmon", section: "Aggiornamento", type: "select", label: "Aggiorna ogni",
+    options: [{ value: "1", label: "1 secondo" }, { value: "2", label: "2 secondi" }, { value: "5", label: "5 secondi" }],
+    description: "Il monitor misura solo mentre il widget è in dashboard o la sua pagina è aperta. Vale solo per questo computer.",
+  },
+
   // ======================= GRUPPI =======================
   {
     key: "groupsShowSubject", group: "groups", section: "Cosa vedono i gruppi", type: "boolean", label: "Mostra la materia che sto studiando",
@@ -409,6 +423,8 @@ export const PER_DEVICE_SETTINGS: ReadonlySet<SettingKey> = new Set<SettingKey>(
   "studyAutoStopChat",
   "companionWatchForegroundApp",
   "companionAppCategories",
+  "sysmonMetrics",
+  "sysmonInterval",
   "syncEnabled",
 ]);
 

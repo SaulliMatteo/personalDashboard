@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-sysmon-capabilities"
+description = "Enables the sysmon_capabilities command without any pre-configured scope."
+commands.allow = ["sysmon_capabilities"]
+
+[[permission]]
+identifier = "deny-sysmon-capabilities"
+description = "Denies the sysmon_capabilities command without any pre-configured scope."
+commands.deny = ["sysmon_capabilities"]

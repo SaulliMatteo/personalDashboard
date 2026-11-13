@@ -52,6 +52,11 @@ fn main() {
             "db_import_stage",
             "db_import_apply",
             "updater_prepare_install",
+            "sysmon_capabilities",
+            "sysmon_subscribe",
+            "sysmon_unsubscribe",
+            "sysmon_reset",
+            "sysmon_set_interval",
         ]),
     ))
     .expect("errore nel build di Tauri");
