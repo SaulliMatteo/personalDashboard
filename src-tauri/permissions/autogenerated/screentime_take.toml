@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-screentime-take"
+description = "Enables the screentime_take command without any pre-configured scope."
+commands.allow = ["screentime_take"]
+
+[[permission]]
+identifier = "deny-screentime-take"
+description = "Denies the screentime_take command without any pre-configured scope."
+commands.deny = ["screentime_take"]

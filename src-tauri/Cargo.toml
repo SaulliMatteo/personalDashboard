@@ -28,7 +28,7 @@ serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 # Pinnata ESATTA: "2.11.3" vorrebbe dire ^2.11.3 e accetterebbe la 2.12, che i plugin pinnati
 # qui sotto (notification, localhost, deep-link, single-instance) non supportano.
-tauri = { version = "=2.11.3", features = [] }
+tauri = { version = "=2.11.3", features = ["tray-icon"] }
 tauri-plugin-log = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 # Pinnata ESATTA (non "2" o "^2.4"): la 2.5.0 richiede tauri ^2.12, che
@@ -91,6 +91,9 @@ starship-battery = "0.12.0"
 # 2.4.0 richiedono tauri ^2.12 (verificato sui manifesti di crates.io). Stesse versioni anche su npm.
 tauri-plugin-updater = "=2.12.0"
 tauri-plugin-process = "=2.3.1"
+# Tempo al PC: avvio col computer (src/app_tray.rs). Pinnata ESATTA: dalla 2.6.0 richiede tauri ^2.12;
+# la 2.5.1 vuole ^2.8.2 (verificato sui manifesti di crates.io). Comandata solo da Rust: niente pacchetto npm.
+tauri-plugin-autostart = "=2.5.1"
 
 # Gruppi su Windows: sessione nel Credential Manager (src/secure_store.rs). La 3.x: la 4.x richiede
 # Rust 1.88 ed edizione 2024. Le feature native vanno attivate a mano (nessuna di default).

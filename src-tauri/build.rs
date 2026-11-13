@@ -57,6 +57,14 @@ fn main() {
             "sysmon_unsubscribe",
             "sysmon_reset",
             "sysmon_set_interval",
+            "screentime_start",
+            "screentime_take",
+            "screentime_stop",
+            "app_set_close_to_tray",
+            "app_quit",
+            "tray_set_today",
+            "app_launch_at_startup",
+            "app_set_launch_at_startup",
         ]),
     ))
     .expect("errore nel build di Tauri");

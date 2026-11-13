@@ -15,7 +15,7 @@
 
 use serde::Serialize;
 
-#[derive(Serialize, Default)]
+#[derive(Serialize, Default, Clone, PartialEq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct ForegroundInfo {
     /// Percorso completo dell'eseguibile (es. "C:\\...\\Code.exe").
@@ -40,6 +40,23 @@ pub struct CompanionSnapshot {
 #[tauri::command]
 pub fn companion_snapshot(include_foreground: bool) -> CompanionSnapshot {
     platform::snapshot(include_foreground)
+}
+
+/// Letture singole per il registratore di Tempo al PC (src/screen_time/), che campiona da un thread suo.
+/// `None` sui sistemi senza segnali (Linux, Android) o quando la lettura non riesce.
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
+pub(crate) fn read_idle_seconds() -> Option<u64> {
+    platform::snapshot(false).idle_seconds
+}
+
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
+pub(crate) fn read_foreground() -> Option<ForegroundInfo> {
+    platform::snapshot(true).foreground
+}
+
+/// I segnali di sistema ci sono (Windows e macOS).
+pub(crate) fn signals_supported() -> bool {
+    cfg!(any(windows, target_os = "macos"))
 }
 
 #[cfg(windows)]

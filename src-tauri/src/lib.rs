@@ -1,9 +1,11 @@
+mod app_tray;
 mod companion;
 mod db_backup;
 mod file_open;
 mod file_send;
 mod file_transfer;
 mod notify;
+mod screen_time;
 mod secure_store;
 mod system_monitor;
 mod updater;
@@ -101,7 +103,12 @@ pub fn run() {
     #[cfg(desktop)]
     let builder = builder
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .plugin(tauri_plugin_process::init());
+        .plugin(tauri_plugin_process::init())
+        // Avvio col computer (Impostazioni > Generale, src/app_tray.rs): parte nascosta, resta l'icona.
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec![app_tray::HIDDEN_ARG]),
+        ));
 
     builder
         .plugin(tauri_plugin_fs::init())
@@ -112,6 +119,8 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .manage(file_transfer::FileTransferState::default())
         .manage(system_monitor::SysmonState::default())
+        .manage(screen_time::ScreenTimeState::default())
+        .manage(app_tray::TrayState::default())
         .invoke_handler(tauri::generate_handler![
             file_transfer::ft_start_server,
             file_transfer::ft_stop_server,
@@ -138,15 +147,33 @@ pub fn run() {
             system_monitor::sysmon_unsubscribe,
             system_monitor::sysmon_reset,
             system_monitor::sysmon_set_interval,
+            screen_time::screentime_start,
+            screen_time::screentime_take,
+            screen_time::screentime_stop,
+            app_tray::app_set_close_to_tray,
+            app_tray::app_quit,
+            app_tray::tray_set_today,
+            app_tray::app_launch_at_startup,
+            app_tray::app_set_launch_at_startup,
         ])
         .on_window_event(|window, event| {
             // Chiudendo la finestra il server C va fermato, altrimenti la
             // porta resta occupata fino alla morte del processo. Su Android
             // CloseRequested non arriva, ma lì il server C non c'è.
             // Si ferma anche il campionatore del monitor di sistema.
-            if let tauri::WindowEvent::CloseRequested { .. } = event {
-                file_transfer::shutdown(window.app_handle());
-                system_monitor::shutdown(window.app_handle());
+            // Con `closeToTray` acceso (src/app_tray.rs) la X nasconde soltanto: l'app resta vicino
+            // all'orologio, il server e il conteggio di Tempo al PC continuano.
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let app = window.app_handle();
+                if app_tray::should_hide(app) {
+                    api.prevent_close();
+                    let _ = window.hide();
+                    app_tray::hidden(app);
+                    return;
+                }
+                file_transfer::shutdown(app);
+                system_monitor::shutdown(app);
+                screen_time::shutdown(app);
             }
         })
         .setup(|app| {
@@ -169,6 +196,11 @@ pub fn run() {
             // poterle cambiare l'URL su macOS (vedi `main_window_url`).
             #[allow(unused_mut)]
             let mut config = app.config().app.windows[0].clone();
+            // Avviata col computer: finestra nascosta, si apre dall'icona.
+            #[cfg(desktop)]
+            if app_tray::started_hidden() {
+                config.visible = false;
+            }
             #[cfg(all(target_os = "macos", not(dev)))]
             {
                 config.url = main_window_url();
@@ -190,6 +222,8 @@ pub fn run() {
                     false
                 })
                 .build()?;
+            #[cfg(desktop)]
+            app_tray::create(app.handle())?;
             Ok(())
         })
         .build(tauri::generate_context!())
@@ -201,6 +235,12 @@ pub fn run() {
             if let tauri::RunEvent::Exit = event {
                 file_transfer::shutdown(app);
                 system_monitor::shutdown(app);
+                screen_time::shutdown(app);
+            }
+            // macOS: clic sull'icona nel Dock con la finestra nascosta.
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = event {
+                app_tray::show_main(app);
             }
         });
 }

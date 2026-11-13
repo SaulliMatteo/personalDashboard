@@ -7,12 +7,13 @@
 
 use tauri::AppHandle;
 
-use crate::{file_transfer, system_monitor};
+use crate::{file_transfer, screen_time, system_monitor};
 
-/// Pulizia prima dell'installazione: il server di File Transfer (porta libera, upload a metà cancellati dal C)
-/// e il campionatore del monitor di sistema. Si può chiamare più volte.
+/// Pulizia prima dell'installazione: il server di File Transfer (porta libera, upload a metà cancellati dal C),
+/// il campionatore del monitor di sistema e il registratore di Tempo al PC. Si può chiamare più volte.
 #[tauri::command]
 pub fn updater_prepare_install(app: AppHandle) {
     file_transfer::shutdown(&app);
     system_monitor::shutdown(&app);
+    screen_time::shutdown(&app);
 }

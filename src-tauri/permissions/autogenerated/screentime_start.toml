@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-screentime-start"
+description = "Enables the screentime_start command without any pre-configured scope."
+commands.allow = ["screentime_start"]
+
+[[permission]]
+identifier = "deny-screentime-start"
+description = "Denies the screentime_start command without any pre-configured scope."
+commands.deny = ["screentime_start"]
