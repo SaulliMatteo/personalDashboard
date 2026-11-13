@@ -18,6 +18,7 @@ import {
   type MetricId,
 } from "../../src/widgets/sysmon/lib/metrics.ts";
 import { HISTORY_WINDOW_MS, pushPoint, type HistoryPoint } from "../../src/widgets/sysmon/lib/history.ts";
+import { HEAD_SPACE, fitWidget } from "../../src/widgets/sysmon/lib/fit.ts";
 
 let passed = 0;
 function test(name: string, fn: () => void) {
@@ -113,6 +114,36 @@ test("storico: un dato mancante resta null (buco nel grafico, non uno 0)", () =>
 test("storico: l'orologio che torna indietro non lascia punti dal futuro", () => {
   const points = pushPoint([{ atMs: 10_000, value: 1 }, { atMs: 12_000, value: 2 }], { atMs: 5000, value: 3 });
   assert.deepEqual(points, [{ atMs: 5000, value: 3 }]);
+});
+
+// Misure vere delle celle (contenuto sotto l'intestazione) dall'app a 1920×1040 e a 1200×620.
+test("forma: con spazio la forma del mockup", () => {
+  assert.equal(fitWidget("S", 3, false, 232, 150).mode, "full");
+  assert.equal(fitWidget("M", 7, true, 515, 390).mode, "full");
+  assert.equal(fitWidget("W", 4, false, 480, 120).mode, "full");
+});
+
+test("forma: cella piccola, righe al posto dell'anello e delle tessere sovrapposte", () => {
+  const s = fitWidget("S", 3, false, 110, 55);
+  assert.equal(s.mode, "lines");
+  assert.equal(s.count, 3, "tre righe entrano togliendo l'intestazione");
+  assert.equal(s.bare, true);
+  const m = fitWidget("M", 7, true, 275, 180);
+  assert.equal(m.mode, "lines");
+  assert.equal(m.count, 7);
+});
+
+test("forma: mai testi schiacciati, piuttosto meno metriche (le prime della lista)", () => {
+  const tiny = fitWidget("M", 8, true, 200, 40);
+  assert.ok(tiny.count < 8 && tiny.count >= 1);
+  assert.equal(tiny.bare, true);
+  // con le righe che restano, ognuna ha almeno l'altezza di una riga di testo
+  const rows = Math.ceil(tiny.count / 2);
+  assert.ok((40 + HEAD_SPACE - (rows - 1) * 5) / rows >= 22);
+});
+
+test("forma: prima misura (cella ancora a 0) = forma piena, nessun salto a vuoto", () => {
+  assert.deepEqual(fitWidget("S", 3, false, 0, 0).mode, "full");
 });
 
 console.log(`sysmon metrics: ${passed} prove passate`);

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { MdExpandMore } from "react-icons/md";
 import type { ProcessInfo } from "../data/sysmonApi";
 import { NA, bytes, percent, rate } from "../lib/format";
 
@@ -13,8 +14,8 @@ const COLUMNS: { key: SortKey; label: string; numeric: boolean }[] = [
   { key: "diskBps", label: "Disco", numeric: true },
 ];
 
-/** Righe disegnate al massimo: centinaia di righe ridisegnate ogni secondo appesantirebbero la pagina. */
-const MAX_ROWS = 150;
+/** Righe visibili prima di "Mostra tutti". */
+const COLLAPSED_ROWS = 10;
 
 /** Confronto con i valori mancanti sempre in fondo, in entrambe le direzioni. */
 function compare(a: ProcessInfo, b: ProcessInfo, key: SortKey, desc: boolean): number {
@@ -35,6 +36,7 @@ function ProcessTable({ processes, count }: { processes: ProcessInfo[] | null; c
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("cpu");
   const [desc, setDesc] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   const rows = useMemo(() => {
     if (!processes) return [];
@@ -86,7 +88,7 @@ function ProcessTable({ processes, count }: { processes: ProcessInfo[] | null; c
               </tr>
             </thead>
             <tbody>
-              {rows.slice(0, MAX_ROWS).map((p) => (
+              {(expanded ? rows : rows.slice(0, COLLAPSED_ROWS)).map((p) => (
                 <tr key={p.pid}>
                   <td className="smp-proc-name">{p.name}</td>
                   <td className="num dim smw-mono">{p.pid}</td>
@@ -99,7 +101,12 @@ function ProcessTable({ processes, count }: { processes: ProcessInfo[] | null; c
             </tbody>
           </table>
           {rows.length === 0 && <p className="smp-fine">Nessun processo trovato.</p>}
-          {rows.length > MAX_ROWS && <p className="smp-fine">Altri {rows.length - MAX_ROWS}: cerca per nome per trovarli.</p>}
+          {rows.length > COLLAPSED_ROWS && (
+            <button type="button" className="smp-expand" aria-expanded={expanded} onClick={() => setExpanded((e) => !e)}>
+              <MdExpandMore className={expanded ? "is-open" : undefined} aria-hidden="true" />
+              {expanded ? "Mostra solo i primi 10" : `Mostra tutti (${rows.length})`}
+            </button>
+          )}
         </div>
       )}
     </section>

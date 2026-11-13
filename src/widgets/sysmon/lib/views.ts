@@ -159,9 +159,8 @@ export function buildView(id: MetricId, snap: SysmonSnapshot | null, history: Sy
       return {
         ...base,
         label: disk ? `Disco ${diskLabel(disk)}` : "Disco",
-        value: p == null ? NA : String(Math.round(p)),
-        unit: "%",
-        detail: disk ? usedOfTotal(disk.used, disk.total) : null,
+        ...gbPair(disk?.used ?? null, disk?.total ?? null),
+        detail: p == null ? null : percent(p),
         summary: disk ? usedOfTotal(disk.used, disk.total) : NA,
         percent: p,
         lines: disk ? [{ label: "↓ lettura", value: rate(disk.readBps) }, { label: "↑ scrittura", value: rate(disk.writeBps) }] : null,

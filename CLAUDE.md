@@ -103,7 +103,8 @@ quando si tocca `widgets/study/timer/phases.ts`, `scripts/sync/records.test.mts`
 su SQLite vero con `node:sqlite`, tutte le migrazioni da zero) e `scripts/sync/round.test.mts` (due dispositivi su SQLite
 vero e un server finto) quando si tocca `core/sync/` o una tabella sincronizzata, `node scripts/sync/files.test.mts`
 quando si tocca `widgets/notes/sync/filePlan.ts`, quelle dello Studio (`scripts/studio/`: piano settimanale e Prospettiva)
-quando si tocca `widgets/study/lib/`.
+quando si tocca `widgets/study/lib/`, `node scripts/sysmon/metrics.test.mts` (scelta delle metriche, storico dei 60 s e forma che entra nella cella)
+e `cd src-tauri && cargo test --lib system_monitor` (unità e "non disponibile → None") quando si tocca il Monitor di sistema.
 
 ```bash
 # Prove pure (scripts/gruppi/, scripts/youtube/ e scripts/studio/<nome>.test.mts, nessun server); una alla volta:
@@ -262,6 +263,22 @@ Quaderno, log in debug) e comandi, e crea la finestra `main` (in `tauri.conf.jso
 - CSP in `tauri.conf.json` (`csp` per l'app installata, `devCsp` per `tauri dev`, che in più ammette Vite e lo stack
   Supabase locale): un dominio nuovo va aggiunto in entrambe. `style-src` ha `'unsafe-inline'` per gli stili inline di
   React, per questo Tauri non vi aggiunge nonce (`dangerousDisableAssetCspModification: ["style-src"]`).
+- Monitor di sistema (`src/system_monitor/`, frontend `widgets/sysmon/`): legge solo l'hardware di questo computer,
+  **senza driver né amministratore** (niente WinRing0/LibreHardwareMonitor: Defender li segnala) e **niente temperatura
+  CPU su Windows** (servirebbe un driver: `cpuTempReason: "windows"`). Windows: sysinfo + PDH (`GPU Engine`, aggregato
+  come Gestione attività: massimo tra i tipi di engine della somma) + D3DKMT (nome, VRAM, temperatura/ventola/consumo
+  della GPU) + IOCTL sul disco aperto con accesso 0 (temperatura SSD); macOS: sysinfo `component` e `gpu` (codice non
+  compilabile da Windows: lo prova solo la CI o un Mac). Ogni campo è `Option`: un dato che manca è `null` e la UI
+  mostra "—", mai 0. Un solo thread (`sysmon`) che gira solo con iscritti (`sysmon_subscribe/unsubscribe`, contatori
+  widget/dettaglio; processi completi e CPU per thread solo col dettaglio) e manda l'evento `sysmon:snapshot`; si ferma
+  in `shutdown` (chiusura, `RunEvent::Exit`, `updater_prepare_install`). Il provider si iscrive solo con un
+  `useSysmonFeed` montato e la finestra visibile; lo storico dei grafici (60 s) sta solo in memoria. Scelta delle
+  metriche (`sysmonMetrics`) e intervallo (`sysmonInterval`) sono in `PER_DEVICE_SETTINGS`. Su Android e nel browser
+  (`SYSMON_AVAILABLE` falso) il widget mostra solo il messaggio e non chiama nessun comando.
+  Le celle cambiano con la finestra: la forma del widget la sceglie `lib/fit.ts` dallo spazio misurato (forma del
+  mockup, poi righe "etichetta valore", poi senza intestazione, poi meno metriche), mai testi schiacciati. Su Windows
+  l'elenco delle reti di sysinfo contiene anche i filtri NDIS ("Ethernet-QoS Packet Scheduler-0000"…): si scartano
+  (`units::is_filter_instance`), altrimenti il traffico si conta più volte.
 - Sui sistemi non supportati (oggi: oltre Windows e macOS, il Companion su Linux) l'app deve compilare e i widget
   mostrano un errore chiaro.
 - Release: `.github/workflows/release.yml` (tag `v*` o avvio manuale) compila `.dmg` universale + installer Windows

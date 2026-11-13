@@ -204,9 +204,10 @@ impl Sampler {
         let mut rx = 0u64;
         let mut tx = 0u64;
         let mut busiest: Option<(&str, u64)> = None;
+        let names: Vec<&str> = self.networks.keys().map(|n| n.to_str().unwrap_or("")).collect();
         for (name, data) in self.networks.iter() {
             let name = name.to_str().unwrap_or("");
-            if is_loopback(name) {
+            if is_loopback(name) || units::is_filter_instance(name, &names) {
                 continue;
             }
             rx += data.received();

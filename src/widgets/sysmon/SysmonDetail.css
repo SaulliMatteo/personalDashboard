@@ -330,6 +330,37 @@
   white-space: nowrap;
 }
 
+/* "Mostra tutti": la freccia gira quando l'elenco è aperto */
+.smp-expand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 38px;
+  margin-top: 4px;
+  border: 0;
+  border-top: 1px solid var(--divider);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.smp-expand:hover {
+  color: var(--text-primary);
+}
+
+.smp-expand svg {
+  font-size: 20px;
+  transition: transform 0.2s;
+}
+
+.smp-expand svg.is-open {
+  transform: rotate(180deg);
+}
+
 @media (pointer: coarse) {
   .smp-table th button {
     position: relative;

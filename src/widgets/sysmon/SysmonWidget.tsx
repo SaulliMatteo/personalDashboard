@@ -1,15 +1,17 @@
-import { createElement, useEffect, useMemo, useState, type MouseEvent } from "react";
+import { createElement, useEffect, useMemo, useState, type CSSProperties, type MouseEvent } from "react";
 import { MdOutlineDesktopWindows, MdTune } from "react-icons/md";
 import WidgetFrame from "../../core/widgets/WidgetFrame";
 import type { WidgetProps } from "../../core/widgets/types";
 import { sizeKey } from "../../core/widgets/sizes";
 import { useThemeVariant } from "../../core/theme/variants";
 import { useSettings } from "../../core/settings/useSettings";
+import { useElementSize } from "../../core/hooks/useElementSize";
 import { SYSMON_AVAILABLE } from "./data/sysmonApi";
 import { useSysmonFeed } from "./useSysmon";
 import { useMetricChoice } from "./useMetricChoice";
 import { MAX_METRICS, sysmonSize, trimToSize, type MetricId, type SysmonSize } from "./lib/metrics";
 import { buildView, type MetricView } from "./lib/views";
+import { HEAD_SPACE, fitWidget } from "./lib/fit";
 import { SYSMON_CHARTS, SYSMON_GAUGES } from "./card/cards";
 import Bar from "./components/Bar";
 import MetricsDialog from "./components/MetricsDialog";
@@ -30,6 +32,39 @@ const KIND: Record<MetricId, Kind> = {
 };
 /** Le metriche che nella Piccola possono stare nell'anello (hanno una percentuale). */
 const GAUGEABLE = new Set<MetricId>(["cpu", "gpu", "memory", "disk", "battery"]);
+
+/** Margini interni della cella (cambiano col tema). */
+function paddingOf(el: HTMLElement) {
+  const style = getComputedStyle(el);
+  return {
+    x: parseFloat(style.paddingLeft) + parseFloat(style.paddingRight),
+    y: parseFloat(style.paddingTop) + parseFloat(style.paddingBottom),
+  };
+}
+
+/** L'etichetta di una tessera ridotta a una riga: le temperature dicono di quale sensore è il valore. */
+function lineLabel(view: MetricView): string {
+  const first = view.lines?.[0];
+  if (view.id === "temps" && first) return `Temp. ${first.label}`;
+  return view.label;
+}
+
+/** Il valore di una tessera ridotta a una riga. */
+function lineValue(view: MetricView): string {
+  const kind = KIND[view.id];
+  // Rete e temperature: solo la prima riga (download, il primo sensore); i processi: il più pesante.
+  if (kind === "lines") {
+    const first = view.lines?.[0];
+    if (!first) return "—";
+    if (view.id === "processes") return first.label;
+    // "55°": l'etichetta dice già che è una temperatura e di quale sensore
+    if (view.id === "temps") return first.value.replace(" °C", "°");
+    return `${first.label} ${first.value}`;
+  }
+  if (kind === "bar") return view.percent == null ? "—" : `${Math.round(view.percent)}%`;
+  if (view.value === "—") return view.value;
+  return view.unit === "°C" ? `${view.value} °C` : `${view.value}${view.unit}`;
+}
 
 /** Il messaggio del telefono e del browser: nessun comando chiamato, nessuna misura. */
 function UnavailableCell() {
@@ -74,7 +109,8 @@ function LiveWidget({ size }: { size: SysmonSize }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const Gauge = useThemeVariant(SYSMON_GAUGES);
   const Chart = useThemeVariant(SYSMON_CHARTS);
-
+  const [article, setArticle] = useState<HTMLElement | null>(null);
+  const box = useElementSize(article);
   // La taglia è scesa sotto la scelta salvata: si tolgono le ultime della lista (una volta, poi resta così).
   useEffect(() => {
     if (saved && saved.length > MAX_METRICS[size]) save(trimToSize(saved, size));
@@ -90,14 +126,34 @@ function LiveWidget({ size }: { size: SysmonSize }) {
   const chart = (view: MetricView, className = "smw-spark") =>
     view.series ? createElement(Chart, { points: view.series, className, label: `${view.label}, ultimi 60 secondi` }) : null;
 
+  // Cosa entra davvero nella cella (cambia con la finestra): forma piena, righe, o meno metriche.
+  const padding = article ? paddingOf(article) : { x: 0, y: 0 };
+  const fit = fitWidget(size, views.length, shown.includes("processes"), box.width - padding.x, box.height - padding.y - HEAD_SPACE);
+  const visible = views.slice(0, fit.count);
+  const hidden = views.length - visible.length;
+
   let body;
   if (views.length === 0) {
     body = <p className="smw-empty">Nessuna metrica scelta: usa la rotellina per sceglierle.</p>;
+  } else if (fit.mode === "lines") {
+    body = (
+      <div className={`smw-lines-grid${size === "S" ? " is-single" : ""}`}>
+        {visible.map((view) => (
+          <div key={view.id} className="smw-tile smw-tile--line">
+            <span className="smw-tile-top">
+              <b>{lineLabel(view)}</b>
+              <span className={`smw-line-value${view.hot ? " smw-hot" : ""}`}>{lineValue(view)}</span>
+            </span>
+            {fit.bars && KIND[view.id] === "bar" && <Bar value={view.percent} hot={view.hot} label={view.label} />}
+          </div>
+        ))}
+      </div>
+    );
   } else if (size === "S") {
     const [hero, side, foot] = views;
     body = (
       <>
-        <div className="smw-hero">
+        <div className="smw-hero" style={{ "--smw-gauge": `${fit.gauge}px` } as CSSProperties}>
           {GAUGEABLE.has(hero.id) ? (
             createElement(
               Gauge,
@@ -145,8 +201,7 @@ function LiveWidget({ size }: { size: SysmonSize }) {
               <div className="smw-tile-main">
                 <span className="smw-tile-top">
                   <b>{view.label}</b>
-                  {view.detail && kind !== "bar" && <span>{view.detail}</span>}
-                  {kind === "bar" && view.percent != null && view.id !== "disk" && <span>{Math.round(view.percent)}%</span>}
+                  {view.detail && <span>{view.detail}</span>}
                 </span>
                 {kind !== "lines" && <Num view={view} />}
               </div>
@@ -176,11 +231,7 @@ function LiveWidget({ size }: { size: SysmonSize }) {
             <div key={view.id} className={`smw-tile${wide ? " smw-wide" : ""}`}>
               <span className="smw-tile-top">
                 <b>{view.label}</b>
-                {kind === "bar" ? (
-                  <span className={`smw-mono${view.hot ? " smw-hot" : ""}`}>{view.summary}</span>
-                ) : (
-                  view.detail && <span>{view.detail}</span>
-                )}
+                {view.detail && <span className={kind === "bar" && view.hot ? "smw-hot" : undefined}>{view.detail}</span>}
               </span>
               {kind === "chart" && (
                 <>
@@ -188,7 +239,7 @@ function LiveWidget({ size }: { size: SysmonSize }) {
                   {chart(view)}
                 </>
               )}
-              {kind === "value" && <Num view={view} />}
+              {(kind === "value" || kind === "bar") && <Num view={view} />}
               {kind === "bar" && <Bar value={view.percent} hot={view.hot} label={view.label} />}
               {kind === "lines" && view.id === "network" && (
                 <div className="smw-net smw-mono">
@@ -232,14 +283,21 @@ function LiveWidget({ size }: { size: SysmonSize }) {
 
   return (
     <WidgetFrame>
-      <article className={`widget smw smw--${size}`} aria-label="Monitor di sistema">
-        <header className="smw-head">
-          <h2 className="smw-title">Sistema</h2>
-          {size !== "S" && <span className="smw-sub">ogni {settings.sysmonInterval} s</span>}
-          <button type="button" className="smw-gear" onClick={openDialog} aria-label="Metriche del widget" title="Metriche del widget">
-            <MdTune size={15} />
-          </button>
-        </header>
+      <article ref={setArticle} className={`widget smw smw--${size} smw--${fit.mode}`} aria-label="Monitor di sistema">
+        {!fit.bare && (
+          <header className="smw-head">
+            <h2 className="smw-title">Sistema</h2>
+            {size !== "S" && fit.mode === "full" && <span className="smw-sub">ogni {settings.sysmonInterval} s</span>}
+            {hidden > 0 && (
+              <span className="smw-sub" title="La cella è troppo piccola: le altre si vedono nella pagina di dettaglio">
+                +{hidden}
+              </span>
+            )}
+            <button type="button" className="smw-gear" onClick={openDialog} aria-label="Metriche del widget" title="Metriche del widget">
+              <MdTune size={15} />
+            </button>
+          </header>
+        )}
         {body}
       </article>
       {dialogOpen && <MetricsDialog size={size} onClose={() => setDialogOpen(false)} />}

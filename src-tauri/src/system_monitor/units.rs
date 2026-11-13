@@ -203,9 +203,29 @@ pub fn sensor_kind(label: &str) -> &'static str {
     }
 }
 
+/// Su Windows l'elenco delle interfacce contiene anche le istanze dei filtri NDIS ("Ethernet-QoS Packet
+/// Scheduler-0000", "Ethernet-VirtualBox NDIS Light-Weight Filter-0000"…), che ripetono il traffico dell'adattatore:
+/// contarle lo moltiplicherebbe. Un'istanza di filtro si chiama "<adattatore>-…" con l'adattatore nell'elenco.
+pub fn is_filter_instance(name: &str, all: &[&str]) -> bool {
+    all.iter().any(|other| *other != name && !other.is_empty() && name.len() > other.len() + 1 && name.starts_with(other) && name.as_bytes()[other.len()] == b'-')
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn filtri_ndis_non_contati() {
+        let all = ["Ethernet", "Ethernet-QoS Packet Scheduler-0000", "Ethernet-VirtualBox NDIS Light-Weight Filter-0000", "Wi-Fi", "Wi-Fi-WFP Native MAC Layer LightWeight Filter-0000", "vEthernet (WSL)"];
+        assert!(!is_filter_instance("Ethernet", &all));
+        assert!(is_filter_instance("Ethernet-QoS Packet Scheduler-0000", &all));
+        assert!(is_filter_instance("Ethernet-VirtualBox NDIS Light-Weight Filter-0000", &all));
+        assert!(!is_filter_instance("Wi-Fi", &all), "il trattino nel nome dell'adattatore non basta");
+        assert!(is_filter_instance("Wi-Fi-WFP Native MAC Layer LightWeight Filter-0000", &all));
+        assert!(!is_filter_instance("vEthernet (WSL)", &all));
+        // Un filtro senza il suo adattatore nell'elenco resta (meglio contarlo che perdere il traffico).
+        assert!(!is_filter_instance("Ethernet 2-QoS Packet Scheduler-0000", &all));
+    }
 
     #[test]
     fn tipi_dei_sensori() {
