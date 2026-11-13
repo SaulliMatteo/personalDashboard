@@ -1,0 +1,425 @@
+/* Pagina del Monitor di sistema (docs/design/temi/sysmon.html). Tessere, barre e numeri vengono da
+   SysmonWidget.css; qui la disposizione e le parti per tema della pagina. */
+
+.smp {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex-shrink: 0;
+}
+
+.smp-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 0;
+}
+
+.smp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.smp-interval {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: max(13px, var(--fs-min));
+  color: var(--text-secondary);
+}
+
+.smp-interval select {
+  min-height: 38px;
+  padding: 6px 10px;
+  border: var(--btn-ghost-border);
+  border-radius: var(--radius-item);
+  background: var(--btn-ghost-bg, var(--surface-1));
+  color: var(--text-primary);
+  font: inherit;
+  color-scheme: inherit;
+}
+
+.smp-interval option {
+  background: var(--modal-bg);
+}
+
+.smp-btn {
+  min-height: 38px;
+  padding: 8px 14px;
+  border: var(--btn-ghost-border);
+  border-radius: var(--radius-item);
+  background: var(--btn-ghost-bg);
+  color: var(--btn-ghost-fg);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.smp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 18px;
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+}
+
+.smp-card h2 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.smp-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.smp-card-head > span {
+  font-size: max(12px, var(--fs-min));
+  color: var(--text-muted);
+}
+
+.smp-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.smp-grid--sum {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.smp-grid--two {
+  grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
+}
+
+.smp-grid--three {
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+}
+
+.smp-big {
+  font-size: 30px;
+}
+
+.smp-rate {
+  font-size: 22px;
+}
+
+.smp-rate-up {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.smp-spark {
+  height: 34px;
+}
+
+.smp-chart {
+  height: 96px;
+}
+
+.smp-chart--short {
+  height: 70px;
+}
+
+.smp-gpu {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.smp-gpu + .smp-gpu {
+  padding-top: 12px;
+  border-top: 1px solid var(--divider);
+}
+
+.smp-fine {
+  margin: 0;
+  font-size: max(12px, var(--fs-min));
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* Barre per thread */
+.smp-threads {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 6px;
+}
+
+.smp-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.smp-thread-bar {
+  position: relative;
+  height: 46px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--track);
+}
+
+.smp-thread-bar i {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--v);
+  background: var(--accent);
+}
+
+.smp-thread-bar.is-hot i {
+  background: var(--smw-hot);
+}
+
+.smp-thread span {
+  font-size: max(10.5px, var(--fs-min));
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.smp-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.smp-tiles .smw-tile .smw-num {
+  font-size: 20px;
+}
+
+/* Memoria, dischi, sensori */
+.smp-mem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.smp-mem-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.smp-mem-row.dim {
+  color: var(--text-secondary);
+}
+
+.smp-io {
+  font-size: max(12px, var(--fs-min));
+  color: var(--text-muted);
+}
+
+.smp-sensor {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 30px;
+  border-bottom: 1px solid var(--divider);
+  font-size: 13px;
+}
+
+.smp-sensor:last-child {
+  border-bottom: 0;
+}
+
+.smp-sensor span:first-child {
+  color: var(--text-secondary);
+}
+
+.smp-na {
+  font-size: max(12px, var(--fs-min));
+  color: var(--text-muted);
+}
+
+/* Processi */
+.smp-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.smp-search input {
+  width: 220px;
+  max-width: 50vw;
+  min-height: 38px;
+  padding: 6px 12px;
+  border: var(--btn-ghost-border);
+  border-radius: var(--radius-item);
+  background: var(--btn-ghost-bg, var(--surface-1));
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.smp-table-wrap {
+  overflow-x: auto;
+}
+
+.smp-table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.smp-table th {
+  padding: 0;
+  font-weight: 500;
+  text-align: left;
+}
+
+.smp-table th button {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: max(12px, var(--fs-min));
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.smp-table th button:hover {
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.smp-table th[aria-sort] button {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.smp-table .num {
+  text-align: right;
+}
+
+.smp-table td {
+  padding: 8px;
+  border-top: 1px solid var(--divider);
+}
+
+.smp-table td.dim {
+  color: var(--text-secondary);
+}
+
+.smp-proc-name {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (pointer: coarse) {
+  .smp-table th button {
+    position: relative;
+  }
+
+  .smp-table th button::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}
+
+/* ================= Parti per tema ================= */
+:root[data-theme="opaco"] .smp-card h2,
+:root[data-theme="opaco"] .smp-card-head > span {
+  color: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .smp-card h2 {
+  font-size: 15px;
+  font-weight: 800;
+}
+
+:root[data-theme="opaco"] .smp {
+  --smw-bar-h: 12px;
+}
+
+:root[data-theme="opaco"] .smp-thread-bar {
+  border-radius: 4px;
+  background: var(--pg-dark, var(--track));
+}
+
+:root[data-theme="quaderno"] .smp {
+  --smw-bar-h: 11px;
+}
+
+:root[data-theme="quaderno"] .smp-card h2 {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .smp-thread-bar {
+  border: 1.5px solid var(--accent);
+  border-radius: 2px;
+  background: transparent;
+}
+
+:root[data-theme="quaderno"] .smp-thread-bar i {
+  background: repeating-linear-gradient(-45deg, var(--accent) 0 1.5px, transparent 1.5px 4px);
+}
+
+:root[data-theme="quaderno"] .smp-thread-bar.is-hot {
+  border-color: var(--smw-hot);
+}
+
+:root[data-theme="quaderno"] .smp-thread-bar.is-hot i {
+  background: repeating-linear-gradient(-45deg, var(--smw-hot) 0 1.5px, transparent 1.5px 4px);
+}
+
+:root[data-theme="quaderno"] .smp-table th[aria-sort] button {
+  text-decoration: underline wavy;
+  text-underline-offset: 4px;
+}
+
+:root[data-theme="fosforo"] .smp {
+  --smw-bar-h: 7px;
+}
+
+:root[data-theme="fosforo"] .smp-card h2 {
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: lowercase;
+}
+
+:root[data-theme="fosforo"] .smp-thread-bar {
+  border-radius: 0;
+  background: radial-gradient(circle, var(--dot-off) 2.2px, transparent 2.6px) 50% 100% / 7px 7px repeat;
+}
+
+:root[data-theme="fosforo"] .smp-thread-bar i {
+  background: radial-gradient(circle, var(--dot-on) 2.2px, transparent 2.6px) 50% 100% / 7px 7px repeat;
+}
+
+:root[data-theme="fosforo"] .smp-thread-bar.is-hot i {
+  background: radial-gradient(circle, var(--led) 2.2px, transparent 2.6px) 50% 100% / 7px 7px repeat;
+}
+
+:root[data-theme="fosforo"] .smp-chart-box {
+  padding: 8px;
+  border-radius: var(--radius-panel);
+  background: var(--display-texture), var(--display-bg);
+}

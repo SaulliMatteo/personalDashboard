@@ -112,6 +112,7 @@ const PIGMENT_BY_WIDGET: Record<string, Pigment> = {
   date: "salvia",
   weather: "blu",
   whiteboard: "salvia",
+  sysmon: "malva",
 };
 
 /** Pigmento di un widget; `index` (posizione nel registry) serve solo per i widget nuovi. */

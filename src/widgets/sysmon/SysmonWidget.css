@@ -1,0 +1,563 @@
+/* Monitor di sistema in dashboard (docs/design/temi/sysmon.html). Le parti per tema in fondo; anelli e grafici
+   cambiano forma nei componenti di card/. */
+
+:root {
+  /* Valori da tenere d'occhio: arancione di avviso, LED rosso in Fosforo. */
+  --smw-hot: var(--warn);
+}
+
+:root[data-theme="fosforo"] {
+  --smw-hot: var(--led);
+}
+
+.smw {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: min(var(--widget-padding), 16px) min(var(--widget-padding), 18px);
+  color: var(--text-primary);
+  container-type: size;
+}
+
+.smw-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 22px;
+}
+
+.smw-title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.smw-sub {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.smw-gear {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.smw-sub + .smw-gear {
+  margin-left: 0;
+}
+
+.smw:hover .smw-gear,
+.smw-gear:focus-visible {
+  opacity: 1;
+}
+
+.smw-gear:hover {
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+/* col dito non c'è il passaggio del mouse: la rotellina resta visibile */
+@media (hover: none) {
+  .smw-gear {
+    opacity: 1;
+  }
+}
+
+@media (pointer: coarse) {
+  .smw-gear::after {
+    content: "";
+    position: absolute;
+    inset: var(--hit);
+  }
+}
+
+/* ---------- Numeri ed etichette ---------- */
+.smw-num {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking, 0);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.smw-unit {
+  margin-left: 1px;
+  font-family: var(--font-family);
+  font-size: 0.5em;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--text-muted);
+}
+
+.smw-mono {
+  font-family: "JetBrains Mono Variable", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.smw-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.smw-hot,
+.smw-hot .smw-unit {
+  color: var(--smw-hot) !important;
+}
+
+.smw-empty {
+  margin: auto 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* ---------- Tessere (Larga e Media) ---------- */
+.smw-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 4px;
+  min-width: 0;
+  min-height: 0;
+  padding: 9px 11px;
+  overflow: hidden;
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+}
+
+.smw-tile-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.smw-tile-top > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.smw-tile-top b {
+  flex: none;
+  font-weight: 600;
+}
+
+.smw-chart {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.smw-chart svg {
+  display: block;
+}
+
+.smw-spark {
+  height: 22px;
+}
+
+/* ---------- Barre: la forma cambia col tema ---------- */
+.smw-bar {
+  position: relative;
+  flex: none;
+  height: var(--smw-bar-h, 6px);
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--track);
+}
+
+.smw-bar > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--v);
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.smw-bar.is-hot > i {
+  background: var(--smw-hot);
+}
+
+/* ---------- Piccola 1×1 ---------- */
+.smw--S .smw-hero {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-height: 0;
+}
+
+.smw-gauge {
+  position: relative;
+  flex: none;
+  width: min(84px, 50cqh);
+  aspect-ratio: 1;
+}
+
+.smw-gauge svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.smw-gauge-val {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+}
+
+.smw-gauge-val .smw-num {
+  font-size: 21px;
+}
+
+.smw-gauge-val small {
+  display: block;
+  margin-top: 2px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.smw-side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.smw-side .smw-num {
+  font-size: 22px;
+}
+
+.smw-side .smw-num--hero {
+  font-size: 30px;
+}
+
+.smw-side-text {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.smw-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.smw-foot-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.smw-foot-row span:first-child {
+  color: var(--text-secondary);
+}
+
+.smw-foot-row span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Larga 2×1: quattro tessere ---------- */
+.smw--W .smw-grid {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-height: 0;
+}
+
+.smw--W .smw-tile {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+}
+
+.smw--W .smw-tile-main {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  max-width: 60%;
+}
+
+.smw--W .smw-tile .smw-num {
+  font-size: 19px;
+}
+
+.smw--W .smw-tile > :is(.smw-chart, .smw-bar, .smw-lines) {
+  flex: 1;
+  min-width: 0;
+}
+
+.smw-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+  font-size: 12px;
+  text-align: right;
+}
+
+.smw-lines span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Media 2×2: due colonne, le righe si dividono l'altezza ---------- */
+.smw--M .smw-grid {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 7px;
+  min-height: 0;
+}
+
+.smw--M .smw-tile {
+  justify-content: flex-start;
+  gap: 3px;
+  padding: 7px 10px;
+}
+
+.smw--M .smw-tile .smw-num {
+  font-size: 22px;
+}
+
+.smw--M .smw-tile .smw-chart {
+  flex: 1;
+  min-height: 12px;
+}
+
+.smw--M .smw-tile .smw-bar {
+  margin-top: auto;
+  margin-bottom: 2px;
+}
+
+.smw-wide {
+  grid-column: 1 / -1;
+}
+
+.smw-net {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.smw-net span:last-child {
+  color: var(--text-secondary);
+}
+
+.smw-chips {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+}
+
+.smw-chip {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.smw--M .smw-chip .smw-num {
+  font-size: 17px;
+}
+
+.smw-procs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.smw-proc {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.smw-proc span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.smw-proc span:last-child {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Celle basse (finestra piccola): via i grafici delle tessere larghe e il sottotitolo. */
+@container (max-height: 150px) {
+  .smw--W .smw-tile .smw-chart {
+    display: none;
+  }
+
+  .smw-sub {
+    display: none;
+  }
+
+  .smw-sub + .smw-gear {
+    margin-left: auto;
+  }
+}
+
+/* ---------- Telefono e browser ---------- */
+.smw-na {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-muted);
+}
+
+.smw-na p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* ================= Parti per tema ================= */
+
+/* OPACO: pigmento piatto, numeri pieni, barre spesse, tessere senza bordo. */
+:root[data-theme="opaco"] .smw {
+  --smw-bar-h: 12px;
+}
+
+:root[data-theme="opaco"] .smw-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .smw-tile {
+  border: 0;
+}
+
+:root[data-theme="opaco"] :is(.smw-tile-top, .smw-label) {
+  color: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .smw-bar {
+  background: var(--pg-dark, var(--track));
+}
+
+/* QUADERNO: titoli e numeri a mano in inchiostro, tessere a quadretti, barre a matita. */
+:root[data-theme="quaderno"] .smw {
+  --smw-bar-h: 11px;
+}
+
+:root[data-theme="quaderno"] .smw-title {
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .smw-tile {
+  border: 1px solid var(--sheet-rule);
+  background: var(--note-page-pattern), var(--panel-bg);
+}
+
+:root[data-theme="quaderno"] .smw-num {
+  color: var(--accent);
+}
+
+:root[data-theme="quaderno"] .smw-bar {
+  border: 1.5px solid var(--accent);
+  border-radius: 2px;
+  background: transparent;
+}
+
+:root[data-theme="quaderno"] .smw-bar > i {
+  border-radius: 0;
+  background: repeating-linear-gradient(-45deg, var(--accent) 0 1.5px, transparent 1.5px 4px);
+}
+
+:root[data-theme="quaderno"] .smw-bar.is-hot {
+  border-color: var(--smw-hot);
+}
+
+:root[data-theme="quaderno"] .smw-bar.is-hot > i {
+  background: repeating-linear-gradient(-45deg, var(--smw-hot) 0 1.5px, transparent 1.5px 4px);
+}
+
+/* FOSFORO: display a punti; numeri Doto, barre di punti, LED rosso per il caldo. */
+:root[data-theme="fosforo"] .smw {
+  --smw-bar-h: 7px;
+}
+
+:root[data-theme="fosforo"] .smw-title {
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+}
+
+:root[data-theme="fosforo"] .smw-tile {
+  border: var(--card-border);
+  background: var(--display-texture), var(--display-bg);
+}
+
+:root[data-theme="fosforo"] .smw-bar {
+  border-radius: 0;
+  background: radial-gradient(circle, var(--dot-off) 2.2px, transparent 2.6px) 0 50% / 7px 7px repeat-x;
+}
+
+:root[data-theme="fosforo"] .smw-bar > i {
+  border-radius: 0;
+  background: radial-gradient(circle, var(--dot-on) 2.2px, transparent 2.6px) 0 50% / 7px 7px repeat-x;
+}
+
+:root[data-theme="fosforo"] .smw-bar.is-hot > i {
+  background: radial-gradient(circle, var(--led) 2.2px, transparent 2.6px) 0 50% / 7px 7px repeat-x;
+}
+
+:root[data-theme="fosforo"] :is(.smw-unit, .smw-mono) {
+  font-family: var(--font-family);
+}

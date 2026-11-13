@@ -1,0 +1,163 @@
+/* Dialog "Cosa mostrare su questo computer" (docs/design/temi/sysmon.html). Sul telefono diventa un foglio dal basso
+   con la regola comune di styles/base.css. */
+
+.smd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay);
+  backdrop-filter: blur(2px);
+}
+
+.smd {
+  box-sizing: border-box;
+  width: min(440px, 92vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  border: var(--modal-border);
+  border-radius: var(--radius-card);
+  background: var(--modal-bg);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-pop);
+}
+
+.smd-head {
+  padding: 20px 22px 4px;
+}
+
+.smd-head h2 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.smd-size {
+  margin: 6px 0 0;
+  font-size: max(13px, var(--fs-min));
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.smd-size b,
+.smd-count b {
+  color: var(--text-primary);
+}
+
+.smd-count {
+  margin: 10px 22px 0;
+  font-size: max(12px, var(--fs-min));
+  color: var(--text-muted);
+}
+
+.smd-list {
+  min-height: 0;
+  margin: 8px 0 0;
+  padding: 0 12px 8px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.smd-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: var(--radius-item);
+  cursor: pointer;
+}
+
+.smd-item:hover {
+  background: var(--surface-1);
+}
+
+.smd-item.is-on {
+  background: var(--surface-1);
+}
+
+.smd-item.is-off {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.smd-item.is-off:hover {
+  background: transparent;
+}
+
+.smd-item input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: inherit;
+}
+
+.smd-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.smd-text span:first-child {
+  font-size: 14px;
+}
+
+.smd-text span:last-child {
+  font-size: max(12px, var(--fs-min));
+  color: var(--text-muted);
+}
+
+.smd-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 22px 18px;
+  border-top: 1px solid var(--divider);
+}
+
+.smd-btn {
+  min-height: 38px;
+  padding: 8px 16px;
+  border-radius: var(--radius-item);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.smd-btn--ghost {
+  border: var(--btn-ghost-border);
+  background: var(--btn-ghost-bg);
+  color: var(--btn-ghost-fg);
+}
+
+.smd-btn--primary {
+  border: 0;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-fg);
+  font-weight: 600;
+}
+
+/* ---------- Parti per tema ---------- */
+:root[data-theme="quaderno"] .smd {
+  background: var(--note-page-pattern), var(--modal-bg);
+}
+
+:root[data-theme="quaderno"] .smd-head h2 {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .smd-head h2 {
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: lowercase;
+}
