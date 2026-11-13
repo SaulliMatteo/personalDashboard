@@ -339,6 +339,84 @@
   white-space: nowrap;
 }
 
+/* ---------- Alta 1×2: una colonna di tessere; numero e grafico (o barra) affiancati sotto l'etichetta ---------- */
+.smw--T .smw-grid {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 0;
+}
+
+.smw--T .smw-tile {
+  flex: 1 1 0;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 10px;
+}
+
+/* i processi hanno tre righe: valgono due tessere */
+.smw--T .smw-tile.smw-wide {
+  flex-grow: 2;
+  justify-content: flex-start;
+}
+
+.smw-tile-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.smw-tile-row > .smw-num {
+  flex: none;
+  font-size: 19px;
+}
+
+.smw-tile-row > :is(.smw-chart, .smw-bar) {
+  flex: 1;
+  min-width: 0;
+}
+
+.smw--T .smw-procs {
+  gap: 1px;
+}
+
+.smw--T .smw-chip .smw-num {
+  font-size: 16px;
+}
+
+/* Rete in una colonna: nome e interfaccia a sinistra, download e upload a destra, una riga ciascuno */
+.smw-net-rows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 3px 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.smw-net-rows > :nth-child(odd) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.smw-net-rows b {
+  font-weight: 600;
+}
+
+.smw-net-rows .smw-mono {
+  font-size: 12px;
+  color: var(--text-primary);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.smw-net-rows .smw-mono:last-child {
+  color: var(--text-secondary);
+}
+
 /* ---------- Media 2×2: due colonne, le righe si dividono l'altezza ---------- */
 .smw--M .smw-grid {
   display: grid;
@@ -539,7 +617,7 @@
   border: 0;
 }
 
-:root[data-theme="opaco"] :is(.smw-tile-top, .smw-label) {
+:root[data-theme="opaco"] :is(.smw-tile-top, .smw-label, .smw-net-rows) {
   color: var(--text-primary);
 }
 

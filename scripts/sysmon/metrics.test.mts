@@ -35,9 +35,10 @@ const all = () => true;
 /** Un PC Windows senza batteria: temperatura CPU mai, il resto sì. */
 const windowsDesktop = (id: MetricId) => metricAvailable({ cpuTemp: false, gpu: true, temps: true, battery: false }, id);
 
-test("massimi per taglia: Piccola 3, Media 4, Grande 8", () => {
-  assert.deepEqual(MAX_METRICS, { S: 3, W: 4, M: 8 });
+test("massimi per taglia: Piccola 3, Larga 4, Alta 5, Media 8", () => {
+  assert.deepEqual(MAX_METRICS, { S: 3, W: 4, T: 5, M: 8 });
   assert.equal(sysmonSize("S"), "S");
+  assert.equal(sysmonSize("T"), "T");
   assert.equal(sysmonSize("W"), "W");
   assert.equal(sysmonSize("M"), "M");
   assert.equal(sysmonSize("XL"), "M", "taglie fuori catalogo sulla più vicina");
@@ -121,6 +122,15 @@ test("forma: con spazio la forma del mockup", () => {
   assert.equal(fitWidget("S", 3, false, 232, 150).mode, "full");
   assert.equal(fitWidget("M", 7, true, 515, 390).mode, "full");
   assert.equal(fitWidget("W", 4, false, 480, 120).mode, "full");
+  // Alta come nel mockup (cella 196×370): 5 tessere con i processi
+  assert.equal(fitWidget("T", 5, true, 160, 306).mode, "full");
+});
+
+test("forma: Alta bassa, una riga per metrica in una colonna", () => {
+  const t = fitWidget("T", 5, true, 160, 200);
+  assert.equal(t.mode, "lines");
+  assert.equal(t.count, 5);
+  assert.equal(trimToSize(["cpu", "gpu", "memory", "disk", "network", "temps", "processes"], "T").length, 5);
 });
 
 test("forma: cella piccola, righe al posto dell'anello e delle tessere sovrapposte", () => {

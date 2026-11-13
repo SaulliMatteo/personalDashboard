@@ -8,8 +8,8 @@
 
 export type MetricId = "cpu" | "cpuTemp" | "gpu" | "memory" | "disk" | "network" | "temps" | "processes" | "battery";
 
-/** Taglie del widget: Piccola 1×1, Media 2×1, Grande 2×2 (chiavi di core/widgets/sizes.ts). */
-export type SysmonSize = "S" | "W" | "M";
+/** Taglie del widget: Piccola 1×1, Larga 2×1, Alta 1×2, Media 2×2 (chiavi di core/widgets/sizes.ts). */
+export type SysmonSize = "S" | "W" | "T" | "M";
 
 export interface MetricDef {
   id: MetricId;
@@ -30,7 +30,7 @@ export const METRICS: readonly MetricDef[] = [
   { id: "battery", label: "Batteria", hint: "Solo portatili" },
 ];
 
-export const MAX_METRICS: Record<SysmonSize, number> = { S: 3, W: 4, M: 8 };
+export const MAX_METRICS: Record<SysmonSize, number> = { S: 3, W: 4, T: 5, M: 8 };
 
 /** Proposta per chi non ha ancora scelto (prese nell'ordine, finché c'è posto e sono disponibili). */
 const DEFAULT_ORDER: readonly MetricId[] = ["cpu", "gpu", "memory", "network", "temps", "disk", "processes", "battery"];
@@ -93,7 +93,8 @@ export function isMetricDisabled(ids: readonly MetricId[], id: MetricId, size: S
 
 /** La taglia del widget dalla chiave della griglia (layout vecchi o fuori catalogo ricadono sulla più vicina). */
 export function sysmonSize(sizeKey: string): SysmonSize {
-  if (sizeKey === "S" || sizeKey === "T") return "S";
+  if (sizeKey === "S") return "S";
+  if (sizeKey === "T") return "T";
   if (sizeKey === "W" || sizeKey === "STRIP") return "W";
   return "M";
 }

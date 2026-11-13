@@ -2,7 +2,7 @@
  * Quale forma del widget entra nello spazio vero della cella: le celle cambiano con la finestra (la griglia divide
  * l'altezza disponibile), quindi la taglia da sola non basta. Puro (prova in `scripts/sysmon/metrics.test.mts`).
  *
- * - "full": la forma del mockup (anello nella Piccola, tessere con numero e grafico in Larga e Media);
+ * - "full": la forma del mockup (anello nella Piccola, tessere con numero e grafico in Larga, Alta e Media);
  * - "lines": una riga per metrica, etichetta e valore, con la barra sottile se c'è posto.
  * Se nemmeno le righe entrano si toglie prima l'intestazione ("bare": la rotellina resta nella pagina di dettaglio),
  * poi le ultime metriche: mai testi schiacciati o sovrapposti.
@@ -29,6 +29,8 @@ const LINE_GAP = 5;
 /** Tessera piena: etichetta, numero e un minimo di grafico o barra. */
 const FULL_TILE_W = 46;
 const FULL_TILE_M = 62;
+/** Alta: tessere una sotto l'altra (etichetta, poi numero e grafico affiancati); i processi valgono due tessere. */
+const FULL_TILE_T = 44;
 const TILE_GAP = 8;
 const MIN_GAUGE = 62;
 const MAX_GAUGE = 84;
@@ -47,7 +49,7 @@ function lines(n: number, columns: number, height: number, headroom: number): Wi
 
 /**
  * `width`/`height`: lo spazio del contenuto sotto l'intestazione (cella meno margini e intestazione).
- * `hasWide`: la Media ha i processi, che prendono una riga intera.
+ * `hasWide`: ci sono i processi, che nella Media prendono una riga intera e nell'Alta il posto di due tessere.
  */
 export function fitWidget(size: SysmonSize, n: number, hasWide: boolean, width: number, height: number): WidgetFit {
   const full: WidgetFit = { mode: "full", count: n, bars: true, bare: false, gauge: MAX_GAUGE };
@@ -56,6 +58,12 @@ export function fitWidget(size: SysmonSize, n: number, hasWide: boolean, width: 
   if (size === "S") {
     const gauge = Math.floor(Math.min(MAX_GAUGE, n >= 3 ? height - S_FOOT : height, width * 0.55));
     if (gauge >= MIN_GAUGE) return { ...full, gauge };
+    return lines(n, 1, height, HEAD_SPACE);
+  }
+
+  if (size === "T") {
+    const units = n + (hasWide ? 1 : 0);
+    if ((height - (n - 1) * TILE_GAP) / units >= FULL_TILE_T) return full;
     return lines(n, 1, height, HEAD_SPACE);
   }
 

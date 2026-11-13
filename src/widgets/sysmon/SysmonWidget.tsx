@@ -94,7 +94,7 @@ function Num({ view, className = "" }: { view: Pick<MetricView, "value" | "unit"
 
 /**
  * Monitor di sistema in dashboard (docs/design/temi/sysmon.html): Piccola 1×1 fino a 3 metriche (anello, numero,
- * riga con barra), Larga 2×1 fino a 4 tessere, Media 2×2 fino a 8. Le metriche le sceglie il dialog della rotellina;
+ * riga con barra), Larga 2×1 fino a 4 tessere, Alta 1×2 fino a 5 tessere in colonna, Media 2×2 fino a 8. Le metriche le sceglie il dialog della rotellina;
  * anelli e grafici hanno una forma per tema (card/cards.ts), barre e tessere la prendono dal CSS.
  */
 function SysmonWidget({ w, h }: WidgetProps) {
@@ -137,7 +137,7 @@ function LiveWidget({ size }: { size: SysmonSize }) {
     body = <p className="smw-empty">Nessuna metrica scelta: usa la rotellina per sceglierle.</p>;
   } else if (fit.mode === "lines") {
     body = (
-      <div className={`smw-lines-grid${size === "S" ? " is-single" : ""}`}>
+      <div className={`smw-lines-grid${size === "S" || size === "T" ? " is-single" : ""}`}>
         {visible.map((view) => (
           <div key={view.id} className="smw-tile smw-tile--line">
             <span className="smw-tile-top">
@@ -213,6 +213,68 @@ function LiveWidget({ size }: { size: SysmonSize }) {
                     <span key={i} className={line.hot ? "smw-hot" : undefined}>
                       {view.id === "processes" ? line.label : `${line.label} ${line.value}`}
                     </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  } else if (size === "T") {
+    body = (
+      <div className="smw-grid">
+        {views.map((view) => {
+          const kind = KIND[view.id];
+          // Rete: nome e interfaccia a sinistra, download e upload a destra (in una colonna non stanno su una riga)
+          if (view.id === "network") {
+            const [down, up] = view.lines ?? [];
+            return (
+              <div key={view.id} className="smw-tile">
+                <div className="smw-net-rows">
+                  <b>{view.label}</b>
+                  <span className="smw-mono">{down ? `${down.label} ${down.value}` : "—"}</span>
+                  <span>{view.detail ?? ""}</span>
+                  <span className="smw-mono">{up ? `${up.label} ${up.value}` : ""}</span>
+                </div>
+              </div>
+            );
+          }
+          return (
+            <div key={view.id} className={`smw-tile${view.id === "processes" ? " smw-wide" : ""}`}>
+              <span className="smw-tile-top">
+                <b>{view.id === "processes" ? "Processi" : view.label}</b>
+                {view.id === "processes" ? <span>CPU</span> : view.detail && <span>{view.detail}</span>}
+              </span>
+              {kind !== "lines" && (
+                <div className="smw-tile-row">
+                  <Num view={view} />
+                  {kind === "chart" && chart(view)}
+                  {kind === "bar" && <Bar value={view.percent} hot={view.hot} label={view.label} />}
+                </div>
+              )}
+              {view.id === "temps" && (
+                <div className="smw-chips">
+                  {(view.lines ?? []).length === 0 && <span className="smw-label">—</span>}
+                  {(view.lines ?? []).map((line, i) => (
+                    <div key={i} className="smw-chip">
+                      <span className="smw-label">{line.label}</span>
+                      <span className={`smw-num${line.hot ? " smw-hot" : ""}`}>
+                        {line.value.replace(" °C", "")}
+                        {line.value !== "—" && <span className="smw-unit">°C</span>}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {view.id === "processes" && (
+                <div className="smw-procs">
+                  {/* solo nome e CPU: la memoria in una colonna non ci sta */}
+                  {(view.lines ?? []).map((line, i) => (
+                    <div key={i} className="smw-proc">
+                      <span>{line.label}</span>
+                      <span className="smw-mono">{line.value.split(" · ")[0]}</span>
+                    </div>
                   ))}
                 </div>
               )}

@@ -5,7 +5,7 @@ import { useMetricChoice } from "../useMetricChoice";
 import { MAX_METRICS, METRICS, isMetricDisabled, toggleMetric, type MetricId, type SysmonSize } from "../lib/metrics";
 import "./MetricsDialog.css";
 
-const SIZE_NAMES: Record<SysmonSize, string> = { S: "Piccola (1×1)", W: "Larga (2×1)", M: "Media (2×2)" };
+const SIZE_NAMES: Record<SysmonSize, string> = { S: "Piccola (1×1)", W: "Larga (2×1)", T: "Alta (1×2)", M: "Media (2×2)" };
 
 interface MetricsDialogProps {
   /** Taglia del widget in dashboard; null se il widget non c'è (si sceglie per la più grande). */
