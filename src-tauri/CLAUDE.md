@@ -1,7 +1,8 @@
 # Backend nativo (src-tauri)
 
 Regole generali (ACL dei comandi, `is_app_url`, CSP, difese del C di File Transfer) nel `CLAUDE.md` principale.
-Android: `gen/android/CLAUDE.md`. Monitor di sistema: `src/widgets/sysmon/CLAUDE.md`.
+Android: `gen/android/CLAUDE.md`. Monitor di sistema: `src/widgets/sysmon/CLAUDE.md`. Tempo al PC:
+`src/widgets/screentime/CLAUDE.md`.
 
 ## Moduli
 
@@ -33,6 +34,15 @@ crea la finestra `main`.
   del Keychain (la legge qualsiasi processo dell'utente), ma senza richieste. Le voci delle versioni fino alla 1.0.9
   (servizi `<identifier>` e `<identifier>.sessione`) non si leggono né si cancellano: farebbero comparire la richiesta.
   Non tornare al Keychain su Mac senza un Team ID di Apple. Su Android: plugin `plugins/secure-store`.
+- **Tempo al PC** (`src/screen_time/`): thread `screentime` che campiona ogni 2 s con `companion::foreground()` e
+  `idle_seconds()` e costruisce i segmenti (`segments.rs`, puro, `cargo test --lib screen_time`); comandi
+  `screentime_start/take/stop`. Niente su disco dal Rust: il titolo va solo al frontend. Si ferma in `shutdown`.
+- **Icona vicino all'orologio** (`src/app_tray.rs`, feature `tray-icon` di tauri): menu Apri / tempo di oggi / Esci.
+  `CloseRequested` nasconde la finestra solo se il frontend ha acceso `closeToTray` (`app_set_close_to_tray`; finché
+  non lo dice la X chiude come prima). **Uscita con salvataggio**: "Esci" manda `app:quitting`, il frontend finisce i
+  lavori di `core/system/beforeQuit.ts` (l'ultimo pezzo di Tempo al PC) e chiama `app_quit`; dopo 2 s si esce comunque.
+  Avvio col computer: `tauri-plugin-autostart` `=2.5.1` con `--hidden` (parte con la finestra nascosta; chiave `Run`
+  su Windows, LaunchAgent su macOS). Su Android i comandi esistono e non fanno nulla.
 
 ## macOS
 
@@ -49,7 +59,7 @@ crea la finestra `main`.
 
 `core/updater/`, `src/updater.rs`. Su Windows `install` chiude il processo con `std::process::exit` senza
 `CloseRequested` né `RunEvent::Exit`: ciò che va fermato alla chiusura (server di File Transfer, campionatore del
-Monitor di sistema) va fermato anche in `updater_prepare_install`, chiamato prima di `install`; il riavvio su macOS
+Monitor di sistema, registratore di Tempo al PC) va fermato anche in `updater_prepare_install`, chiamato prima di `install`; il riavvio su macOS
 (`relaunch`) passa invece da `RunEvent::Exit` in `src/lib.rs`. La chiave pubblica in `plugins.updater.pubkey` non si
 cambia più: le app installate accettano solo pacchetti firmati con la privata corrispondente (Secret
 `TAURI_SIGNING_PRIVATE_KEY`); persa quella, chi ha l'app deve reinstallarla a mano. Con `createUpdaterArtifacts`
@@ -85,5 +95,6 @@ il manifesto su crates.io prima di aggiornarle):
 - `tauri-plugin-localhost` `=2.3.1`;
 - `tauri-plugin-deep-link` `=2.4.10` (anche npm);
 - `tauri-plugin-single-instance` `=2.4.5`;
+- `tauri-plugin-autostart` `=2.5.1`;
 - `tauri-plugin-updater` `=2.12.0` e `tauri-plugin-process` `=2.3.1`, con le stesse versioni esatte su npm
   (`@tauri-apps/plugin-updater`, `@tauri-apps/plugin-process`).

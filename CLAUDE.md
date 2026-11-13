@@ -67,6 +67,7 @@ node node_modules/.tmp/gruppi-chat.test.mjs
 | `widgets/study/lib/` | `scripts/studio/` (piano settimanale, Prospettiva) |
 | `core/notify/inbox.ts` | `scripts/notify/inbox.test.mts` |
 | Monitor di sistema | `scripts/sysmon/metrics.test.mts` e `cd src-tauri && cargo test --lib system_monitor` |
+| `widgets/screentime/lib/`, `src-tauri/src/screen_time/` | `scripts/screentime/siteFromTitle.test.mts`, `logic.test.mts` e `cd src-tauri && cargo test --lib screen_time` |
 
 ```bash
 # Server dei Gruppi (Supabase locale, serve Docker): migrazioni in supabase/migrations/, test pgTAP in
@@ -219,4 +220,5 @@ un'altra parte.
 | Gruppi, Amici, schede nella chat, presenza | `src/social/CLAUDE.md` (stato e decisioni: `docs/GRUPPI.md`) |
 | Notifiche e timer dello Studio | `src/core/notify/CLAUDE.md` |
 | Monitor di sistema | `src/widgets/sysmon/CLAUDE.md` |
+| Tempo al PC (registratore, icona vicino all'orologio, privacy dei titoli) | `src/widgets/screentime/CLAUDE.md` |
 | File Transfer (iPad) | `docs/FILE_TRANSFER.md` |
