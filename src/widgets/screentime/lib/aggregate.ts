@@ -19,6 +19,25 @@ export function dayKey(ms: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/** Il giorno `delta` giorni dopo (o prima) di `day` ("YYYY-MM-DD"), nell'ora locale. */
+export function shiftDay(day: string, delta: number): string {
+  const [y, m, d] = day.split("-").map(Number);
+  return dayKey(new Date(y, m - 1, d + delta, 12).getTime());
+}
+
+/** Il lunedì della settimana di `day`. */
+export function weekStart(day: string): string {
+  const [y, m, d] = day.split("-").map(Number);
+  const weekday = (new Date(y, m - 1, d, 12).getDay() + 6) % 7; // lunedì = 0
+  return shiftDay(day, -weekday);
+}
+
+/** Mezzanotte locale di `day` e del giorno dopo (ms): l'intervallo del giorno. */
+export function dayBounds(day: string): [number, number] {
+  const [y, m, d] = day.split("-").map(Number);
+  return [new Date(y, m - 1, d).getTime(), new Date(y, m - 1, d + 1).getTime()];
+}
+
 /** Inizio dell'ora locale successiva a `ms` (cambi d'ora legale compresi: lo calcola Date). */
 function nextHourStart(ms: number): number {
   const d = new Date(ms);

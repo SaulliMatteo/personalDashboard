@@ -35,3 +35,41 @@ export function formatClock(ms: number): string {
   const d = new Date(ms);
   return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
+
+const WEEKDAYS = ["domenica", "lunedì", "martedì", "mercoledì", "giovedì", "venerdì", "sabato"];
+const WEEKDAYS_SHORT = ["dom", "lun", "mar", "mer", "gio", "ven", "sab"];
+const MONTHS = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+
+function parts(day: string): { y: number; m: number; d: number; weekday: number } {
+  const [y, m, d] = day.split("-").map(Number);
+  return { y, m, d, weekday: new Date(y, m - 1, d, 12).getDay() };
+}
+
+/** "Oggi, venerdì 13 novembre", "Ieri, giovedì 12 novembre", "mercoledì 11 novembre" (con l'anno se non è quello di oggi). */
+export function formatDayLabel(day: string, today: string, yesterday: string): string {
+  const p = parts(day);
+  const year = p.y !== parts(today).y ? ` ${p.y}` : "";
+  const base = `${WEEKDAYS[p.weekday]} ${p.d} ${MONTHS[p.m - 1]}${year}`;
+  if (day === today) return `Oggi, ${base}`;
+  if (day === yesterday) return `Ieri, ${base}`;
+  return base.charAt(0).toUpperCase() + base.slice(1);
+}
+
+/** "9 – 15 novembre", "27 ottobre – 2 novembre", "29 dicembre 2025 – 4 gennaio 2026". */
+export function formatWeekLabel(from: string, to: string): string {
+  const a = parts(from);
+  const b = parts(to);
+  if (a.y !== b.y) return `${a.d} ${MONTHS[a.m - 1]} ${a.y} – ${b.d} ${MONTHS[b.m - 1]} ${b.y}`;
+  if (a.m !== b.m) return `${a.d} ${MONTHS[a.m - 1]} – ${b.d} ${MONTHS[b.m - 1]}`;
+  return `${a.d} – ${b.d} ${MONTHS[b.m - 1]}`;
+}
+
+/** "lun", "mar"… */
+export function weekdayShort(day: string): string {
+  return WEEKDAYS_SHORT[parts(day).weekday];
+}
+
+/** "lunedì", "martedì"… */
+export function weekdayName(day: string): string {
+  return WEEKDAYS[parts(day).weekday];
+}

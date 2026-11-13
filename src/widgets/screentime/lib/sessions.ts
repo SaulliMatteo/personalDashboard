@@ -50,3 +50,20 @@ export function breakStats(sessions: Session[]): { breaks: number; longest: Sess
   for (const s of sorted) if (!longest || s.endAt - s.startAt > longest.endAt - longest.startAt) longest = s;
   return { breaks: Math.max(0, sorted.length - 1), longest };
 }
+
+/**
+ * La pausa più lunga tra due sessioni dentro [fromMs, toMs) (es. il pranzo): null se c'è una sessione sola o nessuna.
+ * Le sessioni a cavallo della mezzanotte si tagliano sull'intervallo.
+ */
+export function longestGap(sessions: Session[], fromMs: number, toMs: number): Session | null {
+  const sorted = sessions
+    .map((s) => ({ startAt: Math.max(s.startAt, fromMs), endAt: Math.min(s.endAt, toMs) }))
+    .filter((s) => s.endAt > s.startAt)
+    .sort((a, b) => a.startAt - b.startAt);
+  let best: Session | null = null;
+  for (let i = 1; i < sorted.length; i++) {
+    const gap = { startAt: sorted[i - 1].endAt, endAt: sorted[i].startAt };
+    if (gap.endAt > gap.startAt && (!best || gap.endAt - gap.startAt > best.endAt - best.startAt)) best = gap;
+  }
+  return best;
+}

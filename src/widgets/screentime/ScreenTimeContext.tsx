@@ -9,7 +9,7 @@ import { parseAppCategories, serializeAppCategories, type AppCategory } from "..
 import { SCREENTIME_AVAILABLE, startRecorder, stopRecorder, takeSegments } from "./data/screentimeApi";
 import * as repo from "./data/screentimeRepository";
 import { classifySegment, type RawSegment } from "./lib/classify";
-import { countedIntervals, dayKey, segmentsToDeltas } from "./lib/aggregate";
+import { countedIntervals, dayKey, segmentsToDeltas, shiftDay } from "./lib/aggregate";
 import { BREAK_MS, breakReminderStep, continuousMinutes, extendSessions, type Session } from "./lib/sessions";
 import { parseFocusClasses, serializeFocusClasses, type FocusClass } from "./lib/focus";
 import { dueNotices, emptyNoticeState, parseNoticeState, type ScreenLimit } from "./lib/limits";
@@ -30,11 +30,6 @@ function untilSameTime(rows: UsageRow[], now: number): number {
   const hour = d.getHours();
   const part = (d.getMinutes() * 60 + d.getSeconds()) / 3600;
   return rows.reduce((sum, r) => sum + (r.hour < hour ? r.seconds : r.hour === hour ? r.seconds * part : 0), 0);
-}
-
-function shiftDay(day: string, delta: number): string {
-  const [y, m, d] = day.split("-").map(Number);
-  return dayKey(new Date(y, m - 1, d + delta, 12).getTime());
 }
 
 /**
@@ -289,6 +284,7 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
       available: SCREENTIME_AVAILABLE,
       enabled,
       loading,
+      now,
       todayRows,
       today,
       yesterdayTotal,

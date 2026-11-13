@@ -20,6 +20,8 @@ export interface ScreenTimeContextValue {
   enabled: boolean;
   /** Prima lettura dal DB non ancora fatta. */
   loading: boolean;
+  /** Ora dell'ultimo salvataggio (ms): la pagina ne ricava "oggi" e l'ora in corso. */
+  now: number;
   /** Righe di oggi (aggiornate a ogni salvataggio, ~30 s). */
   todayRows: UsageRow[];
   today: Summary;

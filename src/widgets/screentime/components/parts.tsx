@@ -102,9 +102,9 @@ export function TopList({ items, max }: { items: RankItem[]; max: number }) {
   );
 }
 
-/** Barra di un limite: colore d'avviso dall'80 %. */
-export function LimitBar({ used, max }: { used: number; max: number }) {
-  const near = max > 0 && used / max >= 0.8;
+/** Barra di un limite: colore d'avviso dall'80 % (`quiet`: mai, es. l'obiettivo di focus). */
+export function LimitBar({ used, max, quiet = false }: { used: number; max: number; quiet?: boolean }) {
+  const near = !quiet && max > 0 && used / max >= 0.8;
   return (
     <div className={`stw-bar${near ? " is-near" : ""}`}>
       <i style={{ width: `${Math.min(100, pct(used, max))}%` }} />

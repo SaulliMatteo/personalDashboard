@@ -6,13 +6,13 @@
  *   node node_modules/.tmp/st-logic.test.mjs
  */
 import assert from "node:assert/strict";
-import { countedIntervals, dayKey, segmentsToDeltas } from "../../src/widgets/screentime/lib/aggregate";
+import { countedIntervals, dayBounds, dayKey, segmentsToDeltas, shiftDay, weekStart } from "../../src/widgets/screentime/lib/aggregate";
 import type { ClassifiedSegment } from "../../src/widgets/screentime/lib/classify";
-import { BREAK_MS, breakReminderStep, breakStats, continuousMinutes, extendSessions } from "../../src/widgets/screentime/lib/sessions";
+import { BREAK_MS, breakReminderStep, breakStats, continuousMinutes, extendSessions, longestGap } from "../../src/widgets/screentime/lib/sessions";
 import { DEFAULT_CLASSES, focusStreak, parseFocusClasses, serializeFocusClasses } from "../../src/widgets/screentime/lib/focus";
 import { dueNotices, emptyNoticeState, parseNoticeState, type ScreenLimit } from "../../src/widgets/screentime/lib/limits";
 import { dailyTotals, limitUsage, summarize, type UsageRow } from "../../src/widgets/screentime/lib/summary";
-import { formatDelta, formatDuration, formatShort } from "../../src/widgets/screentime/lib/format";
+import { formatDayLabel, formatDelta, formatDuration, formatShort, formatWeekLabel, weekdayShort } from "../../src/widgets/screentime/lib/format";
 
 let passed = 0;
 function test(name: string, fn: () => void) {
@@ -182,6 +182,42 @@ test("durate in italiano", () => {
   assert.equal(formatDelta(40 * 60, "ieri"), "+40 min da ieri");
   assert.equal(formatDelta(-65 * 60, "ieri"), "−1 h 5 min da ieri");
   assert.equal(formatDelta(20, "ieri"), "come ieri");
+});
+
+test("giorni: spostamenti, settimana dal lunedì, mezzanotti", () => {
+  assert.equal(shiftDay("2026-11-30", 1), "2026-12-01");
+  assert.equal(shiftDay("2026-01-01", -1), "2025-12-31");
+  assert.equal(shiftDay("2026-03-29", 1), "2026-03-30", "cambio dell'ora legale");
+  assert.equal(weekStart("2026-11-13"), "2026-11-09", "venerdì → lunedì");
+  assert.equal(weekStart("2026-11-15"), "2026-11-09", "domenica → lunedì prima");
+  assert.equal(weekStart("2026-11-09"), "2026-11-09");
+  const [from, to] = dayBounds("2026-11-13");
+  assert.equal(from, at(0, 0, 13));
+  assert.equal(to, at(0, 0, 14));
+});
+
+test("pausa più lunga tra le sessioni del giorno", () => {
+  const s = [
+    { startAt: at(14, 2), endAt: at(17, 24) },
+    { startAt: at(8, 6), endAt: at(10, 50) },
+    { startAt: at(10, 58), endAt: at(13, 10) },
+  ];
+  assert.deepEqual(longestGap(s, at(0), at(0, 0, 14)), { startAt: at(13, 10), endAt: at(14, 2) });
+  assert.equal(longestGap([s[0]], at(0), at(0, 0, 14)), null);
+  // la sessione di ieri sera tagliata a mezzanotte non crea una "pausa" dalla mezzanotte
+  const cross = [{ startAt: at(23, 0, 12), endAt: at(0, 30, 13) }, { startAt: at(9), endAt: at(10) }];
+  assert.deepEqual(longestGap(cross, at(0), at(0, 0, 14)), { startAt: at(0, 30), endAt: at(9) });
+});
+
+test("etichette delle date", () => {
+  assert.equal(formatDayLabel("2026-11-13", "2026-11-13", "2026-11-12"), "Oggi, venerdì 13 novembre");
+  assert.equal(formatDayLabel("2026-11-12", "2026-11-13", "2026-11-12"), "Ieri, giovedì 12 novembre");
+  assert.equal(formatDayLabel("2026-11-11", "2026-11-13", "2026-11-12"), "Mercoledì 11 novembre");
+  assert.equal(formatDayLabel("2025-12-31", "2026-01-02", "2026-01-01"), "Mercoledì 31 dicembre 2025");
+  assert.equal(formatWeekLabel("2026-11-09", "2026-11-15"), "9 – 15 novembre");
+  assert.equal(formatWeekLabel("2026-10-26", "2026-11-01"), "26 ottobre – 1 novembre");
+  assert.equal(formatWeekLabel("2025-12-29", "2026-01-04"), "29 dicembre 2025 – 4 gennaio 2026");
+  assert.equal(weekdayShort("2026-11-09"), "lun");
 });
 
 console.log(`logic: ${passed} prove passate`);

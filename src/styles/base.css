@@ -195,7 +195,7 @@ select option { background: var(--bg-card); color: var(--text-primary); }
    Sono gli stessi dialoghi del desktop (stessi colori e bordi per tema, Esc e indietro come prima): cambia solo dove
    stanno. Larghi quanto lo schermo, attaccati in basso sopra la barra dei gesti; con la tastiera aperta salgono sopra
    di essa. I pulsanti vanno uno sotto l'altro, il principale per primo. */
-:root[data-compact] :is(.grp-overlay, .yt-dialog-overlay, .study-popup-overlay, .nq-modal-overlay, .nq-rowcard-bg, .nq-pdf-range-backdrop, .smd-overlay) {
+:root[data-compact] :is(.grp-overlay, .yt-dialog-overlay, .study-popup-overlay, .nq-modal-overlay, .nq-rowcard-bg, .nq-pdf-range-backdrop, .smd-overlay, .std-overlay) {
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -203,7 +203,7 @@ select option { background: var(--bg-card); color: var(--text-primary); }
   padding: calc(var(--safe-top) + 24px) 0 var(--keyboard);
 }
 
-:root[data-compact] :is(.grp-dialog, .yt-dialog, .study-popup, .nq-modal, .nq-rowcard, .nq-menu.nq-pdf-range, .smd) {
+:root[data-compact] :is(.grp-dialog, .yt-dialog, .study-popup, .nq-modal, .nq-rowcard, .nq-menu.nq-pdf-range, .smd, .std) {
   width: 100% !important;
   max-width: none;
   max-height: 100%;
@@ -220,7 +220,7 @@ select option { background: var(--bg-card); color: var(--text-primary); }
   padding-bottom: var(--safe-bottom);
 }
 
-:root[data-compact] :is(.grp-dialog, .yt-dialog, .study-popup, .nq-modal, .nq-rowcard, .nq-menu.nq-pdf-range, .smd)::before {
+:root[data-compact] :is(.grp-dialog, .yt-dialog, .study-popup, .nq-modal, .nq-rowcard, .nq-menu.nq-pdf-range, .smd, .std)::before {
   content: "";
   display: block;
   flex: none;
@@ -236,12 +236,12 @@ select option { background: var(--bg-card); color: var(--text-primary); }
   margin: 8px auto 0;
 }
 
-:root[data-compact] :is(.grp-actions, .yt-dialog-actions, .nq-modal-actions, .smd-actions) {
+:root[data-compact] :is(.grp-actions, .yt-dialog-actions, .nq-modal-actions, .smd-actions, .std-actions) {
   flex-direction: column-reverse;
   align-items: stretch;
 }
 
-:root[data-compact] :is(.grp-actions, .yt-dialog-actions, .nq-modal-actions, .smd-actions) > * {
+:root[data-compact] :is(.grp-actions, .yt-dialog-actions, .nq-modal-actions, .smd-actions, .std-actions) > * {
   width: 100%;
   min-height: 44px;
   justify-content: center;
