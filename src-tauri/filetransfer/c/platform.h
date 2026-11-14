@@ -15,6 +15,8 @@
 #include <process.h>
 #include <direct.h>
 #include <stdio.h>
+#include <errno.h>
+#include <wchar.h>
 
 typedef HANDLE thread_t;
 #define THREAD_FUNC unsigned __stdcall
@@ -39,7 +41,29 @@ static inline void net_prepare_client(SOCKET s) {
 }
 static inline long atomic_add(volatile long *v, long d) { return InterlockedExchangeAdd(v, d) + d; }
 
-#define make_dir(p)        _mkdir(p)
+/* I percorsi arrivano in UTF-8 (da Rust e dall'header X-File-Name), ma fopen/_mkdir/remove di Windows li leggono
+   nella codepage ANSI: una cartella utente o un nome con lettere accentate non si aprirebbe, o verrebbe salvato
+   con il nome storto. Si passa dalle funzioni a caratteri larghi. Un percorso che non è UTF-8 valido è un errore. */
+#define FT_WPATH_MAX 1280
+static inline int ft_wide_path(const char *path, wchar_t *out) {
+    if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, path, -1, out, FT_WPATH_MAX) > 0) return 0;
+    errno = EINVAL;
+    return -1;
+}
+static inline FILE *file_open(const char *path, const char *mode) {
+    wchar_t wpath[FT_WPATH_MAX], wmode[8];
+    if (ft_wide_path(path, wpath) != 0) return NULL;
+    if (MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, 8) <= 0) { errno = EINVAL; return NULL; }
+    return _wfopen(wpath, wmode);
+}
+static inline int make_dir(const char *path) {
+    wchar_t wpath[FT_WPATH_MAX];
+    return ft_wide_path(path, wpath) != 0 ? -1 : _wmkdir(wpath);
+}
+static inline int file_remove(const char *path) {
+    wchar_t wpath[FT_WPATH_MAX];
+    return ft_wide_path(path, wpath) != 0 ? -1 : _wremove(wpath);
+}
 #define file_seek(f, o, w) _fseeki64(f, o, w)
 #define file_tell(f)       _ftelli64(f)
 #define SEND_FLAGS         0
@@ -98,7 +122,9 @@ static inline void net_prepare_client(SOCKET s) { net_set_timeouts(s); }
 
 static inline long atomic_add(volatile long *v, long d) { return __sync_add_and_fetch(v, d); }
 
+#define file_open(p, m)    fopen(p, m)
 #define make_dir(p)        mkdir(p, 0755)
+#define file_remove(p)     remove(p)
 #define file_seek(f, o, w) fseeko(f, (off_t)(o), w)
 #define file_tell(f)       ftello(f)
 typedef socklen_t net_len_t;

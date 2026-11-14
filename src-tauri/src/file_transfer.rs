@@ -130,6 +130,15 @@ fn get_local_ip() -> io::Result<String> {
     Ok(socket.local_addr()?.ip().to_string())
 }
 
+/// Un nome di file della cartella dei ricevuti, non un percorso: niente separatori, `..` o `:`. Su Windows
+/// `join("C:x")` o `join("C:\\x")` sostituisce la cartella di partenza, e `nome:flusso` apre un flusso alternativo.
+fn is_plain_file_name(name: &str) -> bool {
+    !name.is_empty()
+        && !name.contains("..")
+        && !name.contains(['/', '\\', ':'])
+        && std::path::Path::new(name).file_name().is_some_and(|f| f == std::ffi::OsStr::new(name))
+}
+
 fn stop_native() {
     #[cfg(ft_native)]
     unsafe {
@@ -232,7 +241,7 @@ pub fn ft_list_files(app: AppHandle) -> Result<Vec<FileEntry>, String> {
 
 #[tauri::command]
 pub fn ft_read_preview(app: AppHandle, name: String) -> Result<Preview, String> {
-    if name.is_empty() || name.contains("..") || name.contains('/') || name.contains('\\') {
+    if !is_plain_file_name(&name) {
         return Err("Nome file non valido".into());
     }
 
@@ -288,4 +297,19 @@ pub fn ft_open_folder(app: AppHandle) -> Result<(), String> {
 
     #[cfg(desktop)]
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_plain_file_name;
+
+    #[test]
+    fn solo_nomi_di_file() {
+        assert!(is_plain_file_name("foto.jpg"));
+        assert!(is_plain_file_name("appunti (1).pdf"));
+        assert!(is_plain_file_name("città.txt"));
+        for bad in ["", ".", "..", "../x", "a/b", r"a\b", "C:x", r"C:\x", "nome.txt:flusso", "a..b"] {
+            assert!(!is_plain_file_name(bad), "{bad:?} non è un nome di file");
+        }
+    }
 }

@@ -22,6 +22,8 @@ use tauri_plugin_fs::{FilePath, FsExt, OpenOptions};
 const DB_FILE: &str = "dashboard.db";
 const STAGED_FILE: &str = "dashboard.db.import";
 const EXPORT_FILE: &str = "dashboard-export.db";
+/// Il DB sostituito dall'ultima importazione (vedi `db_import_apply`).
+const PREVIOUS_FILE: &str = "dashboard.db.prima";
 /// Inizio di ogni file SQLite 3.
 const SQLITE_HEADER: &[u8; 16] = b"SQLite format 3\0";
 /// Un database più grande di così non è il nostro (oggi pochi MB).
@@ -136,5 +138,19 @@ pub fn db_import_apply(app: AppHandle) -> Result<(), String> {
             fs::remove_file(&side).map_err(|e| format!("Database ancora in uso: {e}"))?;
         }
     }
-    fs::rename(&staged, dir.join(DB_FILE)).map_err(|e| format!("Database non sostituito: {e}"))
+    // Il DB di prima non si butta: resta accanto come `dashboard.db.prima` (uno solo, l'ultimo). Il file scelto ha
+    // passato solo il controllo dell'intestazione: se fosse rovinato, i dati di prima si recuperano rinominandolo.
+    let current = dir.join(DB_FILE);
+    let previous = dir.join(PREVIOUS_FILE);
+    let had_current = current.exists();
+    if had_current {
+        let _ = fs::remove_file(&previous);
+        fs::rename(&current, &previous).map_err(|e| format!("Database ancora in uso: {e}"))?;
+    }
+    fs::rename(&staged, &current).map_err(|e| {
+        if had_current {
+            let _ = fs::rename(&previous, &current);
+        }
+        format!("Database non sostituito: {e}")
+    })
 }

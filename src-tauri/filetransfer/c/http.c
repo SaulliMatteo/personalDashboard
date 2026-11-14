@@ -68,10 +68,33 @@ static int is_reserved_name(const char *name) {
     return 0;
 }
 
+// UTF-8 ben formato (senza forme lunghe né surrogati): il nome diventa un nome di file e finisce nel JSON di risposta.
+static int is_valid_utf8(const char *text) {
+    const unsigned char *s = (const unsigned char *)text;
+    while (*s) {
+        int extra;
+        unsigned int cp;
+        if (*s < 0x80) { s++; continue; }
+        else if ((*s & 0xE0) == 0xC0) { extra = 1; cp = *s & 0x1Fu; }
+        else if ((*s & 0xF0) == 0xE0) { extra = 2; cp = *s & 0x0Fu; }
+        else if ((*s & 0xF8) == 0xF0) { extra = 3; cp = *s & 0x07u; }
+        else return 0;
+        s++;
+        for (int i = 0; i < extra; i++, s++) {
+            if ((*s & 0xC0) != 0x80) return 0;
+            cp = (cp << 6) | (*s & 0x3Fu);
+        }
+        if ((extra == 1 && cp < 0x80) || (extra == 2 && cp < 0x800) || (extra == 3 && cp < 0x10000)) return 0;
+        if (cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) return 0;
+    }
+    return 1;
+}
+
 // Un nome file non deve poter far scrivere fuori dalla cartella di destinazione, né su un dispositivo.
 static int name_is_safe(const char *name) {
     size_t len = strlen(name);
     if (len == 0) return 0;
+    if (!is_valid_utf8(name)) return 0;
     if (strstr(name, "..")) return 0;
     if (strpbrk(name, "\\/:*?\"<>|")) return 0;
     for (size_t i = 0; i < len; i++)
@@ -199,6 +222,24 @@ static void send_no_body_response(SOCKET s, int code, const char *status_text) {
 
 // ---------- file statici (la pagina React compilata) ----------
 
+// Un pezzo del percorso è un dispositivo di Windows ("/con", "/assets/aux.js")? Aprirlo terrebbe occupato un
+// thread (su Windows 10 "CON" in qualsiasi cartella è la console).
+static int path_has_reserved_segment(const char *path) {
+    const char *p = path;
+    while (*p) {
+        while (*p == '/') p++;
+        size_t len = strcspn(p, "/");
+        if (len > 0 && len < HTTP_MAX_NAME) {
+            char segment[HTTP_MAX_NAME];
+            memcpy(segment, p, len);
+            segment[len] = '\0';
+            if (is_reserved_name(segment)) return 1;
+        }
+        p += len;
+    }
+    return 0;
+}
+
 static const char *content_type_for(const char *path) {
     const char *ext = strrchr(path, '.');
     if (!ext) return "application/octet-stream";
@@ -216,7 +257,7 @@ static void serve_static_file(SOCKET s, const char *web_dir, const char *req_pat
     // solo percorsi dentro la cartella della pagina ("/", "/assets/…"), senza "?…" e senza separatori di Windows
     char clean[HTTP_MAX_PATH];
     snprintf(clean, sizeof(clean), "%.*s", (int)strcspn(req_path, "?#"), req_path);
-    if (clean[0] != '/' || strstr(clean, "..") || strpbrk(clean, "\\:")) {
+    if (clean[0] != '/' || strstr(clean, "..") || strpbrk(clean, "\\:") || path_has_reserved_segment(clean)) {
         send_text_response(s, 400, "Bad Request", "text/plain", "percorso non valido");
         return;
     }
@@ -227,7 +268,7 @@ static void serve_static_file(SOCKET s, const char *web_dir, const char *req_pat
     else
         snprintf(full_path, sizeof(full_path), "%s%s", web_dir, clean);
 
-    FILE *f = fopen(full_path, "rb");
+    FILE *f = file_open(full_path, "rb");
     if (!f) {
         send_text_response(s, 404, "Not Found", "text/plain", "pagina non trovata");
         return;
@@ -263,7 +304,11 @@ static FILE *open_new_file(const char *dir, char *name, size_t name_size, char *
     // spazio per " (999)" + estensione: la base si accorcia se serve
     int max_base = (int)name_size - 8 - (int)strlen(ext);
     if (max_base < 1) return NULL;
-    if (base_len > max_base) base_len = max_base;
+    if (base_len > max_base) {
+        base_len = max_base;
+        // mai tagliare a metà un carattere UTF-8 (il nome non sarebbe più valido)
+        while (base_len > 1 && ((unsigned char)name[base_len] & 0xC0) == 0x80) base_len--;
+    }
 
     for (int i = 0; i < 1000; i++) {
         char candidate[HTTP_MAX_NAME];
@@ -271,7 +316,7 @@ static FILE *open_new_file(const char *dir, char *name, size_t name_size, char *
         else snprintf(candidate, sizeof(candidate), "%.*s (%d)%s", base_len, name, i, ext);
         snprintf(full_path, path_size, "%s/%s", dir, candidate);
         errno = 0;
-        FILE *f = fopen(full_path, "wbx"); // "x": fallisce se il file esiste già
+        FILE *f = file_open(full_path, "wbx"); // "x": fallisce se il file esiste già
         if (f) {
             snprintf(name, name_size, "%s", candidate);
             return f;
@@ -323,7 +368,7 @@ static void handle_upload(SOCKET s, const http_request *req, const char *upload_
     if (fclose(f) != 0) ok = 0;
 
     if (!ok) {
-        remove(full_path); // niente file a metà tra quelli ricevuti
+        file_remove(full_path); // niente file a metà tra quelli ricevuti
         send_text_response(s, 500, "Internal Server Error", "text/plain", "trasferimento interrotto");
         return;
     }
