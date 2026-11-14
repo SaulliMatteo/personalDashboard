@@ -232,8 +232,10 @@ core/pixy/
 ├─ engine/                   logica PURA: face.ts (parametri ed emozioni), animator.ts (interpola, battiti di ciglia,
 │                            sguardo, respiro), personalities.ts (frasi, ritmo, ritocchi), poses.ts (pose e varianti),
 │                            snapshot.ts (BrainSnapshot: lo stato del cervello che serve per animare)
-└─ render/                   stili grafici: ledRenderer.ts (matrice LED), solidRenderer.ts, styles.ts (registro);
-                             costumes.ts (forme dei costumi: fiamma, coperta, libro…) e sdf.ts (distanze)
+├─ themePersonality.ts       temi che decidono il carattere (Ombra: per variante), sopra a companionPersonality
+└─ render/                   stili grafici: ledRenderer.ts (matrice LED), solidRenderer.ts, ombraRenderer.ts (i due
+                             corpi di Ombra), styles.ts (registro); costumes.ts (forme dei costumi: fiamma, coperta,
+                             libro…) e sdf.ts (distanze)
 ```
 
 Dati che Pixy legge dall'activityBus oltre a studio e video: `studySubjectName` (Studio), `weatherTemperature`
@@ -318,13 +320,14 @@ restringe (`min-width: 0`, testi con l'ellissi) invece di allargarsi.
 1. Nel widget che "sa" la cosa: `publishActivity({...})` (stato) o `emitActivityEvent({...})` (momento),
    da `core/activity/activityBus.ts` (aggiungi il tipo lì).
 2. In `widgets/companion/engine/brain.ts`: gestiscilo in `handleEvent` o `decideBehavior`.
-3. Se serve una frase: una chiave in `personalities.ts` per ogni personalità.
+3. Se serve una frase: una chiave in `personalities.ts` per ogni personalità (anche Sarcastico e Stoico di Ombra).
 
 ### Mandare una notifica di sistema
 1. Un nuovo `kind` in `AppNotificationKind` (`core/notify/notifier.ts`), poi `sendAppNotification({ kind, title, body })`
    dal widget (rispettando le sue impostazioni di notifica). Mai `sendNotification` del plugin direttamente.
 2. In `widgets/companion/notify/pixyNotifications.ts`: espressione, emoji e chiave della frase per quel `kind`;
-   se la frase è nuova, una chiave in `personalities.ts` per ogni personalità.
+   se la frase è nuova, una chiave in `personalities.ts` per ogni personalità. Se la posa porta un oggetto, va
+   pensato anche per Ombra (`ombraRenderer.ts`): un costume nuovo lì si vede a punti finché non lo si ridisegna.
 
 ### Cambiare lo schema del DB
 Aggiungi un elemento **in fondo** a `core/db/migrations.ts` (`version` = ultima + 1).

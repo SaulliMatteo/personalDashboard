@@ -1,6 +1,7 @@
-import type { ThemeVariants } from "../../theme/variants";
+import { perMode, type ThemeVariants } from "../../theme/variants";
 import type { FaceFrame } from "../engine/animator";
 import { drawLedFace } from "./ledRenderer";
+import { drawOmbraFace, type OmbraBody } from "./ombraRenderer";
 import { drawSolidFace } from "./solidRenderer";
 
 /**
@@ -40,6 +41,15 @@ function solid(id: string, label: string, roundness: number): CompanionStyle {
   };
 }
 
+function ombra(id: string, label: string, body: OmbraBody): CompanionStyle {
+  return {
+    id,
+    label,
+    draw: (canvas, frame, o) =>
+      drawOmbraFace(canvas, frame, { body, color: o.color, showMouth: o.showMouth, dpr: o.dpr, maxPointSize: o.maxPointSize, padding: o.padding ?? FACE_PADDING }),
+  };
+}
+
 export const COMPANION_STYLES = {
   /** Notte: occhi pieni con gli angoli morbidi (l'alone è nel CSS della card). */
   soft: solid("soft", "Forme morbide", 0.78),
@@ -73,6 +83,10 @@ export const COMPANION_STYLES = {
         minPitch: o.minPointSize === undefined ? undefined : o.minPointSize * o.dpr,
       }),
   },
+  /** Ombra, variante Ombra: un corpo d'ombra con gli occhi luminosi (ombraRenderer.ts). */
+  shadow: ombra("shadow", "Ombra", "shadow"),
+  /** Ombra, variante Fiamma: un globo bianco con le fiamme. */
+  flame: ombra("flame", "Fiamma", "flame"),
 } satisfies Record<string, CompanionStyle>;
 
 /** Come viene disegnata la faccia in ogni tema (mockup: card del Companion). Usato dal canvas e dalle notifiche. */
@@ -82,6 +96,6 @@ export const FACE_STYLES: ThemeVariants<CompanionStyle> = {
   quaderno: COMPANION_STYLES.pill,
   fosforo: COMPANION_STYLES.led,
   vetro: COMPANION_STYLES.glass,
-  // Provvisorio: Ombra avrà un renderer nuovo, con un corpo per variante (fase 5 del piano).
-  ombra: COMPANION_STYLES.soft,
+  // L'unico tema in cui la variante cambia anche il Pixy (docs/TEMI.md).
+  ombra: perMode({ notte: COMPANION_STYLES.shadow, giorno: COMPANION_STYLES.flame }),
 };

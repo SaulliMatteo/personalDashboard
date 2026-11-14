@@ -35,6 +35,7 @@ export function renderNotificationFace(
     costume: null,
     glow: 0,
     glowPos: 0,
+    emotion: look.emotion,
   };
 
   const face = document.createElement("canvas");

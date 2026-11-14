@@ -6,10 +6,12 @@ import { useActivityStatus } from "../../core/activity/activityBus";
 import SettingsSection from "../../core/settings/components/SettingsSection";
 import BackButton from "../../ui/BackButton";
 import { useCompanion } from "./useCompanion";
-import { useThemeVariant } from "../../core/theme/variants";
+import { perMode, useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
+import { useThemeOwnsPersonality, useThemePersonality } from "../../core/pixy/themePersonality";
 import { COMPANION_CARDS } from "./card/cards";
 import { ANIMATIONS, ANIMATION_CATEGORIES, ANIMATION_GALLERY, type AnimationCategory, type GalleryItem } from "./engine/animations";
-import { PERSONALITIES, PERSONALITY_IDS } from "../../core/pixy/engine/personalities";
+import { CHOOSABLE_PERSONALITY_IDS, PERSONALITIES } from "../../core/pixy/engine/personalities";
+import PoseThumb from "./components/PoseThumb";
 import { APP_CATEGORIES, type AppCategory } from "../../core/system/appCategory";
 import { systemSignalsAvailable } from "../../core/system/systemApi";
 import { isMac } from "../../core/system/platform";
@@ -42,6 +44,50 @@ const SYSTEM_SIGNALS = systemSignalsAvailable();
 const VISIBLE_TABS = SYSTEM_SIGNALS ? TABS : TABS.filter((t) => t.id !== "apps");
 const VISIBLE_CATEGORIES = SYSTEM_SIGNALS ? ANIMATION_CATEGORIES : ANIMATION_CATEGORIES.filter((c) => c.id !== "apps");
 
+const DEFAULT_SUBTITLE = "Il tuo compagno di scrivania: personalità, animazioni e comportamento.";
+
+/** Sottotitolo della pagina: in Ombra lo dice la variante (Temi Vetro e Ombra.html, pagina Pixy). */
+const SUBTITLE: ThemeVariants<string> = {
+  notte: DEFAULT_SUBTITLE,
+  opaco: DEFAULT_SUBTITLE,
+  quaderno: DEFAULT_SUBTITLE,
+  fosforo: DEFAULT_SUBTITLE,
+  vetro: DEFAULT_SUBTITLE,
+  ombra: perMode({ notte: "La tua ombra. Ti segue ovunque e commenta tutto.", giorno: "La tua fiamma. Calma, diretta, non si spegne." }),
+};
+
+/** In Ombra la galleria mostra ogni posa disegnata (le miniature del mockup); negli altri temi solo i nomi. */
+const POSE_THUMBS: ThemeVariants<boolean> = { notte: false, opaco: false, quaderno: false, fosforo: false, vetro: false, ombra: true };
+
+/** Le due varianti di Ombra come caratteri: scegliendone una si cambia la variante del tema. */
+const OMBRA_CHARACTERS = [
+  { mode: "notte", personality: "sarcastic", label: "Ombra · sarcastico" },
+  { mode: "giorno", personality: "stoic", label: "Fiamma · stoico" },
+] as const;
+
+/** Come si comporta il carattere della variante (mockup, pagina Pixy). Vuoto fuori da Ombra. */
+const CHARACTER_TRAITS: ThemeVariants<[string, string][]> = {
+  notte: [],
+  opaco: [],
+  quaderno: [],
+  fosforo: [],
+  vetro: [],
+  ombra: perMode<[string, string][]>({
+    notte: [
+      ["Parla", "nei pensieri, tra apici, sempre ironico"],
+      ["Quando studi", "si mette una maschera e sparisce"],
+      ["A fine pomodoro", "assorbe i frammenti, soddisfatto"],
+      ["Quando dormi", "si scioglie in una pozza d'ombra"],
+    ],
+    giorno: [
+      ["Parla", "poco, frasi brevi, mai ironico"],
+      ["Quando studi", "scintille bianche negli occhi"],
+      ["A fine pomodoro", "la fiamma cresce e assorbe i frammenti"],
+      ["Quando dormi", "la fiamma si abbassa a brace"],
+    ],
+  }),
+};
+
 /** Quanto resta ogni posa quando la galleria va da sola. */
 const STEP_MS = 3500;
 
@@ -61,6 +107,11 @@ function CompanionDetail() {
   const { settings, updateSetting } = useSettings();
   const activity = useActivityStatus();
   const Card = useThemeVariant(COMPANION_CARDS);
+  const subtitle = useThemeVariant(SUBTITLE);
+  const showThumbs = useThemeVariant(POSE_THUMBS);
+  const traits = useThemeVariant(CHARACTER_TRAITS);
+  const themeOwnsPersonality = useThemeOwnsPersonality();
+  const personality = useThemePersonality(settings.companionPersonality);
   const {
     snapshot,
     foreground,
@@ -151,7 +202,7 @@ function CompanionDetail() {
       <header className="dashboard-header companion-detail-header">
         <div>
           <h1>{name}</h1>
-          <p>Il tuo compagno di scrivania: personalità, animazioni e comportamento.</p>
+          <p>{subtitle}</p>
         </div>
         <BackButton onClick={goToDashboard} />
       </header>
@@ -232,7 +283,7 @@ function CompanionDetail() {
               <section className="companion-card">
                 <p className="companion-note companion-note-top">
                   Scegli un gruppo, tocca una posa per vederla sulla faccia di Pixy o premi "Guarda tutte". Le pose cambiano con la
-                  personalità ({PERSONALITIES[settings.companionPersonality].label}).
+                  personalità ({PERSONALITIES[personality].label}).
                 </p>
 
                 <div className="companion-cats" aria-label="Gruppi di animazioni">
@@ -306,7 +357,16 @@ function CompanionDetail() {
                                     className={`companion-pose${playing ? " is-playing" : ""}`}
                                     onClick={() => tryItem(cat.id, index)}
                                   >
-                                    <MdPlayArrow className="companion-pose-icon" aria-hidden />
+                                    {showThumbs ? (
+                                      <PoseThumb
+                                        pose={item.pose ?? "idle"}
+                                        emotion={item.animation ? ANIMATIONS.find((a) => a.id === item.animation)?.emotion : undefined}
+                                        personality={personality}
+                                        showMouth={settings.companionShowMouth}
+                                      />
+                                    ) : (
+                                      <MdPlayArrow className="companion-pose-icon" aria-hidden />
+                                    )}
                                     {item.label}
                                   </button>
                                 );
@@ -358,31 +418,65 @@ function CompanionDetail() {
               </section>
             )}
 
-            {tab === "personality" && (
-              <section className="companion-card">
-                <p className="companion-note companion-note-top">
-                  Cambia il modo in cui {name} si muove, parla e reagisce. Dopo averla scelta, riprova le pose in "Animazioni".
-                </p>
-                <div className="companion-personalities">
-                  {PERSONALITY_IDS.map((id) => {
-                    const p = PERSONALITIES[id];
-                    const selected = settings.companionPersonality === id;
-                    return (
-                      <button
-                        key={id}
-                        type="button"
-                        className={`companion-personality${selected ? " is-selected" : ""}`}
-                        aria-pressed={selected}
-                        onClick={() => updateSetting("companionPersonality", id)}
-                      >
-                        <span className="companion-personality-name">{p.label}</span>
-                        <span className="companion-personality-desc">{p.description}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
+            {tab === "personality" &&
+              (themeOwnsPersonality ? (
+                <section className="companion-card">
+                  <p className="companion-note companion-note-top">
+                    In Ombra il carattere lo decide la variante del tema: sceglierne uno cambia anche la variante. Negli altri
+                    temi torna la personalità scelta da te ({PERSONALITIES[settings.companionPersonality].label}).
+                  </p>
+                  <div className="companion-personalities">
+                    {OMBRA_CHARACTERS.map((c) => {
+                      const p = PERSONALITIES[c.personality];
+                      const selected = personality === c.personality;
+                      return (
+                        <button
+                          key={c.mode}
+                          type="button"
+                          className={`companion-personality${selected ? " is-selected" : ""}`}
+                          aria-pressed={selected}
+                          onClick={() => updateSetting("themeMode", c.mode)}
+                        >
+                          <span className="companion-personality-name">{c.label}</span>
+                          <span className="companion-personality-desc">{p.description}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <dl className="companion-status companion-traits">
+                    {traits.map(([what, how]) => (
+                      <div key={what} className="companion-trait">
+                        <dt>{what}</dt>
+                        <dd>{how}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              ) : (
+                <section className="companion-card">
+                  <p className="companion-note companion-note-top">
+                    Cambia il modo in cui {name} si muove, parla e reagisce. Dopo averla scelta, riprova le pose in "Animazioni".
+                  </p>
+                  <div className="companion-personalities">
+                    {CHOOSABLE_PERSONALITY_IDS.map((id) => {
+                      const p = PERSONALITIES[id];
+                      const selected = settings.companionPersonality === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          className={`companion-personality${selected ? " is-selected" : ""}`}
+                          aria-pressed={selected}
+                          onClick={() => updateSetting("companionPersonality", id)}
+                        >
+                          <span className="companion-personality-name">{p.label}</span>
+                          <span className="companion-personality-desc">{p.description}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
 
             {tab === "apps" && (
               <section className="companion-card">

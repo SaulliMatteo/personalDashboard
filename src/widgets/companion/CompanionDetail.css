@@ -145,6 +145,15 @@
   overflow-wrap: anywhere;
 }
 
+/* Ombra: come si comporta il carattere della variante, sotto il selettore. */
+.companion-traits {
+  margin-top: 14px;
+}
+
+.companion-trait {
+  display: contents;
+}
+
 /* ---- Personalità ---- */
 .companion-personalities {
   display: grid;
@@ -414,6 +423,11 @@
   transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
 }
 
+/* Ombra: la posa disegnata al posto dell'icona (le miniature del mockup). */
+.companion-pose-thumb {
+  flex-shrink: 0;
+}
+
 .companion-pose-icon {
   flex-shrink: 0;
   font-size: 16px;
@@ -425,7 +439,12 @@
   background: var(--surface-2);
 }
 
-.companion-pose:hover .companion-pose-icon {
+.companion-pose:hover /* Ombra: la posa disegnata al posto dell'icona (le miniature del mockup). */
+.companion-pose-thumb {
+  flex-shrink: 0;
+}
+
+.companion-pose-icon {
   color: var(--accent);
 }
 
@@ -435,7 +454,12 @@
   color: var(--accent);
 }
 
-.companion-pose.is-playing .companion-pose-icon {
+.companion-pose.is-playing /* Ombra: la posa disegnata al posto dell'icona (le miniature del mockup). */
+.companion-pose-thumb {
+  flex-shrink: 0;
+}
+
+.companion-pose-icon {
   color: var(--accent);
 }
 

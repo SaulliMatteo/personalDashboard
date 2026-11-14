@@ -82,6 +82,20 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
   Vetro e quella di Ombra sono lo stesso componente (`StudyCardVetro.tsx`, prefisso `sv`) con quadrante diverso:
   nel mockup hanno la stessa disposizione; le regole di Ombra stanno in fondo a `StudyCardVetro.css`. Pixy e Note
   hanno le card `CompanionCardOmbra`/`NotesCardOmbra`.
+- Pixy di Ombra: `FACE_STYLES.ombra = perMode({ notte: shadow, giorno: flame })`, due corpi disegnati da
+  `core/pixy/render/ombraRenderer.ts` nel riquadro 100×100 del mockup (`pixyO()`): l'ombra (corpo nero a tentacoli,
+  occhi luminosi, si schiaccia quando dorme o è triste) e la fiamma (globo bianco, cinque fiamme che crescono e
+  calano con l'espressione, alone dorato). Le forme vengono dai parametri continui dell'animatore (palpebre,
+  inclinazione, bocca), non da pose fisse; `FaceFrame.emotion`/`pose` servono solo agli oggetti che i parametri non
+  dicono (maschera quando studia o lavora, tazza in pausa, frammenti a fine pomodoro, saluto). I costumi che il
+  mockup ridisegna (libro, cuffia, coperta, popcorn, occhiali 3D, spada, neve, barra, pausa, coriandoli) sono oggetti;
+  gli altri si disegnano a punti come negli stili pieni (`paintField` di `solidRenderer.ts` + `costumeField`).
+  Colori dai token `--pixy-*` (neutri negli altri temi), l'inchiostro è `--face-on`/`--accent`.
+- In Ombra il carattere di Pixy lo decide la variante (`core/pixy/themePersonality.ts`): Sarcastico di notte, Stoico
+  di giorno; l'impostazione `companionPersonality` non cambia e torna a valere negli altri temi, ed è quella che va ai
+  compagni dei Gruppi. Nella pagina di Pixy la scheda Personalità mostra il selettore delle due varianti (cambia
+  `themeMode`) e la galleria delle pose ha le miniature disegnate (`PoseThumb.tsx`). Di notte le frasi della card
+  sono pensieri tra apici (`.cm-bubble`).
 - Pixy di Vetro: stile `glass` di `core/pixy/render/styles.ts` (matrice LED con i punti spenti visibili) in un
   riquadro lucido (`.cv-box`). Il quadrante dello Studio è `GlassDial` (`Dials.tsx`). In Vetro e in Ombra orologio,
   data, meteo, File Transfer, Monitor, Tempo al PC, Lavagna e YouTube usano le card di Notte: coi token bastano.

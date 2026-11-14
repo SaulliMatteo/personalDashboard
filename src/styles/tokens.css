@@ -109,6 +109,28 @@
   --wall-top: transparent;
   --spark-hot: transparent;
   --spark-glow: transparent;
+  /* Ombra: colori del Pixy (core/pixy/render/ombraRenderer.ts); l'inchiostro è --face-on o --accent. */
+  --pixy-body-1: transparent;
+  --pixy-body-2: transparent;
+  --pixy-body-3: transparent;
+  --pixy-body-line: transparent;
+  --pixy-body-glow: transparent;
+  --pixy-ink-glow: transparent;
+  --pixy-eye-dot: transparent;
+  --pixy-halo: transparent;
+  --pixy-flame: transparent;
+  --pixy-flame-line: transparent;
+  --pixy-flame-glow: transparent;
+  --pixy-deco: transparent;
+  --pixy-fill: transparent;
+  --pixy-pop: transparent;
+  --pixy-blush: transparent;
+  --pixy-steel: transparent;
+  --pixy-cool: transparent;
+  --pixy-screen: transparent;
+  --pixy-lens-l: transparent;
+  --pixy-lens-r: transparent;
+  --pixy-mask: transparent;
 }
 
 /* ==========================================================================
@@ -1433,6 +1455,28 @@
   --wall-top: transparent;
   --spark-hot: transparent;
   --spark-glow: transparent;
+  /* Pixy: l'ombra (corpo nero col bordo che luccica, occhi chiari luminosi). */
+  --pixy-body-1: #1D1D20;
+  --pixy-body-2: #060606;
+  --pixy-body-3: #000000;
+  --pixy-body-line: rgba(238, 237, 232, 0.25);
+  --pixy-body-glow: rgba(238, 237, 232, 0.28);
+  --pixy-ink-glow: rgba(244, 242, 236, 0.85);
+  --pixy-eye-dot: #000000;
+  --pixy-halo: transparent;
+  --pixy-flame: transparent;
+  --pixy-flame-line: transparent;
+  --pixy-flame-glow: transparent;
+  --pixy-deco: #F4F2EC;
+  --pixy-fill: #151515;
+  --pixy-pop: #E8E4DA;
+  --pixy-blush: rgba(238, 237, 232, 0.22);
+  --pixy-steel: #C9CCD2;
+  --pixy-cool: #F4F2EC;
+  --pixy-screen: rgba(140, 170, 255, 0.35);
+  --pixy-lens-l: rgba(200, 80, 70, 0.55);
+  --pixy-lens-r: rgba(80, 120, 200, 0.55);
+  --pixy-mask: #0D0D0D;
 
   --bg-card: #080808;
   --card-bg: #080808;

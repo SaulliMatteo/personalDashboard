@@ -1,7 +1,7 @@
 import type { BrainSnapshot } from "./snapshot";
 import { EMOTIONS, emotionFace, NEUTRAL_FACE, type EmotionId, type FaceMotion, type FaceParams, type GlyphId } from "./face";
 import { PERSONALITIES, type FaceTweak } from "./personalities";
-import { aimPos, kernelPos, planePos, type CostumeId, type GazeMode } from "./poses";
+import { aimPos, kernelPos, planePos, type CostumeId, type GazeMode, type PoseId } from "./poses";
 
 /**
  * Trasforma le decisioni del cervello (che cambiano poche volte al minuto)
@@ -28,6 +28,12 @@ export interface FaceFrame {
   /** 0 = niente bagliore; altrimenti intensità, con `glowPos` 0..1 la posizione della banda. */
   glow: number;
   glowPos: number;
+  /**
+   * Espressione e posa di questo istante. Le leggono solo i renderer che disegnano oggetti che i parametri non
+   * dicono (Ombra: la maschera mentre studia, la tazza in pausa); gli altri disegnano solo `face`.
+   */
+  emotion?: EmotionId;
+  pose?: PoseId;
 }
 
 export interface AnimatorOptions {
@@ -273,7 +279,8 @@ export class FaceAnimator {
     const glowPos = ((t / 2800) % 1) * 1.4 - 0.2;
 
     const costume = this.costumeId && this.costumeAlpha > 0.01 ? { id: this.costumeId, t: this.costumeT, alpha: this.costumeAlpha, value: snap.costumeValue } : null;
-    const frame: FaceFrame = { face, gazeX: this.gazeX, gazeY: this.gazeY, offsetX, offsetY, glyph, costume, glow: this.glow, glowPos };
+    const pose = reaction?.pose ?? snap.pose;
+    const frame: FaceFrame = { face, gazeX: this.gazeX, gazeY: this.gazeY, offsetX, offsetY, glyph, costume, glow: this.glow, glowPos, emotion, pose };
     this.lastFrame = frame;
     return frame;
   }

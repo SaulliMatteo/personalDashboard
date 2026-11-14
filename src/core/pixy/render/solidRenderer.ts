@@ -52,6 +52,56 @@ function maskBuffer(owner: HTMLCanvasElement, w: number, h: number): MaskBuffer 
   return buffer;
 }
 
+/** Dove sta lo spazio della faccia nel canvas: pixel per punto e angolo in alto a sinistra, in pixel reali. */
+export interface FacePlacement {
+  scale: number;
+  originX: number;
+  originY: number;
+}
+
+/**
+ * Campiona una forma dello spazio della faccia (luminosità 0..1 in punti) su un canvas piccolo e la disegna
+ * ingrandita, del colore dato, nel canvas di `ctx`. Copre anche i margini visibili intorno alla faccia (dove
+ * escono i costumi). Lo usa anche il renderer di Ombra per i costumi che disegna a punti.
+ */
+export function paintField(
+  ctx: CanvasRenderingContext2D,
+  owner: HTMLCanvasElement,
+  brightness: (fx: number, fy: number, sharpness: number) => number,
+  color: string,
+  { scale, originX, originY }: FacePlacement
+): void {
+  // Campioni per punto: abbastanza per un bordo netto, mai troppi.
+  const k = Math.max(1, Math.min(8, scale / SAMPLE_PX));
+  // Margini visibili: lo spazio tra faccia e bordo del canvas (la faccia è centrata).
+  const mx = Math.max(0, Math.min(MAX_MARGIN, Math.ceil(originX / scale)));
+  const my = Math.max(0, Math.min(MAX_MARGIN, Math.ceil(originY / scale)));
+  const sw = Math.ceil((FACE_W + mx * 2) * k);
+  const sh = Math.ceil((FACE_H + my * 2) * k);
+  const buffer = maskBuffer(owner, sw, sh);
+  if (!buffer) return;
+
+  const data = buffer.image.data;
+  for (let j = 0; j < sh; j++) {
+    const fy = (j + 0.5) / k - my;
+    for (let i = 0; i < sw; i++) {
+      const fx = (i + 0.5) / k - mx;
+      data[(j * sw + i) * 4 + 3] = Math.round(brightness(fx, fy, k) * 255);
+    }
+  }
+
+  const g = buffer.canvas.getContext("2d");
+  if (!g) return;
+  g.globalCompositeOperation = "source-over";
+  g.putImageData(buffer.image, 0, 0);
+  g.globalCompositeOperation = "source-in";
+  g.fillStyle = color;
+  g.fillRect(0, 0, sw, sh);
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(buffer.canvas, 0, 0, sw, sh, originX - mx * scale, originY - my * scale, (sw / k) * scale, (sh / k) * scale);
+}
+
 /**
  * Disegna un fotogramma. `canvas` ha già dimensioni in pixel reali
  * (width/height = CSS × devicePixelRatio).
@@ -70,36 +120,8 @@ export function drawSolidFace(canvas: HTMLCanvasElement, frame: FaceFrame, optio
   const originX = (W - FACE_W * scale) / 2;
   const originY = (H - FACE_H * scale) / 2;
 
-  // Campioni per punto: abbastanza per un bordo netto, mai troppi.
-  const k = Math.max(1, Math.min(8, scale / SAMPLE_PX));
-  // Margini visibili: lo spazio tra faccia e bordo del canvas (la faccia è centrata).
-  const mx = Math.min(MAX_MARGIN, Math.ceil(originX / scale));
-  const my = Math.min(MAX_MARGIN, Math.ceil(originY / scale));
-  const sw = Math.ceil((FACE_W + mx * 2) * k);
-  const sh = Math.ceil((FACE_H + my * 2) * k);
-  const buffer = maskBuffer(canvas, sw, sh);
-  if (!buffer) return;
-
   const field = faceField(frame, { showMouth: options.showMouth, roundness: options.roundness });
-  const data = buffer.image.data;
-  for (let j = 0; j < sh; j++) {
-    const fy = (j + 0.5) / k - my;
-    for (let i = 0; i < sw; i++) {
-      const fx = (i + 0.5) / k - mx;
-      data[(j * sw + i) * 4 + 3] = Math.round(field.brightness(fx, fy, k) * 255);
-    }
-  }
-
-  const g = buffer.canvas.getContext("2d");
-  if (!g) return;
-  g.globalCompositeOperation = "source-over";
-  g.putImageData(buffer.image, 0, 0);
-  g.globalCompositeOperation = "source-in";
-  g.fillStyle = options.color;
-  g.fillRect(0, 0, sw, sh);
-
-  ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(buffer.canvas, 0, 0, sw, sh, originX - mx * scale, originY - my * scale, (sw / k) * scale, (sh / k) * scale);
+  paintField(ctx, canvas, field.brightness, options.color, { scale, originX, originY });
 
   // Punti del costume (scritte, particelle): come i simboli, punti tondi.
   const r = scale * 0.4;

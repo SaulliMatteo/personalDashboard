@@ -13,6 +13,7 @@ import type { PoseId } from "../../core/pixy/engine/poses";
 import { PERSONALITIES } from "../../core/pixy/engine/personalities";
 import { readSystemSnapshot } from "../../core/system/systemApi";
 import { FACE_STYLES } from "../../core/pixy/render/styles";
+import { useThemePersonality } from "../../core/pixy/themePersonality";
 import { publishMyPixy } from "../../core/pixy/myPixy";
 import { pixyLook, pixyText } from "./notify/pixyNotifications";
 import { renderNotificationFace } from "./notify/renderNotificationFace";
@@ -52,9 +53,13 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
 
   const disabled = useMemo(() => parseDisabled(settings.companionDisabledAnimations), [settings.companionDisabledAnimations]);
 
+  // In Ombra il carattere lo decide la variante (themePersonality.ts); altrove quello scelto.
+  const personality = useThemePersonality(settings.companionPersonality);
+  const personalityRef = useLatestRef(personality);
+
   const config: BrainConfig = useMemo(
     () => ({
-      personality: settings.companionPersonality,
+      personality,
       disabled,
       bubbles: settings.companionBubbles,
       bubbleRate: settings.companionBubbleRate,
@@ -66,7 +71,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       coldC: settings.companionColdC,
     }),
     [
-      settings.companionPersonality,
+      personality,
       disabled,
       settings.companionBubbles,
       settings.companionBubbleRate,
@@ -220,7 +225,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setNotificationDecorator(async (n, { image }) => {
       const cfg = settingsRef.current;
-      const personality = PERSONALITIES[cfg.companionPersonality];
+      const personality = PERSONALITIES[personalityRef.current];
       const look = pixyLook(n);
       if (!look) return { title: n.title, lines: [n.body] };
       const text = pixyText(n, look, {
@@ -241,7 +246,7 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
       return { ...text, imageDataUrl };
     });
     return () => setNotificationDecorator(null);
-  }, [settingsRef, faceStyleRef]);
+  }, [settingsRef, faceStyleRef, personalityRef]);
 
   // --- Orologio del cervello: scadenze, emozioni casuali, chiacchiere.
   useEffect(() => {
@@ -280,8 +285,9 @@ export function CompanionProvider({ children }: { children: ReactNode }) {
           y: clamp((p.y - cy) / (rect.height / 2 + 160), -0.8, 0.8),
         };
       }
-      return animator.advance(t, brain.snapshot(), {
-        blinkMs: PERSONALITIES[cfg.companionPersonality].blinkMs,
+      const snap = brain.snapshot();
+      return animator.advance(t, snap, {
+        blinkMs: PERSONALITIES[snap.personality].blinkMs,
         pointer,
         still: !cfg.animationsEnabled,
       });

@@ -166,7 +166,7 @@ export function CompanionCardVetro({ size }: CardProps) {
 
 /**
  * Ombra (Temi Vetro e Ombra.html, card di Pixy): la faccia libera sulla card, a destra il fumetto in Spectral corsivo
- * con un filo a sinistra e, sotto, nome e stato. Il corpo di Pixy per Ombra arriva con il suo renderer.
+ * con un filo a sinistra e, sotto, nome e stato. La faccia è il corpo di Ombra (ombraRenderer.ts): ombra di notte, fiamma di giorno.
  */
 export function CompanionCardOmbra({ size }: CardProps) {
   const { name, status } = useCompanionCard();

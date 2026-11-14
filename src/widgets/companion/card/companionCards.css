@@ -424,6 +424,12 @@
   line-height: 1.35;
 }
 
+/* Ombra (notte): le frasi sono pensieri, tra apici. */
+:root[data-theme="ombra"][data-mode="notte"] .cm-bubble::before,
+:root[data-theme="ombra"][data-mode="notte"] .cm-bubble::after {
+  content: "'";
+}
+
 /* 2×2: la faccia grande in alto, il fumetto e il nome sotto */
 .widget.cm--M {
   flex-direction: column;

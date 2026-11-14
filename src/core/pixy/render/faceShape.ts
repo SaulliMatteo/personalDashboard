@@ -156,6 +156,18 @@ export function costumeDots(frame: FaceFrame): CostumeDot[] {
   return dots(costume.t).map(([x, y, a]) => [Math.round(x + dx), Math.round(y + dy), a * costume.alpha]);
 }
 
+/**
+ * Solo il costume di un fotogramma (senza faccia), già spostato e sfumato; null se non ce n'è uno o se il costume
+ * diventa la faccia (la fiamma). Per i renderer che disegnano la faccia a modo loro (Ombra).
+ */
+export function costumeField(frame: FaceFrame): ((fx: number, fy: number, sharpness: number) => number) | null {
+  const costume = frame.costume;
+  const def = costume ? COSTUMES[costume.id] : null;
+  if (!costume || !def || def.form) return null;
+  const [dx, dy] = costumeOffset(frame);
+  return (fx, fy, sharpness) => def.shape(fx - dx, fy - dy, costume.t, sharpness, costume.value) * costume.alpha;
+}
+
 /** Prepara le forme di un fotogramma: occhi, bocca, rossore, bagliore e costume. */
 export function faceField(frame: FaceFrame, options: FaceFieldOptions): FaceField {
   const roundness = options.roundness ?? 0.55;

@@ -1257,6 +1257,28 @@
   --wall-top: rgba(255, 226, 170, 0.45);
   --spark-hot: #FFF0DC;
   --spark-glow: rgba(240, 170, 60, 0.9);
+  /* Pixy: la fiamma (globo bianco, fiamme e alone dorato, occhi grigi). */
+  --pixy-body-1: #FFFFFF;
+  --pixy-body-2: #FFFAF0;
+  --pixy-body-3: #F3E4C6;
+  --pixy-body-line: #C9CCD2;
+  --pixy-body-glow: transparent;
+  --pixy-ink-glow: transparent;
+  --pixy-eye-dot: #FFFFFF;
+  --pixy-halo: rgb(255, 190, 95);
+  --pixy-flame: #FFFFFF;
+  --pixy-flame-line: rgba(222, 160, 60, 0.7);
+  --pixy-flame-glow: rgba(242, 182, 79, 0.7);
+  --pixy-deco: #D9A441;
+  --pixy-fill: #FFFFFF;
+  --pixy-pop: #FFF6E0;
+  --pixy-blush: rgba(226, 140, 120, 0.45);
+  --pixy-steel: #C9CCD2;
+  --pixy-cool: #8FB3D9;
+  --pixy-screen: rgba(120, 150, 230, 0.25);
+  --pixy-lens-l: rgba(200, 80, 70, 0.55);
+  --pixy-lens-r: rgba(80, 120, 200, 0.55);
+  --pixy-mask: #0D0D0D;
 
   --bg-card: #FDFDFC;
   --card-bg: #FDFDFC;

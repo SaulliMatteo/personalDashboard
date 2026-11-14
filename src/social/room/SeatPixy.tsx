@@ -2,6 +2,7 @@ import { useCallback, useState, useSyncExternalStore } from "react";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
 import { FaceAnimator, type FaceFrame } from "../../core/pixy/engine/animator";
 import { PERSONALITIES, type PersonalityId } from "../../core/pixy/engine/personalities";
+import { useThemePersonality } from "../../core/pixy/themePersonality";
 import type { PoseId } from "../../core/pixy/engine/poses";
 import { poseSnapshot } from "../../core/pixy/engine/poseSnapshot";
 import type { BrainSnapshot } from "../../core/pixy/engine/snapshot";
@@ -44,13 +45,15 @@ function SeatPixy({ kind, isMe, pixy, offsetMs, localNow, renderScale }: SeatPix
   const { settings } = useSettings();
   const [animator] = useState(() => new FaceAnimator());
   const mine = useSyncExternalStore(subscribeMyPixy, getMyPixy);
+  // Il mio Pixy col carattere che ha qui (in Ombra lo decide la variante), come nel widget.
+  const myPersonality = useThemePersonality(settings.companionPersonality);
 
   let snapshot: BrainSnapshot;
   let color: "accent" | "face";
   let showMouth: boolean;
   let showBubble: boolean;
   if (isMe) {
-    snapshot = mine ?? poseSnapshot(studyPose(kind), settings.companionPersonality);
+    snapshot = mine ?? poseSnapshot(studyPose(kind), myPersonality);
     color = settings.companionColor === "accent" ? "accent" : "face";
     showMouth = settings.companionShowMouth;
     showBubble = true;
