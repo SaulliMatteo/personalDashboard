@@ -10,7 +10,7 @@ interface FriendsButtonProps {
 }
 
 /**
- * Gli amici nell'intestazione della dashboard, accanto alla campanella (docs/design/amici-notifiche.html, vista 1):
+ * Gli amici nell'intestazione della dashboard, accanto alla campanella (docs/mockup/gruppi/amici-notifiche.html, vista 1):
  * un pallino quando c'è un messaggio non letto o una richiesta. Lo mette in pagina app/App.tsx.
  */
 function FriendsButton({ compact = false }: FriendsButtonProps) {

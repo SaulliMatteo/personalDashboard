@@ -47,7 +47,7 @@ function Arrow({ dir }: { dir: "prev" | "next" }) {
 }
 
 /**
- * La Stanza comune (voce della barra laterale, docs/mockup-gruppi/gruppi/stanza-comune.html): chi studia siede ai
+ * La Stanza comune (voce della barra laterale, docs/mockup/gruppi/stanza-comune.html): chi studia siede ai
  * tavoli col suo Pixy, a gruppi di 8 per sala; col timer fermo si resta seduti per compagnia (groupsSitInRoom,
  * "Alzati" lo spegne), e "fuori dalla stanza" sta chi si è alzato o è offline.
  * La pagina sta tutta nella finestra (.main qui non scorre): la sala si adatta allo spazio e scorre solo la lista
@@ -55,9 +55,9 @@ function Arrow({ dir }: { dir: "prev" | "next" }) {
  * (dettaglio del widget) o dagli stati senza gruppi, non da qui.
  * `pigment`: in Opaco la sala usa il pigmento del widget Gruppi (lo decide il registry, in app/App.tsx).
  * `controls`: i comandi dei widget per la stanza (`roomControls`, es. il timer dello Studio), passati da app/App.tsx.
- * Sul telefono (docs/design/mobile/viste.html, vista 8): nome del gruppo e sala nella barra in alto, sotto gruppi e
+ * Sul telefono (docs/mockup/mobile/viste.html, vista 8): nome del gruppo e sala nella barra in alto, sotto gruppi e
  * frecce delle sale, poi posto e timer, la sala a tutta larghezza e le schede sotto, dove scorre solo la lista.
- * In verticale (docs/design/mobile/ritocchi.html, viste 14 e 15) la sala è a grandezza vera e girata (si scorre) e le
+ * In verticale (docs/mockup/mobile/ritocchi.html, viste 14 e 15) la sala è a grandezza vera e girata (si scorre) e le
  * schede stanno in un foglio in fondo che si alza.
  */
 function RoomPage({ pigment, controls }: { pigment: string; controls?: ReactNode }) {

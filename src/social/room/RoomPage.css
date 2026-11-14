@@ -1,5 +1,5 @@
 /*
- * Stanza comune (docs/mockup-gruppi/gruppi/stanza-comune.html). La sala sta in RoomScene.css, la colonna destra in
+ * Stanza comune (docs/mockup/gruppi/stanza-comune.html). La sala sta in RoomScene.css, la colonna destra in
  * RoomSidePanel.css. La pagina occupa tutta l'altezza di .main, che qui non scorre (AppShell scroll={false}).
  */
 
@@ -202,7 +202,7 @@
   overflow-y: auto;
 }
 
-/* ---------- Telefono (docs/design/mobile/viste.html, viste 8 e 9) ----------
+/* ---------- Telefono (docs/mockup/mobile/viste.html, viste 8 e 9) ----------
    Barra in alto (CompactBar), sotto gruppi e frecce, poi posto e timer; la sala a tutta larghezza e le schede, dove
    scorre solo la lista. Con la tastiera aperta (data-keyboard, core/system/androidInsets.ts) restano solo le schede. */
 :root[data-compact] .roomp {

@@ -2,7 +2,7 @@ import { directMessageFromRow, type DirectMessage, type DirectRead, type FriendP
 import { INVITE_CODE_LENGTH, normalizeInviteCode } from "../../core/cloud/inviteCode";
 
 /*
- * Amici e chat salvate (docs/design/amici-notifiche.html, viste 3, 6, 7 e 9): la parte pura. Niente rete né
+ * Amici e chat salvate (docs/mockup/gruppi/amici-notifiche.html, viste 3, 6, 7 e 9): la parte pura. Niente rete né
  * orologio: l'ora arriva da fuori (lo prova scripts/gruppi/friends.test.mts).
  */
 

@@ -22,7 +22,7 @@ const KIND_NAME = { app: "app", site: "sito", category: "categoria" } as const;
 const pct = (v: number, of: number) => (of > 0 ? Math.round((v / of) * 100) : 0);
 
 /**
- * Pagina di Tempo al PC (docs/design/temi/tempo-pc.html): giorno (riepilogo, linea del giorno, classifiche di app e
+ * Pagina di Tempo al PC (docs/mockup/temi/tempo-pc.html): giorno (riepilogo, linea del giorno, classifiche di app e
  * siti con il menu ⋯, limiti, pause) e settimana (barre per giorno con l'obiettivo di focus, più usati, Focus o svago).
  */
 function ScreenTimeDetail() {

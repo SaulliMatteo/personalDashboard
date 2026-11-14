@@ -464,7 +464,7 @@
   color: var(--accent);
 }
 
-/* ---------- Telefono (docs/design/mobile/viste.html, vista 6): sezioni come chip in orizzontale ---------- */
+/* ---------- Telefono (docs/mockup/mobile/viste.html, vista 6): sezioni come chip in orizzontale ---------- */
 :root[data-compact] .sp {
   flex-direction: column;
   min-height: 0;

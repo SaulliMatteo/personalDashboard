@@ -1,5 +1,5 @@
 /**
- * Layout della dashboard sul telefono (docs/design/mobile/viste.html): pagine 2×4 da sfogliare, al massimo 5.
+ * Layout della dashboard sul telefono (docs/mockup/mobile/viste.html): pagine 2×4 da sfogliare, al massimo 5.
  * Logica pura (niente React né DB): la prova è scripts/layout/mobileLayout.test.mts.
  *
  * Regole:

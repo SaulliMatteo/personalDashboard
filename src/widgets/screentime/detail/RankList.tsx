@@ -20,7 +20,7 @@ interface RankListProps {
 }
 
 /**
- * Classifica di app o siti (docs/design/temi/tempo-pc.html, pagina): nome, categoria, tempo, barra colorata per classe
+ * Classifica di app o siti (docs/mockup/temi/tempo-pc.html, pagina): nome, categoria, tempo, barra colorata per classe
  * (un browser divisa tra i suoi siti) e il menu ⋯ per cambiare categoria o mettere un limite.
  */
 function RankList({ items, max = 8, manualCategory, onCategory, onLimit, onShowSites, hasSites, empty }: RankListProps) {

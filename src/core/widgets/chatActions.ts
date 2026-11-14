@@ -2,7 +2,7 @@ import { createElement, type ComponentType, type ReactNode } from "react";
 import type { Pigment } from "../theme/themes";
 
 /*
- * Azioni dei widget nella chat degli amici (docs/design/amici-notifiche.html, viste 4-6 e 9): il "+" accanto al campo
+ * Azioni dei widget nella chat degli amici (docs/mockup/gruppi/amici-notifiche.html, viste 4-6 e 9): il "+" accanto al campo
  * le elenca, `Compose` sceglie cosa mandare e `Card` disegna la scheda inviata o ricevuta. Le dichiara il widget
  * (`chatActions` della sua WidgetDefinition), le raccoglie app/App.tsx e le passa agli amici (social non importa i
  * widget). Il server non guarda il `payload`: lo controlla `parse` di chi lo disegna, a ogni lettura.

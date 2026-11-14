@@ -93,7 +93,7 @@ function Num({ view, className = "" }: { view: Pick<MetricView, "value" | "unit"
 }
 
 /**
- * Monitor di sistema in dashboard (docs/design/temi/sysmon.html): Piccola 1×1 fino a 3 metriche (anello, numero,
+ * Monitor di sistema in dashboard (docs/mockup/temi/sysmon.html): Piccola 1×1 fino a 3 metriche (anello, numero,
  * riga con barra), Larga 2×1 fino a 4 tessere, Alta 1×2 fino a 5 tessere in colonna, Media 2×2 fino a 8. Le metriche le sceglie il dialog della rotellina;
  * anelli e grafici hanno una forma per tema (card/cards.ts), barre e tessere la prendono dal CSS.
  */

@@ -6,7 +6,7 @@ import type { InviteCardPayload } from "./invitePayload";
 import "./InviteChat.css";
 
 /**
- * Scheda di un invito a studiare (docs/design/amici-notifiche.html, vista 9): materia e ora; "Apri la Stanza" se
+ * Scheda di un invito a studiare (docs/mockup/gruppi/amici-notifiche.html, vista 9): materia e ora; "Apri la Stanza" se
  * siamo in un gruppo insieme, sempre "Studio".
  */
 function InviteCard({ payload, mine, friendName, closePanel, openRoom }: ChatCardProps<InviteCardPayload>) {

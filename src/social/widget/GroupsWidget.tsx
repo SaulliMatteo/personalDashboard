@@ -85,7 +85,7 @@ function PeriodSwitch({ period, onChange }: { period: LeaderboardPeriod; onChang
 const WIDE_FACES = 5;
 
 /**
- * 2×1, solo sul telefono (docs/design/mobile/novita.html): quanti studiano ora, il gruppo e le facce dei compagni col
+ * 2×1, solo sul telefono (docs/mockup/mobile/novita.html): quanti studiano ora, il gruppo e le facce dei compagni col
  * loro stato. Tutta la cella apre la Stanza comune (il doppio tocco apre il dettaglio, come le altre celle).
  */
 function WideGroups({ groupName, rows, studying }: { groupName: string; rows: LeaderboardRow[]; studying: number }) {

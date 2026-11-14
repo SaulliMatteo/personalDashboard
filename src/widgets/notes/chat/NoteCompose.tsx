@@ -19,7 +19,7 @@ const normalize = (s: string) =>
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase();
 
-/** "Invia una nota" (docs/design/amici-notifiche.html, vista 5): si sceglie tra le proprie note, si manda una copia. */
+/** "Invia una nota" (docs/mockup/gruppi/amici-notifiche.html, vista 5): si sceglie tra le proprie note, si manda una copia. */
 function NoteCompose({ send, onClose }: ChatComposeProps) {
   const [notes, setNotes] = useState<NoteSummary[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);

@@ -41,7 +41,7 @@ function withCurrent(list: LimitOption[], draft: LimitDraft | null, kind: LimitK
 }
 
 /**
- * "Aggiungi un limite" (docs/design/temi/tempo-pc.html): app, sito o categoria, minuti al giorno, avviso all'80 %.
+ * "Aggiungi un limite" (docs/mockup/temi/tempo-pc.html): app, sito o categoria, minuti al giorno, avviso all'80 %.
  * Lo stesso dialog modifica un limite esistente (stessa app/sito/categoria = stesso limite).
  */
 function LimitDialog({ initial, editing, apps, sites, onSave, onDelete, onClose }: LimitDialogProps) {

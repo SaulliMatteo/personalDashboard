@@ -77,7 +77,7 @@ export function studyingCount(rows: LeaderboardRow[]): number {
 const FACE_ORDER: Record<MemberKind, number> = { studying: 0, break: 1, paused: 2, online: 3, offline: 4 };
 
 /**
- * Le facce del widget Gruppi 2×1 (docs/design/mobile/novita.html): al massimo `max` membri, chi studia per primo e
+ * Le facce del widget Gruppi 2×1 (docs/mockup/mobile/novita.html): al massimo `max` membri, chi studia per primo e
  * a pari stato in ordine di classifica; `more` = quanti restano fuori. Senza interfaccia, come i dati della
  * classifica: potrà servire anche a un widget della Home di Android.
  */

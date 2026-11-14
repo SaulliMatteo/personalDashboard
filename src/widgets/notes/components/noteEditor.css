@@ -1,4 +1,4 @@
-/* Editor delle Notes (docs/design/temi/notes-redesign.html, "La pagina Notes"):
+/* Editor delle Notes (docs/mockup/temi/notes-redesign.html, "La pagina Notes"):
    intestazione, barra strumenti, pagina, barra delle pagine, menu.
    Le forme per tema sono in fondo, divise per tema; i colori vengono dai token. */
 
@@ -2268,7 +2268,7 @@
 }
 
 /* ==========================================================================
-   Telefono (docs/design/mobile/quaderno.html): la nota copre la pagina, in alto ← titolo ☆ ⋯, la pagina larga
+   Telefono (docs/mockup/mobile/quaderno.html): la nota copre la pagina, in alto ← titolo ☆ ⋯, la pagina larga
    quanto lo schermo e una sola riga di strumenti in basso, che sta sopra la tastiera (--keyboard).
    Il resto passa nei fogli dal basso (BottomSheet.tsx).
    ========================================================================== */

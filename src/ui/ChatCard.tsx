@@ -11,7 +11,7 @@ interface ChatCardProps {
 }
 
 /**
- * Scheda di un widget dentro la chat degli amici (docs/design/amici-notifiche.html, viste 3 e 9): da dove viene, il
+ * Scheda di un widget dentro la chat degli amici (docs/mockup/gruppi/amici-notifiche.html, viste 3 e 9): da dove viene, il
  * contenuto e i pulsanti. Il pigmento (Opaco) lo mette chi la contiene con `data-pigment`.
  */
 export function ChatCard({ source, icon, children, actions }: ChatCardProps) {

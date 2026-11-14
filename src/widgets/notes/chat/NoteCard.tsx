@@ -10,7 +10,7 @@ import type { NoteCardPayload } from "./notePayload";
 import "./NoteChat.css";
 
 /**
- * Scheda di una nota (docs/design/amici-notifiche.html, vista 9): titolo e prime righe; "Salva nel Quaderno" mette
+ * Scheda di una nota (docs/mockup/gruppi/amici-notifiche.html, vista 9): titolo e prime righe; "Salva nel Quaderno" mette
  * una copia in "Ricevute", poi (o per chi l'ha mandata) "Apri".
  */
 function NoteCard({ payload, messageId, closePanel }: ChatCardProps<NoteCardPayload>) {

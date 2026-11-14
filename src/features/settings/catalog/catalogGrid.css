@@ -163,7 +163,7 @@
   color: var(--danger);
 }
 
-/* ---------- Telefono (docs/design/mobile/viste.html, vista 5): una colonna, anteprima a sinistra ---------- */
+/* ---------- Telefono (docs/mockup/mobile/viste.html, vista 5): una colonna, anteprima a sinistra ---------- */
 .widget-catalog-preview {
   display: none;
 }

@@ -22,7 +22,7 @@ async function saveVideo(p: VideoCardPayload): Promise<void> {
   invalidateSuggestion();
 }
 
-/** Scheda di un video consigliato (docs/design/amici-notifiche.html, vista 3): "Salva e guarda" o "Solo salva". */
+/** Scheda di un video consigliato (docs/mockup/gruppi/amici-notifiche.html, vista 3): "Salva e guarda" o "Solo salva". */
 function VideoCard({ payload, closePanel }: ChatCardProps<VideoCardPayload>) {
   const { openWidgetDetail } = useNav();
   const [saved, setSaved] = useState<boolean | null>(null);

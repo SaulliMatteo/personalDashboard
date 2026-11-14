@@ -179,7 +179,7 @@
   --shadow-pop: 0 18px 48px rgba(0, 0, 0, 0.5);
   --focus-ring: 2px solid var(--accent);
 
-  /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
+  /* Gruppi (widget e classifica, docs/mockup/gruppi/widget.html). */
   --group-work: var(--accent);
   --group-break: var(--study-break);
   --group-off: var(--tick-off-long);
@@ -194,7 +194,7 @@
   --group-seg-fg: var(--nav-active-fg);
   --group-seg-idle: var(--text-secondary);
 
-  /* Campi di testo e titolo delle finestre (docs/mockup-gruppi/gruppi/finestre.html). */
+  /* Campi di testo e titolo delle finestre (docs/mockup/gruppi/finestre.html). */
   --field-bg: #0B0F1C;
   --field-border: 1px solid #182036;
   --field-focus: 1px solid rgba(142, 166, 255, 0.55);
@@ -219,7 +219,7 @@
   --group-subject-3: #C9A0F0;
   --group-subject-other: #3A4566;
 
-  /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
+  /* Stanza comune: la sala (docs/mockup/gruppi/stanza-comune.html). */
   --scene-bg: #0E1324;
   --scene-wall: #0E1324;
   --scene-floor: #0B0F1C;
@@ -405,7 +405,7 @@
   --shadow-pop: 0 18px 48px rgba(34, 37, 31, 0.18);
   --focus-ring: 2px solid var(--text-primary);
 
-  /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
+  /* Gruppi (widget e classifica, docs/mockup/gruppi/widget.html). */
   --group-work: var(--accent);
   --group-off: var(--dot-off);
   --group-bar-track: var(--track);
@@ -420,7 +420,7 @@
   --group-seg-idle: var(--text-secondary);
   --group-break: #7A6230;
 
-  /* Campi di testo e titolo delle finestre (docs/mockup-gruppi/gruppi/finestre.html). */
+  /* Campi di testo e titolo delle finestre (docs/mockup/gruppi/finestre.html). */
   --field-bg: #E2DED5;
   --field-border: 0;
   --field-focus: 2px solid #22251F;
@@ -526,7 +526,7 @@
   --success-text: var(--pg-ink);
   --focus-ring: 2px solid var(--pg-ink);
 
-  /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
+  /* Gruppi (widget e classifica, docs/mockup/gruppi/widget.html). */
   --group-work: var(--pg-ink);
   --group-off: var(--pg-dark);
   --group-bar-track: var(--pg-dark);
@@ -539,7 +539,7 @@
   --group-seg-fg: var(--pg-light);
   --group-seg-idle: var(--pg-ink);
 
-  /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
+  /* Stanza comune: la sala (docs/mockup/gruppi/stanza-comune.html). */
   --scene-bg: var(--pg-bg);
   --scene-wall: var(--pg-bg);
   --scene-floor: var(--pg-dark);
@@ -722,7 +722,7 @@
   --shadow-pop: 0 4px 0 #DCE4F0;
   --focus-ring: 2px solid var(--accent);
 
-  /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
+  /* Gruppi (widget e classifica, docs/mockup/gruppi/widget.html). */
   --group-work: var(--accent);
   --group-break: var(--warn);
   --group-off: var(--dot-off);
@@ -737,7 +737,7 @@
   --group-seg-idle: var(--accent);
   --group-me-bg: #FFF1A8;
 
-  /* Campi di testo e titolo delle finestre (docs/mockup-gruppi/gruppi/finestre.html). */
+  /* Campi di testo e titolo delle finestre (docs/mockup/gruppi/finestre.html). */
   --field-bg: #FFFFFF;
   --field-border: 1.5px solid #C9D3E3;
   --field-focus: 1.5px solid #2340A0;
@@ -762,7 +762,7 @@
   --group-subject-3: #C2416A;
   --group-subject-other: #B8C4D8;
 
-  /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
+  /* Stanza comune: la sala (docs/mockup/gruppi/stanza-comune.html). */
   --scene-bg: linear-gradient(#E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, linear-gradient(90deg, #E4EBF5 1px, transparent 1px) 0 0 / 24px 24px, #FCFDFF;
   --scene-wall: transparent;
   --scene-floor: transparent;
@@ -964,7 +964,7 @@
   --shadow-pop: 0 18px 48px rgba(0, 0, 0, 0.55);
   --focus-ring: 1px solid #F4E9E4;
 
-  /* Gruppi (widget e classifica, docs/mockup-gruppi/gruppi/widget.html). */
+  /* Gruppi (widget e classifica, docs/mockup/gruppi/widget.html). */
   --group-work: var(--danger);
   --group-break: var(--text-secondary);
   --group-off: var(--dot-off);
@@ -979,7 +979,7 @@
   --group-seg-fg: var(--nav-active-fg);
   --group-seg-idle: var(--text-secondary);
 
-  /* Campi di testo e titolo delle finestre (docs/mockup-gruppi/gruppi/finestre.html). */
+  /* Campi di testo e titolo delle finestre (docs/mockup/gruppi/finestre.html). */
   --field-bg: #0B0405;
   --field-border: 1px solid rgba(255, 214, 206, 0.12);
   --field-focus: 1px solid rgba(255, 214, 206, 0.5);
@@ -1004,7 +1004,7 @@
   --group-subject-3: #7A5753;
   --group-subject-other: #3A2326;
 
-  /* Stanza comune: la sala (docs/mockup-gruppi/gruppi/stanza-comune.html). */
+  /* Stanza comune: la sala (docs/mockup/gruppi/stanza-comune.html). */
   --scene-bg: radial-gradient(rgba(255,230,220,0.07) 1px, transparent 1.3px) 0 0 / 7px 7px, #0B0405;
   --scene-wall: transparent;
   --scene-floor: transparent;

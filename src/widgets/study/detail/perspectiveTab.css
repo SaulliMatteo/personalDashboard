@@ -116,7 +116,7 @@
   border-radius: 4px;
 }
 
-/* ---------- Telefono (docs/design/mobile/novita.html, vista 6): i due quadranti affiancati, testi da 13 px ---------- */
+/* ---------- Telefono (docs/mockup/mobile/novita.html, vista 6): i due quadranti affiancati, testi da 13 px ---------- */
 :root[data-compact] .study-persp-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;

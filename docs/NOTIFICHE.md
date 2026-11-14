@@ -1,4 +1,6 @@
-# Notifiche
+# Notifiche e timer dello Studio
+
+I file senza cartella stanno in `src/core/notify/`.
 
 - Tutte da `notifier.ts` (`sendAppNotification` con un `kind`), mai dal plugin direttamente.
 - Ognuna finisce anche nella campanella della dashboard (`inbox.ts`, tabella locale `app_notifications`, ultime 200

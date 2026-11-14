@@ -3,7 +3,7 @@ import { MdSearch, MdSend } from "react-icons/md";
 import "./ChatCompose.css";
 
 /*
- * Pezzi della finestra in cui un widget sceglie cosa mandare a un amico (docs/design/amici-notifiche.html, vista 5):
+ * Pezzi della finestra in cui un widget sceglie cosa mandare a un amico (docs/mockup/gruppi/amici-notifiche.html, vista 5):
  * schede in alto, ricerca, righe da scegliere e il fondo con il messaggio facoltativo, Annulla e Invia.
  * La finestra (titolo, Esc, foglio dal basso sul telefono) la mette il pannello degli amici.
  */

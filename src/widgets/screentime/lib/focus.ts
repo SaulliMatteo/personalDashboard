@@ -1,6 +1,6 @@
 import { APP_CATEGORIES, type AppCategory } from "../../../core/system/appCategory";
 
-/** Classe del tempo: si colora così in tutto il widget (docs/design/temi/tempo-pc.html). */
+/** Classe del tempo: si colora così in tutto il widget (docs/mockup/temi/tempo-pc.html). */
 export type FocusClass = "focus" | "fun" | "neutral";
 export const FOCUS_CLASSES: FocusClass[] = ["focus", "fun", "neutral"];
 export const CLASS_LABEL: Record<FocusClass, string> = { focus: "focus", fun: "svago", neutral: "neutro" };

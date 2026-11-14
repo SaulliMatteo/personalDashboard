@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * Layout compatto (telefono, docs/design/mobile/viste.html): quando il lato corto della finestra è sotto
+ * Layout compatto (telefono, docs/mockup/mobile/viste.html): quando il lato corto della finestra è sotto
  * i 600 dp, la soglia dei telefoni su Android (i tablet partono da 600). Vale in verticale e in orizzontale;
  * tablet e finestre desktop (minimo 1200×620) restano nel layout desktop. È l'unica definizione: il CSS
  * usa `:root[data-compact]`, che imposta AppShell da questo hook.

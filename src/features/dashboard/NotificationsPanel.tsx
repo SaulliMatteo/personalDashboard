@@ -48,7 +48,7 @@ interface NotificationsPanelProps {
 }
 
 /**
- * Il pannello della campanella (docs/design/amici-notifiche.html, viste 2 e 8): le notifiche per giorno, quelle non
+ * Il pannello della campanella (docs/mockup/gruppi/amici-notifiche.html, viste 2 e 8): le notifiche per giorno, quelle non
  * lette col punto. Un clic apre ciò di cui parla la notifica. Chiudendo il pannello le notifiche viste diventano lette:
  * il numero sulla campanella sparisce, ma finché il pannello è aperto si vede cosa era nuovo.
  */

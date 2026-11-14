@@ -1,4 +1,4 @@
-/* Widget Gruppi (docs/mockup-gruppi/gruppi/widget.html): 1×1, M e L (solo classifica, con le barre). */
+/* Widget Gruppi (docs/mockup/gruppi/widget.html): 1×1, M e L (solo classifica, con le barre). */
 
 .widget.groupsw {
   --groupsw-big: 52px;
@@ -68,7 +68,7 @@
   margin-top: 10px;
 }
 
-/* ---------- 2×1, solo telefono (docs/design/mobile/novita.html) ---------- */
+/* ---------- 2×1, solo telefono (docs/mockup/mobile/novita.html) ---------- */
 .widget.groupsw--W:not(.groupsw--state) {
   padding: 0;
 }

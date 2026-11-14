@@ -10,7 +10,7 @@ import { useFriends } from "./useFriends";
 import "./AddFriendDialog.css";
 
 /**
- * "Aggiungi un amico" (docs/design/amici-notifiche.html, vista 6): il mio codice da copiare o mandare come link,
+ * "Aggiungi un amico" (docs/mockup/gruppi/amici-notifiche.html, vista 6): il mio codice da copiare o mandare come link,
  * il codice di un amico, le richieste ricevute e quelle inviate. Si apre anche dal link personaldashboard://amici/…
  * col codice già scritto.
  */

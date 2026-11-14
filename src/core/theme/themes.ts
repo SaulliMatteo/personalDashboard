@@ -5,7 +5,7 @@
  * `:root[data-theme="<id>"][data-mode="<variante>"]` per l'altra): qui c'è solo
  * ciò che serve al codice (etichette, schema chiaro/scuro, glow, accent di default).
  *
- * Mockup di riferimento: `docs/design/temi/`.
+ * Mockup di riferimento: `docs/mockup/temi/`.
  */
 
 export const THEME_IDS = ["notte", "opaco", "quaderno", "fosforo"] as const;

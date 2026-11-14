@@ -1,4 +1,4 @@
-/* "Aggiungi un amico" (docs/design/amici-notifiche.html, vista 6): dentro la finestra dei Gruppi (groupsUi.css),
+/* "Aggiungi un amico" (docs/mockup/gruppi/amici-notifiche.html, vista 6): dentro la finestra dei Gruppi (groupsUi.css),
    che sul telefono diventa un foglio dal basso. */
 
 .grp-dialog:has(.afd-section) {

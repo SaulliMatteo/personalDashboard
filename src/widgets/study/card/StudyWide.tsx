@@ -13,7 +13,7 @@ interface StudyWideProps {
 }
 
 /**
- * Taglia 2×1 (solo sulla dashboard del telefono, docs/design/mobile/novita.html): tempo, fase e materia a sinistra,
+ * Taglia 2×1 (solo sulla dashboard del telefono, docs/mockup/mobile/novita.html): tempo, fase e materia a sinistra,
  * un solo pulsante avvia/pausa a destra. Uguale nei 4 temi, cambia solo il CSS. I dati sono quelli di useStudyCard,
  * senza interfaccia: un widget della Home di Android potrà mostrare gli stessi.
  */

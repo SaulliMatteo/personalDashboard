@@ -39,7 +39,7 @@ function CatalogNavItem() {
  * Tema, accent e animazioni sono gestiti su <html> da SettingsProvider.
  * `scroll={false}`: .main non scorre (la vista sta tutta nella finestra, es. la Stanza comune).
  * Sul telefono (useCompact) la sidebar diventa un menu a scomparsa e in alto c'è la barra `compactBar`
- * (docs/design/mobile/viste.html).
+ * (docs/mockup/mobile/viste.html).
  */
 function AppShell({ children, scroll = true, compactBar }: { children: ReactNode; scroll?: boolean; compactBar?: CompactBarSpec }) {
   const compact = useCompact();

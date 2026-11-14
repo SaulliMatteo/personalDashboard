@@ -229,7 +229,7 @@
   font-size: min(150px, calc((100cqw - 56px) / (var(--chars) * 0.56)), calc(100cqh - 160px));
 }
 
-/* ---------- 2×1 (solo telefono, docs/design/mobile/novita.html) ---------- */
+/* ---------- 2×1 (solo telefono, docs/mockup/mobile/novita.html) ---------- */
 .widget.so--W {
   padding: 0;
 }

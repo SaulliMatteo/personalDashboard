@@ -182,7 +182,7 @@
   overflow-wrap: anywhere;
 }
 
-/* ---------- Telefono (docs/design/mobile/novita.html, vista 4): schede uguali a tutta larghezza, alte 44 px ---------- */
+/* ---------- Telefono (docs/mockup/mobile/novita.html, vista 4): schede uguali a tutta larghezza, alte 44 px ---------- */
 :root[data-compact] .study-detail-header-actions {
   flex: 1 1 auto;
 }

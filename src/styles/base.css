@@ -191,7 +191,7 @@ select option { background: var(--bg-card); color: var(--text-primary); }
   display: none;
 }
 
-/* ---------- Telefono: i dialoghi diventano fogli dal basso (docs/design/mobile/ritocchi.html, vista 13) ----------
+/* ---------- Telefono: i dialoghi diventano fogli dal basso (docs/mockup/mobile/ritocchi.html, vista 13) ----------
    Sono gli stessi dialoghi del desktop (stessi colori e bordi per tema, Esc e indietro come prima): cambia solo dove
    stanno. Larghi quanto lo schermo, attaccati in basso sopra la barra dei gesti; con la tastiera aperta salgono sopra
    di essa. I pulsanti vanno uno sotto l'altro, il principale per primo. */

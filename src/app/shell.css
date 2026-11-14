@@ -118,7 +118,7 @@
 }
 
 /* ==========================================================================
-   Telefono (useCompact, :root[data-compact]): docs/design/mobile/viste.html.
+   Telefono (useCompact, :root[data-compact]): docs/mockup/mobile/viste.html.
    La sidebar è il menu a scomparsa; .main tiene fuori barra di stato, foro della fotocamera,
    barra dei gesti e tastiera (--safe-*, --keyboard in styles/base.css).
    ========================================================================== */

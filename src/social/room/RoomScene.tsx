@@ -8,7 +8,7 @@ import type { RoomMember } from "./useRoomMembers";
 import "./RoomScene.css";
 
 /*
- * La sala della Stanza comune (docs/mockup-gruppi/gruppi/stanza-comune.html): parete con libreria e finestre,
+ * La sala della Stanza comune (docs/mockup/gruppi/stanza-comune.html): parete con libreria e finestre,
  * due file da due tavoli da due posti. Il disegno è lo stesso per tutti i temi; cambiano i token --scene-*
  * (illustrazione in Notte, pigmento in Opaco, penna in Quaderno, matrice di LED in Fosforo). Le facce sono i
  * Pixy veri (core/pixy), uno per posto.
@@ -22,7 +22,7 @@ interface RoomSceneProps {
   /** 1 = grandezza del mockup; meno quando lo spazio non basta, di più nelle finestre grandi. */
   scale: number;
   /**
-   * "stage": la sala del mockup (720×470), scalata. "column": telefono in verticale (docs/design/mobile/ritocchi.html,
+   * "stage": la sala del mockup (720×470), scalata. "column": telefono in verticale (docs/mockup/mobile/ritocchi.html,
    * vista 14), lo stesso disegno a grandezza vera: parete in alto, poi le 4 scrivanie una sotto l'altra (si scorre).
    */
   layout?: "stage" | "column";

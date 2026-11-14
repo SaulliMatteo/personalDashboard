@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 /**
- * Anello della taglia Piccola, una forma per tema (docs/design/temi/sysmon.html): Notte sottile e arrotondato,
+ * Anello della taglia Piccola, una forma per tema (docs/mockup/temi/sysmon.html): Notte sottile e arrotondato,
  * Opaco spesso a taglio netto, Quaderno tacche come sul quadrante, Fosforo un cerchio di punti.
  * `value` 0-100; null = anello vuoto (il numero al centro dice "—").
  */

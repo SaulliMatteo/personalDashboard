@@ -1,7 +1,8 @@
 # Android
 
-Interfaccia del telefono (layout compatto, dashboard a pagine, fogli): `src/core/layout/CLAUDE.md`. Notifiche
-pianificate e tocco sulle notifiche: `src/core/notify/CLAUDE.md`.
+Interfaccia del telefono (layout compatto, dashboard a pagine, fogli): `docs/MOBILE.md`. Notifiche
+pianificate e tocco sulle notifiche: `docs/NOTIFICHE.md`. Permessi, backup e archivio della sessione visti dal lato
+della sicurezza: `docs/SICUREZZA.md`.
 
 ## Build
 
@@ -26,7 +27,7 @@ pianificate e tocco sulle notifiche: `src/core/notify/CLAUDE.md`.
   tolti (`tools:node="remove"`): il ripristino dopo il riavvio della 2.4.0 non funziona (`batch` salva `sourceJson`
   vuoto).
 - Backup automatico di Android: solo `dashboard.db` (`res/xml/backup_rules.xml` e `data_extraction_rules.xml`); la
-  copia completa è Impostazioni > Generale > Dati (vedi `src-tauri/CLAUDE.md`). Il FileProvider espone solo la
+  copia completa è Impostazioni > Generale > Dati (vedi `docs/BACKEND.md`). Il FileProvider espone solo la
   cartella del Quaderno.
 - La pagina gira da `http://tauri.localhost` e il DB sta in `/data/data/<id>/dashboard.db` (si legge con
   `adb exec-out run-as`).

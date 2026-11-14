@@ -3111,7 +3111,7 @@ async function changePageColor(color: string | null) {
     if (!(e.target instanceof HTMLSelectElement) && !(e.target instanceof HTMLInputElement)) e.preventDefault();
   };
 
-  // ---------------- Telefono (docs/design/mobile/quaderno.html) ----------------
+  // ---------------- Telefono (docs/mockup/mobile/quaderno.html) ----------------
 
   if (phone) {
     const closeThen = (action: () => void) => {

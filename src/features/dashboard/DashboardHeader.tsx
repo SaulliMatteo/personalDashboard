@@ -11,7 +11,7 @@ const HEADER_CLASS: ThemeVariants<string> = { notte: "dh--notte", opaco: "dh--op
 
 /**
  * Intestazione della dashboard: il saluto e, a destra, i mini scelti in Impostazioni > Dashboard e la campanella
- * delle notifiche, poi gli amici (`actions`, da app/App.tsx; docs/design/amici-notifiche.html). Con la finestra stretta
+ * delle notifiche, poi gli amici (`actions`, da app/App.tsx; docs/mockup/gruppi/amici-notifiche.html). Con la finestra stretta
  * cedono i mini, le icone restano.
  */
 function DashboardHeader({ actions }: { actions?: ReactNode }) {

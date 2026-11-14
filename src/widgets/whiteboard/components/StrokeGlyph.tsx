@@ -1,7 +1,7 @@
 import { useId } from "react";
 import "./StrokeGlyph.css";
 
-/** Il giro del pennarello e la punta della freccia (mockup docs/design/temi/lavagna.html). */
+/** Il giro del pennarello e la punta della freccia (mockup docs/mockup/temi/lavagna.html). */
 const LOOP = "M14 70 C 18 44, 44 30, 52 46 C 58 60, 38 70, 34 56 C 30 40, 56 30, 84 34";
 const ARROW = "M71 24 L 85 34 L 72 44";
 

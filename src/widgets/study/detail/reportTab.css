@@ -299,7 +299,7 @@
   }
 }
 
-/* ---------- Telefono (docs/design/mobile/ritocchi.html, vista 5) ---------- */
+/* ---------- Telefono (docs/mockup/mobile/ritocchi.html, vista 5) ---------- */
 /* Riepilogo: totale e media affiancati, la materia più studiata sotto a tutta larghezza. */
 :root[data-compact] .study-report-summary {
   grid-template-columns: repeat(2, minmax(0, 1fr));

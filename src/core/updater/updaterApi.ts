@@ -7,7 +7,7 @@ import { isAndroid } from "../system/platform";
 /**
  * UNICO punto con le chiamate degli aggiornamenti (tauri-plugin-updater + process, src-tauri/src/updater.rs).
  * Lo usa solo `useUpdater.ts`; nessun widget lo importa. In rete si va solo da `checkForUpdate` e
- * `installUpdate`, cioè quando l'utente preme i pulsanti: niente controlli automatici.
+ * `installUpdate`: quando l'utente preme i pulsanti, o dal controllo giornaliero di `autoCheck.ts` (se `autoCheckUpdates` è acceso).
  */
 
 /**

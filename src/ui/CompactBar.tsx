@@ -12,7 +12,7 @@ interface CompactBarProps {
   actions?: ReactNode;
 }
 
-/** Barra in alto del telefono (docs/design/mobile/viste.html): ☰ o ←, titolo nel font del tema, azioni. */
+/** Barra in alto del telefono (docs/mockup/mobile/viste.html): ☰ o ←, titolo nel font del tema, azioni. */
 function CompactBar({ lead, onLead, title, subtitle, actions }: CompactBarProps) {
   return (
     <header className="cbar">

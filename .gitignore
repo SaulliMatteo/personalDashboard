@@ -67,8 +67,9 @@ desktop.ini
 # Istruzioni locali per Claude
 CLAUDE.local.md
 
-# Documentazione, mockup e prompt: solo in locale (vedi CLAUDE.md)
-docs
+# Le guide in docs/*.md sono nel repo; mockup e cronologia del lavoro restano solo in locale (vedi CLAUDE.md)
+docs/mockup/
+docs/STORIA.md
 
 # Progetto Android (src-tauri/gen/android) versionato: i file che Tauri rigenera a ogni build e gli output di
 # Gradle li escludono i .gitignore che stanno dentro quella cartella.

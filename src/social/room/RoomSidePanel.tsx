@@ -123,14 +123,14 @@ interface RoomSidePanelProps {
   /** Apre "Cosa vedono gli altri" nella pagina Gruppi. */
   onOpenSharing: () => void;
   /**
-   * Telefono in verticale (docs/design/mobile/ritocchi.html, viste 14 e 15): un foglio in fondo alla pagina. Chiuso
+   * Telefono in verticale (docs/mockup/mobile/ritocchi.html, viste 14 e 15): un foglio in fondo alla pagina. Chiuso
    * mostra solo le schede; un tocco su una scheda (o su un posto della sala) lo alza, l'indietro lo riabbassa.
    */
   sheet?: boolean;
 }
 
 /**
- * La colonna destra della Stanza comune (docs/mockup-gruppi/gruppi/stanza-comune.html), a schede: Membri (la lista
+ * La colonna destra della Stanza comune (docs/mockup/gruppi/stanza-comune.html), a schede: Membri (la lista
  * scorre dentro il riquadro), Messaggi (dal vivo) e Da fare (il foglietto della sessione). I badge contano i messaggi
  * non letti e le voci ancora da fare.
  */

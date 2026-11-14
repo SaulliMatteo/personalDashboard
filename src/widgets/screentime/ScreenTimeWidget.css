@@ -1,4 +1,4 @@
-/* Tempo al PC in dashboard (docs/design/temi/tempo-pc.html). Il tempo si colora per CLASSE (focus / svago / neutro)
+/* Tempo al PC in dashboard (docs/mockup/temi/tempo-pc.html). Il tempo si colora per CLASSE (focus / svago / neutro)
    con tre colori presi dai token; le parti per tema in fondo, l'anello della Piccola in card/rings.tsx.
    Le classi st-* (pezzi colorati, linea del giorno) servono anche alla pagina di dettaglio. */
 

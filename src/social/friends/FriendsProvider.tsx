@@ -33,7 +33,7 @@ const STALE_MS = 30_000;
 const CLOSED_PANEL: FriendsPanelState = { open: false, chat: null, add: false, addCode: "" };
 
 /**
- * Amici e chat salvate (docs/design/amici-notifiche.html): legge amici, richieste, messaggi e letture dal server,
+ * Amici e chat salvate (docs/mockup/gruppi/amici-notifiche.html): legge amici, richieste, messaggi e letture dal server,
  * ascolta la propria casella in tempo reale e tiene lo stato del pannello. Inerte senza account pronto.
  * Nessun messaggio va perso: oltre al tempo reale si rilegge tutto all'avvio, al rientro in primo piano, quando torna
  * la rete e quando la casella si riallaccia.

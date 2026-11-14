@@ -14,7 +14,7 @@ function keepSelection(e: MouseEvent) {
 }
 
 /**
- * Foglio dal basso dell'editor sul telefono (docs/design/mobile/quaderno.html). Si chiude toccando fuori, con Esc
+ * Foglio dal basso dell'editor sul telefono (docs/mockup/mobile/quaderno.html). Si chiude toccando fuori, con Esc
  * e quindi con l'indietro di Android (core/nav/overlays.ts manda Esc al dialogo in cima).
  */
 function BottomSheet({ label, onClose, children }: BottomSheetProps) {

@@ -20,7 +20,7 @@ type LinkPreview =
   | { state: "ready"; meta: VideoMetadata }
   | { state: "error"; message: string };
 
-/** "Consiglia un video" (docs/design/amici-notifiche.html, vista 5): dai video salvati o da un link. */
+/** "Consiglia un video" (docs/mockup/gruppi/amici-notifiche.html, vista 5): dai video salvati o da un link. */
 function VideoCompose({ send, onClose }: ChatComposeProps) {
   const [tab, setTab] = useState<Tab>("mine");
   const [videos, setVideos] = useState<SavedVideo[] | null>(null);

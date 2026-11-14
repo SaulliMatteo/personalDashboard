@@ -59,7 +59,7 @@ function useMinuteClock(): number {
 }
 
 /**
- * Il pannello degli amici (docs/design/amici-notifiche.html, viste 3, 7, 9 e 10): a sinistra richieste, ricerca e
+ * Il pannello degli amici (docs/mockup/gruppi/amici-notifiche.html, viste 3, 7, 9 e 10): a sinistra richieste, ricerca e
  * amici; a destra la chat salvata. Sul telefono a tutto schermo: dall'elenco si entra nella chat, ← torna indietro.
  */
 function FriendsPanel({ anchor, full, onClose }: FriendsPanelProps) {

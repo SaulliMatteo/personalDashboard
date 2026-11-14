@@ -42,7 +42,7 @@ function MessageCell({ size, icon, text }: { size: Size; icon: "pc" | "off"; tex
 }
 
 /**
- * Tempo al PC in dashboard (docs/design/temi/tempo-pc.html): Piccola 1×1 anello delle classi col totale, Larga 2×1
+ * Tempo al PC in dashboard (docs/mockup/temi/tempo-pc.html): Piccola 1×1 anello delle classi col totale, Larga 2×1
  * totale + barra + più usati, Alta 1×2 totale + elenco, Media 2×2 linea del giorno, più usati, limiti e pausa.
  */
 function ScreenTimeWidget({ w, h }: WidgetProps) {

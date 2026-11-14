@@ -4,7 +4,7 @@ import { ChartFosforo, ChartNotte, ChartOpaco, ChartQuaderno, type ChartProps } 
 import { GaugeFosforo, GaugeNotte, GaugeOpaco, GaugeQuaderno, type GaugeProps } from "./gauges";
 
 /**
- * Le parti del Monitor di sistema che cambiano forma col tema (docs/design/temi/sysmon.html). Barre, tessere e
+ * Le parti del Monitor di sistema che cambiano forma col tema (docs/mockup/temi/sysmon.html). Barre, tessere e
  * barre per thread cambiano solo col CSS (SysmonWidget.css, SysmonDetail.css).
  */
 export const SYSMON_GAUGES: ThemeVariants<ComponentType<GaugeProps>> = {

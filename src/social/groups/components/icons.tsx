@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/* Icone dei mockup dei Gruppi (docs/mockup-gruppi/gruppi/). */
+/* Icone dei mockup dei Gruppi (docs/mockup/gruppi/). */
 
 export function CheckIcon() {
   return (

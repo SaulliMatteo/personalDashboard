@@ -1,8 +1,8 @@
 # Backend nativo (src-tauri)
 
-Regole generali (ACL dei comandi, `is_app_url`, CSP, difese del C di File Transfer) nel `CLAUDE.md` principale.
-Android: `gen/android/CLAUDE.md`. Monitor di sistema: `src/widgets/sysmon/CLAUDE.md`. Tempo al PC:
-`src/widgets/screentime/CLAUDE.md`.
+Regole di sicurezza (ACL dei comandi, `is_app_url`, CSP, difese del C di File Transfer): `docs/SICUREZZA.md`.
+Android: `docs/ANDROID.md`. Monitor di sistema, Tempo al PC e File Transfer visti dal widget: `docs/WIDGET.md`.
+I percorsi qui sotto sono relativi a `src-tauri/`.
 
 ## Moduli
 
@@ -12,9 +12,10 @@ crea la finestra `main`.
 - **File Transfer**: server HTTP in C (`filetransfer/c/`; Winsock su Windows, socket POSIX su macOS/Linux, tutte le
   differenze in `platform.h`), compilato da `build.rs` con `cc` (che imposta `cfg(ft_native)`), esposto con i comandi
   `ft_*` di `src/file_transfer.rs`; va fermato alla chiusura della finestra. Su macOS la 5000 è di AirPlay: il server
-  prova le porte successive. Su Android il server non c'è e il widget **invia** al PC (`src/file_send.rs`,
+  prova le porte successive. I percorsi passano al C in UTF-8: su Windows i file si aprono solo con le funzioni di
+  `platform.h` (`file_open`, `make_dir`, `file_remove`), mai con `fopen`. Su Android il server non c'è e il widget **invia** al PC (`src/file_send.rs`,
   `ft_check_target`/`ft_send_file`; frontend `FileSendContext.tsx`/`FileSendDetail.tsx`, ruolo scelto in
-  `data/fileSendApi.ts`): stessa richiesta della pagina dell'iPad, senza `Origin`. Dettagli in `docs/FILE_TRANSFER.md`.
+  `data/fileSendApi.ts`): stessa richiesta della pagina dell'iPad, senza `Origin`. Dettagli in `docs/WIDGET.md`.
 - **Companion (Pixy)**: `companion_snapshot` in `src/companion.rs` (inattività, app in primo piano e descrizione
   dell'eseguibile via `windows-sys`; su macOS inattività da CoreGraphics e app via `NSWorkspace`, con il bundle `.app`
   come "processo" e titolo vuoto). Lato frontend la catena è `core/system/appCategory.ts` (classifica l'app; con
@@ -24,9 +25,11 @@ crea la finestra `main`.
   pieno negli altri temi), disegnati da `core/pixy/PixyFace.tsx`. Motore e disegno stanno in `core/pixy` perché li usano
   anche i Gruppi (i Pixy dei compagni nella Stanza comune); il cervello resta nel widget.
 - **Notifiche con immagine** (Windows): comando `notify_with_image` (`src/notify.rs`, `tauri-winrt-notification`),
-  chiamato solo da `core/notify/notifyApi.ts`. Resto in `src/core/notify/CLAUDE.md`.
+  chiamato solo da `core/notify/notifyApi.ts`. Resto in `docs/NOTIFICHE.md`.
 - **Esporta/Importa i dati**: `core/db/backup.ts` + `src/db_backup.rs` (`VACUUM INTO`, import con controllo di
-  intestazione e `user_version`, DB chiuso e pagina ricaricata; restano i `cloud_device_id:*` del dispositivo).
+  intestazione e `user_version`, DB chiuso e pagina ricaricata; restano i `cloud_device_id:*` del dispositivo). Il DB
+  sostituito resta accanto come `dashboard.db.prima` (solo l'ultimo): se il file importato era rovinato si recupera
+  rinominandolo a mano.
 - **Sessione dei Gruppi** (`src/secure_store.rs`): su Windows nel Credential Manager a pezzi (limite di 2560 byte per
   voce); su macOS **non nel Keychain** ma in un file per chiave in `<dati dell'app>/sessione/` (cartella 700, file 600,
   scrittura atomica con rinomina): senza Team ID ogni aggiornamento è un'altra app per il Keychain e la richiesta della

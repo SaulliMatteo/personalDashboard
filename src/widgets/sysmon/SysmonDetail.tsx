@@ -60,7 +60,7 @@ function GpuTiles({ gpu }: { gpu: GpuInfo }) {
 }
 
 /**
- * Pagina del Monitor di sistema (docs/design/temi/sysmon.html): riepilogo con i grafici degli ultimi 60 s, CPU con
+ * Pagina del Monitor di sistema (docs/mockup/temi/sysmon.html): riepilogo con i grafici degli ultimi 60 s, CPU con
  * barre per thread, schede video, memoria, dischi, sensori e la tabella dei processi. Mentre è aperta il campionatore
  * manda anche la lista completa dei processi e la CPU per thread.
  */

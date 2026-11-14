@@ -3,7 +3,7 @@ import { useElementSize } from "../../../core/hooks/useElementSize";
 import { HISTORY_WINDOW_MS, type HistoryPoint } from "../lib/history";
 
 /**
- * Grafico degli ultimi 60 s, una forma per tema (docs/design/temi/sysmon.html): Notte linea con velo, Opaco area
+ * Grafico degli ultimi 60 s, una forma per tema (docs/mockup/temi/sysmon.html): Notte linea con velo, Opaco area
  * piena, Quaderno linea a inchiostro, Fosforo colonne di punti. Disegnato in pixel veri (niente tratti stirati):
  * misura il contenitore. Un dato mancante (null) lascia un buco, non uno 0. Scala fissa 0-100.
  */

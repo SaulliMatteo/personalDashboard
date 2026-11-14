@@ -1,5 +1,8 @@
 # Sync tra dispositivi
 
+I file senza cartella stanno in `src/core/sync/`. Server e flusso completo: `docs/GRUPPI.md` § 5 ("Sync dei miei
+dati"); ricetta per una tabella nuova: `docs/ARCHITETTURA.md`.
+
 Prove: `scripts/sync/records.test.mts`, `schema.test.mts` (SQLite vero con `node:sqlite`, tutte le migrazioni da
 zero), `round.test.mts` (due dispositivi su SQLite vero e un server finto), `files.test.mts` per `filePlan.ts`.
 

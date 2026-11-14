@@ -3,7 +3,7 @@ import type { ClassSeconds } from "../lib/summary";
 import type { FocusClass } from "../lib/focus";
 
 /**
- * Anello della Piccola, una forma per tema (docs/design/temi/tempo-pc.html): il giro è diviso tra focus, svago e
+ * Anello della Piccola, una forma per tema (docs/mockup/temi/tempo-pc.html): il giro è diviso tra focus, svago e
  * neutro. Notte archi sottili staccati, Opaco spessi a taglio netto, Quaderno tacche (focus più lunghe), Fosforo
  * un cerchio di punti. Senza tempo l'anello resta vuoto.
  */
