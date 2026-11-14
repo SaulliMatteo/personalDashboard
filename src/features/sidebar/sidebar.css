@@ -199,6 +199,18 @@
   border: var(--btn-ghost-border);
 }
 
+/* ---------- Vetro: voce attiva di vetro in rilievo, obiettivo su una lastra (Temi Vetro e Ombra.html) ---------- */
+:root[data-theme="vetro"] .nav-item.active {
+  box-shadow: var(--card-inset), 0 4px 14px color-mix(in srgb, var(--text-primary) 6%, transparent);
+}
+
+:root[data-theme="vetro"] .sidebar-goal {
+  border-radius: calc(var(--radius-item) + 4px);
+  border: 1px solid var(--card-border);
+  background: var(--surface-2);
+  box-shadow: var(--card-inset);
+}
+
 :root[data-theme="opaco"] .setting-button,
 :root[data-theme="fosforo"] .setting-button {
   justify-content: flex-start;

@@ -83,6 +83,23 @@ export function NotesCardNotte({ size }: CardProps) {
   );
 }
 
+/** Vetro, 1×1: il numero e l'etichetta al centro (Temi Vetro e Ombra.html, `.mini`); le righe sono lastre di vetro. */
+export function NotesCardVetro({ size }: CardProps) {
+  const data = useNotesCard();
+  return (
+    <Shell theme="vetro" size={size} data={data} label={size === "S" ? `Note: ${countText(data)}` : undefined}>
+      {size === "S" ? (
+        <div className="nc-s-vetro">
+          <div className="nc-big">{countText(data)}</div>
+          <small>{data.countLabel}</small>
+        </div>
+      ) : (
+        <Body size={size} data={data} quickIcon limit={3} />
+      )}
+    </Shell>
+  );
+}
+
 /** Opaco, 1×1: il numero gigante sul pigmento "carta". */
 export function NotesCardOpaco({ size }: CardProps) {
   const data = useNotesCard();

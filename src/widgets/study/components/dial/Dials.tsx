@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { useElementSize } from "../../../../core/hooks/useElementSize";
 import "./dials.css";
 
@@ -86,6 +86,50 @@ export function DotDial({ size, progress, running, children }: DialProps & { run
           const cls = isLed ? "is-led" : i < lit ? "is-on" : "is-off";
           return <circle key={i} className={cls} cx={cx} cy={cy} r={isLed ? 4 : 2.5} />;
         })}
+      </svg>
+      <div className="dial-center">{children}</div>
+    </div>
+  );
+}
+
+const GLASS_R = 80;
+const GLASS_C = 2 * Math.PI * GLASS_R;
+
+/**
+ * Vetro: un tubo di vetro (Temi Vetro e Ombra.html, `dial`). Traccia spessa, progresso sfumato tra i due accent
+ * con un alone, riflesso in alto a sinistra e una perla lucida sulla punta.
+ */
+export function GlassDial({ size, progress, children }: DialProps) {
+  const p = Math.min(1, Math.max(0, progress));
+  // gli id di useId hanno caratteri che dentro url(#...) non vanno bene
+  const id = `gd${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  const angle = ((-90 + 360 * p) * Math.PI) / 180;
+  const ex = 100 + GLASS_R * Math.cos(angle);
+  const ey = 100 + GLASS_R * Math.sin(angle);
+  const dash = `${GLASS_C * p} ${GLASS_C}`;
+  return (
+    <div className="dial glass-dial" style={{ width: size, height: size }}>
+      <svg className="dial-svg" viewBox="0 0 200 200" aria-hidden="true" style={{ overflow: "visible" }}>
+        <defs>
+          <linearGradient id={`${id}g`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="var(--accent)" />
+            <stop offset="1" stopColor="var(--accent-2)" />
+          </linearGradient>
+          <filter id={`${id}s`} x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="5" />
+          </filter>
+        </defs>
+        <circle className="glass-dial-track" cx="100" cy="100" r={GLASS_R} />
+        {p > 0 && (
+          <>
+            <circle className="glass-dial-ink" cx="100" cy="100" r={GLASS_R} stroke={`url(#${id}g)`} strokeDasharray={dash} filter={`url(#${id}s)`} opacity=".55" transform="rotate(-90 100 100)" />
+            <circle className="glass-dial-ink" cx="100" cy="100" r={GLASS_R} stroke={`url(#${id}g)`} strokeDasharray={dash} transform="rotate(-90 100 100)" />
+          </>
+        )}
+        <circle className="glass-dial-shine" cx="100" cy="100" r={GLASS_R + 5} strokeDasharray={`${GLASS_C * 0.16} ${GLASS_C * 2}`} transform="rotate(-160 100 100)" />
+        <circle className="glass-dial-inner" cx="100" cy="100" r={GLASS_R - 6} />
+        <circle className="glass-dial-knob" cx={ex} cy={ey} r="11" />
+        <circle className="glass-dial-knob-dot" cx={ex - 3} cy={ey - 3} r="3" />
       </svg>
       <div className="dial-center">{children}</div>
     </div>

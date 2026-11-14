@@ -133,6 +133,37 @@ export function CompanionCardQuaderno({ size }: CardProps) {
   );
 }
 
+/**
+ * Vetro (Temi Vetro e Ombra.html, card di Pixy): faccia a punti in un riquadro di vetro lucido; a destra il
+ * fumetto di vetro e, sotto, nome e stato. 1×1: solo il riquadro.
+ */
+export function CompanionCardVetro({ size }: CardProps) {
+  const { name, status } = useCompanionCard();
+  if (size === "S") {
+    return (
+      <article className="widget cv cv--S">
+        <div className="cv-box">
+          <Face />
+        </div>
+      </article>
+    );
+  }
+  return (
+    <article className={`widget cv cv--${size}`}>
+      <div className="cv-box">
+        <Face />
+      </div>
+      <div className="cv-text">
+        <div className="cv-bubble-slot">
+          <Bubble className="cv-bubble" />
+        </div>
+        <span className="cv-name">{name}</span>
+        <span className="cv-status">{status}</span>
+      </div>
+    </article>
+  );
+}
+
 /** Fosforo: faccia a punti dentro una "lente" sul display. */
 export function CompanionCardFosforo({ size }: CardProps) {
   const { name, status } = useCompanionCard();

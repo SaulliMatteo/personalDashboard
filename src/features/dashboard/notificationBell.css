@@ -54,6 +54,16 @@
   box-shadow: 0 0 8px var(--led);
 }
 
+/* Vetro: pulsante di vetro a pillola. */
+:root[data-theme="vetro"] .nbell:not(.nbell--compact) {
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  box-shadow: var(--card-inset);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 /* Separatore fra i mini e le icone. */
 .dh-sep {
   flex: none;

@@ -118,14 +118,46 @@
 :root[data-theme="vetro"] .app-wall {
   display: block;
   position: absolute;
-  inset: -40px;
+  inset: 0;
+  overflow: hidden;
   pointer-events: none;
-  /* provvisorio: la stanza disegnata arriva con il tema completo */
-  background:
-    radial-gradient(60% 50% at 25% 30%, color-mix(in srgb, var(--accent-2) 30%, transparent), transparent 70%),
-    radial-gradient(50% 60% at 80% 70%, color-mix(in srgb, var(--text-muted) 35%, transparent), transparent 70%),
-    var(--bg);
+}
+
+/* La foto (stanza disegnata o immagine scelta, app/GlassWall.tsx), più grande della finestra perché la sfocatura
+   non mostri i bordi. */
+.app-wall-photo {
+  position: absolute;
+  inset: -40px;
+  width: calc(100% + 80px);
+  height: calc(100% + 80px);
+  object-fit: cover;
+  background-size: cover;
+  background-position: center;
   filter: var(--photo-filter);
+}
+
+/* "Sfondo animato": la stanza si sposta piano avanti e indietro. */
+:root[data-theme="vetro"][data-glass-wall="moving"][data-animations="on"] .app-wall-photo {
+  animation: glass-drift 40s ease-in-out infinite alternate;
+}
+
+@keyframes glass-drift {
+  to {
+    transform: translate(1.5%, 1.2%) scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-wall-photo {
+    animation: none !important;
+  }
+}
+
+/* "Sfocatura leggera" (Sfocatura forte spenta): niente vetro sulle card e meno blur sulla sidebar, così le
+   WebView lente (WebKitGTK, Android vecchi) reggono. Le card diventano quasi piene per restare leggibili. */
+:root[data-theme="vetro"][data-glass="light"] {
+  --blur: 12px;
+  --card-bg: color-mix(in srgb, var(--bg-card) 82%, transparent);
 }
 
 /* Vetro: la sidebar è un'isola di vetro e il riquadro principale un grande pannello di vetro. */

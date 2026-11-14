@@ -84,6 +84,30 @@
   font-weight: 400;
 }
 
+/* ---------- Vetro: saluto pieno in Outfit, icone di vetro a pillola (Temi Vetro e Ombra.html, `.head`) ---------- */
+.dh--vetro {
+  align-items: center;
+  gap: 16px;
+}
+
+.dh--vetro h1 {
+  font-family: var(--font-title);
+  font-size: 26px;
+  font-weight: var(--title-weight);
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Ombra: per ora come Notte (fase 3 del piano) ---------- */
+.dh--ombra {
+  align-items: flex-end;
+  gap: 32px;
+}
+
+.dh--ombra h1 {
+  font-size: 28px;
+  font-weight: 300;
+}
+
 /* ---------- Intestazione stretta: prima rimpicciolisce il saluto, poi spariscono i mini ----------
    Così non si va mai a capo e il nome non viene mai tagliato. */
 @container (max-width: 860px) {

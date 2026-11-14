@@ -652,4 +652,17 @@ export const MIGRATIONS: Migration[] = [
        )`,
     ],
   },
+  {
+    version: 28,
+    description: "Tema Vetro: l'immagine di sfondo scelta su questo dispositivo",
+    statements: [
+      // Una sola riga (id = 1). data_url: JPEG già ridimensionato, come data: URL (core/theme/wallpaper.ts).
+      // Non sincronizzata: lo sfondo è di questo dispositivo (non in core/sync/tables.ts).
+      `CREATE TABLE IF NOT EXISTS device_wallpaper (
+         id INTEGER PRIMARY KEY CHECK (id = 1),
+         data_url TEXT NOT NULL,
+         updated_at INTEGER NOT NULL
+       )`,
+    ],
+  },
 ];

@@ -18,10 +18,27 @@
   box-shadow: var(--card-shadow);
   overflow: visible;
 }
-/* Vetro: la card è vetro smerigliato sopra il pannello di vetro. */
+/* Vetro: la card è vetro smerigliato sopra il pannello di vetro, con un lucido fisso (--card-gloss) e il riflesso
+   che segue il puntatore (--lx/--ly da app/usePointerFx.ts). Niente pseudo-elementi: ::before e ::after sono del glow. */
 :root[data-theme="vetro"] .border-glow-card {
+  background: var(--card-gloss), var(--card-bg);
   backdrop-filter: blur(var(--blur)) saturate(175%);
   -webkit-backdrop-filter: blur(var(--blur)) saturate(175%);
+  transition: transform 0.25s var(--ease-out-back);
+}
+:root[data-theme="vetro"][data-glass-sheen="on"][data-animations="on"] .border-glow-card {
+  background:
+    radial-gradient(320px circle at var(--lx, 20%) var(--ly, 0%), color-mix(in srgb, var(--sheen) 35%, transparent), transparent 55%),
+    var(--card-gloss),
+    var(--card-bg);
+}
+:root[data-theme="vetro"][data-animations="on"] .border-glow-card:hover {
+  transform: var(--card-transform) translate3d(0, -2px, 0.01px);
+}
+/* Sfocatura leggera: il vetro resta solo sul riquadro principale (shell.css). */
+:root[data-theme="vetro"][data-glass="light"] .border-glow-card {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 .border-glow-card::before,
 .border-glow-card::after,

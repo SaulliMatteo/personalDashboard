@@ -83,6 +83,14 @@ export const DEFAULT_SETTINGS = {
   glowConeSpread: 25,
   glowFillOpacity: 0.5,
 
+  // ---- Effetti del vetro (solo tema Vetro) ----
+  /** Il riflesso dentro le card che segue il mouse. */
+  glassSheen: true,
+  /** La stanza dietro il vetro si muove piano. */
+  glassAnimatedWall: true,
+  /** Spento ("sfocatura leggera"): meno blur e niente blur sulle card, resta solo sul pannello principale. */
+  glassStrongBlur: true,
+
   // ---- Dashboard ----
   showDashboardHeader: true,
   dashboardGreeting: "time" as "welcome" | "time" | "off",
@@ -190,7 +198,7 @@ export const DEFAULT_SETTINGS = {
 
 export type AppSettings = typeof DEFAULT_SETTINGS;
 export type SettingKey = keyof AppSettings;
-export type SettingsGroup = "general" | "appearance" | "glow" | "dashboard" | "study" | "youtube" | "companion" | "weather" | "sysmon" | "screentime" | "groups";
+export type SettingsGroup = "general" | "appearance" | "glow" | "glass" | "dashboard" | "study" | "youtube" | "companion" | "weather" | "sysmon" | "screentime" | "groups";
 
 interface BaseDef {
   key: SettingKey;
@@ -258,6 +266,12 @@ export const SETTING_DEFS: SettingDef[] = [
   { key: "glowRadius", group: "glow", section: "Intensità e forma", type: "number", control: "slider", min: 0, max: 60, step: 1, unit: "px", dependsOn: "glowEnabled", label: "Raggio" },
   { key: "glowEdgeSensitivity", group: "glow", section: "Intensità e forma", type: "number", control: "slider", min: 5, max: 45, step: 1, dependsOn: "glowEnabled", label: "Sensibilità al bordo", description: "Valori alti: il glow si accende solo con il mouse molto vicino al bordo. Valori bassi: si accende da più lontano." },
   { key: "glowConeSpread", group: "glow", section: "Intensità e forma", type: "number", control: "slider", min: 10, max: 45, step: 1, dependsOn: "glowEnabled", label: "Ampiezza del cono" },
+  { key: "glassSheen", group: "glass", section: "Effetti del vetro", type: "boolean", label: "Riflesso che segue il mouse" },
+  { key: "glassAnimatedWall", group: "glass", section: "Effetti del vetro", type: "boolean", label: "Sfondo animato", description: "La stanza dietro il vetro si muove piano." },
+  {
+    key: "glassStrongBlur", group: "glass", section: "Effetti del vetro", type: "boolean", label: "Sfocatura forte",
+    description: "Più lenta su computer e telefoni vecchi: spenta, il vetro resta solo sul riquadro principale.",
+  },
   { key: "glowFillOpacity", group: "glow", section: "Intensità e forma", type: "number", control: "slider", min: 0, max: 1, step: 0.05, dependsOn: "glowEnabled", label: "Riempimento vicino ai bordi" },
 
   // ======================= DASHBOARD =======================
@@ -457,6 +471,9 @@ export const PER_DEVICE_SETTINGS: ReadonlySet<SettingKey> = new Set<SettingKey>(
   "glowEdgeSensitivity",
   "glowConeSpread",
   "glowFillOpacity",
+  "glassSheen",
+  "glassAnimatedWall",
+  "glassStrongBlur",
   "studySoundEnabled",
   "studyVolume",
   "studyNotificationsEnabled",

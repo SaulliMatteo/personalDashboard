@@ -54,7 +54,23 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
   `--core-fill/-ink/-glow` (il nucleo), `--prog(-glow)`, `--rune-glow`, `--fx-light/-shadow/-len`.
 - Vetro: dietro l'app c'è `.app-wall` (in `AppShell`), con la foto sfocata da `--photo-filter`; la sidebar è
   un'isola di vetro e `.main` un grande pannello (`shell.css`), le card hanno `backdrop-filter` (`BorderGlow.css`).
-  `--modal-bg` resta pieno, perché lo usano anche le `<option>` dei menu nativi.
+  `--modal-bg` resta pieno, perché lo usano anche le `<option>` dei menu nativi. In Vetro `--btn-primary-bg` è un
+  gradiente: va usato solo come `background`, mai in `color-mix` o come colore.
+- Vetro, sfondo: senza immagine `app/GlassWall.tsx` disegna su canvas una stanza con i token `--room-*` (ridisegnata
+  al cambio di variante); con un'immagine scelta in Aspetto (`core/theme/wallpaper.ts`) mostra quella. L'immagine
+  sta nella tabella locale `device_wallpaper` (migrazione 28, non sincronizzata, già ridimensionata a 1600 px JPEG
+  come data URL): Esporta/Importa i dati copia tutto il database, quindi la porta con sé.
+- Vetro, effetti (impostazioni per dispositivo del gruppo `glass`, attributi su `<html>` da `applySettings.ts`):
+  `glassSheen` → `data-glass-sheen` (riflesso che segue il puntatore), `glassAnimatedWall` → `data-glass-wall`
+  (lenta deriva dello sfondo), `glassStrongBlur` → `data-glass` `strong|light` (con `light` il blur resta solo su
+  `.main` e le card sono più opache). Tutto il movimento si spegne con `data-animations="off"` e con
+  `prefers-reduced-motion`.
+- Effetti del puntatore: un solo listener, `app/usePointerFx.ts`, scrive `--lx/--ly` (sulla card sotto il
+  puntatore), `--sx/--sy` (ombra opposta, lunga `--fx-len`) e `--px/--py` (su `.app-wall`). Si sceglie per tema con
+  `POINTER_FX` in `AppShell`; sul telefono è spento.
+- Pixy di Vetro: stile `glass` di `core/pixy/render/styles.ts` (matrice LED con i punti spenti visibili) in un
+  riquadro lucido (`.cv-box`). Il quadrante dello Studio è `GlassDial` (`Dials.tsx`). Orologio, data, meteo, File
+  Transfer, Monitor, Tempo al PC, Lavagna e YouTube usano le card di Notte, che col vetro dei token bastano.
 - L'impostazione `themeMode` è `giorno|notte|auto`: `auto` segue il sistema (`useSystemDark`) anche ad app aperta.
   `useTheme()` restituisce il tema risolto (`mode`, `scheme`, `glow`, `defaultAccent`, `accent`): il codice non
   guarda mai `themeMode` direttamente. L'accent personalizzato è uno per variante (`ACCENT_KEYS` in `schema.ts`).

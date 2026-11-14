@@ -988,7 +988,36 @@
   --card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 rgba(255, 255, 255, 0.04);
   --sheen: rgba(255, 255, 255, 0.22);
   --blur: 30px;
+  --card-gloss: linear-gradient(160deg, rgba(255, 255, 255, 0.09), transparent 32%, transparent 70%, rgba(255, 255, 255, 0.02));
+  --glass-shine: rgba(255, 255, 255, 0.45);
+  --glass-line: rgba(255, 255, 255, 0.16);
+  --glass-knob: #F6F2EC;
+  --btn-glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 6px 18px rgba(0, 0, 0, 0.35);
   --accent-2: #FF8A6B;
+  /* La stanza di sera: più scura, finestra blu, lampade calde e la lampada da terra accesa. */
+  --room-wall-top: #4A3B30;
+  --room-wall-bottom: #2A211B;
+  --room-window: #1C2333;
+  --room-window-glow: rgba(255, 250, 240, 0);
+  --room-frame: #2B2420;
+  --room-beam: #3A2A1E;
+  --room-cord: #2B2017;
+  --room-lamp: #FFD59A;
+  --room-lamp-glow: rgba(255, 190, 110, 0.95);
+  --room-shelf: #3B2C21;
+  --room-book-1: #2A201A;
+  --room-book-2: #2A201A;
+  --room-book-3: #2A201A;
+  --room-book-4: #2A201A;
+  --room-book-5: #2A201A;
+  --room-book-6: #2A201A;
+  --room-plant: #1D2219;
+  --room-pot: #2D241D;
+  --room-floor-top: #2B221C;
+  --room-floor-bottom: #1A1410;
+  --room-sofa: #3D3029;
+  --room-cushion: #4A3A31;
+  --room-floor-lamp: rgba(255, 180, 100, 0.85);
 
   --bg-card: #2A241E;
   --card-bg: rgba(28, 24, 20, 0.34);
@@ -1040,7 +1069,8 @@
   --surface-3: rgba(255, 255, 255, 0.2);
 
   --radius-item: 14px;
-  --btn-primary-bg: var(--accent);
+  /* pulsante di vetro: si usa sempre come `background`, quindi può essere un gradiente */
+  --btn-primary-bg: linear-gradient(180deg, color-mix(in srgb, var(--accent) 82%, white), var(--accent));
   --btn-primary-fg: var(--on-accent);
   --btn-ghost-border: 1px solid rgba(255, 255, 255, 0.16);
   --btn-ghost-fg: #F6F2EC;

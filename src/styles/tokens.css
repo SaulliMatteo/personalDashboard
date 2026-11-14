@@ -81,6 +81,12 @@
   --card-inset: inset 0 0 0 transparent;
   --sheen: transparent;
   --blur: 0px;
+  /* riflessi del vetro: filo lucido, filo tenue, perla sulla punta del quadrante */
+  --glass-shine: transparent;
+  --glass-line: transparent;
+  --glass-knob: var(--text-primary);
+  /* pulsante principale "di vetro": riflesso in alto e alone del suo colore */
+  --btn-glass-shadow: none;
   /* Ombra: lucido delle card, il nucleo (eclisse o stella), barre di progresso e luce del puntatore. */
   --card-gloss: linear-gradient(transparent, transparent);
   --core-fill: var(--panel-bg);
@@ -1141,7 +1147,37 @@
   --card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.65), inset 0 -1px 0 rgba(255, 255, 255, 0.12);
   --sheen: rgba(255, 255, 255, 0.7);
   --blur: 30px;
+  /* il lucido fisso del vetro: chiaro in alto a sinistra, un filo in basso a destra */
+  --card-gloss: linear-gradient(160deg, rgba(255, 255, 255, 0.21), transparent 32%, transparent 70%, rgba(255, 255, 255, 0.05));
+  --glass-shine: rgba(255, 255, 255, 0.75);
+  --glass-line: rgba(255, 255, 255, 0.35);
+  --glass-knob: #FFFFFF;
+  --btn-glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 6px 16px rgba(0, 0, 0, 0.18);
   --accent-2: #E8735A;
+  /* La stanza disegnata dietro il vetro (app/GlassWall.tsx), di giorno. */
+  --room-wall-top: #E3D6C5;
+  --room-wall-bottom: #CDBBA5;
+  --room-window: #FBF6EE;
+  --room-window-glow: rgba(255, 250, 240, 0.9);
+  --room-frame: #B9A184;
+  --room-beam: #8A6A4C;
+  --room-cord: #6E5640;
+  --room-lamp: #F4E3C9;
+  --room-lamp-glow: rgba(255, 230, 190, 0.8);
+  --room-shelf: #A58564;
+  --room-book-1: #7D5A45;
+  --room-book-2: #C7B39A;
+  --room-book-3: #4F5A52;
+  --room-book-4: #B68A5C;
+  --room-book-5: #E1D3BF;
+  --room-book-6: #6D4C3B;
+  --room-plant: #56634A;
+  --room-pot: #9C7D61;
+  --room-floor-top: #BFA98F;
+  --room-floor-bottom: #A68E74;
+  --room-sofa: #E8DCCB;
+  --room-cushion: #F2E8DA;
+  --room-floor-lamp: rgba(255, 180, 100, 0);
 
   --bg-card: #E6DDD2;
   --card-bg: rgba(255, 255, 255, 0.24);
@@ -1193,7 +1229,8 @@
   --surface-3: rgba(255, 255, 255, 0.62);
 
   --radius-item: 14px;
-  --btn-primary-bg: var(--accent);
+  /* pulsante di vetro: si usa sempre come `background`, quindi può essere un gradiente */
+  --btn-primary-bg: linear-gradient(180deg, color-mix(in srgb, var(--accent) 82%, white), var(--accent));
   --btn-primary-fg: var(--on-accent);
   --btn-ghost-border: 1px solid rgba(255, 255, 255, 0.5);
   --btn-ghost-fg: #1C1A17;

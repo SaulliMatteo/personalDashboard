@@ -81,6 +81,37 @@
   fill: var(--led);
 }
 
+/* ---------- Vetro ---------- */
+.glass-dial-track {
+  fill: none;
+  stroke: var(--ring-track);
+  stroke-width: 18;
+}
+.glass-dial-ink {
+  fill: none;
+  stroke-width: 18;
+  stroke-linecap: round;
+}
+.glass-dial-shine {
+  fill: none;
+  stroke: var(--glass-shine);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.glass-dial-inner {
+  fill: none;
+  stroke: var(--glass-line);
+  stroke-width: 1;
+}
+.glass-dial-knob {
+  fill: var(--glass-knob);
+  opacity: 0.95;
+}
+.glass-dial-knob-dot {
+  fill: var(--accent);
+  opacity: 0.35;
+}
+
 /* ---------- Opaco ---------- */
 .ring-dial-track {
   fill: none;

@@ -1,5 +1,9 @@
-import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
+import { createElement, useEffect, useMemo, useState, type ComponentType, type MouseEvent, type ReactNode } from "react";
 import Sidebar from "../features/sidebar/Sidebar";
+import { useSettings } from "../core/settings/useSettings";
+import { useThemeVariant, type ThemeVariants } from "../core/theme/variants";
+import GlassWall from "./GlassWall";
+import { usePointerFx, type PointerFx } from "./usePointerFx";
 import RoomNavItem from "../social/room/RoomNavItem";
 import CompactBar from "../ui/CompactBar";
 import { useCompact } from "../core/layout/useCompact";
@@ -15,6 +19,26 @@ export interface CompactBarSpec {
   /** "menu": ☰ apre il menu; "back": ← torna alla dashboard. */
   lead: "menu" | "back";
 }
+
+/** Cosa c'è dentro `.app-wall`: in Vetro la foto sfocata (la stanza o l'immagine scelta). */
+const WALLS: ThemeVariants<ComponentType | null> = {
+  notte: null,
+  opaco: null,
+  quaderno: null,
+  fosforo: null,
+  vetro: GlassWall,
+  ombra: null,
+};
+
+/** Effetti che seguono il puntatore (usePointerFx): il riflesso del vetro. */
+const POINTER_FX: ThemeVariants<PointerFx | null> = {
+  notte: null,
+  opaco: null,
+  quaderno: null,
+  fosforo: null,
+  vetro: { local: true, shadow: false, wall: false },
+  ombra: null,
+};
 
 /** La voce "Widget" (il catalogo) del menu del telefono: sul desktop il catalogo si apre dalla griglia. */
 function CatalogNavItem() {
@@ -56,6 +80,12 @@ function AppShell({ children, scroll = true, compactBar }: { children: ReactNode
 
   useBackHandler(drawer.open, () => setDrawerOpen(false));
 
+  const { settings } = useSettings();
+  const Wall = useThemeVariant(WALLS);
+  const fx = useThemeVariant(POINTER_FX);
+  // Sul telefono non c'è un puntatore da seguire; il riflesso del vetro si può spegnere.
+  usePointerFx(!compact && settings.animationsEnabled && settings.glassSheen ? fx : null);
+
   const deco = (
     <>
       {/* Decorazione di sfondo del tema (Fosforo: due cerchi). */}
@@ -64,7 +94,9 @@ function AppShell({ children, scroll = true, compactBar }: { children: ReactNode
         <span className="app-deco-ring" />
       </div>
       {/* Lo sfondo dietro il vetro (Vetro: la stanza sfocata o l'immagine scelta; Ombra: la luce del puntatore). */}
-      <div className="app-wall" aria-hidden="true" />
+      <div className="app-wall" aria-hidden="true">
+        {Wall && createElement(Wall)}
+      </div>
     </>
   );
   const mainClass = scroll ? "main" : "main main--fixed";

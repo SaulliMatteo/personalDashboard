@@ -5,6 +5,7 @@ import StudyCardNotte from "./StudyCardNotte";
 import StudyCardOpaco from "./StudyCardOpaco";
 import StudyCardQuaderno from "./StudyCardQuaderno";
 import StudyCardFosforo from "./StudyCardFosforo";
+import StudyCardVetro from "./StudyCardVetro";
 
 /**
  * Ogni tema ha la sua card: nei mockup cambiano anche i pezzi, non solo i
@@ -15,7 +16,7 @@ export const STUDY_CARDS: ThemeVariants<ComponentType<{ size: SizeKey }>> = {
   opaco: StudyCardOpaco,
   quaderno: StudyCardQuaderno,
   fosforo: StudyCardFosforo,
-  // Provvisori (fase 1): le card di Vetro e Ombra arrivano con i loro temi.
-  vetro: StudyCardNotte,
+  vetro: StudyCardVetro,
+  // Provvisoria: la card di Ombra arriva con il suo tema.
   ombra: StudyCardNotte,
 };

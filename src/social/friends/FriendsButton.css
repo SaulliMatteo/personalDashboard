@@ -48,6 +48,16 @@
   box-shadow: 0 0 8px var(--led);
 }
 
+/* Vetro: gemello di vetro della campanella. */
+:root[data-theme="vetro"] .fbtn:not(.fbtn--compact) {
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  box-shadow: var(--card-inset);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 @media (pointer: coarse) {
   .fbtn::after {
     content: "";

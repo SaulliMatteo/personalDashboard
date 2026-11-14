@@ -59,6 +59,20 @@ export const COMPANION_STYLES = {
         minPitch: o.minPointSize === undefined ? undefined : o.minPointSize * o.dpr,
       }),
   },
+  /** Vetro: matrice di punti tondi; quelli spenti si vedono appena, dentro il riquadro lucido della card. */
+  glass: {
+    id: "glass",
+    label: "Punti di vetro",
+    draw: (canvas, frame, o) =>
+      drawLedFace(canvas, frame, {
+        color: o.color,
+        offAlpha: 0.18,
+        showMouth: o.showMouth,
+        padding: o.padding ?? FACE_PADDING,
+        maxPitch: o.maxPointSize * o.dpr,
+        minPitch: o.minPointSize === undefined ? undefined : o.minPointSize * o.dpr,
+      }),
+  },
 } satisfies Record<string, CompanionStyle>;
 
 /** Come viene disegnata la faccia in ogni tema (mockup: card del Companion). Usato dal canvas e dalle notifiche. */
@@ -67,7 +81,7 @@ export const FACE_STYLES: ThemeVariants<CompanionStyle> = {
   opaco: COMPANION_STYLES.pill,
   quaderno: COMPANION_STYLES.pill,
   fosforo: COMPANION_STYLES.led,
-  // Provvisori: Vetro e Ombra avranno i loro (Ombra un renderer nuovo, con un corpo per variante).
-  vetro: COMPANION_STYLES.soft,
+  vetro: COMPANION_STYLES.glass,
+  // Provvisorio: Ombra avrà un renderer nuovo, con un corpo per variante (fase 5 del piano).
   ombra: COMPANION_STYLES.soft,
 };

@@ -1,4 +1,7 @@
+import { useState } from "react";
 import SettingsSection from "../../../core/settings/components/SettingsSection";
+import { useThemeVariant, type ThemeVariants } from "../../../core/theme/variants";
+import { chooseWallpaper, resetWallpaper, useWallpaper } from "../../../core/theme/wallpaper";
 import { useSettings } from "../../../core/settings/useSettings";
 import { ACCENT_KEYS } from "../../../core/settings/schema";
 import { ACCENT_PRESETS, THEME_IDS, THEMES } from "../../../core/theme/themes";
@@ -13,6 +16,58 @@ const MODE_OPTIONS = [
   { value: "auto", label: "Automatico" },
 ] as const;
 
+/** Le impostazioni degli effetti del tema in fondo alla scheda: il glow (Notte) o il vetro (Vetro). */
+const THEME_EFFECTS: ThemeVariants<"glow" | "glass"> = {
+  notte: "glow",
+  opaco: "glow",
+  quaderno: "glow",
+  fosforo: "glow",
+  vetro: "glass",
+  ombra: "glow",
+};
+
+/** Vetro: lo sfondo dietro il vetro (di questo dispositivo) e gli effetti, come nel mockup. */
+function GlassSettings() {
+  const wallpaper = useWallpaper();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run(action: () => Promise<unknown>) {
+    setBusy(true);
+    setError(null);
+    try {
+      await action();
+    } catch (e) {
+      console.error("Sfondo di Vetro non cambiato:", e);
+      setError("Non riesco a leggere questa immagine: prova con un JPEG o un PNG.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="sp-block">
+        <div className="sp-block-head">
+          <h3>
+            Sfondo del vetro <span className="sp-block-sub">solo su questo dispositivo</span>
+          </h3>
+        </div>
+        <div className="sp-actions">
+          <button type="button" className="sp-btn" disabled={busy} onClick={() => void run(chooseWallpaper)}>
+            {wallpaper ? "Scegli un'altra immagine" : "Scegli un'immagine"}
+          </button>
+          <button type="button" className="sp-btn" disabled={busy || !wallpaper} onClick={() => void run(resetWallpaper)}>
+            Torna alla stanza
+          </button>
+        </div>
+        <p className="sp-note">{error ?? "Dietro il vetro c'è una stanza disegnata, oppure una tua immagine: resta sfocata e non lascia il dispositivo."}</p>
+      </div>
+      <SettingsSection group="glass" />
+    </>
+  );
+}
+
 /** Scheda Aspetto: come il mockup impostazioni-aspetto.html (tema, accent, griglia) più il resto del gruppo. */
 function AppearanceTab() {
   const { settings, updateSetting } = useSettings();
@@ -25,6 +80,7 @@ function AppearanceTab() {
   const isPreset = ACCENT_PRESETS.some((p) => p.color.toLowerCase() === effectiveAccent);
   // Ombra chiama le varianti "Ombra" e "Fiamma"; gli altri temi "Giorno" e "Notte".
   const modeLabels = THEMES[settings.theme].modeLabels;
+  const effects = useThemeVariant(THEME_EFFECTS);
 
   function pickAccent(color: string) {
     updateSetting(accentKeys.color, color);
@@ -141,7 +197,9 @@ function AppearanceTab() {
 
       <SettingsSection group="appearance" omit={["theme", "themeMode", "accentOverrideGiorno", "accentColorGiorno", "accentOverrideNotte", "accentColorNotte"]} />
 
-      {compact ? (
+      {effects === "glass" ? (
+        <GlassSettings />
+      ) : compact ? (
         <p className="sp-note">Glow dei widget, griglia e posizione della barra laterale si regolano dal desktop.</p>
       ) : theme.glow ? (
         <SettingsSection group="glow" />

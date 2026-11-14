@@ -269,6 +269,102 @@
   flex-direction: column;
 }
 
+/* ==================== Vetro ==================== */
+.widget.cv {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.widget.cv--S {
+  padding: 10px;
+}
+
+/* il riquadro lucido della faccia (mockup `.face` di Vetro) */
+.cv-box {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-self: stretch;
+  aspect-ratio: 92 / 80;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid var(--card-border);
+  background:
+    radial-gradient(circle at 35% 25%, var(--glass-shine), transparent 50%),
+    linear-gradient(160deg, color-mix(in srgb, var(--accent) 30%, transparent), color-mix(in srgb, var(--accent-2) 25%, transparent));
+  box-shadow: var(--card-inset), 0 8px 24px color-mix(in srgb, var(--text-primary) 8%, transparent);
+}
+
+.cv--S .cv-box {
+  flex: 1 1 auto;
+  aspect-ratio: auto;
+}
+
+.cv-box .cc-face {
+  position: relative;
+  align-self: stretch;
+}
+
+.cv-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cv-name,
+.cv-status {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cv-name {
+  font-family: var(--font-title);
+  font-weight: 600;
+}
+
+.cv-status {
+  font-size: max(11.5px, var(--fs-min));
+  color: var(--text-muted);
+}
+
+.cv-bubble-slot {
+  display: flex;
+  min-height: 0;
+}
+
+.cv-bubble {
+  padding: 9px 12px;
+  border: 1px solid var(--card-border);
+  border-radius: 16px 16px 16px 4px;
+  background: var(--surface-2);
+  box-shadow: var(--card-inset);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
+/* 2×2: riquadro grande in alto, fumetto e nome sotto */
+.widget.cv--M {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.cv--M .cv-box {
+  flex: 1 1 auto;
+  aspect-ratio: auto;
+}
+
+.cv--M .cv-text {
+  flex: 0 0 auto;
+}
+
 /* ==================== Fosforo ==================== */
 .widget.cf {
   display: flex;

@@ -25,6 +25,10 @@ export function applySettingsToDocument(settings: AppSettings, mode: ThemeMode) 
   root.dataset.mode = mode;
   root.dataset.animations = settings.animationsEnabled ? "on" : "off";
   root.dataset.sidebar = settings.sidebarPosition;
+  // Effetti del tema Vetro (shell.css, BorderGlow.css): senza effetto negli altri temi.
+  root.dataset.glass = settings.glassStrongBlur ? "strong" : "light";
+  root.dataset.glassSheen = settings.glassSheen ? "on" : "off";
+  root.dataset.glassWall = settings.glassAnimatedWall ? "moving" : "still";
 
   const style = root.style;
   // Senza override vale l'accent definito dalla variante del tema nei token.

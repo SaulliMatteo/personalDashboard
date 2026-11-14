@@ -547,6 +547,48 @@ div.nc-s-quaderno {
   box-shadow: var(--note-key-shadow);
 }
 
+/* ---------- Vetro: righe e anteprima su lastre di vetro (mockup `.ncard`) ---------- */
+.nc-s-vetro {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.nc-s-vetro .nc-big {
+  font-size: min(40px, 30cqmin);
+}
+
+.nc-s-vetro small {
+  font-size: max(11.5px, var(--fs-min));
+  color: var(--text-muted);
+}
+
+.nc--vetro .nc-list {
+  gap: 6px;
+}
+
+.nc--vetro .nc-list .nc-row {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 46px;
+  padding: 0 11px;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  box-shadow: var(--card-inset);
+}
+
+.nc--vetro .nc-strip-main {
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-item);
+  background: var(--surface-2);
+  box-shadow: var(--card-inset);
+}
+
 /* Notte, 2×2: le righe si dividono l'altezza rimasta (al massimo 46px l'una). */
 .nc--notte .nc-list .nc-row {
   flex: 1 1 0;

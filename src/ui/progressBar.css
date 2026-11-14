@@ -34,6 +34,16 @@
   border-radius: 0;
 }
 
+/* Vetro: a pillola, il progresso sfuma tra i due accent (Temi Vetro e Ombra.html, `.bar`). */
+:root[data-theme="vetro"] .pbar {
+  height: 6px;
+  border-radius: 99px;
+}
+
+:root[data-theme="vetro"] .pbar-fill {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
 /* Fosforo: celle separate da 6px, accese o spente. Si accendono celle intere. */
 :root[data-theme="fosforo"] .pbar {
   --cell: 14px;
