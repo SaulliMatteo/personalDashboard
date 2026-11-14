@@ -110,7 +110,7 @@ function LiveWidget({ size }: { size: Size }) {
               <ClassLegend />
             </div>
             <div className="stw-top-box" ref={setList}>
-              <TopList items={today.top} max={Math.min(4, rowsThatFit)} />
+              <TopList items={today.apps} max={Math.min(4, rowsThatFit)} />
             </div>
           </div>
         </article>
@@ -131,7 +131,7 @@ function LiveWidget({ size }: { size: Size }) {
           </div>
           <div className="stw-sep" />
           <div className="stw-top-box" ref={setList}>
-            <TopList items={today.top} max={rowsThatFit} />
+            <TopList items={today.apps} max={rowsThatFit} />
           </div>
         </article>
       </WidgetFrame>
@@ -164,7 +164,7 @@ function LiveWidget({ size }: { size: Size }) {
           <div className="stw-col">
             <h3>Più usati</h3>
             <div className="stw-top-box" ref={setList}>
-              <TopList items={today.top} max={rowsThatFit} />
+              <TopList items={today.apps} max={rowsThatFit} />
             </div>
           </div>
           <div className="stw-col">

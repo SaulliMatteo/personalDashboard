@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useNav } from "../../core/nav/useNav";
 import { useSettings } from "../../core/settings/useSettings";
 import { APP_CATEGORIES } from "../../core/system/appCategory";
@@ -18,12 +18,12 @@ import { usePeriodData, type DayTotal, type PeriodMode } from "./detail/usePerio
 import "./ScreenTimeWidget.css";
 import "./ScreenTimeDetail.css";
 
-const KIND_NAME = { app: "app", site: "sito", category: "categoria" } as const;
+const KIND_NAME = { app: "app", category: "categoria" } as const;
 const pct = (v: number, of: number) => (of > 0 ? Math.round((v / of) * 100) : 0);
 
 /**
- * Pagina di Tempo al PC (docs/mockup/temi/tempo-pc.html): giorno (riepilogo, linea del giorno, classifiche di app e
- * siti con il menu ⋯, limiti, pause) e settimana (barre per giorno con l'obiettivo di focus, più usati, Focus o svago).
+ * Pagina di Tempo al PC (docs/mockup/temi/tempo-pc.html): giorno (riepilogo, linea del giorno, classifica delle app
+ * con il menu ⋯, e accanto limiti e pause) e settimana (barre per giorno con l'obiettivo di focus, più usati, Focus o svago).
  */
 function ScreenTimeDetail() {
   const { goToDashboard } = useNav();
@@ -78,7 +78,6 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
   const data = usePeriodData(mode, day, today);
   const summary = useMemo(() => summarize(data.rows, st.classify), [data.rows, st.classify]);
   const [dialog, setDialog] = useState<{ initial: LimitDraft | null; editing: ScreenLimit | null } | null>(null);
-  const sitesRef = useRef<HTMLElement | null>(null);
 
   // Prima di guardare: quello che il registratore ha in mano finisce nel DB.
   const { flush } = st;
@@ -99,10 +98,8 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
   const limitFor = (kind: ScreenLimit["kind"], target: string) => st.limits.find((l) => l.limit.kind === kind && l.limit.target === target)?.limit ?? null;
 
   function openLimit(item: RankItem) {
-    const kind = item.isSite ? "site" : "app";
-    const target = item.isSite ? item.label : item.key;
-    const existing = limitFor(kind, target);
-    setDialog({ initial: existing ?? { kind, target, label: item.label, minutes: 60, warn: true }, editing: existing });
+    const existing = limitFor("app", item.key);
+    setDialog({ initial: existing ?? { kind: "app", target: item.key, label: item.label, minutes: 60, warn: true }, editing: existing });
   }
 
   async function saveLimit(draft: LimitDraft) {
@@ -158,7 +155,6 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
           data={data}
           summary={summary}
           rankProps={rankProps}
-          sitesRef={sitesRef}
           onAddLimit={() => setDialog({ initial: null, editing: null })}
           onEditLimit={(limit) => setDialog({ initial: limit, editing: limit })}
           goalSeconds={settings.screentimeFocusGoalMinutes * 60}
@@ -173,7 +169,6 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
           initial={dialog.initial}
           editing={dialog.editing}
           apps={data.recentApps}
-          sites={data.recentSites}
           onSave={(d) => void saveLimit(d)}
           onDelete={(id) => {
             void st.deleteLimit(id);
@@ -202,14 +197,13 @@ interface DayViewProps {
   data: Data;
   summary: Summary;
   rankProps: RankProps;
-  sitesRef: RefObject<HTMLElement | null>;
   onAddLimit: () => void;
   onEditLimit: (limit: ScreenLimit) => void;
   goalSeconds: number;
   breakMinutes: number;
 }
 
-function DayView({ day, today, data, summary, rankProps, sitesRef, onAddLimit, onEditLimit, goalSeconds, breakMinutes }: DayViewProps) {
+function DayView({ day, today, data, summary, rankProps, onAddLimit, onEditLimit, goalSeconds, breakMinutes }: DayViewProps) {
   const st = useScreenTime();
   const isToday = day === today;
   const nowHour = isToday ? new Date(st.now).getHours() : null;
@@ -218,13 +212,11 @@ function DayView({ day, today, data, summary, rankProps, sitesRef, onAddLimit, o
   const previous = isToday ? st.yesterdaySoFar : (data.history[1]?.total ?? 0);
   const avg = average7(data.history);
   const streak = focusStreak(data.history.map((d) => ({ total: d.total, focus: d.byClass.focus })), goalSeconds);
-  const funNames = summary.top.filter((i) => i.cls === "fun").slice(0, 2).map((i) => i.label).join(", ");
+  const funNames = summary.apps.filter((i) => i.cls === "fun").slice(0, 2).map((i) => i.label).join(", ");
 
   const [from, to] = dayBounds(day);
   const gap = longestGap(data.sessions, from, to);
   const breaks = breakStats(data.sessions);
-  const browsers = new Set(summary.sites.map((s) => s.appKey));
-  const sitesTotal = summary.sites.reduce((s, i) => s + i.seconds, 0);
 
   const limits = isToday ? st.limits : st.limits.map(({ limit }) => ({ limit, usedSeconds: limitUsage(data.rows, limit, st.classify.manual) }));
 
@@ -317,25 +309,9 @@ function DayView({ day, today, data, summary, rankProps, sitesRef, onAddLimit, o
               {summary.apps.length === 1 ? "1 app" : `${summary.apps.length} app`} · {formatDuration(summary.total)}
             </span>
           </div>
-          <RankList
-            items={summary.apps}
-            {...rankProps}
-            hasSites={(item) => browsers.has(item.key)}
-            onShowSites={() => sitesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            empty="Nessuna app."
-          />
+          <RankList items={summary.apps} {...rankProps} empty="Nessuna app." />
         </section>
-        <section className="stp-card" ref={sitesRef}>
-          <div className="stp-card-head">
-            <h2>Siti</h2>
-            <span>nel browser · {formatDuration(sitesTotal)}</span>
-          </div>
-          <RankList items={summary.sites} {...rankProps} empty="Nessun sito in questo giorno." />
-          <p className="stp-fine">Il sito si ricava dal titolo della scheda: se un sito non mette il suo nome nel titolo finisce in "Altro sul web".</p>
-        </section>
-      </div>
-
-      <div className="stp-grid stp-grid--two">
+        <div className="stp-stack">
         <section className="stp-card">
           <div className="stp-card-head">
             <h2>{isToday ? "Limiti di oggi" : "Limiti in quel giorno"}</h2>
@@ -344,7 +320,7 @@ function DayView({ day, today, data, summary, rankProps, sitesRef, onAddLimit, o
             </button>
           </div>
           {limits.length === 0 ? (
-            <p className="stp-fine">Nessun limite. Mettine uno a un'app, a un sito o a una categoria, anche dal menu ⋯ di una riga.</p>
+            <p className="stp-fine">Nessun limite. Mettine uno a un'app o a una categoria, anche dal menu ⋯ di una riga.</p>
           ) : (
             <ul className="stp-limits">
               {limits.map(({ limit, usedSeconds }) => {
@@ -399,6 +375,7 @@ function DayView({ day, today, data, summary, rankProps, sitesRef, onAddLimit, o
           {isToday && breakMinutes > 0 && <LimitBar used={st.continuousMinutes} max={breakMinutes} />}
           <p className="stp-fine">Una pausa è almeno 5 minuti senza toccare mouse e tastiera (o con lo schermo bloccato).</p>
         </section>
+        </div>
       </div>
     </>
   );
@@ -489,9 +466,9 @@ function WeekView({ today, data, summary, rankProps, goalSeconds }: WeekViewProp
         <section className="stp-card">
           <div className="stp-card-head">
             <h2>Più usati in settimana</h2>
-            <span>app e siti</span>
+            <span>app</span>
           </div>
-          <RankList items={summary.top} {...rankProps} empty="Nessun tempo al PC in questa settimana." />
+          <RankList items={summary.apps} {...rankProps} empty="Nessun tempo al PC in questa settimana." />
         </section>
       </div>
 
@@ -518,7 +495,7 @@ function WeekView({ today, data, summary, rankProps, goalSeconds }: WeekViewProp
             </li>
           ))}
         </ul>
-        <p className="stp-fine">La categoria di un'app o di un sito si cambia dal menu ⋯ della sua riga (la scelta vale anche per Pixy).</p>
+        <p className="stp-fine">La categoria di un'app si cambia dal menu ⋯ della sua riga (la scelta vale anche per Pixy).</p>
       </section>
     </>
   );

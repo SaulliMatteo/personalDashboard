@@ -2,12 +2,12 @@
  * Limiti giornalieri di Tempo al PC: avviso all'80 % (se voluto) e allo scadere, una volta al giorno per limite.
  * Puro: il tempo usato e lo stato degli avvisi arrivano da fuori (lo stato si salva in core/db/meta.ts).
  */
-export type LimitKind = "app" | "site" | "category";
+export type LimitKind = "app" | "category";
 
 export interface ScreenLimit {
   id: number;
   kind: LimitKind;
-  /** app_key, nome del sito o categoria. */
+  /** app_key o categoria. */
   target: string;
   /** Nome da mostrare. */
   label: string;

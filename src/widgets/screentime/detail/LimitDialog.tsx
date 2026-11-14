@@ -23,13 +23,12 @@ interface LimitDialogProps {
   /** Il limite che si sta modificando (mostra "Togli il limite"). */
   editing: ScreenLimit | null;
   apps: LimitOption[];
-  sites: LimitOption[];
   onSave: (draft: LimitDraft) => void;
   onDelete: (id: number) => void;
   onClose: () => void;
 }
 
-const KIND_LABEL: Record<LimitKind, string> = { app: "App", site: "Sito", category: "Categoria" };
+const KIND_LABEL: Record<LimitKind, string> = { app: "App", category: "Categoria" };
 const PRESETS = [15, 30, 60, 120];
 const presetLabel = (m: number) => (m < 60 ? `${m} min` : `${m / 60} h`);
 const CATEGORY_OPTIONS: LimitOption[] = APP_CATEGORIES.map((c) => ({ target: c, label: CATEGORY_LABEL[c] }));
@@ -41,19 +40,17 @@ function withCurrent(list: LimitOption[], draft: LimitDraft | null, kind: LimitK
 }
 
 /**
- * "Aggiungi un limite" (docs/mockup/temi/tempo-pc.html): app, sito o categoria, minuti al giorno, avviso all'80 %.
- * Lo stesso dialog modifica un limite esistente (stessa app/sito/categoria = stesso limite).
+ * "Aggiungi un limite" (docs/mockup/temi/tempo-pc.html): app o categoria, minuti al giorno, avviso all'80 %.
+ * Lo stesso dialog modifica un limite esistente (stessa app o categoria = stesso limite).
  */
-function LimitDialog({ initial, editing, apps, sites, onSave, onDelete, onClose }: LimitDialogProps) {
+function LimitDialog({ initial, editing, apps, onSave, onDelete, onClose }: LimitDialogProps) {
   const [kind, setKind] = useState<LimitKind>(initial?.kind ?? "app");
   const lists: Record<LimitKind, LimitOption[]> = {
     app: withCurrent(apps, initial, "app"),
-    site: withCurrent(sites, initial, "site"),
     category: CATEGORY_OPTIONS,
   };
   const [targets, setTargets] = useState<Record<LimitKind, string>>(() => ({
     app: initial?.kind === "app" ? initial.target : (lists.app[0]?.target ?? ""),
-    site: initial?.kind === "site" ? initial.target : (lists.site[0]?.target ?? ""),
     category: initial?.kind === "category" ? initial.target : "video",
   }));
   const [minutes, setMinutes] = useState(initial?.minutes ?? 60);
@@ -120,7 +117,7 @@ function LimitDialog({ initial, editing, apps, sites, onSave, onDelete, onClose 
                 ))}
               </select>
             ) : (
-              <span className="std-none">{kind === "site" ? "Ancora nessun sito contato negli ultimi giorni." : "Ancora nessuna app contata negli ultimi giorni."}</span>
+              <span className="std-none">Ancora nessuna app contata negli ultimi giorni.</span>
             )}
           </label>
           <div className="std-field">

@@ -683,4 +683,27 @@ export const MIGRATIONS: Migration[] = [
       `UPDATE screentime_usage SET category = 'browser' WHERE app_key IN ('opera', 'opera_gx', 'opera gx')`,
     ],
   },
+  {
+    version: 30,
+    description: "Tempo al PC: niente siti, ogni browser conta come app",
+    statements: [
+      // Come la 29, per tutti i browser: le righe con un sito si sommano in quella senza sito della stessa ora.
+      `INSERT INTO screentime_usage (day, hour, app_key, site, app_label, category, seconds, first_at, last_at)
+       SELECT day, hour, app_key, '', MAX(app_label), 'browser', SUM(seconds), MIN(first_at), MAX(last_at)
+       FROM screentime_usage
+       WHERE site <> ''
+       GROUP BY day, hour, app_key
+       ON CONFLICT(day, hour, app_key, site) DO UPDATE SET
+         seconds = seconds + excluded.seconds,
+         category = 'browser',
+         first_at = MIN(first_at, excluded.first_at),
+         last_at = MAX(last_at, excluded.last_at)`,
+      `DELETE FROM screentime_usage WHERE site <> ''`,
+      // I browser noti (BROWSER_KEYS di lib/classify.ts) sono sempre "Browser".
+      `UPDATE screentime_usage SET category = 'browser' WHERE app_key IN ('chrome', 'msedge', 'firefox', 'opera', 'opera_gx',
+       'opera gx', 'brave', 'vivaldi', 'arc', 'zen', 'librewolf', 'waterfox', 'chromium', 'safari', 'google chrome',
+       'microsoft edge', 'brave browser')`,
+      `DELETE FROM screentime_limits WHERE kind = 'site'`,
+    ],
+  },
 ];

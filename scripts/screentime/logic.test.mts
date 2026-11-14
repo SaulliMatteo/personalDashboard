@@ -29,7 +29,7 @@ const MIN = 60_000;
 const at = (h: number, m = 0, day = 13) => new Date(2026, 10, day, h, m).getTime();
 
 function seg(start: number, end: number, over: Partial<ClassifiedSegment> = {}): ClassifiedSegment {
-  return { startMs: start, endMs: end, appKey: "code", appLabel: "VS Code", site: "", category: "coding", counted: true, ...over };
+  return { startMs: start, endMs: end, appKey: "code", appLabel: "VS Code", category: "coding", counted: true, ...over };
 }
 
 test("un segmento dentro un'ora: una riga", () => {
@@ -48,18 +48,18 @@ test("spezzato sui cambi d'ora e sulla mezzanotte", () => {
   );
 });
 
-test("righe uguali si sommano; via dal PC non conta; app e siti separati", () => {
+test("righe uguali si sommano; via dal PC non conta; app separate", () => {
   const rows = segmentsToDeltas([
     seg(at(10), at(10, 10)),
     seg(at(10, 10), at(10, 20), { counted: false }),
     seg(at(10, 20), at(10, 30)),
-    seg(at(10, 30), at(10, 45), { appKey: "chrome", appLabel: "Chrome", site: "YouTube", category: "video" }),
+    seg(at(10, 30), at(10, 45), { appKey: "chrome", appLabel: "Chrome", category: "browser" }),
   ]);
   const code = rows.find((r) => r.appKey === "code")!;
   assert.equal(code.seconds, 1200);
   assert.equal(code.firstAt, at(10));
   assert.equal(code.lastAt, at(10, 30));
-  assert.equal(rows.find((r) => r.site === "YouTube")!.seconds, 900);
+  assert.equal(rows.find((r) => r.appKey === "chrome")!.seconds, 900);
   assert.equal(rows.length, 2);
   assert.deepEqual(countedIntervals([seg(at(11), at(11, 5)), seg(at(10), at(10, 5), { counted: false }), seg(at(9), at(9, 5))]), [
     [at(9), at(9, 5)],
@@ -111,7 +111,7 @@ test("serie del focus: i giorni senza PC non la rompono, oggi conta se già ragg
   assert.equal(focusStreak([d(6, 5)], 0), 0);
 });
 
-const limit = (over: Partial<ScreenLimit>): ScreenLimit => ({ id: 1, kind: "site", target: "YouTube", label: "YouTube", minutes: 60, warn: true, ...over });
+const limit = (over: Partial<ScreenLimit>): ScreenLimit => ({ id: 1, kind: "app", target: "chrome", label: "Chrome", minutes: 60, warn: true, ...over });
 
 test("limiti: 80 % una volta, poi lo scadere; giorno nuovo riparte", () => {
   const l = limit({});
@@ -140,38 +140,34 @@ test("limiti: già superato alla prima occhiata = solo lo scadere; senza avviso 
 });
 
 const row = (over: Partial<UsageRow>): UsageRow => ({
-  day: "2026-11-13", hour: 9, appKey: "code", site: "", appLabel: "VS Code", category: "coding", seconds: 3600, firstAt: at(9), lastAt: at(10), ...over,
+  day: "2026-11-13", hour: 9, appKey: "code", appLabel: "VS Code", category: "coding", seconds: 3600, firstAt: at(9), lastAt: at(10), ...over,
 });
 
-test("riepilogo: classi, ore, app con i siti dentro, siti, più usati", () => {
+test("riepilogo: classi, ore, app dalla più usata", () => {
   const rows = [
     row({}),
-    row({ hour: 10, appKey: "chrome", appLabel: "Chrome", site: "YouTube", category: "video", seconds: 1800, firstAt: at(10), lastAt: at(10, 30) }),
-    row({ hour: 10, appKey: "chrome", appLabel: "Chrome", site: "GitHub", category: "coding", seconds: 600, firstAt: at(10, 30), lastAt: at(10, 40) }),
+    row({ hour: 10, appKey: "chrome", appLabel: "Chrome", category: "browser", seconds: 1800, firstAt: at(10), lastAt: at(10, 30) }),
+    row({ hour: 10, appKey: "spotify", appLabel: "Spotify", category: "music", seconds: 600, firstAt: at(10, 30), lastAt: at(10, 40) }),
     row({ hour: 11, appKey: "discord", appLabel: "Discord", category: "chat", seconds: 300, firstAt: at(11), lastAt: at(11, 5) }),
   ];
   const ctx = { manual: new Map(), classes: DEFAULT_CLASSES };
   const s = summarize(rows, ctx);
   assert.equal(s.total, 6300);
-  assert.deepEqual(s.byClass, { focus: 4200, fun: 1800, neutral: 300 });
-  assert.deepEqual(s.hours[10], { focus: 600, fun: 1800, neutral: 0 });
-  assert.deepEqual(s.apps.map((a) => [a.key, a.seconds]), [["code", 3600], ["chrome", 2400], ["discord", 300]]);
-  assert.equal(s.apps[1].cls, "fun", "il browser ha la classe del tempo più lungo");
-  assert.deepEqual(s.sites.map((x) => x.label), ["YouTube", "GitHub"]);
-  assert.deepEqual(s.top.map((x) => x.label), ["VS Code", "YouTube", "GitHub", "Discord"]);
+  assert.deepEqual(s.byClass, { focus: 3600, fun: 600, neutral: 2100 });
+  assert.deepEqual(s.hours[10], { focus: 0, fun: 600, neutral: 1800 });
+  assert.deepEqual(s.apps.map((a) => [a.key, a.seconds, a.cls]), [["code", 3600, "focus"], ["chrome", 1800, "neutral"], ["spotify", 600, "fun"], ["discord", 300, "neutral"]]);
   assert.equal(s.firstAt, at(9));
   assert.equal(s.lastAt, at(11, 5));
 
-  const withChoice = summarize(rows, { manual: new Map([["web:youtube", "office" as const]]), classes: DEFAULT_CLASSES });
-  assert.equal(withChoice.byClass.fun, 0, "la scelta a mano vale anche per i giorni salvati");
+  const withChoice = summarize(rows, { manual: new Map([["chrome", "video" as const]]), classes: DEFAULT_CLASSES });
+  assert.equal(withChoice.byClass.fun, 2400, "la scelta a mano vale anche per i giorni salvati");
 
   const totals = dailyTotals([...rows, row({ day: "2026-11-12", seconds: 100 })], ctx);
   assert.equal(totals.get("2026-11-12")!.total, 100);
-  assert.equal(totals.get("2026-11-13")!.byClass.focus, 4200);
+  assert.equal(totals.get("2026-11-13")!.byClass.focus, 3600);
 
   assert.equal(limitUsage(rows, limit({}), ctx.manual), 1800);
-  assert.equal(limitUsage(rows, limit({ kind: "app", target: "chrome" }), ctx.manual), 2400);
-  assert.equal(limitUsage(rows, limit({ kind: "category", target: "coding" }), ctx.manual), 4200);
+  assert.equal(limitUsage(rows, limit({ kind: "category", target: "coding" }), ctx.manual), 3600);
 });
 
 test("durate in italiano", () => {

@@ -58,13 +58,18 @@ con rolldown: scelta delle metriche, storico dei 60 s, forma che entra nella cel
 
 Backend in `src-tauri/src/screen_time/` (registratore) e `src-tauri/src/app_tray.rs` (icona vicino all'orologio,
 avvio col computer), frontend in `src/widgets/screentime/`. Mockup: `docs/mockup/temi/tempo-pc.html`. Prove (dopo il bundle con rolldown):
-`scripts/screentime/siteFromTitle.test.mts` (sito dal titolo, classificazione), `migrations.test.mts` (migrazioni
+`scripts/screentime/classify.test.mts` (classificazione dei segmenti), `migrations.test.mts` (migrazioni
 su SQLite vero) e `logic.test.mts` (ore e mezzanotte,
 focus e serie, limiti, pause e sessioni, settimana, etichette delle date); `cd src-tauri && cargo test --lib screen_time`
 (segmenti).
 
-- **Privacy**: il titolo della finestra esce dal Rust solo verso il frontend, serve a `lib/siteFromTitle.ts` e poi si
-  butta. Nel DB vanno solo app, nome del sito, categoria e secondi. Non loggare titoli e non salvarli in `meta`.
+- **Privacy**: il titolo della finestra esce dal Rust solo verso il frontend, serve a `classifyApp` (es. una chiamata
+  nel browser) e poi si butta. Nel DB vanno solo app, categoria e secondi. Non loggare titoli e non salvarli in `meta`.
+- **Niente siti** (scelta dell'utente): ogni browser (`BROWSER_KEYS` di `lib/classify.ts`) conta come app, sempre
+  categoria "Browser"; un video nel browser senza toccare nulla non conta. Le migrazioni 29 (Opera) e 30 (tutti) hanno
+  unito le righe vecchie con un sito e tolto i limiti per sito. La colonna `site` di `screentime_usage` resta, sempre
+  `''`. Le vecchie scelte di categoria per un sito (`web:…` in `companionAppCategories`) restano ma non contano più.
+  La pagina: App a sinistra, Limiti sopra Pause a destra (`.stp-stack`).
 - **Perché in Rust**: con la finestra nascosta la WebView rallenta i timer JS (fino a uno al minuto). Il thread
   `screentime` campiona ogni 2 s (stesse letture di Pixy, `companion.rs`) e tiene i segmenti; il provider li ritira
   ogni 30 s (`screentime_take`), su `visibilitychange` e prima di uscire (`core/system/beforeQuit.ts`).
@@ -72,11 +77,10 @@ focus e serie, limiti, pause e sessioni, settimana, etichette delle date); `cd s
   `ScreenTimeContext.tsx`): con StrictMode, se solo lo stop passava dalla coda, al Rust arrivavano avvio, avvio, stop e
   il registratore restava spento.
 - Catena di un segmento: `lib/classify.ts` (app con `classifyApp` + correzioni manuali `companionAppCategories`,
-  condivise con Pixy; sito dal titolo solo per i browser e solo se il titolo non è vuoto, mai per Opera (`OPERA_KEYS`:
-  conta solo come Opera, sempre navigazione, scelta dell'utente; la migrazione 29 ha unito le righe vecchie); la
+  condivise con Pixy; i browser sempre "Browser"; la
   dashboard stessa è `__self`; schermata di blocco = via dal PC) → `lib/aggregate.ts` (spezza su ore e mezzanotte; l'inattività conta
   solo in video/musica/chiamate) → `screentime_usage` (`seconds += ?`).
-- Tabelle (migrazione 27): `screentime_usage` (giorno × ora × app × sito), `screentime_sessions` (tempo continuo al PC,
+- Tabelle (migrazione 27): `screentime_usage` (giorno × ora × app), `screentime_sessions` (tempo continuo al PC,
   una pausa ≥ 5 min la chiude), `screentime_limits`. **Non sincronizzate**: sono dati di questo computer (viaggiano solo
   con Esporta/Importa). Si tengono 400 giorni, pulizia una volta al giorno (`screentime_pruned_day` in `meta`).
 - Limiti: avviso all'80 % (facoltativo) e al 100 %, una volta al giorno per limite (`screentime_limit_notices` in
@@ -86,8 +90,7 @@ focus e serie, limiti, pause e sessioni, settimana, etichette delle date); `cd s
 - Pagina (`ScreenTimeDetail.tsx` + `detail/`): `usePeriodData` legge il giorno o la settimana dal DB e per oggi usa le
   righe del provider; si rilegge a ogni `revision` (una categoria cambiata a mano si vede anche nei giorni passati). Il
   giorno di oggi viene da `now` del contesto, non da `Date.now()` nel render (lint `purity`).
-- Su Android, Linux e nel browser il widget mostra solo il messaggio "solo Windows e macOS" e non chiama comandi. Su
-  macOS il titolo è vuoto: niente siti, solo app.
+- Su Android, Linux e nel browser il widget mostra solo il messaggio "solo Windows e macOS" e non chiama comandi. 
 - La X che nasconde la finestra (`closeToTray`, default sì) e "Avvia con il computer" stanno in Impostazioni ›
   Generale › Finestra e avvio (`features/settings/tabs/WindowSection.tsx`); il collegamento col Rust è
   `core/system/useAppWindowBridge.ts`.

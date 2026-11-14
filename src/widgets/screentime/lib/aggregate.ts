@@ -1,11 +1,10 @@
 import type { ClassifiedSegment } from "./classify";
 
-/** Una riga da sommare nel DB: secondi di un'app (e sito) in un'ora di un giorno locale. */
+/** Una riga da sommare nel DB: secondi di un'app in un'ora di un giorno locale. */
 export interface UsageDelta {
   day: string;
   hour: number;
   appKey: string;
-  site: string;
   appLabel: string;
   category: string;
   seconds: number;
@@ -46,7 +45,7 @@ function nextHourStart(ms: number): number {
 }
 
 /**
- * Segmenti contati → righe per ora, spezzati sui cambi d'ora e di giorno. Righe uguali (stessa ora, app e sito)
+ * Segmenti contati → righe per ora, spezzati sui cambi d'ora e di giorno. Righe uguali (stessa ora e app)
  * si sommano. I segmenti "via dal PC" non producono righe. I secondi si arrotondano per riga, alla fine.
  */
 export function segmentsToDeltas(segments: ClassifiedSegment[]): UsageDelta[] {
@@ -58,7 +57,7 @@ export function segmentsToDeltas(segments: ClassifiedSegment[]): UsageDelta[] {
       const to = Math.min(seg.endMs, nextHourStart(from));
       const day = dayKey(from);
       const hour = new Date(from).getHours();
-      const key = `${day}|${hour}|${seg.appKey}|${seg.site}`;
+      const key = `${day}|${hour}|${seg.appKey}`;
       const row = byKey.get(key);
       if (row) {
         row.ms += to - from;
@@ -68,7 +67,7 @@ export function segmentsToDeltas(segments: ClassifiedSegment[]): UsageDelta[] {
         row.category = seg.category;
       } else {
         byKey.set(key, {
-          day, hour, appKey: seg.appKey, site: seg.site, appLabel: seg.appLabel, category: seg.category,
+          day, hour, appKey: seg.appKey, appLabel: seg.appLabel, category: seg.category,
           seconds: 0, firstAt: from, lastAt: to, ms: to - from,
         });
       }

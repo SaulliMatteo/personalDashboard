@@ -38,7 +38,7 @@ export interface ScreenTimeContextValue {
   revision: number;
   /** Salva subito quello che il registratore ha in mano (es. prima di aprire la pagina). */
   flush: () => Promise<void>;
-  /** Categoria scelta a mano per un'app (app_key) o un sito ("web:<sito>"); null = torna automatica. */
+  /** Categoria scelta a mano per un'app (app_key); null = torna automatica. */
   setCategory: (key: string, category: AppCategory | null) => void;
   setFocusClass: (category: AppCategory, cls: FocusClass) => void;
   saveLimit: (limit: Omit<ScreenLimit, "id">) => Promise<void>;

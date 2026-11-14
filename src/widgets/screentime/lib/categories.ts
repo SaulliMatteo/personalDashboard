@@ -16,14 +16,14 @@ export const CATEGORY_LABEL: Record<AppCategory, string> = {
 
 /** Esempi sotto ogni categoria nella scheda "Focus o svago". */
 export const CATEGORY_HINT: Record<AppCategory, string> = {
-  coding: "VS Code, terminale, GitHub",
+  coding: "VS Code, terminale, IntelliJ",
   office: "Word, PDF, posta, Notion",
   design: "Figma, Photoshop, Blender",
   game: "Steam, Riot, Epic e i giochi",
-  chat: "Discord, WhatsApp, ChatGPT",
-  social: "Instagram, TikTok, Reddit, X",
-  video: "YouTube, Netflix, Twitch",
-  music: "Spotify, musica nel browser",
-  browser: "siti non riconosciuti",
+  chat: "Discord, WhatsApp, Teams",
+  social: "app di Instagram, TikTok, Telegram",
+  video: "VLC, Netflix, app di Twitch",
+  music: "Spotify, Apple Music",
+  browser: "Opera, Chrome, Edge, Firefox",
   other: "Esplora file, impostazioni…",
 };

@@ -6,14 +6,14 @@ import type { UsageRow } from "../lib/summary";
 
 /**
  * Tutto l'SQL di Tempo al PC (tabelle della migrazione 27). Solo dati di questo computer: niente sync.
- * Nessun titolo di finestra arriva qui: solo app, sito, categoria e secondi.
+ * Nessun titolo di finestra arriva qui: solo app, categoria e secondi. La colonna `site` resta (le
+ * migrazioni non si toccano) ma è sempre '': i siti non si contano più (migrazioni 29 e 30).
  */
 
 interface UsageDbRow {
   day: string;
   hour: number;
   app_key: string;
-  site: string;
   app_label: string;
   category: string;
   seconds: number;
@@ -25,7 +25,6 @@ const toUsage = (r: UsageDbRow): UsageRow => ({
   day: r.day,
   hour: r.hour,
   appKey: r.app_key,
-  site: r.site,
   appLabel: r.app_label,
   category: r.category,
   seconds: r.seconds,
@@ -33,21 +32,21 @@ const toUsage = (r: UsageDbRow): UsageRow => ({
   lastAt: r.last_at,
 });
 
-/** Somma i secondi nuovi (una riga per giorno, ora, app e sito). */
+/** Somma i secondi nuovi (una riga per giorno, ora e app). */
 export async function addUsage(deltas: UsageDelta[]): Promise<void> {
   if (deltas.length === 0) return;
   const db = await getDatabase();
   for (const d of deltas) {
     await db.execute(
       `INSERT INTO screentime_usage (day, hour, app_key, site, app_label, category, seconds, first_at, last_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       VALUES (?, ?, ?, '', ?, ?, ?, ?, ?)
        ON CONFLICT(day, hour, app_key, site) DO UPDATE SET
          seconds = seconds + excluded.seconds,
          app_label = excluded.app_label,
          category = excluded.category,
          first_at = MIN(first_at, excluded.first_at),
          last_at = MAX(last_at, excluded.last_at)`,
-      [d.day, d.hour, d.appKey, d.site, d.appLabel, d.category, d.seconds, d.firstAt, d.lastAt]
+      [d.day, d.hour, d.appKey, d.appLabel, d.category, d.seconds, d.firstAt, d.lastAt]
     );
   }
 }
@@ -56,7 +55,7 @@ export async function addUsage(deltas: UsageDelta[]): Promise<void> {
 export async function usageBetween(fromDay: string, toDay: string): Promise<UsageRow[]> {
   const db = await getDatabase();
   const rows = await db.select<UsageDbRow[]>(
-    `SELECT day, hour, app_key, site, app_label, category, seconds, first_at, last_at
+    `SELECT day, hour, app_key, app_label, category, seconds, first_at, last_at
      FROM screentime_usage WHERE day >= ? AND day <= ?`,
     [fromDay, toDay]
   );
@@ -124,7 +123,7 @@ export async function listLimits(): Promise<ScreenLimit[]> {
   const db = await getDatabase();
   const rows = await db.select<LimitDbRow[]>(`SELECT id, kind, target, label, minutes, warn FROM screentime_limits ORDER BY created_at, id`);
   return rows
-    .filter((r) => r.kind === "app" || r.kind === "site" || r.kind === "category")
+    .filter((r) => r.kind === "app" || r.kind === "category")
     .map((r) => ({ id: r.id, kind: r.kind as LimitKind, target: r.target, label: r.label, minutes: r.minutes, warn: r.warn !== 0 }));
 }
 

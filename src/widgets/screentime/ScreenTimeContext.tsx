@@ -34,7 +34,7 @@ function untilSameTime(rows: UsageRow[], now: number): number {
 
 /**
  * Tempo al PC: sempre montato (anche col widget fuori dalla dashboard), conta solo su Windows e macOS con
- * `screentimeEnabled`. Ogni 30 s ritira i segmenti dal registratore in Rust, li classifica (app, sito dal titolo,
+ * `screentimeEnabled`. Ogni 30 s ritira i segmenti dal registratore in Rust, li classifica (app e
  * categoria), butta il titolo e somma i secondi nel DB; poi controlla limiti e pausa e aggiorna il menu dell'icona.
  */
 export function ScreenTimeProvider({ children }: { children: ReactNode }) {

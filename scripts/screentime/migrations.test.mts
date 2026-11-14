@@ -52,4 +52,25 @@ test("29: le righe di Opera con un sito si uniscono in Opera, sempre navigazione
   ]);
 });
 
+test("30: tutte le righe con un sito si uniscono nel loro browser; via i limiti per sito", () => {
+  const db = new DatabaseSync(":memory:");
+  migrate(db, 0, 29);
+  const ins = db.prepare("INSERT INTO screentime_usage (day, hour, app_key, site, app_label, category, seconds, first_at, last_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+  ins.run("2026-11-14", 10, "chrome", "", "Chrome", "other", 10, 100, 200);
+  ins.run("2026-11-14", 10, "chrome", "YouTube", "Chrome", "video", 300, 50, 900);
+  ins.run("2026-11-14", 10, "chrome", "GitHub", "Chrome", "coding", 60, 300, 400);
+  ins.run("2026-11-14", 12, "firefox", "Reddit", "Firefox", "social", 40, 7, 8);
+  ins.run("2026-11-14", 10, "code", "", "VS Code", "coding", 500, 1, 2);
+  const lim = db.prepare("INSERT INTO screentime_limits (kind, target, label, minutes, warn, created_at) VALUES (?, ?, ?, 60, 1, 0)");
+  lim.run("site", "YouTube", "YouTube");
+  lim.run("app", "chrome", "Chrome");
+  migrate(db, 30, 30);
+  assert.deepEqual(all(db, "SELECT hour, app_key, site, category, seconds, first_at, last_at FROM screentime_usage ORDER BY app_key, hour"), [
+    { hour: 10, app_key: "chrome", site: "", category: "browser", seconds: 370, first_at: 50, last_at: 900 },
+    { hour: 10, app_key: "code", site: "", category: "coding", seconds: 500, first_at: 1, last_at: 2 },
+    { hour: 12, app_key: "firefox", site: "", category: "browser", seconds: 40, first_at: 7, last_at: 8 },
+  ]);
+  assert.deepEqual(all(db, "SELECT kind, target FROM screentime_limits"), [{ kind: "app", target: "chrome" }]);
+});
+
 console.log(`screentime migrazioni: ${passed} prove passate`);

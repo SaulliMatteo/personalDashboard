@@ -1,6 +1,5 @@
 import { classifyApp, processKey, type AppCategory } from "../../../core/system/appCategory";
 import { appDisplayName } from "./appName";
-import { siteFromTitle } from "./siteFromTitle";
 
 /** Segmento come arriva da `screentime_take` (src-tauri/src/screen_time/segments.rs). */
 export interface RawSegment {
@@ -19,8 +18,6 @@ export interface ClassifiedSegment {
   endMs: number;
   appKey: string;
   appLabel: string;
-  /** Nome del sito ('' fuori dal browser). */
-  site: string;
   /** Categoria automatica (le scelte a mano si applicano leggendo: `effectiveCategory`). */
   category: AppCategory;
   counted: boolean;
@@ -43,50 +40,36 @@ const NO_CHOICES: ReadonlyMap<string, AppCategory> = new Map();
 export function classifySegment(seg: RawSegment): ClassifiedSegment {
   const key = processKey(seg.process);
   if (seg.isSelf) {
-    return { startMs: seg.startMs, endMs: seg.endMs, appKey: SELF_KEY, appLabel: SELF_LABEL, site: "", category: "other", counted: !seg.idle };
+    return { startMs: seg.startMs, endMs: seg.endMs, appKey: SELF_KEY, appLabel: SELF_LABEL, category: "other", counted: !seg.idle };
   }
   const auto = classifyApp(seg.process, seg.description, seg.title, NO_CHOICES);
-  const isBrowser = auto.category === "browser" || BROWSER_KEYS.has(key);
-  let site = "";
-  let category = auto.category;
-  // Opera conta solo come Opera: niente sito dal titolo e sempre navigazione (scelta dell'utente).
-  if (OPERA_KEYS.has(key)) category = "browser";
-  else if (isBrowser && seg.title.trim() !== "") {
-    const match = siteFromTitle(seg.title, key);
-    site = match.site;
-    category = match.category ?? auto.category;
-  }
+  // Un browser conta come app, sempre "Browser": i siti non si contano (scelta dell'utente). Il titolo serve solo a
+  // classifyApp (es. una chiamata nel browser), e non esce da qui.
+  const category = BROWSER_KEYS.has(key) ? "browser" : auto.category;
   const counted = !AWAY_KEYS.has(key) && (!seg.idle || countsWhileIdle(category, auto.appId));
   return {
     startMs: seg.startMs,
     endMs: seg.endMs,
     appKey: key || "sconosciuta",
     appLabel: appDisplayName(key, seg.description),
-    site,
     category,
     counted,
   };
 }
 
-/** Opera e Opera GX: contano come app, senza i siti (anche la migrazione 29 li ha uniti così). */
-export const OPERA_KEYS: ReadonlySet<string> = new Set(["opera", "opera_gx", "opera gx"]);
-
-/** I browser noti (anche quando il titolo ha già fatto cambiare categoria all'app, es. YouTube = video). */
-const BROWSER_KEYS = new Set([
+/**
+ * I browser noti: contano sempre come "Browser", anche quando per Pixy il titolo ne cambia la categoria (es. YouTube
+ * = video). Le migrazioni 29 e 30 hanno unito così le righe vecchie con i siti.
+ */
+export const BROWSER_KEYS: ReadonlySet<string> = new Set([
   "chrome", "msedge", "firefox", "opera", "opera_gx", "opera gx", "brave", "vivaldi", "arc", "zen", "librewolf", "waterfox",
   "chromium", "safari", "google chrome", "microsoft edge", "brave browser",
 ]);
 
-/** Chiave delle scelte manuali per un sito, nella stessa impostazione delle app (`companionAppCategories`). */
-export function siteChoiceKey(site: string): string {
-  return `web:${site.toLowerCase().replace(/[;=]/g, "")}`;
-}
-
 /**
- * Categoria di una riga salvata, con le scelte a mano: per i siti vale quella del sito, per le app quella dell'app
- * (la stessa che usa Pixy). Così cambiare categoria vale anche per i giorni passati.
+ * Categoria di una riga salvata, con la scelta a mano dell'app (la stessa che usa Pixy). Così cambiare categoria vale
+ * anche per i giorni passati.
  */
-export function effectiveCategory(row: { appKey: string; site: string; category: string }, manual: ReadonlyMap<string, AppCategory>): AppCategory {
-  const chosen = row.site ? manual.get(siteChoiceKey(row.site)) : manual.get(row.appKey);
-  return chosen ?? (row.category as AppCategory);
+export function effectiveCategory(row: { appKey: string; category: string }, manual: ReadonlyMap<string, AppCategory>): AppCategory {
+  return manual.get(row.appKey) ?? (row.category as AppCategory);
 }

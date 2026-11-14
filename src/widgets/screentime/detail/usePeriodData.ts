@@ -28,19 +28,16 @@ export interface PeriodData {
   history: DayTotal[];
   /** Primo giorno con dati: non si torna più indietro di così. */
   firstDay: string | null;
-  /** App e siti usati negli ultimi due mesi, dal più usato: le scelte del dialog dei limiti. */
+  /** App usate negli ultimi due mesi, dal più usato: le scelte del dialog dei limiti. */
   recentApps: Array<{ target: string; label: string }>;
-  recentSites: Array<{ target: string; label: string }>;
 }
 
-function recent(rows: UsageRow[], pick: (r: UsageRow) => [string, string] | null) {
+function recentApps(rows: UsageRow[]) {
   const seconds = new Map<string, { target: string; label: string; seconds: number }>();
   for (const r of rows) {
-    const p = pick(r);
-    if (!p) continue;
-    const cur = seconds.get(p[0]) ?? { target: p[0], label: p[1], seconds: 0 };
+    const cur = seconds.get(r.appKey) ?? { target: r.appKey, label: r.appLabel, seconds: 0 };
     cur.seconds += r.seconds;
-    seconds.set(p[0], cur);
+    seconds.set(r.appKey, cur);
   }
   return [...seconds.values()].sort((a, b) => b.seconds - a.seconds).map(({ target, label }) => ({ target, label }));
 }
@@ -103,8 +100,7 @@ export function usePeriodData(mode: PeriodMode, day: string, today: string): Per
       week,
       history,
       firstDay: ready?.firstDay ?? null,
-      recentApps: recent(historyRows, (r) => [r.appKey, r.appLabel]),
-      recentSites: recent(historyRows, (r) => (r.site ? [r.site, r.site] : null)),
+      recentApps: recentApps(historyRows),
     };
   }, [stored, key, todayRows, today, from, to, classify, day, mode]);
 }

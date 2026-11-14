@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { APP_CATEGORIES, type AppCategory } from "../../../core/system/appCategory";
 import { CATEGORY_LABEL } from "../lib/categories";
-import { FOCUS_CLASSES } from "../lib/focus";
 import { formatShort } from "../lib/format";
 import type { RankItem } from "../lib/summary";
 
@@ -13,17 +12,14 @@ interface RankListProps {
   manualCategory: (item: RankItem) => AppCategory | undefined;
   onCategory: (item: RankItem, category: AppCategory | null) => void;
   onLimit: (item: RankItem) => void;
-  /** Solo per i browser nella lista delle app. */
-  onShowSites?: (item: RankItem) => void;
-  hasSites?: (item: RankItem) => boolean;
   empty: string;
 }
 
 /**
- * Classifica di app o siti (docs/mockup/temi/tempo-pc.html, pagina): nome, categoria, tempo, barra colorata per classe
- * (un browser divisa tra i suoi siti) e il menu ⋯ per cambiare categoria o mettere un limite.
+ * Classifica delle app (docs/mockup/temi/tempo-pc.html, pagina): nome, categoria, tempo, barra col colore della classe
+ * e il menu ⋯ per cambiare categoria o mettere un limite.
  */
-function RankList({ items, max = 8, manualCategory, onCategory, onLimit, onShowSites, hasSites, empty }: RankListProps) {
+function RankList({ items, max = 8, manualCategory, onCategory, onLimit, empty }: RankListProps) {
   const [open, setOpen] = useState<string | null>(null);
   const [all, setAll] = useState(false);
   if (items.length === 0) return <p className="stp-fine">{empty}</p>;
@@ -50,11 +46,7 @@ function RankList({ items, max = 8, manualCategory, onCategory, onLimit, onShowS
               ⋯
             </button>
             <div className="stp-rank-bar">
-              {FOCUS_CLASSES.map((c) =>
-                item.byClass[c] > 0 ? (
-                  <span key={c} className={`st-seg is-${c}`} style={{ "--v": `${(item.byClass[c] / top) * 100}%` } as CSSProperties} />
-                ) : null
-              )}
+              <span className={`st-seg is-${item.cls}`} style={{ "--v": `${(item.seconds / top) * 100}%` } as CSSProperties} />
             </div>
             {open === item.key && (
               <RowMenu
@@ -63,7 +55,6 @@ function RankList({ items, max = 8, manualCategory, onCategory, onLimit, onShowS
                 onClose={() => setOpen(null)}
                 onCategory={(c) => onCategory(item, c)}
                 onLimit={() => onLimit(item)}
-                onShowSites={onShowSites && hasSites?.(item) ? () => onShowSites(item) : undefined}
               />
             )}
           </li>
@@ -84,10 +75,9 @@ interface RowMenuProps {
   onClose: () => void;
   onCategory: (category: AppCategory | null) => void;
   onLimit: () => void;
-  onShowSites?: () => void;
 }
 
-function RowMenu({ item, manual, onClose, onCategory, onLimit, onShowSites }: RowMenuProps) {
+function RowMenu({ item, manual, onClose, onCategory, onLimit }: RowMenuProps) {
   const [picking, setPicking] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
   const onCloseRef = useRef(onClose);
@@ -149,21 +139,6 @@ function RowMenu({ item, manual, onClose, onCategory, onLimit, onShowSites }: Ro
           >
             Imposta un limite…
           </button>
-          {onShowSites && (
-            <>
-              <hr />
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  onClose();
-                  onShowSites();
-                }}
-              >
-                Vedi i siti
-              </button>
-            </>
-          )}
         </>
       )}
     </div>
