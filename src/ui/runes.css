@@ -1,0 +1,66 @@
+/* Elenco "Nome: [valore]" delle rune (tema Ombra, Temi Vetro e Ombra.html `.runes`): scheda Rune dello Studio e card
+   nella barra laterale. I valori tra parentesi quadre brillano piano, a turno; fermi con le animazioni spente. */
+.runes {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 10px;
+  align-items: baseline;
+  margin: 0;
+  font-size: 12px;
+}
+
+.runes dt {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.runes dd {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-flavor);
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+:root[data-animations="on"] .runes dd {
+  animation: runes-shimmer 5s ease-in-out infinite;
+}
+
+:root[data-animations="on"] .runes dd:nth-of-type(2n) {
+  animation-delay: -2.5s;
+}
+
+.runes dd::before {
+  content: "[";
+  color: var(--text-muted);
+}
+
+.runes dd::after {
+  content: "]";
+  color: var(--text-muted);
+}
+
+.runes dd.plain::before,
+.runes dd.plain::after {
+  content: none;
+}
+
+.runes .br {
+  color: var(--text-muted);
+  font-style: normal;
+}
+
+@keyframes runes-shimmer {
+  50% {
+    text-shadow: 0 0 8px var(--rune-glow);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .runes dd {
+    animation: none !important;
+  }
+}

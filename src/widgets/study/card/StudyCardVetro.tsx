@@ -6,6 +6,7 @@ import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
 import StudyWide from "./StudyWide";
+import { useProgression } from "../progression/useProgression";
 import { useStudyCard, type StudyCardData } from "./useStudyCard";
 import "./StudyCardVetro.css";
 
@@ -19,11 +20,17 @@ export function StudyCardVetro({ size }: { size: SizeKey }) {
   return <StudyCardLayout size={size} dial={GlassDial} />;
 }
 
+/** Ombra: al posto del tempo di oggi, i frammenti di oggi sull'obiettivo ("155 / 240 frammenti"). */
 export function StudyCardOmbra({ size }: { size: SizeKey }) {
-  return <StudyCardLayout size={size} dial={CoreDial} />;
+  const progression = useProgression();
+  const fragments = progression
+    ? `${progression.todayFragments}${progression.todayGoalFragments > 0 ? ` / ${progression.todayGoalFragments}` : ""} frammenti`
+    : undefined;
+  return <StudyCardLayout size={size} dial={CoreDial} todayAs={fragments} />;
 }
 
-function StudyCardLayout({ size, dial }: { size: SizeKey; dial: ComponentType<DialProps> }) {
+/** `todayAs`: cosa scrivere al posto del tempo di oggi nell'intestazione delle materie. */
+function StudyCardLayout({ size, dial, todayAs }: { size: SizeKey; dial: ComponentType<DialProps>; todayAs?: string }) {
   const data = useStudyCard({ withWeek: size === "XL" });
 
   if (size === "S") {
@@ -71,7 +78,7 @@ function StudyCardLayout({ size, dial }: { size: SizeKey; dial: ComponentType<Di
   const body = (
     <div className="sv-body">
       {timer}
-      <Subjects data={data} max={4} withCycles={size === "L"} />
+      <Subjects data={data} max={4} withCycles={size === "L"} todayAs={todayAs} />
     </div>
   );
 
@@ -124,16 +131,20 @@ function Cycles({ data }: { data: StudyCardData }) {
   );
 }
 
-function Subjects({ data, max, withCycles }: { data: StudyCardData; max: number; withCycles: boolean }) {
+function Subjects({ data, max, withCycles, todayAs }: { data: StudyCardData; max: number; withCycles: boolean; todayAs?: string }) {
   const rows = data.fitRows(max);
   return (
     <div className="sv-subjects">
       <div className="sv-subjects-head">
         <span>Materie di {data.todayName}</span>
-        <b>
-          {data.todayText}
-          {data.goalText && <span className="sv-muted"> / {data.goalText}</span>}
-        </b>
+        {todayAs ? (
+          <b>{todayAs}</b>
+        ) : (
+          <b>
+            {data.todayText}
+            {data.goalText && <span className="sv-muted"> / {data.goalText}</span>}
+          </b>
+        )}
       </div>
       {rows.length === 0 && <p className="sv-empty">{data.emptyText}</p>}
       {rows.map((row) => (

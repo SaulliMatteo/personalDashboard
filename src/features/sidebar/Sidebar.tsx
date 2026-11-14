@@ -6,6 +6,7 @@ import { useNav } from "../../core/nav/useNav";
 import { useSettings } from "../../core/settings/useSettings";
 import { perMode, useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
 import ProgressBar from "../../ui/ProgressBar";
+import "../../ui/runes.css";
 
 /** Simbolo accanto al titolo dell'app, uno per tema (mockup). */
 const LOGOS: ThemeVariants<React.JSX.Element | null> = {
@@ -63,8 +64,8 @@ const LOGOS: ThemeVariants<React.JSX.Element | null> = {
   }),
 };
 
-/** La card "Obiettivo di oggi" c'è nei mockup di Notte e Vetro (in Ombra la sidebar avrà le rune). */
-const SHOW_GOAL: ThemeVariants<boolean> = { notte: true, opaco: false, quaderno: false, fosforo: false, vetro: true, ombra: false };
+/** La card in fondo alla barra laterale: "Obiettivo di oggi" in Notte e Vetro, le rune in Ombra (mockup). */
+const SIDE_CARD: ThemeVariants<"goal" | "runes" | null> = { notte: "goal", opaco: null, quaderno: null, fosforo: null, vetro: "goal", ombra: "runes" };
 
 /** "2h 05m". */
 function hoursMinutes(seconds: number): string {
@@ -91,6 +92,38 @@ function GoalCard({ goalSeconds }: { goalSeconds: number }) {
   );
 }
 
+/** Ombra: le rune della progressione dello Studio (dal bus delle attività); apre la scheda Rune. */
+function RunesCard() {
+  const { studyProgress: p } = useActivityStatus();
+  const { settings } = useSettings();
+  const { openWidgetDetail } = useNav();
+  if (!p) return null;
+  return (
+    <button type="button" className="sidebar-goal sidebar-runes" onClick={() => openWidgetDetail("study", "runes")} aria-label={`Le tue rune: livello ${p.levelText}. ${p.nextText}`}>
+      <dl className="runes">
+        <dt>Nome:</dt>
+        <dd>{settings.userName.trim() || "Tu"}</dd>
+        <dt>Livello:</dt>
+        <dd>{p.levelText}</dd>
+        <dt>Serie:</dt>
+        <dd>{p.gradeText || "nessuna"}</dd>
+        <dt>Nuclei:</dt>
+        <dd>{p.fullCores}/7</dd>
+        {p.coreCap > 0 && (
+          <>
+            <dt>Frammenti:</dt>
+            <dd>
+              {p.coreFill}/{p.coreCap}
+            </dd>
+          </>
+        )}
+      </dl>
+      {p.coreCap > 0 && <ProgressBar value={p.coreFill / p.coreCap} label="Riempimento del nucleo" />}
+      <span className="sidebar-runes-next">{p.nextText}</span>
+    </button>
+  );
+}
+
 /** `extraNav`: voci in più sotto "Dashboard", passate da app/ (es. la Stanza comune dei Gruppi). */
 function Sidebar({ extraNav }: { extraNav?: ReactNode }) {
   const { view, goToDashboard, openSettings } = useNav();
@@ -98,7 +131,8 @@ function Sidebar({ extraNav }: { extraNav?: ReactNode }) {
   const logo = useThemeVariant(LOGOS);
   // L'obiettivo di oggi lo calcola lo Studio (materie di oggi o impostazione generale): 0 = nessun obiettivo.
   const { studyTodayGoalSeconds } = useActivityStatus();
-  const showGoal = useThemeVariant(SHOW_GOAL) && studyTodayGoalSeconds > 0;
+  const sideCard = useThemeVariant(SIDE_CARD);
+  const showGoal = sideCard === "goal" && studyTodayGoalSeconds > 0;
 
   const item = (label: string, active: boolean, onClick: () => void) => (
     <button
@@ -128,6 +162,7 @@ function Sidebar({ extraNav }: { extraNav?: ReactNode }) {
 
       <div className="sidebar-bottom">
         {showGoal && <GoalCard goalSeconds={studyTodayGoalSeconds} />}
+        {sideCard === "runes" && <RunesCard />}
         <button
           type="button"
           className={`nav-item setting-button${view.type === "settings" ? " active" : ""}`}

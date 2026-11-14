@@ -1,0 +1,269 @@
+/* Scheda Rune (solo Ombra, Temi Vetro e Ombra.html `runeTab`). L'elenco "Nome: [valore]" è in ui/runes.css. */
+
+.study-runes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.study-runes-row {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 12px;
+}
+
+.study-runes-row--top {
+  grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+}
+
+@media (max-width: 760px) {
+  .study-runes-row,
+  .study-runes-row--top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.study-runes-panel {
+  position: relative;
+  min-width: 0;
+  padding: 16px 18px;
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--card-gloss), var(--panel-bg);
+  box-shadow: var(--sx, 0px) var(--sy, 12px) 30px var(--fx-shadow);
+}
+
+.study-runes-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.study-runes-title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 14px;
+  font-weight: var(--title-weight);
+  letter-spacing: 0.02em;
+}
+
+:root[data-mode="giorno"] .study-runes-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+:root[data-mode="giorno"] .study-runes-title::before {
+  content: "✦";
+  font-size: 11px;
+  color: var(--accent-2);
+  text-shadow: 0 0 8px var(--flame-glow);
+}
+
+.study-runes-sub {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.study-runes-head .study-runes-sub {
+  margin: 0;
+  text-align: right;
+}
+
+.study-runes-line {
+  display: block;
+}
+
+.study-runes-list {
+  margin-top: 12px;
+  row-gap: 6px;
+  font-size: 13px;
+}
+
+.study-runes-trait + .study-runes-trait {
+  margin-left: 6px;
+}
+
+.study-runes-rule {
+  height: 1px;
+  margin: 14px 0 0;
+  border: 0;
+  background: var(--divider);
+}
+
+/* ---------- Nuclei ---------- */
+.study-runes-cores {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+
+.study-runes-core-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.study-runes-core {
+  width: 100%;
+  max-width: 74px;
+  height: auto;
+  overflow: visible;
+}
+
+.study-runes-core-track {
+  fill: none;
+  stroke: var(--ring-track);
+  stroke-width: 2;
+}
+
+.study-runes-core-ink {
+  fill: none;
+  stroke: var(--core-ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.study-runes-core-glow {
+  fill: var(--core-glow);
+}
+
+.study-runes-core-disc {
+  fill: var(--core-fill);
+  stroke: var(--core-glow);
+}
+
+.study-runes-core-empty {
+  fill: none;
+  stroke: var(--divider);
+  stroke-dasharray: 2 3;
+}
+
+/* ---------- Livelli ---------- */
+.study-runes-ladder {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+@media (max-width: 760px) {
+  .study-runes-ladder {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.study-runes-step {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 74px;
+  padding: 10px 8px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-item);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.study-runes-step b {
+  font-family: var(--font-flavor);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.study-runes-step.is-done b,
+.study-runes-step.is-on b {
+  color: var(--text-primary);
+}
+
+.study-runes-step.is-on {
+  border-color: var(--core-ink);
+  background: var(--accent-soft);
+  box-shadow: 0 0 16px var(--rune-glow);
+}
+
+/* ---------- Prova ---------- */
+.study-runes-trial {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.study-runes-trial .study-runes-sub {
+  margin-top: 4px;
+}
+
+.study-runes-days {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.study-runes-day {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--text-muted);
+  border-radius: 50%;
+}
+
+.study-runes-day.is-hit {
+  border-color: var(--core-ink);
+  background: var(--core-fill);
+  box-shadow: 0 0 8px var(--core-glow);
+}
+
+.study-runes-day.is-miss {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 35%, transparent);
+}
+
+.study-runes-day.is-today {
+  border-color: var(--core-ink);
+}
+
+.study-runes-day.is-future {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+/* ---------- Serie ---------- */
+.study-runes-grades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.study-runes-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-item);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+:root[data-mode="giorno"] .study-runes-chip {
+  border-radius: 999px;
+}
+
+.study-runes-chip.is-on {
+  border-color: var(--core-ink);
+  color: var(--text-primary);
+  box-shadow: 0 0 12px var(--rune-glow);
+}

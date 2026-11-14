@@ -35,6 +35,18 @@ export interface StudyTimerSnapshot {
   changedAt: number;
 }
 
+/** Riassunto della progressione dello Studio (widgets/study/lib/progression.ts) per la card delle rune (Ombra). */
+export interface StudyProgressSummary {
+  /** Livello e grado della Serie già scritti in numeri romani ("III"; grado "" = nessuna serie). */
+  levelText: string;
+  gradeText: string;
+  fullCores: number;
+  coreFill: number;
+  coreCap: number;
+  /** Cosa viene dopo, già scritto ("Prova del livello III tra 520 frammenti"). */
+  nextText: string;
+}
+
 export interface ActivityStatus {
   /** Timer di Studio in fase di lavoro E in corsa. */
   studying: boolean;
@@ -62,6 +74,8 @@ export interface ActivityStatus {
   studyTodayGoalSeconds: number;
   /** Timer di Studio avviato (anche in pausa); null = fermo. */
   studyTimer: StudyTimerSnapshot | null;
+  /** Progressione dello Studio; null finché non è calcolata. */
+  studyProgress: StudyProgressSummary | null;
 }
 
 export type ActivityEvent =
@@ -87,6 +101,7 @@ const IDLE: ActivityStatus = {
   studyTodaySpans: [],
   studyTodayGoalSeconds: 0,
   studyTimer: null,
+  studyProgress: null,
 };
 
 let status: ActivityStatus = IDLE;

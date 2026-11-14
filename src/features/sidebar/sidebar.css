@@ -230,3 +230,34 @@
 :root[data-theme="fosforo"] .setting-button svg {
   display: none;
 }
+
+/* ---------- Ombra: la card delle rune, apre la scheda Rune dello Studio ---------- */
+.sidebar-runes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sidebar-runes:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.sidebar-runes .runes {
+  gap: 3px 8px;
+  font-size: 11px;
+}
+
+.sidebar-runes .runes dd {
+  font-size: 13px;
+}
+
+.sidebar-runes-next {
+  font-size: max(11px, var(--fs-min));
+  color: var(--text-muted);
+}

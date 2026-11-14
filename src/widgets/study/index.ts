@@ -2,7 +2,7 @@ import type { WidgetDefinition } from "../../core/widgets/types";
 import { SIZE_S, SIZE_W, SIZE_M, SIZE_L, SIZE_XL } from "../../core/widgets/sizes";
 import StudyWidget from "./StudyWidget";
 import StudyDetail from "./StudyDetail";
-import { TimerProvider } from "./timer/TimerContext";
+import StudyProviders from "./StudyProviders";
 import StudyMini from "./mini/StudyMini";
 import RoomTimerControls from "./room/RoomTimerControls";
 import { inviteChatAction } from "./chat";
@@ -23,6 +23,6 @@ export const studyWidget: WidgetDefinition = {
   roomControls: RoomTimerControls,
   // nella chat degli amici: invito a studiare insieme
   chatActions: [inviteChatAction],
-  // Il timer deve continuare a girare anche se il widget non è in dashboard.
-  provider: TimerProvider,
+  // Il timer deve continuare a girare anche se il widget non è in dashboard (e con lui la progressione).
+  provider: StudyProviders,
 };

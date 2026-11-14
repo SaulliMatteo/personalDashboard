@@ -15,7 +15,8 @@ export type AppView =
   /** Stanza comune dei Gruppi (src/social/room/). */
   | { type: "room" }
   | { type: "settings"; section: string }
-  | { type: "widgetDetail"; widgetId: string };
+  /** `tab`: la scheda della pagina da aprire, se la pagina ne ha (es. "runes" dello Studio); assente = la prima. */
+  | { type: "widgetDetail"; widgetId: string; tab?: string };
 
 export interface NavContextValue {
   view: AppView;
@@ -24,7 +25,7 @@ export interface NavContextValue {
   openRoom: () => void;
   /** Apre la pagina Impostazioni su una sezione (default "appearance"; per un widget "widget:<id>"). */
   openSettings: (section?: string) => void;
-  openWidgetDetail: (widgetId: string) => void;
+  openWidgetDetail: (widgetId: string, tab?: string) => void;
   /** Apre ciò di cui parla una notifica (tocco su Android, clic nella campanella). */
   openNotification: (open: NotificationOpen) => void;
 }

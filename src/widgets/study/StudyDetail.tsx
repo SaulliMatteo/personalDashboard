@@ -1,25 +1,47 @@
 import { useRef, useState, type KeyboardEvent } from "react";
 import "./StudyDetail.css";
 import { useNav } from "../../core/nav/useNav";
+import { useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
 import BackButton from "../../ui/BackButton";
 import { useTimer } from "./timer/useTimer";
 import TimerTab from "./detail/TimerTab";
 import ReportTab from "./detail/ReportTab";
 import PerspectiveTab from "./detail/PerspectiveTab";
+import RunesTab from "./detail/RunesTab";
 
-type DetailTab = "timer" | "report" | "perspective";
+type DetailTab = "timer" | "report" | "perspective" | "runes";
 
-const TABS: { id: DetailTab; label: string }[] = [
+const ALL_TABS: { id: DetailTab; label: string }[] = [
   { id: "timer", label: "Timer" },
   { id: "report", label: "Report" },
   { id: "perspective", label: "Prospettiva" },
+  { id: "runes", label: "Rune" },
 ];
+
+/** La scheda Rune (la progressione) c'è solo in Ombra (Temi Vetro e Ombra.html). */
+const SHOW_RUNES: ThemeVariants<boolean> = { notte: false, opaco: false, quaderno: false, fosforo: false, vetro: false, ombra: true };
+
+function isDetailTab(value: string | undefined): value is DetailTab {
+  return ALL_TABS.some((t) => t.id === value);
+}
 
 /** Pagina a schermo intero del widget Studio: una scheda per vista, scelta dal selettore nell'intestazione. */
 function StudyDetail() {
   const { ready } = useTimer();
-  const { goToDashboard } = useNav();
-  const [tab, setTab] = useState<DetailTab>("timer");
+  const { view, goToDashboard } = useNav();
+  const showRunes = useThemeVariant(SHOW_RUNES);
+  const TABS = showRunes ? ALL_TABS : ALL_TABS.filter((t) => t.id !== "runes");
+  // la barra laterale di Ombra apre direttamente le Rune (view.tab)
+  const requested = view.type === "widgetDetail" ? view.tab : undefined;
+  const [chosen, setTab] = useState<DetailTab>(isDetailTab(requested) ? requested : "timer");
+  // pagina già aperta e una nuova richiesta (la card delle rune toccata dallo Studio): si segue la richiesta
+  const [lastView, setLastView] = useState(view);
+  if (view !== lastView) {
+    setLastView(view);
+    if (isDetailTab(requested)) setTab(requested);
+  }
+  // cambiando tema la scheda Rune sparisce: si torna al Timer
+  const tab = TABS.some((t) => t.id === chosen) ? chosen : "timer";
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Frecce sinistra/destra: spostano la scheda scelta (e il focus), in giro.
@@ -72,6 +94,8 @@ function StudyDetail() {
         <TimerTab />
       ) : tab === "report" ? (
         <ReportTab />
+      ) : tab === "runes" ? (
+        <RunesTab />
       ) : (
         <PerspectiveTab />
       )}

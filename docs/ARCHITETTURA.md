@@ -129,16 +129,29 @@ src/
 ```
 study/
 ├─ index.ts                  WidgetDefinition (nome, taglie, provider, pagina di dettaglio)
+├─ StudyProviders.tsx        il provider del widget: TimerProvider e, dentro, ProgressionProvider
 ├─ StudyWidget.tsx/.css      widget in dashboard (1x1 anello aperto, 2x2 con elenco materie)
-├─ StudyDetail.tsx/.css      pagina a schermo intero: scheda Timer e scheda Report
-├─ detail/                   TimerTab, SubjectList, ReportTab (+ css accanto)
+├─ StudyDetail.tsx/.css      pagina a schermo intero: schede Timer, Report, Prospettiva e (solo Ombra) Rune
+├─ detail/                   TimerTab, SubjectList, ReportTab, PerspectiveTab, RunesTab (+ css accanto)
+├─ progression/              ProgressionProvider (carica le sessioni, calcola, salva il livello, pubblica
+│                            `studyProgress` sul bus per la barra laterale) e useProgression
 ├─ components/               TimerRing, ModeToggle, SubjectSettingsPopup, NumberField
 ├─ timer/                    TimerContext (stato e logica), useTimerView (come si DISEGNA il timer),
 │                            alerts.ts (suono di fine fase), autoStop.ts (quando fermarsi da solo:
 │                            inattività o app che distrae, puro con orologio iniettato)
 ├─ data/studyRepository.ts   tutte le query SQL di Studio
-└─ lib/                      format.ts, colors.ts, report.ts (funzioni pure)
+└─ lib/                      format.ts, colors.ts, report.ts, schedule.ts, progression.ts (funzioni pure)
 ```
+
+Progressione (`lib/progression.ts`, regole in cima al file, prove in `scripts/studio/progression.test.mts`): 1 minuto
+= 1 frammento, il nucleo n contiene n×1000 frammenti, livelli I–VII (dal III serve anche la Prova: 5 giorni su 7
+sull'obiettivo, esito fissato appena è certo), Serie coi gradi I–VII e tratti sugli ultimi 30 giorni. Si calcola in
+ogni tema ma si vede solo in Ombra (scheda Rune, card delle rune nella barra laterale, frammenti di oggi sulla card).
+Le Prove non si salvano: si ricalcolano dalle sessioni (sincronizzate), con gli obiettivi attuali delle materie.
+Si salva solo il livello più alto raggiunto, nell'impostazione sincronizzata `studyLevelReached`, così il livello non
+scende mai, nemmeno se cambiano gli obiettivi. Scelta fatta con l'utente al posto di una tabella `study_trials`:
+un tipo nuovo in `sync_records` avrebbe fatto rifiutare a Supabase ogni blocco del sync finché non si applicava la
+migrazione.
 
 ### Il widget YouTube (`widgets/youtube/`)
 

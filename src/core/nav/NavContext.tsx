@@ -25,7 +25,7 @@ export function NavProvider({ children }: { children: ReactNode }) {
       goToCatalog: () => setView({ type: "catalog" }),
       openRoom: () => setView({ type: "room" }),
       openSettings: (section = "appearance") => setView({ type: "settings", section }),
-      openWidgetDetail: (widgetId) => setView({ type: "widgetDetail", widgetId }),
+      openWidgetDetail: (widgetId, tab) => setView(tab ? { type: "widgetDetail", widgetId, tab } : { type: "widgetDetail", widgetId }),
       openNotification: (open) => showNotification(open, setView),
     }),
     [view]

@@ -128,6 +128,12 @@ export const DEFAULT_SETTINGS = {
   studySleepHours: 8,
   studyBreakColor: "#f5a35c",
   studyShowSubjectsInWidget: true,
+  /**
+   * Livello più alto raggiunto nella progressione (1–7, widgets/study/lib/progression.ts): il livello non scende mai.
+   * Viaggia col sync come le altre impostazioni; le Prove si ricalcolano dalle sessioni. Lo scrive lo Studio da solo:
+   * nessuna voce in SETTING_DEFS (il valore si ripulisce in progression.ts).
+   */
+  studyLevelReached: 1,
 
   // ---- Widget: YouTube ----
   youtubeCountAsStudy: false,

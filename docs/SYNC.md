@@ -26,6 +26,9 @@ zero), `round.test.mts` (due dispositivi su SQLite vero e un server finto), `fil
   timer dello Studio; le Note passano da `widgets/notes/sync/NotesSyncProvider.tsx`, che toglie le cartelle su disco
   delle note cancellate, ricalcola segni e copia su disco e poi avvisa pagina, card e mini con `lib/remoteChanges.ts`).
 - I tipi accesi sono `SYNC_KINDS` in `syncSetup.ts`: uno nuovo entra nel registro da solo al primo giro.
+- Un tipo nuovo va prima aggiunto al check `sync_records_kind` su Supabase: `sync_push` scrive un blocco intero in una
+  volta, e un tipo sconosciuto fa rifiutare tutto il blocco, quindi il sync di ogni cosa si ferma finché la
+  migrazione non è applicata. Per dati piccoli si può usare un'impostazione (come `studyLevelReached` dello Studio).
 - I totali dei Gruppi contano solo le sessioni con `origin_device` NULL (fatte qui).
 
 ## File
