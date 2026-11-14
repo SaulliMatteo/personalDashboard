@@ -90,6 +90,18 @@ test("inattivo: conta solo video, musica e chiamate", () => {
   assert.equal(classifySegment(seg({ idle: true, process: "C:\\x\\chrome.exe", title: "Articolo - Wikipedia - Google Chrome" })).counted, false);
 });
 
+test("Opera conta solo come Opera, sempre navigazione", () => {
+  for (const process of ["C:\\x\\opera.exe", "C:\\x\\opera_gx.exe"]) {
+    const yt = classifySegment(seg({ process, description: "Opera Internet Browser", title: "Video - YouTube - Opera" }));
+    assert.equal(yt.site, "");
+    assert.equal(yt.category, "browser");
+    assert.match(yt.appLabel, /^Opera/);
+    assert.equal(yt.counted, true);
+  }
+  // senza titolo come prima: niente sito
+  assert.equal(classifySegment(seg({ process: "C:\\x\\opera.exe", description: "Opera Internet Browser", title: "" })).site, "");
+});
+
 test("scelte a mano: per il sito vale quella del sito, per l'app quella dell'app", () => {
   const manual = new Map([
     ["chrome", "office" as const],

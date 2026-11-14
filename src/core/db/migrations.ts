@@ -665,4 +665,22 @@ export const MIGRATIONS: Migration[] = [
        )`,
     ],
   },
+  {
+    version: 29,
+    description: "Tempo al PC: Opera conta solo come Opera, senza i siti",
+    statements: [
+      // Le righe di Opera con un sito si sommano in quella senza sito della stessa ora (widgets/screentime/lib/classify.ts).
+      `INSERT INTO screentime_usage (day, hour, app_key, site, app_label, category, seconds, first_at, last_at)
+       SELECT day, hour, app_key, '', MAX(app_label), 'browser', SUM(seconds), MIN(first_at), MAX(last_at)
+       FROM screentime_usage
+       WHERE app_key IN ('opera', 'opera_gx', 'opera gx') AND site <> ''
+       GROUP BY day, hour, app_key
+       ON CONFLICT(day, hour, app_key, site) DO UPDATE SET
+         seconds = seconds + excluded.seconds,
+         first_at = MIN(first_at, excluded.first_at),
+         last_at = MAX(last_at, excluded.last_at)`,
+      `DELETE FROM screentime_usage WHERE app_key IN ('opera', 'opera_gx', 'opera gx') AND site <> ''`,
+      `UPDATE screentime_usage SET category = 'browser' WHERE app_key IN ('opera', 'opera_gx', 'opera gx')`,
+    ],
+  },
 ];

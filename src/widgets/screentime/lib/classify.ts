@@ -49,7 +49,9 @@ export function classifySegment(seg: RawSegment): ClassifiedSegment {
   const isBrowser = auto.category === "browser" || BROWSER_KEYS.has(key);
   let site = "";
   let category = auto.category;
-  if (isBrowser && seg.title.trim() !== "") {
+  // Opera conta solo come Opera: niente sito dal titolo e sempre navigazione (scelta dell'utente).
+  if (OPERA_KEYS.has(key)) category = "browser";
+  else if (isBrowser && seg.title.trim() !== "") {
     const match = siteFromTitle(seg.title, key);
     site = match.site;
     category = match.category ?? auto.category;
@@ -65,6 +67,9 @@ export function classifySegment(seg: RawSegment): ClassifiedSegment {
     counted,
   };
 }
+
+/** Opera e Opera GX: contano come app, senza i siti (anche la migrazione 29 li ha uniti così). */
+export const OPERA_KEYS: ReadonlySet<string> = new Set(["opera", "opera_gx", "opera gx"]);
 
 /** I browser noti (anche quando il titolo ha già fatto cambiare categoria all'app, es. YouTube = video). */
 const BROWSER_KEYS = new Set([
