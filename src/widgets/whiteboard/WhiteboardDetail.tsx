@@ -17,6 +17,8 @@ const NOTICE_PLACE: ThemeVariants<"above" | "inside"> = {
   opaco: "inside",
   quaderno: "above",
   fosforo: "inside",
+  vetro: "above",
+  ombra: "above",
 };
 
 /**

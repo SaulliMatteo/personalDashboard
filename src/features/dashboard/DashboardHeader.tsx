@@ -7,7 +7,14 @@ import { useGreeting } from "./useGreeting";
 import "./dashboardHeader.css";
 
 /** Classe per tema: le forme dei mockup stanno in dashboardHeader.css. */
-const HEADER_CLASS: ThemeVariants<string> = { notte: "dh--notte", opaco: "dh--opaco", quaderno: "dh--quaderno", fosforo: "dh--fosforo" };
+const HEADER_CLASS: ThemeVariants<string> = {
+  notte: "dh--notte",
+  opaco: "dh--opaco",
+  quaderno: "dh--quaderno",
+  fosforo: "dh--fosforo",
+  vetro: "dh--vetro",
+  ombra: "dh--ombra",
+};
 
 /**
  * Intestazione della dashboard: il saluto e, a destra, i mini scelti in Impostazioni > Dashboard e la campanella

@@ -1,17 +1,21 @@
 /**
- * I quattro temi dell'app, ognuno in due varianti (giorno / notte). I colori
+ * I sei temi dell'app, ognuno in due varianti (giorno / notte). I colori
  * NON stanno qui ma in `styles/tokens.css` (un blocco `:root[data-theme="<id>"]`
  * per la variante nativa) e `styles/tokens-varianti.css` (un blocco
  * `:root[data-theme="<id>"][data-mode="<variante>"]` per l'altra): qui c'è solo
  * ciò che serve al codice (etichette, schema chiaro/scuro, glow, accent di default).
  *
- * Mockup di riferimento: `docs/mockup/temi/`.
+ * Mockup di riferimento: `docs/mockup/temi/` (Vetro e Ombra: `Temi Vetro e Ombra.html`).
  */
 
-export const THEME_IDS = ["notte", "opaco", "quaderno", "fosforo"] as const;
+export const THEME_IDS = ["notte", "opaco", "quaderno", "fosforo", "vetro", "ombra"] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 
-/** Variante di un tema: cambiano solo i colori, mai forme, font o componenti. */
+/**
+ * Variante di un tema: cambiano solo i colori, mai forme, font o componenti.
+ * Unica eccezione: in Ombra la variante cambia anche forme, testi e Pixy
+ * (Ombra di notte, Fiamma di giorno), con `perMode` di `variants.ts`.
+ */
 export const THEME_MODES = ["giorno", "notte"] as const;
 export type ThemeMode = (typeof THEME_MODES)[number];
 
@@ -31,6 +35,8 @@ export interface ThemeDef {
   /** La variante con cui il tema è nato (i blocchi di tokens.css). */
   nativeMode: ThemeMode;
   modes: Record<ThemeMode, ThemeModeDef>;
+  /** Nomi delle varianti nella scheda Aspetto, se non sono "Giorno" e "Notte". */
+  modeLabels?: Record<ThemeMode, string>;
 }
 
 export const THEMES: Record<ThemeId, ThemeDef> = {
@@ -73,6 +79,27 @@ export const THEMES: Record<ThemeId, ThemeDef> = {
       notte: { scheme: "dark", defaultAccent: "#F4E9E4", glow: false },
       giorno: { scheme: "light", defaultAccent: "#2A1215", glow: false },
     },
+  },
+  vetro: {
+    id: "vetro",
+    label: "Vetro",
+    description: "Vetro smerigliato su una stanza sfocata.",
+    nativeMode: "giorno",
+    modes: {
+      giorno: { scheme: "light", defaultAccent: "#1D1C1A", glow: false },
+      notte: { scheme: "dark", defaultAccent: "#F6F2EC", glow: false },
+    },
+  },
+  ombra: {
+    id: "ombra",
+    label: "Ombra",
+    description: "Nero assoluto ed eclisse, o alabastro e fiamma.",
+    nativeMode: "notte",
+    modes: {
+      notte: { scheme: "dark", defaultAccent: "#EEEDE8", glow: false },
+      giorno: { scheme: "light", defaultAccent: "#3D4450", glow: false },
+    },
+    modeLabels: { notte: "Ombra", giorno: "Fiamma" },
   },
 };
 

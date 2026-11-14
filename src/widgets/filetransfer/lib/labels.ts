@@ -6,6 +6,8 @@ export const STATUS_LABELS: ThemeVariants<[string, string]> = {
   opaco: ["Online", "Offline"],
   quaderno: ["Online", "Offline"],
   fosforo: ["On", "Off"],
+  vetro: ["Online", "Offline"],
+  ombra: ["Online", "Offline"],
 };
 
 /** Testi che cambiano tra chi riceve (desktop, server acceso/spento) e chi invia (Android, PC raggiungibile o no). */

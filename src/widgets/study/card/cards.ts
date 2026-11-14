@@ -15,4 +15,7 @@ export const STUDY_CARDS: ThemeVariants<ComponentType<{ size: SizeKey }>> = {
   opaco: StudyCardOpaco,
   quaderno: StudyCardQuaderno,
   fosforo: StudyCardFosforo,
+  // Provvisori (fase 1): le card di Vetro e Ombra arrivano con i loro temi.
+  vetro: StudyCardNotte,
+  ombra: StudyCardNotte,
 };

@@ -15,7 +15,7 @@ const LATEST_FILES = 3;
 
 // Etichetta dello stato: in Fosforo è da display ("On"), negli altri temi per esteso.
 // Raggio degli angoli dell'icona "ferma", come nei mockup.
-const STOP_ROUND = { notte: 2, opaco: 3, quaderno: 2, fosforo: 0 };
+const STOP_ROUND = { notte: 2, opaco: 3, quaderno: 2, fosforo: 0, vetro: 3, ombra: 1 };
 
 /**
  * Card del File transfer (temi-dashboard/docs/design/temi/*.html): in 2×1 e

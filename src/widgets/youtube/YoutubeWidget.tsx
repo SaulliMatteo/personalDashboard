@@ -40,6 +40,8 @@ const POSITION_TEXT = {
     return v.positionSeconds > 0 && total ? `Continua da ${positionOf(v)} su ${total}` : continueFrom(v);
   },
   fosforo: positionOfTotal,
+  vetro: continueFrom,
+  ombra: continueFrom,
 };
 
 /**
@@ -51,6 +53,8 @@ const LARGE_LAYOUT = {
   opaco: { titleLeft: false, showCount: false, nextAsList: false },
   quaderno: { titleLeft: false, showCount: false, nextAsList: true },
   fosforo: { titleLeft: true, showCount: true, nextAsList: true },
+  vetro: { titleLeft: true, showCount: true, nextAsList: true },
+  ombra: { titleLeft: true, showCount: true, nextAsList: true },
 };
 
 /** I pulsanti dentro la cella non devono arrivare alla cella (click, doppio click). */

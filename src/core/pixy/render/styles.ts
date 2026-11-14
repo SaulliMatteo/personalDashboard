@@ -67,4 +67,7 @@ export const FACE_STYLES: ThemeVariants<CompanionStyle> = {
   opaco: COMPANION_STYLES.pill,
   quaderno: COMPANION_STYLES.pill,
   fosforo: COMPANION_STYLES.led,
+  // Provvisori: Vetro e Ombra avranno i loro (Ombra un renderer nuovo, con un corpo per variante).
+  vetro: COMPANION_STYLES.soft,
+  ombra: COMPANION_STYLES.soft,
 };

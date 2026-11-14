@@ -57,11 +57,15 @@ function AppShell({ children, scroll = true, compactBar }: { children: ReactNode
   useBackHandler(drawer.open, () => setDrawerOpen(false));
 
   const deco = (
-    /* Decorazione di sfondo del tema (oggi solo Fosforo: due cerchi). */
-    <div className="app-deco" aria-hidden="true">
-      <span className="app-deco-fill" />
-      <span className="app-deco-ring" />
-    </div>
+    <>
+      {/* Decorazione di sfondo del tema (Fosforo: due cerchi). */}
+      <div className="app-deco" aria-hidden="true">
+        <span className="app-deco-fill" />
+        <span className="app-deco-ring" />
+      </div>
+      {/* Lo sfondo dietro il vetro (Vetro: la stanza sfocata o l'immagine scelta; Ombra: la luce del puntatore). */}
+      <div className="app-wall" aria-hidden="true" />
+    </>
   );
   const mainClass = scroll ? "main" : "main main--fixed";
 

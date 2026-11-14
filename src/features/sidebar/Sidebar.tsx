@@ -4,7 +4,7 @@ import "./sidebar.css";
 import { useActivityStatus } from "../../core/activity/activityBus";
 import { useNav } from "../../core/nav/useNav";
 import { useSettings } from "../../core/settings/useSettings";
-import { useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
+import { perMode, useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
 import ProgressBar from "../../ui/ProgressBar";
 
 /** Simbolo accanto al titolo dell'app, uno per tema (mockup). */
@@ -22,10 +22,49 @@ const LOGOS: ThemeVariants<React.JSX.Element | null> = {
     </svg>
   ),
   fosforo: <span className="sidebar-logo-dot" aria-hidden="true" />,
+  // Vetro: una goccia con il riflesso.
+  vetro: (
+    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+      <defs>
+        <linearGradient id="sb-logo-vetro" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="var(--accent)" />
+          <stop offset="1" stopColor="var(--accent-2)" />
+        </linearGradient>
+      </defs>
+      <path d="M12 2.5c3.5 4.4 6.5 7.9 6.5 11.5a6.5 6.5 0 0 1-13 0c0-3.6 3-7.1 6.5-11.5z" fill="url(#sb-logo-vetro)" />
+      <path d="M9 13.5a3.3 3.3 0 0 0 2.4 3.6" stroke="var(--on-accent)" strokeWidth="1.6" fill="none" strokeLinecap="round" opacity=".8" />
+    </svg>
+  ),
+  // Ombra: eclisse di notte, stella di giorno.
+  ombra: perMode({
+    notte: (
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+        <defs>
+          <filter id="sb-logo-ombra" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.4" />
+          </filter>
+        </defs>
+        <circle cx="12" cy="12" r="7.6" fill="var(--core-glow)" filter="url(#sb-logo-ombra)" />
+        <circle cx="12" cy="12" r="7" fill="var(--core-fill)" />
+        <circle cx="12" cy="12" r="7" fill="none" stroke="var(--core-glow)" strokeWidth=".6" />
+      </svg>
+    ),
+    giorno: (
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+        <defs>
+          <filter id="sb-logo-fiamma" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.6" />
+          </filter>
+        </defs>
+        <path d="M12 1.5l2.2 8.3 8.3 2.2-8.3 2.2L12 22.5l-2.2-8.3L1.5 12l8.3-2.2z" fill="var(--core-glow)" filter="url(#sb-logo-fiamma)" />
+        <path d="M12 3l1.8 7.2L21 12l-7.2 1.8L12 21l-1.8-7.2L3 12l7.2-1.8z" fill="var(--core-fill)" stroke="var(--accent-2)" strokeWidth=".5" />
+      </svg>
+    ),
+  }),
 };
 
-/** La card "Obiettivo di oggi" c'è solo nel mockup di Notte. */
-const SHOW_GOAL: ThemeVariants<boolean> = { notte: true, opaco: false, quaderno: false, fosforo: false };
+/** La card "Obiettivo di oggi" c'è nei mockup di Notte e Vetro (in Ombra la sidebar avrà le rune). */
+const SHOW_GOAL: ThemeVariants<boolean> = { notte: true, opaco: false, quaderno: false, fosforo: false, vetro: true, ombra: false };
 
 /** "2h 05m". */
 function hoursMinutes(seconds: number): string {

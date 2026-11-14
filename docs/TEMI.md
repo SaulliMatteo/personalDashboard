@@ -8,17 +8,18 @@
   `widget-1x1.html`…) stanno in un altro progetto e non in questa cartella.
 - Ogni colore viene dai token del tema: niente esadecimali nei componenti (eccezione: colori scelti dall'utente, come
   materie e cartelle).
-- Ogni nuovo widget deve funzionare in tutti e 4 i temi (Notte, Opaco, Quaderno, Fosforo), giorno e notte, e avere una
-  taglia 1×1 ultra minimal. Anche le pagine di dettaglio usano il linguaggio completo del tema (parti per tema, non
-  solo colori).
+- Ogni nuovo widget deve funzionare in tutti e 6 i temi (Notte, Opaco, Quaderno, Fosforo, Vetro, Ombra), giorno e
+  notte, e avere una taglia 1×1 ultra minimal. Anche le pagine di dettaglio usano il linguaggio completo del tema
+  (parti per tema, non solo colori).
 
 ## Come funzionano
 
-4 temi (`core/theme/themes.ts`), scelti con `data-theme` su `<html>`; ogni tema ridefinisce i
+6 temi (`core/theme/themes.ts`), scelti con `data-theme` su `<html>`; ogni tema ridefinisce i
 token di `src/styles/tokens.css` (colori, `--card-*`, `--panel-*`, `--radius-*`, `--font-display`, `--btn-*`…).
 Ogni tema ha due varianti, giorno e notte (`data-mode`, impostazione `themeMode` con `auto` che segue il sistema):
-cambiano solo i colori. La variante nativa sta in `tokens.css`, l'altra in `tokens-varianti.css` (un token nuovo va
-in entrambi). Il codice legge il tema risolto con `useTheme()` (`mode`, `accent`…), mai `themeMode`.
+cambiano solo i colori, **tranne in Ombra** (vedi sotto). La variante nativa sta in `tokens.css`, l'altra in
+`tokens-varianti.css` (un token nuovo va in entrambi). Il codice legge il tema risolto con `useTheme()` (`mode`,
+`accent`…), mai `themeMode`.
 Quando un pezzo cambia *forma* per tema si usa `useThemeVariant(map)` (`core/theme/variants.ts`), mai
 `if (theme === …)`; le varianti-componente si rendono con `createElement` (lint `static-components`). Le card per
 tema dei widget stanno in `card/cards.ts` e le pagine di dettaglio riusano la card M. In Opaco ogni widget ha un
@@ -32,21 +33,40 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
 - Usa sempre i token (`--bg-card`, `--surface-1/2/3`, `--accent`, `--on-accent`, `--text-*`): così il tema chiaro funziona da solo.
 - Ogni componente ha il suo `.css` accanto; niente CSS globale fuori da `styles/`.
 - Come appare il timer (colori, testo, anello): `widgets/study/timer/useTimerView.ts`, usato da widget e pagina.
-- I temi sono 4 (Notte, Opaco, Quaderno, Fosforo), ognuno in due varianti, giorno e notte, che cambiano **solo i
-  colori** (forme, font e componenti restano quelli del tema). Su `<html>` ci sono `data-theme` e `data-mode`
-  (`giorno|notte`, già risolta). La variante nativa (Notte e Fosforo: notte; Opaco e Quaderno: giorno) è il blocco
-  `:root[data-theme="<id>"]` di `tokens.css`; l'altra è un blocco completo `:root[data-theme][data-mode]` in
-  `tokens-varianti.css` (con pigmenti di Opaco notte, post-it di Quaderno notte e anteprime della scheda Aspetto).
-  Un token nuovo va aggiunto in entrambi i file. I mockup in `docs/mockup/` sono la fonte di verità.
+- I temi sono 6 (Notte, Opaco, Quaderno, Fosforo, Vetro, Ombra), ognuno in due varianti, giorno e notte, che
+  cambiano **solo i colori** (forme, font e componenti restano quelli del tema). Su `<html>` ci sono `data-theme` e
+  `data-mode` (`giorno|notte`, già risolta). La variante nativa (Notte, Fosforo e Ombra: notte; Opaco, Quaderno e
+  Vetro: giorno) è il blocco `:root[data-theme="<id>"]` di `tokens.css`; l'altra è un blocco completo
+  `:root[data-theme][data-mode]` in `tokens-varianti.css` (con pigmenti di Opaco notte, post-it di Quaderno notte e
+  anteprime della scheda Aspetto). Un token nuovo va aggiunto in entrambi i file. I mockup in `docs/mockup/` sono la
+  fonte di verità (Vetro e Ombra: `docs/mockup/temi/Temi Vetro e Ombra.html`).
+- **Eccezione di Ombra**: le due varianti sono due linguaggi, non solo due palette. Di notte "Ombra" (nero assoluto,
+  card con gli angoli tagliati, eclisse), di giorno "Fiamma" (alabastro e argento, card arrotondate con il filo di
+  fiamma, stella). Cambiano anche forme, testi e Pixy: una voce di `ThemeVariants` può essere
+  `perMode({ notte, giorno })` (`core/theme/variants.ts`), risolta da `useThemeVariant` col modo corrente; fuori da
+  React (canvas, notifiche) si usa `resolveVariant(map, id, mode)`. Nel CSS bastano i selettori
+  `:root[data-theme="ombra"][data-mode="…"]`. Mai `if (mode === …)` nei componenti, e gli altri temi non usano
+  `perMode`. I nomi delle varianti in Aspetto vengono da `modeLabels` del tema.
+- Nessun riferimento alla novel che ha ispirato Ombra: niente nomi di personaggi, termini o passaggi del libro,
+  e niente personaggi disegnati. Restano solo simboli generici (eclisse, stella, fiamma, frammenti).
+- Token che usano solo Vetro e Ombra (default spenti nel `:root` comune di `tokens.css`): `--accent-2`,
+  `--font-flavor`; Vetro `--photo-filter`, `--pane-*`, `--card-inset`, `--sheen`, `--blur`; Ombra `--card-gloss`,
+  `--core-fill/-ink/-glow` (il nucleo), `--prog(-glow)`, `--rune-glow`, `--fx-light/-shadow/-len`.
+- Vetro: dietro l'app c'è `.app-wall` (in `AppShell`), con la foto sfocata da `--photo-filter`; la sidebar è
+  un'isola di vetro e `.main` un grande pannello (`shell.css`), le card hanno `backdrop-filter` (`BorderGlow.css`).
+  `--modal-bg` resta pieno, perché lo usano anche le `<option>` dei menu nativi.
 - L'impostazione `themeMode` è `giorno|notte|auto`: `auto` segue il sistema (`useSystemDark`) anche ad app aperta.
   `useTheme()` restituisce il tema risolto (`mode`, `scheme`, `glow`, `defaultAccent`, `accent`): il codice non
   guarda mai `themeMode` direttamente. L'accent personalizzato è uno per variante (`ACCENT_KEYS` in `schema.ts`).
   Lo script in `index.html` applica tema e variante dalla cache (`pd-theme`, `pd-mode`, `pd-theme-mode`) prima del
-  bundle, ricalcolando `auto` dal sistema; la splash ha i colori di tutte le 8 combinazioni.
+  bundle, ricalcolando `auto` dal sistema; la splash ha i colori di tutte le 12 combinazioni. Un tema nuovo va
+  aggiunto anche lì (elenco dei temi ammessi, variante nativa, colori della splash) e in `settingsPage.css`
+  (anteprime `.sp-theme--<id>`): sono elenchi scritti a mano che il compilatore non controlla.
 - I canvas che leggono i token (faccia del Companion, inchiostro delle Note) li rileggono quando cambiano
   `theme.id`/`theme.mode`. Nelle Note il colore `THEME_INK` (`#f2f2f4`) si disegna con `--text-primary`.
 - Quando un pezzo cambia **forma** per tema (non solo colore) si usa `useThemeVariant(map)` di
-  `core/theme/variants.ts` con una `ThemeVariants<T>` (una voce per tema), mai `if (theme === …)`.
+  `core/theme/variants.ts` con una `ThemeVariants<T>` (una voce per tema, `perMode` solo per Ombra), mai
+  `if (theme === …)`.
   Se la variante è un componente, si rende con `createElement(Variant, props)` (regola lint `static-components`).
 - Le card per tema dei widget stanno in `card/cards.ts` (es. `STUDY_CARDS`, `COMPANION_CARDS`): la pagina di
   dettaglio riusa la card M del tema, così è identica alla dashboard.

@@ -9,4 +9,6 @@ export const PDF_PAGE_COUNTER: ThemeVariants<(current: number, total: number) =>
   opaco: (c, t) => `${c} di ${t}`,
   quaderno: (c, t) => `pag. ${c} di ${t}`,
   fosforo: (c, t) => `${String(c).padStart(3, "0")}/${String(t).padStart(3, "0")}`,
+  vetro: (c, t) => `${c} / ${t}`,
+  ombra: (c, t) => `${c} / ${t}`,
 };

@@ -8,6 +8,14 @@ import "@fontsource-variable/figtree";
 import "@fontsource-variable/caveat";
 import "@fontsource-variable/jetbrains-mono";
 import "@fontsource-variable/doto";
+// Vetro (Outfit per titoli e numeri, Plus Jakarta Sans per il testo) e Ombra (Spectral, con Figtree).
+import "@fontsource-variable/outfit";
+import "@fontsource-variable/plus-jakarta-sans";
+import "@fontsource/spectral/300.css";
+import "@fontsource/spectral/300-italic.css";
+import "@fontsource/spectral/400.css";
+import "@fontsource/spectral/400-italic.css";
+import "@fontsource/spectral/500.css";
 // Font "serif" del selettore delle Note.
 import "@fontsource-variable/literata";
 

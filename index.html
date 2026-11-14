@@ -19,12 +19,12 @@
         var t = localStorage.getItem("pd-theme");
         // Nessuna cache = primo avvio: valgono i default (tema notte, variante automatica).
         var tm = t === null ? "auto" : localStorage.getItem("pd-theme-mode");
-        if (t !== "notte" && t !== "opaco" && t !== "quaderno" && t !== "fosforo") t = "notte";
+        if (["notte", "opaco", "quaderno", "fosforo", "vetro", "ombra"].indexOf(t) < 0) t = "notte";
         root.dataset.theme = t;
         var m = localStorage.getItem("pd-mode");
         if (tm === "auto") m = window.matchMedia("(prefers-color-scheme: dark)").matches ? "notte" : "giorno";
         else if (tm === "giorno" || tm === "notte") m = tm;
-        if (m !== "giorno" && m !== "notte") m = t === "opaco" || t === "quaderno" ? "giorno" : "notte";
+        if (m !== "giorno" && m !== "notte") m = t === "opaco" || t === "quaderno" || t === "vetro" ? "giorno" : "notte";
         root.dataset.mode = m;
       } catch (e) {}
     </script>
@@ -40,6 +40,10 @@
       :root[data-theme="opaco"][data-mode="notte"] { --s-bg: #1B1C18; --s-accent: #ECE9E2; --s-card: #34352F; --s-line: transparent; --s-text: #ECE9E2; --s-muted: #A9A79E; --s-radius: 12px; }
       :root[data-theme="quaderno"][data-mode="notte"] { --s-bg: #121620; --s-accent: #9FB6FF; --s-card: #1A1F2B; --s-line: #2C3446; --s-text: #E6EAF2; --s-muted: #98A3B8; --s-radius: 4px; }
       :root[data-theme="fosforo"][data-mode="giorno"] { --s-bg: #EFE9E5; --s-accent: #2A1215; --s-card: #FDFAF8; --s-line: rgba(70,24,28,.12); --s-text: #2A1517; --s-muted: #77605D; --s-radius: 6px; }
+      :root[data-theme="vetro"] { --s-bg: #CDBFAE; --s-accent: #1D1C1A; --s-card: #DCD2C6; --s-line: rgba(255,255,255,.5); --s-text: #1C1A17; --s-muted: #6B6356; --s-radius: 10px; }
+      :root[data-theme="vetro"][data-mode="notte"] { --s-bg: #1B1612; --s-accent: #F6F2EC; --s-card: #2A241E; --s-line: rgba(255,255,255,.16); --s-text: #F6F2EC; --s-muted: #A3998B; --s-radius: 10px; }
+      :root[data-theme="ombra"] { --s-bg: #000000; --s-accent: #EEEDE8; --s-card: #080808; --s-line: rgba(240,238,230,.08); --s-text: #EEEDE8; --s-muted: #66645E; --s-radius: 2px; }
+      :root[data-theme="ombra"][data-mode="giorno"] { --s-bg: #F2F1EE; --s-accent: #3D4450; --s-card: #FDFDFC; --s-line: rgba(160,166,178,.35); --s-text: #1D2026; --s-muted: #878C95; --s-radius: 8px; }
       html, body { margin: 0; height: 100%; background: var(--s-bg); }
       #splash {
         position: fixed; inset: 0; z-index: 9999;

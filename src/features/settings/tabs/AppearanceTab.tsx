@@ -23,6 +23,8 @@ function AppearanceTab() {
   const accentKeys = ACCENT_KEYS[theme.mode];
   const effectiveAccent = theme.accent.toLowerCase();
   const isPreset = ACCENT_PRESETS.some((p) => p.color.toLowerCase() === effectiveAccent);
+  // Ombra chiama le varianti "Ombra" e "Fiamma"; gli altri temi "Giorno" e "Notte".
+  const modeLabels = THEMES[settings.theme].modeLabels;
 
   function pickAccent(color: string) {
     updateSetting(accentKeys.color, color);
@@ -50,9 +52,11 @@ function AppearanceTab() {
               onClick={() => updateSetting("theme", id)}
             >
               <span className="sp-theme-preview" aria-hidden="true">
+                <span className="sp-theme-side" />
+                <span />
+                <span />
                 <span className="sp-theme-a" />
-                <span className="sp-theme-b" />
-                <span className="sp-theme-c" />
+                <span />
               </span>
               <span className="sp-theme-name">
                 <span>{def.label}</span>
@@ -70,6 +74,7 @@ function AppearanceTab() {
         <div className="sp-segmented" role="radiogroup" aria-label="Variante">
           {MODE_OPTIONS.map((option) => {
             const selected = settings.themeMode === option.value;
+            const label = option.value === "auto" ? option.label : (modeLabels?.[option.value] ?? option.label);
             return (
               <button
                 key={option.value}
@@ -79,7 +84,7 @@ function AppearanceTab() {
                 className={selected ? "is-on" : ""}
                 onClick={() => updateSetting("themeMode", option.value)}
               >
-                {option.label}
+                {label}
               </button>
             );
           })}
@@ -90,7 +95,7 @@ function AppearanceTab() {
       <div className="sp-block">
         <div className="sp-block-head">
           <h3>
-            Colore accent <span className="sp-block-sub">per la variante {theme.mode}</span>
+            Colore accent <span className="sp-block-sub">per la variante {modeLabels?.[theme.mode] ?? theme.mode}</span>
           </h3>
           <button type="button" className="sp-link" disabled={!settings[accentKeys.override]} onClick={() => updateSetting(accentKeys.override, false)}>
             Usa quello del tema

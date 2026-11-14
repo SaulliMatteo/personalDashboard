@@ -18,6 +18,11 @@
   box-shadow: var(--card-shadow);
   overflow: visible;
 }
+/* Vetro: la card è vetro smerigliato sopra il pannello di vetro. */
+:root[data-theme="vetro"] .border-glow-card {
+  backdrop-filter: blur(var(--blur)) saturate(175%);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(175%);
+}
 .border-glow-card::before,
 .border-glow-card::after,
 .border-glow-card > .edge-light {

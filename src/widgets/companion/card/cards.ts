@@ -6,4 +6,7 @@ export const COMPANION_CARDS = {
   opaco: CompanionCardOpaco,
   quaderno: CompanionCardQuaderno,
   fosforo: CompanionCardFosforo,
+  // Provvisori (fase 1): le card di Vetro e Ombra arrivano con i loro temi.
+  vetro: CompanionCardNotte,
+  ombra: CompanionCardNotte,
 };

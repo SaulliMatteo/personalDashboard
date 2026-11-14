@@ -24,7 +24,9 @@ Questo file ha solo le regole che valgono sempre e l'indice. Il resto sta nelle 
 - I mockup approvati in `docs/mockup/` (solo locali) sono la fonte di verità per la grafica: se codice e mockup non
   concordano, vale il mockup.
 - Ogni colore viene dai token del tema: niente esadecimali nei componenti (eccezione: colori scelti dall'utente).
-- Ogni nuovo widget funziona nei 4 temi (Notte, Opaco, Quaderno, Fosforo), giorno e notte, e ha una taglia 1×1.
+- Ogni nuovo widget funziona nei 6 temi (Notte, Opaco, Quaderno, Fosforo, Vetro, Ombra), giorno e notte, e ha una
+  taglia 1×1. Le varianti giorno/notte cambiano solo i colori, tranne in Ombra (forme, testi e Pixy per variante,
+  con `perMode`): `docs/TEMI.md`.
 - SQL solo nei `*Repository.ts`; migrazioni solo aggiunte in fondo, mai modificare una migrazione rilasciata.
 - Un widget non importa un altro widget; `social` non importa i widget; la rete dei Gruppi passa solo da `core/cloud/`.
 - Git: si lavora su `dev`, PR verso `main`.

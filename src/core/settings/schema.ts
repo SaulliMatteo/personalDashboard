@@ -33,7 +33,14 @@ export type GlowPaletteKey = keyof typeof GLOW_PALETTES | "accent";
 
 /** Cosa mostra lo spazio dell'intestazione impostato su "Come il tema" (`headerSlot1` = "auto"):
  *  il mini dei mockup. Sono id del registry dei widget, che core non importa. */
-export const HEADER_SLOT_AUTO: ThemeVariants<string> = { notte: "study", opaco: "none", quaderno: "none", fosforo: "clock" };
+export const HEADER_SLOT_AUTO: ThemeVariants<string> = {
+  notte: "study",
+  opaco: "none",
+  quaderno: "none",
+  fosforo: "clock",
+  vetro: "study",
+  ombra: "study",
+};
 
 export const DEFAULT_SETTINGS = {
   // ---- Generale ----

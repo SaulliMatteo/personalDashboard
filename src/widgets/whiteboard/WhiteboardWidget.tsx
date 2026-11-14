@@ -46,6 +46,8 @@ const WIDE_LAYOUTS: ThemeVariants<ComponentType> = {
   opaco: WideSplit,
   quaderno: WideSheet,
   fosforo: WideSplit,
+  vetro: WideSplit,
+  ombra: WideSplit,
 };
 
 /** 1×1 ultra minimal: tutta la cella è il pulsante che apre la lavagna. */

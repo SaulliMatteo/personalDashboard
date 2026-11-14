@@ -12,4 +12,7 @@ export const NOTES_CARDS: ThemeVariants<ComponentType<{ size: SizeKey }>> = {
   opaco: NotesCardOpaco,
   quaderno: NotesCardQuaderno,
   fosforo: NotesCardFosforo,
+  // Provvisori (fase 1): le card di Vetro e Ombra arrivano con i loro temi.
+  vetro: NotesCardNotte,
+  ombra: NotesCardNotte,
 };

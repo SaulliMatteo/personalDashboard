@@ -4,7 +4,7 @@ import "./UnsavedNotice.css";
 type Mark = "icon" | "none" | "hand" | "led";
 
 /** Il segno che apre l'avviso, per tema: triangolo (Notte), niente (Opaco), "Attenzione!" a mano (Quaderno), LED (Fosforo). */
-const MARKS: ThemeVariants<Mark> = { notte: "icon", opaco: "none", quaderno: "hand", fosforo: "led" };
+const MARKS: ThemeVariants<Mark> = { notte: "icon", opaco: "none", quaderno: "hand", fosforo: "led", vetro: "icon", ombra: "icon" };
 
 function WarnIcon() {
   return (

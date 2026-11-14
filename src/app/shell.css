@@ -110,6 +110,53 @@
   position: relative;
 }
 
+/* ---------- Sfondo dietro il vetro (Vetro) ---------- */
+.app-wall {
+  display: none;
+}
+
+:root[data-theme="vetro"] .app-wall {
+  display: block;
+  position: absolute;
+  inset: -40px;
+  pointer-events: none;
+  /* provvisorio: la stanza disegnata arriva con il tema completo */
+  background:
+    radial-gradient(60% 50% at 25% 30%, color-mix(in srgb, var(--accent-2) 30%, transparent), transparent 70%),
+    radial-gradient(50% 60% at 80% 70%, color-mix(in srgb, var(--text-muted) 35%, transparent), transparent 70%),
+    var(--bg);
+  filter: var(--photo-filter);
+}
+
+/* Vetro: la sidebar è un'isola di vetro e il riquadro principale un grande pannello di vetro. */
+:root[data-theme="vetro"] .app:not(.app--compact) > .sidebar {
+  margin: 12px 0 12px 12px;
+  border: var(--card-border);
+  border-radius: 28px;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(var(--blur)) saturate(170%);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(170%);
+}
+
+:root[data-theme="vetro"] .app:not(.app--compact) > .main {
+  margin: 12px 12px 12px 10px;
+  border: var(--pane-border);
+  border-radius: 30px;
+  background: var(--pane-bg);
+  box-shadow: var(--pane-shadow);
+  backdrop-filter: blur(6px) saturate(110%);
+  -webkit-backdrop-filter: blur(6px) saturate(110%);
+}
+
+:root[data-theme="vetro"][data-sidebar="right"] .app:not(.app--compact) > .sidebar {
+  margin: 12px 12px 12px 0;
+  border: var(--card-border);
+}
+
+:root[data-theme="vetro"][data-sidebar="right"] .app:not(.app--compact) > .main {
+  margin: 12px 10px 12px 12px;
+}
+
 /* Quaderno: la riga rossa del margine, ferma mentre il foglio scorre. */
 :root[data-theme="quaderno"] .main {
   background:

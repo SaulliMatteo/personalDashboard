@@ -13,4 +13,7 @@ export const FT_CELLS: ThemeVariants<ComponentType> = {
   opaco: FtCellOpaco,
   quaderno: FtCellQuaderno,
   fosforo: FtCellFosforo,
+  // Provvisori (fase 1): le celle di Vetro e Ombra arrivano con i loro temi.
+  vetro: FtCellNotte,
+  ombra: FtCellNotte,
 };

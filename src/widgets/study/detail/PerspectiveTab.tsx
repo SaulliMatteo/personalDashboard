@@ -35,6 +35,9 @@ const DIALS: ThemeVariants<ComponentType<DialProps>> = {
   opaco: RingDial,
   quaderno: PenDial,
   fosforo: StillDotDial,
+  // Provvisori (fase 1): i quadranti di Vetro e Ombra arrivano con i loro temi.
+  vetro: TickDial,
+  ombra: TickDial,
 };
 
 /** "1 ora" / "8 ore". */

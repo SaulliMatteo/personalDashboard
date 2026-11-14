@@ -12,6 +12,9 @@ export const SYSMON_GAUGES: ThemeVariants<ComponentType<GaugeProps>> = {
   opaco: GaugeOpaco,
   quaderno: GaugeQuaderno,
   fosforo: GaugeFosforo,
+  // Provvisori (fase 1): Vetro e Ombra avranno i loro.
+  vetro: GaugeNotte,
+  ombra: GaugeNotte,
 };
 
 export const SYSMON_CHARTS: ThemeVariants<ComponentType<ChartProps>> = {
@@ -19,4 +22,6 @@ export const SYSMON_CHARTS: ThemeVariants<ComponentType<ChartProps>> = {
   opaco: ChartOpaco,
   quaderno: ChartQuaderno,
   fosforo: ChartFosforo,
+  vetro: ChartNotte,
+  ombra: ChartNotte,
 };

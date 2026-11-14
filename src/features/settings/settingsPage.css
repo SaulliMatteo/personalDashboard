@@ -109,9 +109,10 @@
 }
 
 /* ---------- Schede dei temi ---------- */
+/* Sei temi in tre colonne, anteprima con barra laterale e quattro card (Temi Vetro e Ombra.html). */
 .sp-themes {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -134,10 +135,11 @@
 
 .sp-theme-preview {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-auto-rows: 63px;
-  gap: 6px;
-  padding: 10px;
+  grid-template-columns: 22% minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  height: 86px;
+  padding: 7px;
   border-radius: 10px;
   background: var(--pv-bg);
 }
@@ -148,20 +150,14 @@
   background: var(--pv-b);
 }
 
+/* la barra laterale occupa le due righe */
+.sp-theme-preview > .sp-theme-side {
+  grid-row: span 2;
+}
+
 .sp-theme-preview > .sp-theme-a {
-  grid-column: 1 / 3;
-  grid-row: 1 / 3;
   background: var(--pv-a);
-}
-
-.sp-theme-b {
-  grid-column: 3 / 5;
-  grid-row: 1 / 2;
-}
-
-.sp-theme-c {
-  grid-column: 3 / 4;
-  grid-row: 2 / 3;
+  opacity: 0.85;
 }
 
 .sp-theme--notte {
@@ -228,6 +224,43 @@
   --pv-b: var(--preview-fosforo-giorno-b);
   --pv-border: var(--preview-fosforo-giorno-border);
   --pv-radius: var(--preview-fosforo-giorno-radius);
+}
+
+.sp-theme--vetro {
+  --pv-bg: var(--preview-vetro-bg);
+  --pv-a: var(--preview-vetro-a);
+  --pv-b: var(--preview-vetro-b);
+  --pv-border: var(--preview-vetro-border);
+  --pv-radius: var(--preview-vetro-radius);
+}
+
+:root[data-mode="notte"] .sp-theme--vetro {
+  --pv-bg: var(--preview-vetro-notte-bg);
+  --pv-a: var(--preview-vetro-notte-a);
+  --pv-b: var(--preview-vetro-notte-b);
+  --pv-border: var(--preview-vetro-notte-border);
+  --pv-radius: var(--preview-vetro-notte-radius);
+}
+
+.sp-theme--ombra {
+  --pv-bg: var(--preview-ombra-bg);
+  --pv-a: var(--preview-ombra-a);
+  --pv-b: var(--preview-ombra-b);
+  --pv-border: var(--preview-ombra-border);
+  --pv-radius: var(--preview-ombra-radius);
+}
+
+/* nel mockup il foglio di Ombra ha anche il bordo */
+.sp-theme--ombra .sp-theme-preview {
+  border: var(--pv-border);
+}
+
+:root[data-mode="giorno"] .sp-theme--ombra {
+  --pv-bg: var(--preview-ombra-giorno-bg);
+  --pv-a: var(--preview-ombra-giorno-a);
+  --pv-b: var(--preview-ombra-giorno-b);
+  --pv-border: var(--preview-ombra-giorno-border);
+  --pv-radius: var(--preview-ombra-giorno-radius);
 }
 
 .sp-theme-name {

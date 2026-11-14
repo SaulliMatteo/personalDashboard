@@ -1,6 +1,6 @@
 /* ==========================================================================
    TOKEN DI TEMA. Unico posto in cui vivono i colori.
-   - il tema si sceglie con <html data-theme="notte|opaco|quaderno|fosforo">
+   - il tema si sceglie con <html data-theme="notte|opaco|quaderno|fosforo|vetro|ombra">
      (impostazione "theme"); i valori vengono dai mockup in
      temi-dashboard/docs/design/temi/
    - --accent viene sovrascritto da <html style> solo se "accentOverride"
@@ -58,6 +58,40 @@
   --preview-fosforo-b: #24100F;
   --preview-fosforo-border: 1px solid rgba(255, 214, 206, 0.2);
   --preview-fosforo-radius: 4px;
+  --preview-vetro-bg: linear-gradient(135deg, #8FBAFF, #FFB8D2 60%, #FFD99A);
+  --preview-vetro-a: #2F6BFF;
+  --preview-vetro-b: rgba(255, 255, 255, 0.5);
+  --preview-vetro-border: 0;
+  --preview-vetro-radius: 5px;
+  --preview-ombra-bg: #030304;
+  --preview-ombra-a: #EEEDE8;
+  --preview-ombra-b: #0A0A0B;
+  --preview-ombra-border: 1px solid rgba(230, 224, 210, 0.15);
+  --preview-ombra-radius: 2px;
+
+  /* Token usati solo da Vetro e Ombra (Temi Vetro e Ombra.html): negli altri temi
+     restano spenti, così ogni tema li ha definiti. */
+  --accent-2: var(--accent);
+  --font-flavor: var(--font-title);
+  /* Vetro: la foto sfocata dietro, il grande pannello di vetro e il vetro delle card. */
+  --photo-filter: none;
+  --pane-bg: transparent;
+  --pane-border: 1px solid transparent;
+  --pane-shadow: none;
+  --card-inset: inset 0 0 0 transparent;
+  --sheen: transparent;
+  --blur: 0px;
+  /* Ombra: lucido delle card, il nucleo (eclisse o stella), barre di progresso e luce del puntatore. */
+  --card-gloss: linear-gradient(transparent, transparent);
+  --core-fill: var(--panel-bg);
+  --core-ink: var(--text-primary);
+  --core-glow: transparent;
+  --prog: var(--accent);
+  --prog-glow: transparent;
+  --rune-glow: transparent;
+  --fx-light: transparent;
+  --fx-shadow: transparent;
+  --fx-len: 0px;
 }
 
 /* ==========================================================================
@@ -1073,6 +1107,468 @@
   --tint-senape-ink: #F0D9A0;
   --tint-malva: #36263A;
   --tint-malva-ink: #EBD7E8;
+}
+
+/* ==========================================================================
+   VETRO: vetro smerigliato semitrasparente su una foto (stanza) sfocata.
+   Il riquadro principale è un grande vetro, le card sono vetro sopra vetro.
+   Variante nativa: giorno (docs/mockup/temi/Temi Vetro e Ombra.html).
+   ========================================================================== */
+:root[data-theme="vetro"] {
+  color-scheme: light;
+
+  --font-family: "Plus Jakarta Sans Variable", system-ui, sans-serif;
+  --font-display: "Outfit Variable", system-ui, sans-serif;
+  --display-weight: 200;
+  --display-tracking: -0.02em;
+  --font-title: "Outfit Variable", system-ui, sans-serif;
+  --font-flavor: "Outfit Variable", system-ui, sans-serif;
+  --title-weight: 500;
+  --heading-weight: 400;
+  --body-size: 14px;
+  --line-height: 1.5;
+
+  --bg: #CDBFAE;
+  --main-bg: transparent;
+  --bg-sidebar: rgba(255, 255, 255, 0.2);
+  --sidebar-border: 1px solid rgba(255, 255, 255, 0.5);
+  --sidebar-width: 224px;
+
+  --photo-filter: blur(16px) saturate(0.95) brightness(1.02);
+  --pane-bg: rgba(255, 255, 255, 0.12);
+  --pane-border: 1px solid rgba(255, 255, 255, 0.38);
+  --pane-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  --card-inset: inset 0 1px 0 rgba(255, 255, 255, 0.65), inset 0 -1px 0 rgba(255, 255, 255, 0.12);
+  --sheen: rgba(255, 255, 255, 0.7);
+  --blur: 30px;
+  --accent-2: #E8735A;
+
+  --bg-card: #E6DDD2;
+  --card-bg: rgba(255, 255, 255, 0.24);
+  --card-border: 1px solid rgba(255, 255, 255, 0.5);
+  --card-shadow: 0 10px 30px rgba(60, 40, 20, 0.12), 0 1px 2px rgba(60, 40, 20, 0.06), var(--card-inset);
+  --card-transform: none;
+  --radius-card: 26px;
+  --widget-padding: 18px;
+  --grid-gap: 12px;
+  --main-padding: 20px 22px;
+  --main-gap: 14px;
+
+  --panel-bg: rgba(255, 255, 255, 0.2);
+  --panel-border: 1px solid rgba(255, 255, 255, 0.45);
+  --radius-panel: 18px;
+  --display-bg: rgba(255, 255, 255, 0.2);
+  --display-texture: none;
+  --display-border: 1px solid rgba(255, 255, 255, 0.45);
+  --radius-display: 18px;
+
+  --border-subtle: rgba(40, 30, 20, 0.1);
+  --divider: rgba(40, 30, 20, 0.1);
+  --row-active-bg: rgba(255, 255, 255, 0.55);
+  --row-active-border: rgba(255, 255, 255, 0.7);
+  --track: rgba(255, 255, 255, 0.42);
+  --tick-off: rgba(40, 30, 20, 0.14);
+  --tick-off-long: rgba(40, 30, 20, 0.26);
+  --bar-off: rgba(255, 255, 255, 0.42);
+  --dot-off: rgba(40, 30, 20, 0.16);
+  --dot-on: #1D1C1A;
+
+  --text-primary: #1C1A17;
+  --text-secondary: #463F36;
+  --text-muted: #6B6356;
+  --text-soft: #2E2A24;
+
+  --accent: #1D1C1A;
+  --accent-strong: color-mix(in srgb, var(--accent) 82%, #000000);
+  --on-accent: #FFFFFF;
+  --success: #2F8A5B;
+  --success-text: #2F8A5B;
+  --warn: #B9801C;
+  --led: #2F8A5B;
+  --danger: #D0453B;
+  --on-danger: #FFFFFF;
+
+  --surface-1: rgba(255, 255, 255, 0.2);
+  --surface-2: rgba(255, 255, 255, 0.34);
+  --surface-3: rgba(255, 255, 255, 0.62);
+
+  --radius-item: 14px;
+  --btn-primary-bg: var(--accent);
+  --btn-primary-fg: var(--on-accent);
+  --btn-ghost-border: 1px solid rgba(255, 255, 255, 0.5);
+  --btn-ghost-fg: #1C1A17;
+  --chip-bg: var(--accent-soft);
+  --chip-fg: var(--accent);
+  --slot-border: 1px dashed rgba(40, 30, 20, 0.22);
+  --slot-bg: rgba(255, 255, 255, 0.14);
+  --slot-fg: #6B6356;
+  --slot-gap: 6px;
+  --slot-font-size: 13px;
+  --slot-weight: 400;
+  --slot-svg-display: block;
+  --slot-svg-stroke: 1.6;
+  --slot-text-display: none;
+  --slot-plus-font: inherit;
+  --slot-plus-size: 30px;
+
+  --nav-active-bg: rgba(255, 255, 255, 0.55);
+  --nav-active-fg: #1C1A17;
+  --nav-fg: #6B6356;
+
+  --bubble-bg: rgba(255, 255, 255, 0.34);
+  --bubble-fg: #1C1A17;
+  --bubble-radius: 16px 16px 16px 4px;
+  --face-on: #1D1C1A;
+  --face-halo: rgba(232, 115, 90, 0.16);
+
+  --thumb-bg: linear-gradient(135deg, #C9A98A 0%, #7D6551 100%);
+  --thumb-play-bg: rgba(255, 255, 255, 0.75);
+  --thumb-play-fg: #1C1A17;
+  --thumb-badge-bg: rgba(0, 0, 0, 0.6);
+  --thumb-track: rgba(255, 255, 255, 0.25);
+
+  --highlight: var(--accent-soft);
+  --overlay: rgba(40, 30, 20, 0.12);
+  /* Pieno (non vetro): lo usano anche le <option> dei menu nativi. */
+  --modal-bg: #F3EDE5;
+  --modal-border: 1px solid rgba(255, 255, 255, 0.6);
+  --shadow-pop: 0 30px 80px rgba(60, 40, 20, 0.25);
+  --focus-ring: 2px solid var(--accent);
+
+  --group-work: var(--accent);
+  --group-break: var(--study-break);
+  --group-off: var(--tick-off-long);
+  --group-bar-track: var(--track);
+  --group-soon-border: var(--slot-border);
+  --group-me-bg: var(--accent-soft);
+  --group-rank-1: var(--accent);
+  --group-rank-2: var(--text-secondary);
+  --group-rank-3: var(--accent-2);
+  --group-rank-n: var(--text-muted);
+  --group-seg-bg: var(--surface-3);
+  --group-seg-fg: var(--text-primary);
+  --group-seg-idle: var(--text-muted);
+
+  --field-bg: rgba(255, 255, 255, 0.28);
+  --field-border: 1px solid rgba(255, 255, 255, 0.55);
+  --field-focus: 1px solid rgba(29, 28, 26, 0.45);
+  --field-error: 1px solid rgba(208, 69, 59, 0.55);
+  --modal-title-weight: 500;
+
+  --group-warn-fg: var(--warn);
+  --group-warn-bg: rgba(185, 128, 28, 0.12);
+  --group-warn-border: 1px solid rgba(185, 128, 28, 0.3);
+  --group-danger-card: var(--card-bg);
+  --group-danger-border: 1px solid rgba(208, 69, 59, 0.45);
+  --group-danger-soft: rgba(208, 69, 59, 0.14);
+  --group-danger-line: 1px solid rgba(208, 69, 59, 0.28);
+  --group-danger-row: transparent;
+  --group-tabs-line: 1px solid rgba(40, 30, 20, 0.1);
+  --group-subject-0: #E8735A;
+  --group-subject-1: #1D1C1A;
+  --group-subject-2: #F2B84B;
+  --group-subject-3: #5B8DEF;
+  --group-subject-other: rgba(40, 30, 20, 0.22);
+
+  --scene-bg: #E4D6C4;
+  --scene-wall: #E4D6C4;
+  --scene-floor: #CDBBA4;
+  --scene-floor-line: rgba(90, 64, 40, 0.18);
+  --scene-win: #F6EEE2;
+  --scene-win-frame: #B9A68E;
+  --scene-win-sw: 4;
+  --scene-mullion: 3;
+  --scene-moon: #FFF6E0;
+  --scene-star: #B9A68E;
+  --scene-shelf: #C9B49A;
+  --scene-board: #B9A68E;
+  --scene-b1: #E8735A;
+  --scene-b2: #5B8DEF;
+  --scene-b3: #F2B84B;
+  --scene-chair: #A8927A;
+  --scene-top: #BCA78E;
+  --scene-top-hi: #CDBBA4;
+  --scene-front: #A8927A;
+  --scene-head: #F6EEE2;
+  --scene-head-stroke: #8C7862;
+  --scene-head-sw: 1.5;
+  --scene-body: #D8C8B4;
+  --scene-face: #1D1C1A;
+  --scene-page: #FFFFFF;
+  --scene-lamp: #8C7862;
+  --scene-lamp-on: #6B5A48;
+  --scene-lamp-off: #A8927A;
+  --scene-bulb-on: #FFF1C8;
+  --scene-bulb-brk: #E8735A;
+  --scene-cone: rgba(255, 236, 190, 0.35);
+  --scene-cone-op: 1;
+  --scene-pool: rgba(255, 226, 160, 0.45);
+  --scene-warm: rgba(232, 115, 90, 0.12);
+  --scene-mug: #8C7862;
+  --scene-steam: #A8927A;
+  --scene-line: none;
+  --scene-sw: 0;
+  --scene-plate-bg: rgba(255, 255, 255, 0.6);
+  --scene-free-fg: #6B6356;
+  --scene-dot-a: #000;
+  --scene-dot-b: #000;
+  --scene-dot-r: #000;
+  --scene-plate-border: rgba(255, 255, 255, 0.7);
+  --scene-pill-work-bg: rgba(29, 28, 26, 0.1);
+  --scene-pill-work-fg: #1C1A17;
+  --scene-pill-break-bg: rgba(232, 115, 90, 0.16);
+  --scene-pill-break-fg: #B5503A;
+
+  --note-page-bg: rgba(255, 255, 255, 0.55);
+  --note-page-ink: #1C1A17;
+  --note-page-pattern: none;
+  --note-page-border: 1px solid rgba(255, 255, 255, 0.6);
+  --note-page-shadow: 0 10px 30px rgba(60, 40, 20, 0.12);
+  --note-margin: transparent;
+  --note-postit-bg: #FFF1A8;
+  --note-postit-ink: #5C4E12;
+  --note-key-shadow: none;
+  --tint-salvia: #C9D3C0;
+  --tint-salvia-ink: #1F2B1C;
+  --tint-blu: #C3D1E0;
+  --tint-blu-ink: #1B2A36;
+  --tint-senape: #EBD39A;
+  --tint-senape-ink: #3A2C0A;
+  --tint-malva: #DCCBD8;
+  --tint-malva-ink: #33213A;
+}
+
+/* ==========================================================================
+   OMBRA: nero assoluto, rune bianche, il nucleo a eclisse. Variante nativa:
+   notte ("Ombra"); il giorno ("Fiamma", alabastro e argento) è in
+   tokens-varianti.css. Unica eccezione: le due varianti cambiano anche forma
+   (card con angoli tagliati di notte, arrotondate con il filo di fiamma di
+   giorno), con perMode di core/theme/variants.ts e i selettori data-mode.
+   ========================================================================== */
+:root[data-theme="ombra"] {
+  color-scheme: dark;
+
+  --font-family: "Figtree Variable", system-ui, sans-serif;
+  --font-display: "Spectral", Georgia, serif;
+  --display-weight: 300;
+  --display-tracking: 0;
+  --font-title: "Figtree Variable", system-ui, sans-serif;
+  --font-flavor: "Spectral", Georgia, serif;
+  --title-weight: 600;
+  --heading-weight: 300;
+  --body-size: 14px;
+  --line-height: 1.5;
+
+  --bg: #000000;
+  --main-bg: #000000;
+  --bg-sidebar: #000000;
+  --sidebar-border: 1px solid rgba(238, 237, 232, 0.05);
+  --sidebar-width: 224px;
+
+  --accent-2: #8B8F99;
+  --card-gloss: linear-gradient(165deg, rgba(255, 255, 255, 0.04), transparent 38%);
+  --core-fill: #000000;
+  --core-ink: #EEEDE8;
+  --core-glow: rgba(238, 237, 232, 0.85);
+  --prog: #EEEDE8;
+  --prog-glow: rgba(238, 237, 232, 0.45);
+  --rune-glow: rgba(238, 237, 232, 0.35);
+  --fx-light: rgba(238, 237, 232, 0.05);
+  --fx-shadow: rgba(0, 0, 0, 0.95);
+  --fx-len: 26px;
+
+  --bg-card: #080808;
+  --card-bg: #080808;
+  --card-border: 1px solid rgba(240, 238, 230, 0.08);
+  --card-shadow: none;
+  --card-transform: none;
+  --radius-card: 2px;
+  --widget-padding: 18px;
+  --grid-gap: 12px;
+  --main-padding: 20px 22px;
+  --main-gap: 14px;
+
+  --panel-bg: #050505;
+  --panel-border: 1px solid rgba(238, 237, 232, 0.08);
+  --radius-panel: 2px;
+  --display-bg: #050505;
+  --display-texture: none;
+  --display-border: 1px solid rgba(238, 237, 232, 0.08);
+  --radius-display: 2px;
+
+  --border-subtle: rgba(238, 237, 232, 0.08);
+  --divider: rgba(238, 237, 232, 0.08);
+  --row-active-bg: rgba(238, 237, 232, 0.06);
+  --row-active-border: rgba(238, 237, 232, 0.16);
+  --track: rgba(238, 237, 232, 0.08);
+  --tick-off: rgba(238, 237, 232, 0.1);
+  --tick-off-long: rgba(238, 237, 232, 0.2);
+  --bar-off: rgba(238, 237, 232, 0.1);
+  --dot-off: rgba(238, 237, 232, 0.12);
+  --dot-on: #EEEDE8;
+
+  --text-primary: #EEEDE8;
+  --text-secondary: #A4A29B;
+  --text-muted: #66645E;
+  --text-soft: #C9C7C0;
+
+  --accent: #EEEDE8;
+  --accent-strong: color-mix(in srgb, var(--accent) 70%, #ffffff);
+  --on-accent: #030304;
+  --success: #C9C7C0;
+  --success-text: #C9C7C0;
+  --warn: #C9A15A;
+  --led: #EEEDE8;
+  --danger: #C8615A;
+  --on-danger: #030304;
+
+  --surface-1: rgba(238, 237, 232, 0.03);
+  --surface-2: rgba(238, 237, 232, 0.06);
+  --surface-3: rgba(238, 237, 232, 0.11);
+
+  --radius-item: 3px;
+  --btn-primary-bg: var(--accent);
+  --btn-primary-fg: var(--on-accent);
+  --btn-ghost-border: 1px solid rgba(238, 237, 232, 0.12);
+  --btn-ghost-fg: #EEEDE8;
+  --chip-bg: transparent;
+  --chip-fg: var(--text-secondary);
+  --slot-border: 1px dashed rgba(238, 237, 232, 0.14);
+  --slot-bg: transparent;
+  --slot-fg: #66645E;
+  --slot-gap: 6px;
+  --slot-font-size: 13px;
+  --slot-weight: 400;
+  --slot-svg-display: block;
+  --slot-svg-stroke: 1.6;
+  --slot-text-display: none;
+  --slot-plus-font: inherit;
+  --slot-plus-size: 30px;
+
+  --nav-active-bg: rgba(238, 237, 232, 0.06);
+  --nav-active-fg: #EEEDE8;
+  --nav-fg: #66645E;
+
+  --bubble-bg: transparent;
+  --bubble-fg: #A4A29B;
+  --bubble-radius: 0;
+  --face-on: #EEEDE8;
+  --face-halo: rgba(238, 237, 232, 0.1);
+
+  --thumb-bg: linear-gradient(135deg, #1A1B1E 0%, #070708 100%);
+  --thumb-play-bg: rgba(238, 237, 232, 0.85);
+  --thumb-play-fg: #030304;
+  --thumb-badge-bg: rgba(0, 0, 0, 0.75);
+  --thumb-track: rgba(238, 237, 232, 0.15);
+
+  --highlight: var(--accent-soft);
+  --overlay: rgba(0, 0, 0, 0.7);
+  --modal-bg: #0A0A0B;
+  --modal-border: 1px solid rgba(238, 237, 232, 0.1);
+  --shadow-pop: 0 30px 80px rgba(0, 0, 0, 0.8);
+  --focus-ring: 2px solid var(--accent);
+
+  --group-work: var(--accent);
+  --group-break: var(--study-break);
+  --group-off: var(--tick-off-long);
+  --group-bar-track: var(--track);
+  --group-soon-border: var(--slot-border);
+  --group-me-bg: var(--accent-soft);
+  --group-rank-1: var(--accent);
+  --group-rank-2: var(--text-secondary);
+  --group-rank-3: var(--accent-2);
+  --group-rank-n: var(--text-muted);
+  --group-seg-bg: var(--surface-3);
+  --group-seg-fg: var(--text-primary);
+  --group-seg-idle: var(--text-muted);
+
+  --field-bg: rgba(238, 237, 232, 0.03);
+  --field-border: 1px solid rgba(238, 237, 232, 0.12);
+  --field-focus: 1px solid rgba(238, 237, 232, 0.45);
+  --field-error: 1px solid rgba(200, 97, 90, 0.55);
+  --modal-title-weight: 500;
+
+  --group-warn-fg: var(--warn);
+  --group-warn-bg: rgba(201, 161, 90, 0.1);
+  --group-warn-border: 1px solid rgba(201, 161, 90, 0.3);
+  --group-danger-card: var(--card-bg);
+  --group-danger-border: 1px solid rgba(200, 97, 90, 0.45);
+  --group-danger-soft: rgba(200, 97, 90, 0.14);
+  --group-danger-line: 1px solid rgba(200, 97, 90, 0.28);
+  --group-danger-row: transparent;
+  --group-tabs-line: 1px solid rgba(238, 237, 232, 0.08);
+  --group-subject-0: #EEEDE8;
+  --group-subject-1: #8E8E92;
+  --group-subject-2: #5F5F63;
+  --group-subject-3: #8F7068;
+  --group-subject-other: rgba(238, 237, 232, 0.14);
+
+  --scene-bg: #030304;
+  --scene-wall: #030304;
+  --scene-floor: #000000;
+  --scene-floor-line: rgba(238, 237, 232, 0.06);
+  --scene-win: #050506;
+  --scene-win-frame: rgba(238, 237, 232, 0.14);
+  --scene-win-sw: 4;
+  --scene-mullion: 3;
+  --scene-moon: #EEEDE8;
+  --scene-star: #66645E;
+  --scene-shelf: #0A0A0B;
+  --scene-board: #121214;
+  --scene-b1: #1F1F22;
+  --scene-b2: #2A2A2E;
+  --scene-b3: #161618;
+  --scene-chair: #0E0E10;
+  --scene-top: #121214;
+  --scene-top-hi: #1A1A1D;
+  --scene-front: #0A0A0B;
+  --scene-head: #000000;
+  --scene-head-stroke: rgba(238, 237, 232, 0.3);
+  --scene-head-sw: 1.5;
+  --scene-body: #0A0A0B;
+  --scene-face: #EEEDE8;
+  --scene-page: #A4A29B;
+  --scene-lamp: #1F1F22;
+  --scene-lamp-on: #2A2A2E;
+  --scene-lamp-off: #161618;
+  --scene-bulb-on: #EEEDE8;
+  --scene-bulb-brk: #8B8F99;
+  --scene-cone: rgba(238, 237, 232, 0.07);
+  --scene-cone-op: 1;
+  --scene-pool: rgba(238, 237, 232, 0.14);
+  --scene-warm: rgba(139, 143, 153, 0.08);
+  --scene-mug: #1F1F22;
+  --scene-steam: #66645E;
+  --scene-line: none;
+  --scene-sw: 0;
+  --scene-plate-bg: #050505;
+  --scene-free-fg: #66645E;
+  --scene-dot-a: #000;
+  --scene-dot-b: #000;
+  --scene-dot-r: #000;
+  --scene-plate-border: rgba(238, 237, 232, 0.12);
+  --scene-pill-work-bg: rgba(238, 237, 232, 0.08);
+  --scene-pill-work-fg: #EEEDE8;
+  --scene-pill-break-bg: rgba(139, 143, 153, 0.14);
+  --scene-pill-break-fg: #A4A8B2;
+
+  --note-page-bg: #050505;
+  --note-page-ink: #EEEDE8;
+  --note-page-pattern: none;
+  --note-page-border: 1px solid rgba(238, 237, 232, 0.08);
+  --note-page-shadow: none;
+  --note-margin: transparent;
+  --note-postit-bg: #1A1A1D;
+  --note-postit-ink: #EEEDE8;
+  --note-key-shadow: none;
+  --tint-salvia: #1E2420;
+  --tint-salvia-ink: #C9D3C0;
+  --tint-blu: #1B2026;
+  --tint-blu-ink: #C3D1E0;
+  --tint-senape: #26211A;
+  --tint-senape-ink: #E3CFA2;
+  --tint-malva: #241E24;
+  --tint-malva-ink: #DCCBD8;
 }
 
 /* ==========================================================================
