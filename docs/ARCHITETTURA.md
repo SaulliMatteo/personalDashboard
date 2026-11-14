@@ -152,6 +152,8 @@ Si salva solo il livello più alto raggiunto, nell'impostazione sincronizzata `s
 scende mai, nemmeno se cambiano gli obiettivi. Scelta fatta con l'utente al posto di una tabella `study_trials`:
 un tipo nuovo in `sync_records` avrebbe fatto rifiutare a Supabase ogni blocco del sync finché non si applicava la
 migrazione.
+Il livello resta tuo: viaggia solo tra i tuoi dispositivi col sync e non va ai Gruppi (deciso con l'utente, quindi
+niente tabella sul server e nessun livello nella classifica, anche se il mockup lo mostra).
 
 ### Il widget YouTube (`widgets/youtube/`)
 
