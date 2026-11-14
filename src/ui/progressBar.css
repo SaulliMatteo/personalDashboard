@@ -44,6 +44,17 @@
   background: linear-gradient(90deg, var(--accent), var(--accent-2));
 }
 
+/* Ombra: un filo sottile che brilla (di giorno sfumato come la fiamma). */
+:root[data-theme="ombra"] .pbar {
+  height: 3px;
+  overflow: visible;
+}
+
+:root[data-theme="ombra"] .pbar-fill {
+  background: var(--prog);
+  box-shadow: 0 0 10px var(--prog-glow);
+}
+
 /* Fosforo: celle separate da 6px, accese o spente. Si accendono celle intere. */
 :root[data-theme="fosforo"] .pbar {
   --cell: 14px;

@@ -12,7 +12,7 @@ export const SYSMON_GAUGES: ThemeVariants<ComponentType<GaugeProps>> = {
   opaco: GaugeOpaco,
   quaderno: GaugeQuaderno,
   fosforo: GaugeFosforo,
-  // Provvisori (fase 1): Vetro e Ombra avranno i loro.
+  // Vetro e Ombra usano quelli di Notte: con i loro token bastano (docs/TEMI.md).
   vetro: GaugeNotte,
   ombra: GaugeNotte,
 };

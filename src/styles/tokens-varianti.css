@@ -1248,6 +1248,15 @@
   --fx-light: rgba(255, 214, 150, 0.4);
   --fx-shadow: rgba(50, 56, 66, 0.13);
   --fx-len: 14px;
+  --cut: 0px;
+  --cut-edge: transparent;
+  --cut-edge-2: transparent;
+  --text-hidden: var(--text-muted);
+  --flame-line: linear-gradient(90deg, transparent, #F3C574, #FFFFFF 50%, #F3C574, transparent);
+  --flame-glow: rgba(255, 186, 80, 0.55);
+  --wall-top: rgba(255, 226, 170, 0.45);
+  --spark-hot: #FFF0DC;
+  --spark-glow: rgba(240, 170, 60, 0.9);
 
   --bg-card: #FDFDFC;
   --card-bg: #FDFDFC;

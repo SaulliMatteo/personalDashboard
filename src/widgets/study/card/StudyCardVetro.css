@@ -499,3 +499,134 @@
   width: 40px;
   height: 40px;
 }
+
+/* ==========================================================================
+   Ombra: stessa disposizione, il nucleo al posto del tubo (Temi Vetro e Ombra.html, regole `.app[data-theme="ombra"]`).
+   Barre sottili che brillano, righe senza riquadro, frase della fase in Spectral corsivo, cicli come piccoli nuclei.
+   ========================================================================== */
+:root[data-theme="ombra"] .sv-bar,
+:root[data-theme="ombra"] .sv-wide-line {
+  height: 3px;
+  overflow: visible;
+}
+
+:root[data-theme="ombra"] .sv-bar > span,
+:root[data-theme="ombra"] .sv-wide-line > span {
+  background: var(--prog);
+  box-shadow: 0 0 10px var(--prog-glow);
+}
+
+:root[data-theme="ombra"] .sv-row-bar > span {
+  background: var(--subject-color);
+  box-shadow: none;
+}
+
+:root[data-theme="ombra"] .sv-time,
+:root[data-theme="ombra"] .sv-cell-time,
+:root[data-theme="ombra"] .sv-wide-time {
+  letter-spacing: 0;
+}
+
+:root[data-theme="ombra"] .sv-phase {
+  font-family: var(--font-flavor);
+  font-style: italic;
+  font-size: max(13px, 6cqw);
+  color: color-mix(in srgb, var(--core-ink) 65%, transparent);
+}
+
+:root[data-theme="ombra"] .sv-subject {
+  color: var(--core-ink);
+}
+
+:root[data-theme="ombra"] .sv-row {
+  padding: 7px 2px;
+  border: 0;
+  border-bottom: 1px solid var(--divider);
+  border-radius: 0;
+  background: transparent;
+}
+
+:root[data-theme="ombra"] .sv-row.is-active {
+  padding-inline: 8px;
+  border-bottom-color: transparent;
+  border-radius: var(--radius-item);
+  background: var(--accent-soft);
+}
+
+:root[data-theme="ombra"] .sv-row:not(.is-active):hover {
+  background: var(--surface-1);
+}
+
+:root[data-theme="ombra"] .sv-chip {
+  border: 1px solid var(--divider);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+/* pulsanti: piastre squadrate di notte, pillole di giorno; il principale si accende */
+:root[data-theme="ombra"] .sv .study-btn {
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+  box-shadow: none;
+}
+
+:root[data-theme="ombra"][data-mode="giorno"] .sv .study-btn {
+  border-radius: 999px;
+}
+
+:root[data-theme="ombra"] .sv .study-btn--primary {
+  border: 0;
+  background: var(--btn-primary-bg);
+  box-shadow: 0 0 20px var(--rune-glow);
+}
+
+/* i cicli sono piccoli nuclei: pieni quelli fatti */
+:root[data-theme="ombra"] .sv-cycle {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--text-muted);
+  background: transparent;
+}
+
+:root[data-theme="ombra"] .sv-cycle.is-done {
+  border-color: var(--core-ink);
+  background: var(--core-fill);
+  box-shadow: 0 0 8px var(--core-glow);
+}
+
+:root[data-theme="ombra"] .sv-cycle.is-current {
+  border-color: var(--core-ink);
+}
+
+:root[data-theme="ombra"] .sv-week {
+  border: 1px solid var(--divider);
+  background: transparent;
+  box-shadow: none;
+}
+
+:root[data-theme="ombra"] .sv-week-bar {
+  border-radius: var(--radius-item);
+  box-shadow: none;
+}
+
+:root[data-theme="ombra"] .sv-week-day.is-today .sv-week-bar {
+  background: var(--prog);
+  box-shadow: 0 0 10px var(--prog-glow);
+}
+
+/* Fiamma: il titolo in Spectral con la stella */
+:root[data-theme="ombra"][data-mode="giorno"] .sv-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  letter-spacing: 0.03em;
+}
+
+:root[data-theme="ombra"][data-mode="giorno"] .sv-head h2::before {
+  content: "✦";
+  font-size: 11px;
+  color: var(--accent-2);
+  text-shadow: 0 0 8px var(--flame-glow);
+}

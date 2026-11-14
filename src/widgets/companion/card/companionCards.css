@@ -365,6 +365,76 @@
   flex: 0 0 auto;
 }
 
+/* ==================== Ombra ==================== */
+.widget.cm {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.widget.cm--S {
+  padding: 10px;
+}
+
+.cm .cm-face {
+  flex: 0 0 auto;
+  align-self: stretch;
+  aspect-ratio: 1;
+}
+
+.cm-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cm-name,
+.cm-status {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cm-name {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.cm-status {
+  font-size: max(11.5px, var(--fs-min));
+  color: var(--text-muted);
+}
+
+.cm-bubble-slot {
+  display: flex;
+  min-height: 0;
+}
+
+.cm-bubble {
+  padding: 2px 12px;
+  border-left: 2px solid var(--divider);
+  color: var(--text-secondary);
+  font-family: var(--font-flavor);
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.35;
+}
+
+/* 2×2: la faccia grande in alto, il fumetto e il nome sotto */
+.widget.cm--M {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.cm--M .cm-face {
+  flex: 1 1 auto;
+  aspect-ratio: auto;
+}
+
 /* ==================== Fosforo ==================== */
 .widget.cf {
   display: flex;

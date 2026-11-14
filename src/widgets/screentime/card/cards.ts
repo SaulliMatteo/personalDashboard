@@ -11,7 +11,7 @@ export const SCREENTIME_RINGS: ThemeVariants<ComponentType<RingProps>> = {
   opaco: RingOpaco,
   quaderno: RingQuaderno,
   fosforo: RingFosforo,
-  // Provvisori (fase 1): gli anelli di Vetro e Ombra arrivano con i loro temi.
+  // Vetro e Ombra usano quello di Notte: con i loro token basta (docs/TEMI.md).
   vetro: RingNotte,
   ombra: RingNotte,
 };

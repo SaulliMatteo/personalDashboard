@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import type { SizeKey } from "../../../core/widgets/sizes";
 import type { ThemeVariants } from "../../../core/theme/variants";
-import { NotesCardFosforo, NotesCardNotte, NotesCardOpaco, NotesCardQuaderno, NotesCardVetro } from "./NotesCards";
+import { NotesCardFosforo, NotesCardNotte, NotesCardOmbra, NotesCardOpaco, NotesCardQuaderno, NotesCardVetro } from "./NotesCards";
 
 /**
  * La card di ogni tema (docs/mockup/temi/notes-redesign.html): la 1×1 cambia
@@ -13,6 +13,5 @@ export const NOTES_CARDS: ThemeVariants<ComponentType<{ size: SizeKey }>> = {
   quaderno: NotesCardQuaderno,
   fosforo: NotesCardFosforo,
   vetro: NotesCardVetro,
-  // Provvisorio (fase 1): la card di Ombra arriva con il suo tema.
-  ombra: NotesCardNotte,
+  ombra: NotesCardOmbra,
 };

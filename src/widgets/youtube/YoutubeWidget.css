@@ -439,3 +439,8 @@
 :root[data-theme="opaco"] .ytw-cell {
   background: transparent;
 }
+
+/* Ombra: le miniature perdono quasi tutto il colore (Temi Vetro e Ombra.html, `.thumb`). */
+:root[data-theme="ombra"] .ytw-thumb img {
+  filter: grayscale(0.6);
+}

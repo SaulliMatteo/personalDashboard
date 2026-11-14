@@ -98,6 +98,17 @@
   --fx-light: transparent;
   --fx-shadow: transparent;
   --fx-len: 0px;
+  /* Ombra: filo chiaro sugli angoli tagliati, testo nascosto che si rivela al passaggio,
+     fiamma sul bordo alto, alone in cima allo sfondo e scintille del puntatore (Fiamma). */
+  --cut: 0px;
+  --cut-edge: transparent;
+  --cut-edge-2: transparent;
+  --text-hidden: var(--text-muted);
+  --flame-line: none;
+  --flame-glow: transparent;
+  --wall-top: transparent;
+  --spark-hot: transparent;
+  --spark-glow: transparent;
 }
 
 /* ==========================================================================
@@ -1413,6 +1424,15 @@
   --fx-light: rgba(238, 237, 232, 0.05);
   --fx-shadow: rgba(0, 0, 0, 0.95);
   --fx-len: 26px;
+  --cut: 12px;
+  --cut-edge: rgba(238, 237, 232, 0.22);
+  --cut-edge-2: rgba(238, 237, 232, 0.14);
+  --text-hidden: #5D5B55;
+  --flame-line: none;
+  --flame-glow: transparent;
+  --wall-top: transparent;
+  --spark-hot: transparent;
+  --spark-glow: transparent;
 
   --bg-card: #080808;
   --card-bg: #080808;

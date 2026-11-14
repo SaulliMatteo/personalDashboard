@@ -112,6 +112,48 @@
   opacity: 0.35;
 }
 
+/* ---------- Ombra: il nucleo ---------- */
+.core-dial-track {
+  fill: none;
+  stroke: var(--ring-track);
+  stroke-width: 2;
+}
+.core-dial-glow {
+  fill: none;
+  stroke: var(--core-glow);
+  stroke-width: 4;
+}
+.core-dial-ink {
+  fill: none;
+  stroke: var(--core-ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.core-dial-head {
+  fill: var(--core-ink);
+}
+.core-dial-rays {
+  stroke: var(--core-glow);
+  stroke-width: 1;
+  opacity: 0.55;
+}
+.core-dial-halo {
+  fill: var(--core-glow);
+  opacity: 0.9;
+}
+.core-dial-disc {
+  fill: var(--core-fill);
+  stroke: var(--core-glow);
+  stroke-width: 1;
+}
+/* il tempo sta sul disco: di notte bianco sul nero, di giorno scuro sul globo bianco */
+.core-dial-center {
+  color: var(--core-ink);
+}
+.core-dial-center > * {
+  color: inherit;
+}
+
 /* ---------- Opaco ---------- */
 .ring-dial-track {
   fill: none;

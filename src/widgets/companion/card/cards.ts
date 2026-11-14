@@ -1,4 +1,4 @@
-import { CompanionCardFosforo, CompanionCardNotte, CompanionCardOpaco, CompanionCardQuaderno, CompanionCardVetro } from "./CompanionCards";
+import { CompanionCardFosforo, CompanionCardNotte, CompanionCardOmbra, CompanionCardOpaco, CompanionCardQuaderno, CompanionCardVetro } from "./CompanionCards";
 
 /** La card di ogni tema: la usa la dashboard e, in taglia 2×2, la pagina del Companion. */
 export const COMPANION_CARDS = {
@@ -7,6 +7,5 @@ export const COMPANION_CARDS = {
   quaderno: CompanionCardQuaderno,
   fosforo: CompanionCardFosforo,
   vetro: CompanionCardVetro,
-  // Provvisorio (fase 1): la card di Ombra arriva con il suo tema.
-  ombra: CompanionCardNotte,
+  ombra: CompanionCardOmbra,
 };

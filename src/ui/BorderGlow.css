@@ -40,6 +40,54 @@
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
+/* Ombra: lucido fisso e ombra proiettata lontano dal puntatore (--sx/--sy da app/usePointerFx.ts). Il glow non c'è:
+   ::before e ::after sono liberi per gli angoli e per la fiamma. */
+:root[data-theme="ombra"] .border-glow-card {
+  background: var(--card-gloss), var(--card-bg);
+  box-shadow: var(--sx, 0px) var(--sy, 12px) 30px var(--fx-shadow);
+}
+:root[data-theme="ombra"] .border-glow-card > .edge-light {
+  display: none;
+}
+/* Ombra (notte): due angoli tagliati come piastre, dipinti col colore del fondo, con un filo chiaro sul taglio
+   (Temi Vetro e Ombra.html, `:is(.card, .panel, .npage)` di notte). */
+:root[data-theme="ombra"][data-mode="notte"] .border-glow-card {
+  border: 0;
+  background:
+    linear-gradient(135deg, var(--bg) var(--cut), transparent calc(var(--cut) + 0.5px)) top left / 100% 100% no-repeat,
+    linear-gradient(-45deg, var(--bg) var(--cut), transparent calc(var(--cut) + 0.5px)) bottom right / 100% 100% no-repeat,
+    linear-gradient(135deg, transparent calc(var(--cut) - 0.5px), var(--cut-edge) var(--cut), transparent calc(var(--cut) + 1px)) top left / 100% 100% no-repeat,
+    linear-gradient(-45deg, transparent calc(var(--cut) - 0.5px), var(--cut-edge-2) var(--cut), transparent calc(var(--cut) + 1px)) bottom right / 100% 100% no-repeat,
+    var(--card-gloss),
+    linear-gradient(180deg, var(--divider) 0 1px, transparent 1px),
+    var(--card-bg);
+}
+/* Ombra (notte): il testo tenue quasi si nasconde e torna leggibile passando sulla card. */
+:root[data-theme="ombra"][data-mode="notte"] .border-glow-card:not(:hover):not(:focus-within) {
+  --text-muted: var(--text-hidden);
+}
+:root[data-theme="ombra"] .border-glow-card::before {
+  display: none;
+}
+/* Ombra (giorno, Fiamma): il filo di fiamma sul bordo alto. */
+:root[data-theme="ombra"] .border-glow-card::after {
+  display: none;
+}
+:root[data-theme="ombra"][data-mode="giorno"] .border-glow-card::after {
+  display: block;
+  inset: -1px 18% auto;
+  height: 2px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--flame-line);
+  box-shadow: 0 0 12px var(--flame-glow);
+  mask: none;
+  mix-blend-mode: normal;
+  opacity: 1;
+  z-index: 2;
+  pointer-events: none;
+}
+
 .border-glow-card::before,
 .border-glow-card::after,
 .border-glow-card > .edge-light {

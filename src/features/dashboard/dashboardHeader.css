@@ -97,15 +97,23 @@
   letter-spacing: -0.01em;
 }
 
-/* ---------- Ombra: per ora come Notte (fase 3 del piano) ---------- */
+/* ---------- Ombra: saluto in Spectral corsivo di notte, dritto di giorno (Temi Vetro e Ombra.html, `.head h1`) ---------- */
 .dh--ombra {
   align-items: flex-end;
   gap: 32px;
 }
 
 .dh--ombra h1 {
-  font-size: 28px;
+  font-family: var(--font-flavor);
+  font-size: 30px;
+  font-style: italic;
   font-weight: 300;
+}
+
+:root[data-mode="giorno"] .dh--ombra h1 {
+  font-style: normal;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 /* ---------- Intestazione stretta: prima rimpicciolisce il saluto, poi spariscono i mini ----------

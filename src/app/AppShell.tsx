@@ -1,7 +1,8 @@
 import { createElement, useEffect, useMemo, useState, type ComponentType, type MouseEvent, type ReactNode } from "react";
 import Sidebar from "../features/sidebar/Sidebar";
 import { useSettings } from "../core/settings/useSettings";
-import { useThemeVariant, type ThemeVariants } from "../core/theme/variants";
+import { perMode, useThemeVariant, type ThemeVariants } from "../core/theme/variants";
+import EmberSparks from "./EmberSparks";
 import GlassWall from "./GlassWall";
 import { usePointerFx, type PointerFx } from "./usePointerFx";
 import RoomNavItem from "../social/room/RoomNavItem";
@@ -30,14 +31,27 @@ const WALLS: ThemeVariants<ComponentType | null> = {
   ombra: null,
 };
 
-/** Effetti che seguono il puntatore (usePointerFx): il riflesso del vetro. */
-const POINTER_FX: ThemeVariants<PointerFx | null> = {
+/**
+ * Effetti che seguono il puntatore (usePointerFx): il riflesso del vetro, che si spegne con l'impostazione
+ * `glassSheen`; in Ombra le ombre proiettate e la luce sullo sfondo.
+ */
+const POINTER_FX: ThemeVariants<(PointerFx & { sheenSetting?: boolean }) | null> = {
   notte: null,
   opaco: null,
   quaderno: null,
   fosforo: null,
-  vetro: { local: true, shadow: false, wall: false },
-  ombra: null,
+  vetro: { local: true, shadow: false, wall: false, sheenSetting: true },
+  ombra: { local: false, shadow: true, wall: true },
+};
+
+/** Sopra l'app, solo con le animazioni accese: le scintille di Fiamma. */
+const OVERLAYS: ThemeVariants<ComponentType | null> = {
+  notte: null,
+  opaco: null,
+  quaderno: null,
+  fosforo: null,
+  vetro: null,
+  ombra: perMode({ notte: null, giorno: EmberSparks }),
 };
 
 /** La voce "Widget" (il catalogo) del menu del telefono: sul desktop il catalogo si apre dalla griglia. */
@@ -83,8 +97,11 @@ function AppShell({ children, scroll = true, compactBar }: { children: ReactNode
   const { settings } = useSettings();
   const Wall = useThemeVariant(WALLS);
   const fx = useThemeVariant(POINTER_FX);
+  const Overlay = useThemeVariant(OVERLAYS);
   // Sul telefono non c'è un puntatore da seguire; il riflesso del vetro si può spegnere.
-  usePointerFx(!compact && settings.animationsEnabled && settings.glassSheen ? fx : null);
+  const fxOn = !compact && settings.animationsEnabled && (!fx?.sheenSetting || settings.glassSheen);
+  usePointerFx(fxOn ? fx : null);
+  const overlay = !compact && settings.animationsEnabled && Overlay ? createElement(Overlay) : null;
 
   const deco = (
     <>
@@ -107,6 +124,7 @@ function AppShell({ children, scroll = true, compactBar }: { children: ReactNode
         {deco}
         <Sidebar extraNav={<RoomNavItem />} />
         <main className={mainClass}>{children}</main>
+        {overlay}
       </div>
     );
   }

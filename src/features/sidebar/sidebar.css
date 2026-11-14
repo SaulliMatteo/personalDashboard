@@ -211,6 +211,16 @@
   box-shadow: var(--card-inset);
 }
 
+/* ---------- Ombra: obiettivo senza fondo, solo il contorno ---------- */
+:root[data-theme="ombra"] .sidebar-goal {
+  border: 1px solid var(--divider);
+  background: transparent;
+}
+
+:root[data-theme="ombra"] .sidebar-goal-done {
+  font-family: var(--font-display);
+}
+
 :root[data-theme="opaco"] .setting-button,
 :root[data-theme="fosforo"] .setting-button {
   justify-content: flex-start;

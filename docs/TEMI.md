@@ -68,9 +68,23 @@ nella Stanza comune (`AppShell scroll={false}`): lì la pagina sta nella finestr
 - Effetti del puntatore: un solo listener, `app/usePointerFx.ts`, scrive `--lx/--ly` (sulla card sotto il
   puntatore), `--sx/--sy` (ombra opposta, lunga `--fx-len`) e `--px/--py` (su `.app-wall`). Si sceglie per tema con
   `POINTER_FX` in `AppShell`; sul telefono è spento.
+- Ombra, forme: i raggi vengono dai token (2–3 px di notte, 16 px di giorno). Di notte la cornice (`BorderGlow.css`)
+  ha due angoli tagliati dipinti col colore del fondo (`--cut`, `--cut-edge*`, come il mockup: niente `clip-path`,
+  che taglierebbe l'ombra) e il testo tenue si scurisce (`--text-hidden`) finché non si passa sulla card; di giorno
+  c'è il filo di fiamma sul bordo alto (`::after`, `--flame-line`/`--flame-glow`). In Ombra `::before`, `::after` e
+  `.edge-light` della cornice non fanno il glow.
+- Ombra, effetti: `POINTER_FX` dà ombre proiettate (`--sx/--sy`) e luce sullo sfondo (`--px/--py` su `.app-wall`,
+  con `--fx-light` e, di giorno, l'alone `--wall-top`); il riquadro `.main` è trasparente per lasciarla vedere.
+  Fiamma ha le scintille di `app/EmberSparks.tsx` (mappa `OVERLAYS` in `AppShell`, colori `--spark-hot`/`--spark-glow`):
+  il ciclo gira solo mentre il puntatore si muove o ci sono scintille. Tutto spento con le animazioni disattivate,
+  con `prefers-reduced-motion` e sul telefono.
+- Ombra, Studio: quadrante `CoreDial` (`Dials.tsx`, il nucleo con `--core-fill/-ink/-glow`). La card dello Studio di
+  Vetro e quella di Ombra sono lo stesso componente (`StudyCardVetro.tsx`, prefisso `sv`) con quadrante diverso:
+  nel mockup hanno la stessa disposizione; le regole di Ombra stanno in fondo a `StudyCardVetro.css`. Pixy e Note
+  hanno le card `CompanionCardOmbra`/`NotesCardOmbra`.
 - Pixy di Vetro: stile `glass` di `core/pixy/render/styles.ts` (matrice LED con i punti spenti visibili) in un
-  riquadro lucido (`.cv-box`). Il quadrante dello Studio è `GlassDial` (`Dials.tsx`). Orologio, data, meteo, File
-  Transfer, Monitor, Tempo al PC, Lavagna e YouTube usano le card di Notte, che col vetro dei token bastano.
+  riquadro lucido (`.cv-box`). Il quadrante dello Studio è `GlassDial` (`Dials.tsx`). In Vetro e in Ombra orologio,
+  data, meteo, File Transfer, Monitor, Tempo al PC, Lavagna e YouTube usano le card di Notte: coi token bastano.
 - L'impostazione `themeMode` è `giorno|notte|auto`: `auto` segue il sistema (`useSystemDark`) anche ad app aperta.
   `useTheme()` restituisce il tema risolto (`mode`, `scheme`, `glow`, `defaultAccent`, `accent`): il codice non
   guarda mai `themeMode` direttamente. L'accent personalizzato è uno per variante (`ACCENT_KEYS` in `schema.ts`).

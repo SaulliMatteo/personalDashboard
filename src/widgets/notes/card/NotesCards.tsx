@@ -89,7 +89,24 @@ export function NotesCardVetro({ size }: CardProps) {
   return (
     <Shell theme="vetro" size={size} data={data} label={size === "S" ? `Note: ${countText(data)}` : undefined}>
       {size === "S" ? (
-        <div className="nc-s-vetro">
+        <div className="nc-s-mini">
+          <div className="nc-big">{countText(data)}</div>
+          <small>{data.countLabel}</small>
+        </div>
+      ) : (
+        <Body size={size} data={data} quickIcon limit={3} />
+      )}
+    </Shell>
+  );
+}
+
+/** Ombra, 1×1: il numero in Spectral e l'etichetta (mockup `.mini`); righe sottili, anteprima col filo in alto. */
+export function NotesCardOmbra({ size }: CardProps) {
+  const data = useNotesCard();
+  return (
+    <Shell theme="ombra" size={size} data={data} label={size === "S" ? `Note: ${countText(data)}` : undefined}>
+      {size === "S" ? (
+        <div className="nc-s-mini">
           <div className="nc-big">{countText(data)}</div>
           <small>{data.countLabel}</small>
         </div>

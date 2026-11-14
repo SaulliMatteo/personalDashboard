@@ -1528,3 +1528,8 @@ textarea.yt-input {
   flex: 1 1 auto;
   min-height: 44px;
 }
+
+/* Ombra: le miniature perdono quasi tutto il colore (Temi Vetro e Ombra.html, `.thumb`). */
+:root[data-theme="ombra"] .yt-thumb img {
+  filter: grayscale(0.6);
+}

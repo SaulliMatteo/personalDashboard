@@ -164,6 +164,33 @@ export function CompanionCardVetro({ size }: CardProps) {
   );
 }
 
+/**
+ * Ombra (Temi Vetro e Ombra.html, card di Pixy): la faccia libera sulla card, a destra il fumetto in Spectral corsivo
+ * con un filo a sinistra e, sotto, nome e stato. Il corpo di Pixy per Ombra arriva con il suo renderer.
+ */
+export function CompanionCardOmbra({ size }: CardProps) {
+  const { name, status } = useCompanionCard();
+  if (size === "S") {
+    return (
+      <article className="widget cm cm--S">
+        <Face />
+      </article>
+    );
+  }
+  return (
+    <article className={`widget cm cm--${size}`}>
+      <Face className="cm-face" />
+      <div className="cm-text">
+        <div className="cm-bubble-slot">
+          <Bubble className="cm-bubble" />
+        </div>
+        <span className="cm-name">{name}</span>
+        <span className="cm-status">{status}</span>
+      </div>
+    </article>
+  );
+}
+
 /** Fosforo: faccia a punti dentro una "lente" sul display. */
 export function CompanionCardFosforo({ size }: CardProps) {
   const { name, status } = useCompanionCard();

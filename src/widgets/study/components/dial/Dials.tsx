@@ -136,6 +136,57 @@ export function GlassDial({ size, progress, children }: DialProps) {
   );
 }
 
+const CORE_R = 88;
+const CORE_C = 2 * Math.PI * CORE_R;
+/** 24 raggi attorno al nucleo, alternati lunghi e corti. */
+const CORE_RAYS = Array.from({ length: 24 }, (_, k) => {
+  const a = (k / 24) * Math.PI * 2;
+  const l = k % 2 ? 8 : 15;
+  return { x1: 100 + 62 * Math.cos(a), y1: 100 + 62 * Math.sin(a), x2: 100 + (62 + l) * Math.cos(a), y2: 100 + (62 + l) * Math.sin(a) };
+});
+
+/**
+ * Ombra: il nucleo (Temi Vetro e Ombra.html, `dial` di Ombra). Un disco con la corona di raggi e l'alone; il
+ * progresso è un filo sottile luminoso con un punto in testa. Eclisse nera di notte, globo bianco di giorno:
+ * cambiano solo i token `--core-fill/-ink/-glow`.
+ */
+export function CoreDial({ size, progress, children }: DialProps) {
+  const p = Math.min(1, Math.max(0, progress));
+  const id = `cd${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
+  const angle = ((-90 + 360 * p) * Math.PI) / 180;
+  const dash = `${CORE_C * p} ${CORE_C}`;
+  return (
+    <div className="dial core-dial" style={{ width: size, height: size }}>
+      <svg className="dial-svg" viewBox="0 0 200 200" aria-hidden="true" style={{ overflow: "visible" }}>
+        <defs>
+          <filter id={`${id}h`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="7" />
+          </filter>
+          <filter id={`${id}l`} x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="2.2" />
+          </filter>
+        </defs>
+        <circle className="core-dial-track" cx="100" cy="100" r={CORE_R} />
+        {p > 0 && (
+          <>
+            <circle className="core-dial-glow" cx="100" cy="100" r={CORE_R} strokeDasharray={dash} transform="rotate(-90 100 100)" filter={`url(#${id}l)`} />
+            <circle className="core-dial-ink" cx="100" cy="100" r={CORE_R} strokeDasharray={dash} transform="rotate(-90 100 100)" />
+          </>
+        )}
+        <circle className="core-dial-head" cx={100 + CORE_R * Math.cos(angle)} cy={100 + CORE_R * Math.sin(angle)} r="4" />
+        <g className="core-dial-rays" filter={`url(#${id}l)`}>
+          {CORE_RAYS.map((r, i) => (
+            <line key={i} {...r} />
+          ))}
+        </g>
+        <circle className="core-dial-halo" cx="100" cy="100" r="64" filter={`url(#${id}h)`} />
+        <circle className="core-dial-disc" cx="100" cy="100" r="61" />
+      </svg>
+      <div className="dial-center core-dial-center">{children}</div>
+    </div>
+  );
+}
+
 /** Spessore dell'anello di Opaco: lo stesso della barra .so-bar del widget. */
 const RING_STROKE = 16;
 

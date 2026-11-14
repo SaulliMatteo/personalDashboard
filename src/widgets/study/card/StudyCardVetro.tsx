@@ -1,7 +1,7 @@
-import type { CSSProperties, MouseEvent } from "react";
+import { createElement, type ComponentType, type CSSProperties, type MouseEvent } from "react";
 import type { SizeKey } from "../../../core/widgets/sizes";
 import { MODE_LABEL, formatHoursMinutes } from "../lib/format";
-import { DialFit, GlassDial } from "../components/dial/Dials";
+import { CoreDial, DialFit, GlassDial, type DialProps } from "../components/dial/Dials";
 import OthersToggle from "./OthersToggle";
 import StudyCell from "./StudyCell";
 import StudyControls from "./StudyControls";
@@ -10,10 +10,20 @@ import { useStudyCard, type StudyCardData } from "./useStudyCard";
 import "./StudyCardVetro.css";
 
 /**
- * Tema Vetro (Temi Vetro e Ombra.html): quadrante a tubo di vetro, pulsanti di vetro a pillola,
- * materie in piccole lastre con la barra del loro colore, cicli in fondo.
+ * Temi Vetro e Ombra (Temi Vetro e Ombra.html, `.st`): nel mockup la card ha la stessa disposizione nei due temi,
+ * cambiano il quadrante e il CSS (prefisso `sv`; le regole di Ombra sono in fondo a StudyCardVetro.css).
+ * Vetro: tubo di vetro, pulsanti a pillola, materie in piccole lastre. Ombra: il nucleo, righe sottili, cicli come
+ * piccoli nuclei.
  */
-function StudyCardVetro({ size }: { size: SizeKey }) {
+export function StudyCardVetro({ size }: { size: SizeKey }) {
+  return <StudyCardLayout size={size} dial={GlassDial} />;
+}
+
+export function StudyCardOmbra({ size }: { size: SizeKey }) {
+  return <StudyCardLayout size={size} dial={CoreDial} />;
+}
+
+function StudyCardLayout({ size, dial }: { size: SizeKey; dial: ComponentType<DialProps> }) {
   const data = useStudyCard({ withWeek: size === "XL" });
 
   if (size === "S") {
@@ -43,11 +53,13 @@ function StudyCardVetro({ size }: { size: SizeKey }) {
     <div className="sv-timer">
       <DialFit max={230}>
         {(side) => (
-          <GlassDial size={side} progress={data.progress}>
-            <span className="sv-time">{data.clockText}</span>
-            <span className="sv-phase">{data.phaseLabel}</span>
-            {data.currentSubject && <span className="sv-subject">{data.currentSubject.name}</span>}
-          </GlassDial>
+          createElement(
+            dial,
+            { size: side, progress: data.progress },
+            <span className="sv-time">{data.clockText}</span>,
+            <span className="sv-phase">{data.phaseLabel}</span>,
+            data.currentSubject && <span className="sv-subject">{data.currentSubject.name}</span>,
+          )
         )}
       </DialFit>
       <StudyControls data={data} className="sv-controls" iconSize={[18, 15]} />
@@ -158,4 +170,3 @@ function Subjects({ data, max, withCycles }: { data: StudyCardData; max: number;
   );
 }
 
-export default StudyCardVetro;

@@ -189,6 +189,46 @@
   margin: 12px 10px 12px 12px;
 }
 
+/* ---------- Ombra: luce tenue che segue il puntatore (--px/--py da app/usePointerFx.ts) ----------
+   Fiamma aggiunge un alone caldo in cima. Il riquadro principale diventa trasparente per lasciarla vedere. */
+:root[data-theme="ombra"] .app:not(.app--compact) > .app-wall {
+  display: block;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 420px at 50% -10%, var(--wall-top), transparent 70%),
+    radial-gradient(560px circle at var(--px, 60%) var(--py, 30%), var(--fx-light), transparent 70%),
+    var(--main-bg);
+}
+
+:root[data-theme="ombra"] .app:not(.app--compact) > .main {
+  background: transparent;
+}
+
+/* Ombra (notte): la barra laterale non ha bordo, proietta un'ombra lunga sul piano. */
+:root[data-theme="ombra"][data-mode="notte"] .app:not(.app--compact) > .sidebar {
+  border-right: 0;
+  box-shadow: 1px 0 0 var(--surface-1), 20px 0 40px var(--fx-shadow);
+  z-index: 1;
+}
+
+:root[data-theme="ombra"][data-mode="notte"][data-sidebar="right"] .app:not(.app--compact) > .sidebar {
+  border-left: 0;
+  box-shadow: -1px 0 0 var(--surface-1), -20px 0 40px var(--fx-shadow);
+}
+
+/* Scintille (Fiamma): il canvas di app/EmberSparks.tsx sopra tutto, senza prendere i click. */
+.app-sparks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 15;
+  pointer-events: none;
+}
+
 /* Quaderno: la riga rossa del margine, ferma mentre il foglio scorre. */
 :root[data-theme="quaderno"] .main {
   background:

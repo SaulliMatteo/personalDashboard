@@ -547,8 +547,8 @@ div.nc-s-quaderno {
   box-shadow: var(--note-key-shadow);
 }
 
-/* ---------- Vetro: righe e anteprima su lastre di vetro (mockup `.ncard`) ---------- */
-.nc-s-vetro {
+/* ---------- Vetro e Ombra, 1×1: numero ed etichetta al centro (mockup `.mini`) ---------- */
+.nc-s-mini {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -558,15 +558,16 @@ div.nc-s-quaderno {
   text-align: center;
 }
 
-.nc-s-vetro .nc-big {
+.nc-s-mini .nc-big {
   font-size: min(40px, 30cqmin);
 }
 
-.nc-s-vetro small {
+.nc-s-mini small {
   font-size: max(11.5px, var(--fs-min));
   color: var(--text-muted);
 }
 
+/* ---------- Vetro: righe e anteprima su lastre di vetro (mockup `.ncard`) ---------- */
 .nc--vetro .nc-list {
   gap: 6px;
 }
@@ -587,6 +588,24 @@ div.nc-s-quaderno {
   border-radius: var(--radius-item);
   background: var(--surface-2);
   box-shadow: var(--card-inset);
+}
+
+/* ---------- Ombra: righe sottili; l'anteprima ha il filo chiaro in alto (mockup `.ncard` di Ombra) ---------- */
+.nc--ombra .nc-list .nc-row {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 46px;
+}
+
+.nc--ombra .nc-strip-main {
+  border: 1px solid var(--divider);
+  border-top: 2px solid var(--text-secondary);
+  border-radius: var(--radius-item);
+  background: var(--surface-1);
+}
+
+.nc--ombra .nc-big {
+  letter-spacing: 0;
 }
 
 /* Notte, 2×2: le righe si dividono l'altezza rimasta (al massimo 46px l'una). */

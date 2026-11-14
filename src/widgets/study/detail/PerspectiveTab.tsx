@@ -3,7 +3,7 @@ import { MdChevronLeft, MdChevronRight } from "react-icons/md";
 import { useNav } from "../../../core/nav/useNav";
 import { useSettings } from "../../../core/settings/useSettings";
 import { useThemeVariant, type ThemeVariants } from "../../../core/theme/variants";
-import { DialFit, DotDial, GlassDial, PenDial, RingDial, TickDial, type DialProps } from "../components/dial/Dials";
+import { DialFit, DotDial, CoreDial, GlassDial, PenDial, RingDial, TickDial, type DialProps } from "../components/dial/Dials";
 import { getFirstSessionTime, getSessionsBetween } from "../data/studyRepository";
 import { formatHoursMinutes } from "../lib/format";
 import {
@@ -36,8 +36,7 @@ const DIALS: ThemeVariants<ComponentType<DialProps>> = {
   quaderno: PenDial,
   fosforo: StillDotDial,
   vetro: GlassDial,
-  // Provvisorio: il nucleo di Ombra arriva con il suo tema.
-  ombra: TickDial,
+  ombra: CoreDial,
 };
 
 /** "1 ora" / "8 ore". */
