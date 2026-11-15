@@ -89,7 +89,15 @@ const SAME_ELEMENT: Partial<Record<SyncKind, readonly string[]>> = {
   row: ["collection_id", "created_at"],
   view: ["collection_id", "name"],
   attachment: ["note_id", "name"],
+  screen_usage: ["origin_device", "day", "hour", "app_key"],
 };
+
+/**
+ * Tipi con un indice unico sulle righe fatte qui: una riga di questo dispositivo che torna dal cloud senza id locale
+ * (DB rifatto, stesso dispositivo) prende sempre il posto di quella locale uguale, anche senza `adopt`; altrimenti
+ * l'inserimento violerebbe l'indice e fermerebbe il giro.
+ */
+const ADOPT_OWN: ReadonlySet<SyncKind> = new Set<SyncKind>(["screen_usage"]);
 
 /** Colonne UNIQUE: un nome già usato da un altro elemento qui diventa "Nome (2)". */
 const UNIQUE_TEXT: Partial<Record<SyncKind, string>> = { subject: "name" };
@@ -209,7 +217,7 @@ export async function syncRound(store: SyncStore, server: SyncServer, opts: Roun
     const row = converted.row;
 
     let target = local;
-    if (target === null && opts.adopt) target = await adoptable(spec, row);
+    if (target === null && (opts.adopt || (ADOPT_OWN.has(spec.kind) && row.origin_device === null))) target = await adoptable(spec, row);
     if (target !== null && local === null) {
       // stesso elemento creato anche qui: prende l'id globale del cloud, la versione del cloud vince
       await store.setUid(spec.table, target, record.uid);

@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 import type { AppCategory } from "../../core/system/appCategory";
+import type { DeviceFilter, DeviceKind } from "./lib/devices";
 import type { FocusClass } from "./lib/focus";
 import type { ScreenLimit } from "./lib/limits";
 import type { ClassifyContext, Summary, UsageRow } from "./lib/summary";
@@ -15,20 +16,36 @@ export interface LimitStatus {
 }
 
 export interface ScreenTimeContextValue {
-  /** False sul telefono, su Linux e nel browser: il widget mostra solo il messaggio. */
-  available: boolean;
+  /** False solo nel browser (niente DB): il widget mostra solo il messaggio. */
+  viewable: boolean;
+  /** Si conta su questo dispositivo (Windows e macOS); altrove si vedono solo le righe arrivate col sync. */
+  canRecord: boolean;
+  /** Si conta adesso: `canRecord` e conteggio acceso. */
   enabled: boolean;
+  /** Questo dispositivo: computer o telefono. */
+  device: DeviceKind;
   /** Prima lettura dal DB non ancora fatta. */
   loading: boolean;
-  /** Ora dell'ultimo salvataggio (ms): la pagina ne ricava "oggi" e l'ora in corso. */
+  /** Ora dell'ultimo salvataggio o dell'ultima lettura (ms): la pagina ne ricava "oggi" e l'ora in corso. */
   now: number;
-  /** Righe di oggi (aggiornate a ogni salvataggio, ~30 s). */
+  /** Righe di oggi di tutti i dispositivi (aggiornate a ogni salvataggio, ~30 s, e dopo ogni giro del sync). */
   todayRows: UsageRow[];
+  /** Oggi, solo i dispositivi del filtro. */
   today: Summary;
-  /** Totale di ieri (secondi). */
+  /** Oggi per dispositivo, senza filtro (colonna "Dispositivi"). */
+  todayByDevice: Record<DeviceKind, number>;
+  /** Filtro "Tutti / Computer / Telefono" in uso (sempre "all" col sync spento). */
+  filter: DeviceFilter;
+  /** Il filtro serve (sync acceso): pagina e widget lo mostrano. */
+  showFilter: boolean;
+  setFilter: (filter: DeviceFilter) => void;
+  /** Ultimo secondo contato oggi sugli altri dispositivi (ms), arrivato col sync; null se non c'è. */
+  othersUpdatedAt: number | null;
+  /** Totale di ieri (secondi), coi dispositivi del filtro. */
   yesterdayTotal: number;
   /** Ieri fino alla stessa ora di adesso (secondi): il confronto del widget. */
   yesterdaySoFar: number;
+  /** Limiti di questo dispositivo: contano solo le righe contate qui. */
   limits: LimitStatus[];
   /** Minuti al PC senza una pausa di 5 (0 se sei in pausa). */
   continuousMinutes: number;

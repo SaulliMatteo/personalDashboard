@@ -1,10 +1,16 @@
 import type { AppCategory } from "../../../core/system/appCategory";
 import { effectiveCategory } from "./classify";
+import { zeroDevices, type DeviceKind } from "./devices";
 import type { FocusClass } from "./focus";
 import type { ScreenLimit } from "./limits";
 
-/** Riga salvata (screentime_usage). */
+export type { DeviceKind } from "./devices";
+
+/** Riga salvata (screen_usage), di questo dispositivo o arrivata col sync. */
 export interface UsageRow {
+  device: DeviceKind;
+  /** Contata qui (origin_device NULL): solo queste valgono per limiti, menu dell'icona e pause. */
+  local: boolean;
   day: string;
   hour: number;
   appKey: string;
@@ -24,10 +30,13 @@ export interface RankItem {
   seconds: number;
   category: AppCategory;
   cls: FocusClass;
+  /** Quanto viene da ogni dispositivo (stessa app_key = una riga sola). */
+  byDevice: Record<DeviceKind, number>;
 }
 
 export interface Summary {
   total: number;
+  byDevice: Record<DeviceKind, number>;
   byClass: ClassSeconds;
   /** 24 ore, ognuna con i secondi per classe. */
   hours: ClassSeconds[];
@@ -48,17 +57,19 @@ function rank(map: Map<string, RankItem>): RankItem[] {
   return [...map.values()].sort((a, b) => b.seconds - a.seconds || a.label.localeCompare(b.label));
 }
 
-function add(map: Map<string, RankItem>, base: Omit<RankItem, "seconds">, seconds: number) {
+function add(map: Map<string, RankItem>, base: Omit<RankItem, "seconds" | "byDevice">, device: DeviceKind, seconds: number) {
   let item = map.get(base.key);
   if (!item) {
-    item = { ...base, seconds: 0 };
+    item = { ...base, seconds: 0, byDevice: zeroDevices() };
     map.set(base.key, item);
   }
   item.seconds += seconds;
+  item.byDevice[device] += seconds;
 }
 
 export function summarize(rows: UsageRow[], ctx: ClassifyContext): Summary {
   const byClass = zero();
+  const devices = zeroDevices();
   const hours = Array.from({ length: 24 }, zero);
   const apps = new Map<string, RankItem>();
   let total = 0;
@@ -70,13 +81,14 @@ export function summarize(rows: UsageRow[], ctx: ClassifyContext): Summary {
     const cls = ctx.classes[category] ?? "neutral";
     total += row.seconds;
     byClass[cls] += row.seconds;
+    devices[row.device] += row.seconds;
     if (row.hour >= 0 && row.hour < 24) hours[row.hour][cls] += row.seconds;
     firstAt = firstAt === null ? row.firstAt : Math.min(firstAt, row.firstAt);
     lastAt = lastAt === null ? row.lastAt : Math.max(lastAt, row.lastAt);
 
-    add(apps, { key: row.appKey, label: row.appLabel, category, cls }, row.seconds);
+    add(apps, { key: row.appKey, label: row.appLabel, category, cls }, row.device, row.seconds);
   }
-  return { total, byClass, hours, apps: rank(apps), firstAt, lastAt };
+  return { total, byDevice: devices, byClass, hours, apps: rank(apps), firstAt, lastAt };
 }
 
 /** Totale e classi per giorno (settimana, confronti, serie). */
@@ -95,10 +107,11 @@ export function dailyTotals(rows: UsageRow[], ctx: ClassifyContext): Map<string,
   return out;
 }
 
-/** Tempo di oggi che conta per un limite. */
+/** Tempo di oggi che conta per un limite: solo quello contato su questo dispositivo. */
 export function limitUsage(rows: UsageRow[], limit: ScreenLimit, manual: ReadonlyMap<string, AppCategory>): number {
   let sum = 0;
   for (const row of rows) {
+    if (!row.local) continue;
     if (limit.kind === "app" ? row.appKey === limit.target : effectiveCategory(row, manual) === limit.target) {
       sum += row.seconds;
     }

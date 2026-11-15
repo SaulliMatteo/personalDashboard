@@ -1,9 +1,11 @@
 import type { CSSProperties } from "react";
+import { MdOutlineDesktopWindows, MdOutlineSmartphone } from "react-icons/md";
+import { DEVICE_FILTERS, DEVICE_KINDS, DEVICE_LABEL, FILTER_LABEL, type DeviceFilter, type DeviceKind } from "../lib/devices";
 import { CLASS_LABEL, FOCUS_CLASSES, type FocusClass } from "../lib/focus";
 import type { ClassSeconds, RankItem } from "../lib/summary";
 import { formatShort, splitHours } from "../lib/format";
 
-/** Pezzi di Tempo al PC usati dal widget e dalla pagina. Forma per tema solo nel CSS (ScreenTimeWidget.css). */
+/** Pezzi di Tempo allo schermo usati dal widget e dalla pagina. Forma per tema solo nel CSS (ScreenTimeWidget.css). */
 
 const pct = (v: number, of: number) => (of > 0 ? Math.round((v / of) * 100) : 0);
 
@@ -64,7 +66,7 @@ export function ClassLegend({ byClass, withTime = false }: { byClass?: ClassSeco
 export function DayChart({ hours, nowHour, height }: { hours: ClassSeconds[]; nowHour: number | null; height?: number }) {
   return (
     <div>
-      <div className="st-day" style={height ? ({ "--h": `${height}px` } as CSSProperties) : undefined} role="img" aria-label="Tempo al PC ora per ora">
+      <div className="st-day" style={height ? ({ "--h": `${height}px` } as CSSProperties) : undefined} role="img" aria-label="Tempo allo schermo ora per ora">
         {hours.map((h, i) => {
           const sum = h.focus + h.fun + h.neutral;
           return (
@@ -87,18 +89,77 @@ export function DayChart({ hours, nowHour, height }: { hours: ClassSeconds[]; no
   );
 }
 
-/** Le voci più usate: pallino della classe, nome, tempo. */
-export function TopList({ items, max }: { items: RankItem[]; max: number }) {
+/** Icona di un dispositivo (docs/mockup/temi/tempo-pc-telefono.html). */
+export function DeviceIcon({ device, size = 12 }: { device: DeviceKind; size?: number }) {
+  const Icon = device === "phone" ? MdOutlineSmartphone : MdOutlineDesktopWindows;
+  return <Icon size={size} aria-hidden="true" />;
+}
+
+/** Segno accanto al nome di un'app: da quali dispositivi viene il suo tempo. */
+export function DeviceMark({ byDevice }: { byDevice: Record<DeviceKind, number> }) {
+  const kinds = DEVICE_KINDS.filter((d) => byDevice[d] > 0);
+  if (kinds.length === 0) return null;
+  return (
+    <span className="st-dev" role="img" aria-label={kinds.map((d) => DEVICE_LABEL[d].toLowerCase()).join(" e ")}>
+      {kinds.map((d) => (
+        <DeviceIcon key={d} device={d} />
+      ))}
+    </span>
+  );
+}
+
+/** Le voci più usate: pallino della classe, nome (col segno del dispositivo se `marks`), tempo. */
+export function TopList({ items, max, marks = false }: { items: RankItem[]; max: number; marks?: boolean }) {
   return (
     <div className="stw-top">
       {items.slice(0, max).map((item) => (
         <div key={item.key} className="stw-top-row">
           <ClassDot cls={item.cls} />
-          <span>{item.label}</span>
+          <span>
+            {item.label}
+            {marks && <DeviceMark byDevice={item.byDevice} />}
+          </span>
           <span className="stw-mono">{formatShort(item.seconds)}</span>
         </div>
       ))}
     </div>
+  );
+}
+
+/** Filtro "Tutti / Computer / Telefono" (`wide`: tre colonne uguali, come sul telefono). */
+export function DeviceFilterTabs({ value, onChange, wide = false }: { value: DeviceFilter; onChange: (f: DeviceFilter) => void; wide?: boolean }) {
+  return (
+    <div className={`stp-tabs is-dev${wide ? " is-wide" : ""}`} role="group" aria-label="Dispositivi">
+      {DEVICE_FILTERS.map((f) => (
+        <button key={f} type="button" aria-pressed={value === f} onClick={() => onChange(f)}>
+          {f !== "all" && <DeviceIcon device={f} size={14} />}
+          {FILTER_LABEL[f]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Tempo di oggi per dispositivo, con la barra (colonna "Dispositivi"); `here` = questo dispositivo. */
+export function DeviceBars({ byDevice, here }: { byDevice: Record<DeviceKind, number>; here: DeviceKind }) {
+  const max = Math.max(1, ...DEVICE_KINDS.map((d) => byDevice[d]));
+  return (
+    <>
+      {DEVICE_KINDS.map((d) => (
+        <div key={d} className={`stw-dev${d === here ? " is-here" : ""}`}>
+          <div className="stw-dev-top">
+            <span>
+              <DeviceIcon device={d} size={13} />
+              {DEVICE_LABEL[d]}
+            </span>
+            <span className="stw-mono">{byDevice[d] > 0 ? formatShort(byDevice[d]) : "—"}</span>
+          </div>
+          <div className="stw-bar">
+            <i style={{ width: `${pct(byDevice[d], max)}%` }} />
+          </div>
+        </div>
+      ))}
+    </>
   );
 }
 

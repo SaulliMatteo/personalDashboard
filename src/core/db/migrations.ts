@@ -706,4 +706,51 @@ export const MIGRATIONS: Migration[] = [
       `DELETE FROM screentime_limits WHERE kind = 'site'`,
     ],
   },
+  {
+    version: 31,
+    description: "Tempo allo schermo: i minuti per app vanno col sync (tabella nuova con id e dispositivo)",
+    statements: [
+      // Una riga per giorno locale, ora e app di un dispositivo. Al posto di screentime_usage, che non ha un id numerico
+      // (serve al sync). origin_device: NULL = contata qui, altrimenti l'id (dei Gruppi) del dispositivo che l'ha
+      // contata, come study_sessions. device_kind: 'computer' o 'phone' (filtro e segni della pagina). Niente sito.
+      `CREATE TABLE IF NOT EXISTS screen_usage (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         origin_device TEXT,
+         device_kind TEXT NOT NULL,
+         day TEXT NOT NULL,
+         hour INTEGER NOT NULL,
+         app_key TEXT NOT NULL,
+         app_label TEXT NOT NULL,
+         category TEXT NOT NULL,
+         seconds INTEGER NOT NULL DEFAULT 0,
+         first_at INTEGER NOT NULL,
+         last_at INTEGER NOT NULL
+       )`,
+      // Le righe di qui si sommano per giorno, ora e app (addUsage di widgets/screentime/data/screentimeRepository.ts).
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_screen_usage_here ON screen_usage(day, hour, app_key) WHERE origin_device IS NULL`,
+      `CREATE INDEX IF NOT EXISTS idx_screen_usage_day ON screen_usage(day)`,
+      // Rieseguita dopo il DROP qui sotto (app chiusa a metà) la copia non deve fallire: la tabella vecchia torna vuota.
+      `CREATE TABLE IF NOT EXISTS screentime_usage (
+         day TEXT NOT NULL,
+         hour INTEGER NOT NULL,
+         app_key TEXT NOT NULL,
+         site TEXT NOT NULL DEFAULT '',
+         app_label TEXT NOT NULL,
+         category TEXT NOT NULL,
+         seconds INTEGER NOT NULL DEFAULT 0,
+         first_at INTEGER NOT NULL,
+         last_at INTEGER NOT NULL,
+         PRIMARY KEY (day, hour, app_key, site)
+       )`,
+      // Le righe vecchie vengono per forza da questo computer (Windows o macOS). Dalla 30 il sito è sempre ''.
+      `INSERT INTO screen_usage (origin_device, device_kind, day, hour, app_key, app_label, category, seconds, first_at, last_at)
+       SELECT NULL, 'computer', u.day, u.hour, u.app_key, u.app_label, u.category, u.seconds, u.first_at, u.last_at
+       FROM screentime_usage u
+       WHERE u.site = '' AND NOT EXISTS (
+         SELECT 1 FROM screen_usage s WHERE s.origin_device IS NULL AND s.day = u.day AND s.hour = u.hour AND s.app_key = u.app_key)`,
+      `DROP TABLE IF EXISTS screentime_usage`,
+      // Trigger del sync (core/sync/tables.ts). origin_device non cambia mai qui: non serve tra le colonne dei trigger.
+      ...syncTracking("screen_usage", "id", ["device_kind", "day", "hour", "app_key", "app_label", "category", "seconds", "first_at", "last_at"]),
+    ],
+  },
 ];

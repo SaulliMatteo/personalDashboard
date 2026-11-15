@@ -8,7 +8,7 @@ zero), `round.test.mts` (due dispositivi su SQLite vero e un server finto), `fil
 
 ## Righe
 
-- Le tabelle sincronizzate (`SYNC_TABLES` in `tables.ts`: Studio, Note, Raccolte, impostazioni) hanno trigger SQLite
+- Le tabelle sincronizzate (`SYNC_TABLES` in `tables.ts`: Studio, Note, Raccolte, Tempo allo schermo, impostazioni) hanno trigger SQLite
   (migrazione 23) che danno a ogni riga un id globale (`sync_map`) e segnano le righe cambiate (`sync_outbox`); tacciono
   con `sync_state.applying = 1`.
 - Una colonna nuova in una di quelle tabelle va aggiunta ai trigger (migrazione nuova con DROP/CREATE TRIGGER) e in
@@ -29,7 +29,14 @@ zero), `round.test.mts` (due dispositivi su SQLite vero e un server finto), `fil
 - Un tipo nuovo va prima aggiunto al check `sync_records_kind` su Supabase: `sync_push` scrive un blocco intero in una
   volta, e un tipo sconosciuto fa rifiutare tutto il blocco, quindi il sync di ogni cosa si ferma finché la
   migrazione non è applicata. Per dati piccoli si può usare un'impostazione (come `studyLevelReached` dello Studio).
-- I totali dei Gruppi contano solo le sessioni con `origin_device` NULL (fatte qui).
+- Tabelle con `origin: true` (`study_sessions`, `screen_usage`): `origin_device` NULL = riga fatta qui; al push diventa
+  l'id di questo dispositivo, al pull torna NULL se è il mio. I totali dei Gruppi contano solo le sessioni con
+  `origin_device` NULL; limiti e menu dell'icona di Tempo allo schermo solo le righe di qui.
+- `screen_usage` ha un indice unico sulle righe di qui (giorno, ora, app): una riga mia che torna dal cloud senza id
+  locale (DB rifatto) prende sempre il posto di quella uguale (`ADOPT_OWN` in `engine/round.ts`), anche senza `adopt`.
+- Tabelle `lazy: true` (`screen_usage`, che cambia ogni 30 s): le loro modifiche non fanno partire un giro
+  (`SYNC_EAGER_TABLES`, letto dal controllo del registro in `SyncContext.tsx`); viaggiano col giro successivo (al
+  massimo ogni 5 minuti).
 
 ## File
 

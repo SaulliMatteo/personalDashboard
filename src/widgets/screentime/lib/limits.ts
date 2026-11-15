@@ -1,5 +1,5 @@
 /**
- * Limiti giornalieri di Tempo al PC: avviso all'80 % (se voluto) e allo scadere, una volta al giorno per limite.
+ * Limiti giornalieri di Tempo allo schermo: avviso all'80 % (se voluto) e allo scadere, una volta al giorno per limite.
  * Puro: il tempo usato e lo stato degli avvisi arrivano da fuori (lo stato si salva in core/db/meta.ts).
  */
 export type LimitKind = "app" | "category";

@@ -57,7 +57,7 @@ Non c'è un test runner: si verifica con build + lint (+ `cargo check`) e con le
 | Sync tra dispositivi (righe e file) | `docs/SYNC.md` |
 | Gruppi, Amici, chat e schede, presenza, schema e passi su Supabase | `docs/GRUPPI.md` |
 | Notifiche e timer dello Studio | `docs/NOTIFICHE.md` |
-| Griglia della dashboard, Monitor di sistema, Tempo al PC, File Transfer, Lavagna | `docs/WIDGET.md` |
+| Griglia della dashboard, Monitor di sistema, Tempo allo schermo, File Transfer, Lavagna | `docs/WIDGET.md` |
 
 Solo in locale (non nel repo): `docs/mockup/` (`temi/`, `mobile/`, `gruppi/`, `widget/`), `docs/STORIA.md`
 (cronologia delle fasi chiuse, da leggere solo se serve sapere perché una cosa è stata fatta così) e

@@ -30,7 +30,7 @@ export interface SyncRecord {
 }
 
 export interface PushContext {
-  /** Id di questo dispositivo: diventa l'origine delle sessioni registrate qui. */
+  /** Id di questo dispositivo: diventa l'origine delle righe fatte qui (tabelle con `origin`). */
   deviceId: string;
   /** Id globale di una riga locale, o null se non c'è (riga cancellata). */
   uidOf(kind: SyncKind, localId: number): string | null;
@@ -175,7 +175,7 @@ export function rowToData(spec: TableSpec, row: Row, ctx: PushContext): Row | nu
     if (!uid && !ref.nullable) return null;
     out[column] = uid;
   }
-  if (spec.kind === "session") out.origin_device = typeof row.origin_device === "string" ? row.origin_device : ctx.deviceId;
+  if (spec.origin) out.origin_device = typeof row.origin_device === "string" ? row.origin_device : ctx.deviceId;
   const toUid: Resolve = (kind, id) => {
     const local = Number(id);
     return Number.isInteger(local) && local > 0 ? ctx.uidOf(kind, local) : null;
@@ -202,7 +202,7 @@ export function dataToRow(kind: SyncKind, data: Row, ctx: PullContext): PullResu
     if (local === null && !(ctx.lenient && ref.nullable)) missing.add(uid);
     row[column] = local;
   }
-  if (kind === "session") row.origin_device = row.origin_device === ctx.deviceId ? null : row.origin_device;
+  if (spec.origin) row.origin_device = row.origin_device === ctx.deviceId ? null : row.origin_device;
   const toLocal: Resolve = (refKind, uid) => {
     const local = ctx.localOf(refKind, uid);
     if (local === null && !ctx.lenient) missing.add(uid);

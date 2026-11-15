@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import * as repo from "../data/screentimeRepository";
 import { dayBounds, shiftDay, weekStart } from "../lib/aggregate";
+import { byDevice } from "../lib/devices";
 import type { Session } from "../lib/sessions";
 import { dailyTotals, type ClassSeconds, type UsageRow } from "../lib/summary";
 import { useScreenTime } from "../useScreenTime";
@@ -18,8 +19,10 @@ export interface DayTotal {
 
 export interface PeriodData {
   loading: boolean;
-  /** Righe del giorno scelto, o della settimana intera. */
+  /** Righe del giorno scelto, o della settimana intera, dei dispositivi del filtro. */
   rows: UsageRow[];
+  /** Righe del periodo contate su questo dispositivo, senza filtro: i limiti dei giorni passati. */
+  localRows: UsageRow[];
   /** Sessioni del giorno scelto (vuote nella settimana). */
   sessions: Session[];
   /** I 7 giorni della settimana (lunedì → domenica), anche quelli vuoti. */
@@ -28,13 +31,14 @@ export interface PeriodData {
   history: DayTotal[];
   /** Primo giorno con dati: non si torna più indietro di così. */
   firstDay: string | null;
-  /** App usate negli ultimi due mesi, dal più usato: le scelte del dialog dei limiti. */
+  /** App usate su questo dispositivo negli ultimi due mesi, dal più usato: le scelte del dialog dei limiti. */
   recentApps: Array<{ target: string; label: string }>;
 }
 
 function recentApps(rows: UsageRow[]) {
   const seconds = new Map<string, { target: string; label: string; seconds: number }>();
   for (const r of rows) {
+    if (!r.local) continue;
     const cur = seconds.get(r.appKey) ?? { target: r.appKey, label: r.appLabel, seconds: 0 };
     cur.seconds += r.seconds;
     seconds.set(r.appKey, cur);
@@ -43,12 +47,13 @@ function recentApps(rows: UsageRow[]) {
 }
 
 /**
- * I dati che la pagina di Tempo al PC legge dal DB per il giorno o la settimana scelti. Oggi le righe vengono dal
+ * I dati che la pagina di Tempo allo schermo legge dal DB per il giorno o la settimana scelti. Oggi le righe vengono dal
  * provider (sempre fresche); gli altri giorni si rileggono quando cambia la scelta o quando il provider salva
- * (`revision`), così una categoria cambiata a mano si vede subito anche nei giorni passati.
+ * (`revision`, anche dopo un giro del sync), così una categoria cambiata a mano si vede subito anche nei giorni passati.
+ * Giorni, settimana e serie contano solo i dispositivi del filtro.
  */
 export function usePeriodData(mode: PeriodMode, day: string, today: string): PeriodData {
-  const { todayRows, revision, classify } = useScreenTime();
+  const { todayRows, revision, classify, filter } = useScreenTime();
   const [stored, setStored] = useState<{ key: string; rows: UsageRow[]; sessions: Session[]; historyRows: UsageRow[]; firstDay: string | null } | null>(null);
 
   const from = mode === "week" ? weekStart(day) : day;
@@ -71,7 +76,7 @@ export function usePeriodData(mode: PeriodMode, day: string, today: string): Per
         const rows = historyRows.filter((r) => r.day >= from && r.day <= to);
         setStored({ key, rows, sessions, historyRows, firstDay });
       } catch (error) {
-        console.error("Tempo al PC: lettura della pagina non riuscita", error);
+        console.error("Tempo allo schermo: lettura della pagina non riuscita", error);
       }
     })();
     return () => {
@@ -83,8 +88,10 @@ export function usePeriodData(mode: PeriodMode, day: string, today: string): Per
     const ready = stored?.key === key ? stored : null;
     // Oggi: le righe del provider sono più nuove di quelle lette qui (salvate al massimo 30 s fa).
     const withToday = (rows: UsageRow[]) => (to >= today && from <= today ? [...rows.filter((r) => r.day !== today), ...todayRows] : rows);
-    const rows = withToday(ready?.rows ?? []);
-    const historyRows = withToday(ready?.historyRows ?? []);
+    const allHistory = withToday(ready?.historyRows ?? []);
+    const periodRows = withToday(ready?.rows ?? []);
+    const rows = byDevice(periodRows, filter);
+    const historyRows = byDevice(allHistory, filter);
     const totals = dailyTotals(historyRows, classify);
     const at = (d: string): DayTotal => {
       const t = totals.get(d);
@@ -96,11 +103,12 @@ export function usePeriodData(mode: PeriodMode, day: string, today: string): Per
     return {
       loading: !ready,
       rows,
+      localRows: periodRows.filter((r) => r.local),
       sessions: ready?.sessions ?? [],
       week,
       history,
       firstDay: ready?.firstDay ?? null,
-      recentApps: recentApps(historyRows),
+      recentApps: recentApps(allHistory),
     };
-  }, [stored, key, todayRows, today, from, to, classify, day, mode]);
+  }, [stored, key, todayRows, today, from, to, classify, day, mode, filter]);
 }

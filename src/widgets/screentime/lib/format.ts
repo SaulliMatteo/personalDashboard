@@ -1,4 +1,4 @@
-/** Durate di Tempo al PC, in italiano. Gli input sono secondi. */
+/** Durate di Tempo allo schermo, in italiano. Gli input sono secondi. */
 
 /** "5 h 12 min", "47 min", "0 min". */
 export function formatDuration(seconds: number): string {

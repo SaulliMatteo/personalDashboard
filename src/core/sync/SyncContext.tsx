@@ -11,7 +11,7 @@ import { SyncScheduler, type SyncFailure } from "./engine/scheduler";
 import { emitSyncApplied } from "./syncEvents";
 import { runSyncTasks } from "./syncTasks";
 import { SyncRepository } from "./syncRepository";
-import { chooseMerge, chooseReplace, finishAdopt, prepareSync, SYNC_KINDS, SYNC_TABLES_ON, syncKeys } from "./syncSetup";
+import { chooseMerge, chooseReplace, finishAdopt, prepareSync, SYNC_EAGER_TABLES, SYNC_KINDS, syncKeys } from "./syncSetup";
 import { SyncContext, type SyncContextValue, type SyncStatus } from "./useSync";
 
 /** Dopo una modifica si aspetta un attimo: più salvataggi ravvicinati partono insieme. */
@@ -108,11 +108,11 @@ export function SyncProvider({ children }: { children: ReactNode }) {
     schedulerRef.current = scheduler;
     scheduler.request(0);
 
-    // una modifica nuova nel registro → giro tra poco
+    // una modifica nuova nel registro → giro tra poco (non per le tabelle `lazy` di tables.ts)
     let lastChange: number | null = null;
     const poll = window.setInterval(() => {
       void SyncRepository.open()
-        .then((repo) => repo.outboxSummary(SYNC_TABLES_ON))
+        .then((repo) => repo.outboxSummary(SYNC_EAGER_TABLES))
         .then(({ count, last }) => {
           if (lastChange !== null && last !== lastChange && count > 0) scheduler.request(CHANGE_DELAY_MS);
           lastChange = last;

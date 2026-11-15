@@ -91,11 +91,11 @@ reinstallare cancella i dati: esportali prima).
   disposizione restano di ogni dispositivo. Se due dispositivi cambiano la stessa cosa vince l'ultima modifica.
   I dati passano dal servizio online dei Gruppi e li vedi solo tu, nemmeno i membri dei tuoi gruppi. Non è un
   backup: una cancellazione arriva anche sugli altri dispositivi.
-- **Tempo al PC** (Windows e macOS): conta quanto usi il computer, con quali app e su quali siti, e resta **solo su
-  questo computer** (non passa dal sync né dai Gruppi). Per riconoscere il sito l'app legge il titolo della finestra
-  del browser, ne tiene solo il nome del sito (es. "YouTube") e butta via il resto: titoli di pagine, video o
-  documenti non vengono mai salvati. Su macOS conta solo le app. Si tengono gli ultimi 13 mesi circa.
-  Per spegnerlo: **Impostazioni › Widget › Tempo al PC › Conta il tempo al PC**.
+- **Tempo allo schermo** (conta su Windows e macOS): quanto usi il computer e con quali app. Si salvano solo nome
+  dell'app, categoria e minuti: niente siti, e i titoli di finestre, pagine, video o documenti non vengono mai
+  salvati. Con il sync acceso i minuti vanno anche agli altri tuoi dispositivi (li vedi solo tu, come il resto del
+  sync; non passano dai Gruppi) e sul telefono o su Linux si vedono quelli del computer. Si tengono gli ultimi 13 mesi
+  circa. Per spegnerlo: **Impostazioni › Widget › Tempo allo schermo › Conta il tempo al PC**.
   Per continuare a contare con la finestra chiusa la X la nasconde vicino all'orologio (nella barra dei menu su
   macOS): per chiudere davvero usa **Esci** nel menu dell'icona, oppure spegni **Impostazioni › Generale › Finestra e
   avvio › Chiudendo la finestra resta vicino all'orologio**. Lì c'è anche **Avvia con il computer** (spento di

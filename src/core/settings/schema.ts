@@ -155,7 +155,8 @@ export const DEFAULT_SETTINGS = {
   companionHotC: 28,
   /** Sotto questa temperatura (°C, dal widget Meteo) ogni tanto diventa un fiocco di neve. */
   companionColdC: 5,
-  /** Categorie scelte a mano per le app, "processo=categoria;…". Si modifica dalla pagina del Companion: nessuna voce in SETTING_DEFS. */
+  /** Categorie scelte a mano per le app, "processo=categoria;…". Si modifica dalla pagina del Companion e da Tempo allo
+   *  schermo: nessuna voce in SETTING_DEFS. Sincronizzata: vale anche per le righe arrivate dagli altri dispositivi. */
   companionAppCategories: "",
 
   // ---- Widget: Meteo ----
@@ -169,7 +170,8 @@ export const DEFAULT_SETTINGS = {
   /** Ogni quanti secondi si aggiorna (widget e pagina). */
   sysmonInterval: "2" as "1" | "2" | "5",
 
-  // ---- Widget: Tempo al PC (per dispositivo: conta le app di questo computer) ----
+  // ---- Widget: Tempo allo schermo (conteggio, soglie e filtro per dispositivo; categorie, classi e obiettivo
+  // sincronizzati, perché la vista somma i dispositivi) ----
   screentimeEnabled: true,
   /** Minuti senza mouse né tastiera dopo cui sei "via dal PC" (tranne video, musica e chiamate). */
   screentimeIdleMinutes: 3,
@@ -180,6 +182,9 @@ export const DEFAULT_SETTINGS = {
   /** Classe di ogni categoria, "categoria=focus|fun|neutral;…" (widgets/screentime/lib/focus.ts); vuota = i default.
    *  Si modifica dalla pagina del widget: nessuna voce in SETTING_DEFS. */
   screentimeFocusClasses: "",
+  /** Cosa si somma nel widget e nella pagina (widgets/screentime/lib/devices.ts). Si sceglie nella pagina del
+   *  widget: nessuna voce in SETTING_DEFS. */
+  screentimeDeviceFilter: "all" as "all" | "computer" | "phone",
 
   // ---- Gruppi ----
   /** Il nome della materia in corso arriva ai compagni di gruppo solo se attivo (spento di default). */
@@ -355,7 +360,7 @@ export const SETTING_DEFS: SettingDef[] = [
   // ======================= WIDGET: TEMPO AL PC =======================
   {
     key: "screentimeEnabled", systemSignals: true, group: "screentime", section: "Conteggio", type: "boolean", label: "Conta il tempo al PC",
-    description: "Guarda l'app in primo piano e, nel browser, il titolo della scheda per capire il sito. Su disco restano solo app, sito e minuti, mai i titoli. Niente esce dal computer.",
+    description: "Guarda l'app in primo piano. Su disco restano solo app, categoria e minuti, mai i titoli delle finestre. Col sync acceso i minuti vanno anche agli altri tuoi dispositivi, nel tuo account.",
   },
   {
     key: "screentimeIdleMinutes", systemSignals: true, group: "screentime", section: "Conteggio", type: "number", control: "input", min: 1, max: 30, step: 1, dependsOn: "screentimeEnabled",
@@ -489,14 +494,12 @@ export const PER_DEVICE_SETTINGS: ReadonlySet<SettingKey> = new Set<SettingKey>(
   "studyAutoStopVideo",
   "studyAutoStopChat",
   "companionWatchForegroundApp",
-  "companionAppCategories",
   "sysmonMetrics",
   "sysmonInterval",
   "screentimeEnabled",
   "screentimeIdleMinutes",
   "screentimeBreakMinutes",
-  "screentimeFocusGoalMinutes",
-  "screentimeFocusClasses",
+  "screentimeDeviceFilter",
   "syncEnabled",
 ]);
 

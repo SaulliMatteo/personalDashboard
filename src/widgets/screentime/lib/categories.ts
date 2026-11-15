@@ -1,6 +1,6 @@
 import type { AppCategory } from "../../../core/system/appCategory";
 
-/** Nomi delle categorie in Tempo al PC (etichette delle righe, limiti, Focus o svago). */
+/** Nomi delle categorie in Tempo allo schermo (etichette delle righe, limiti, Focus o svago). */
 export const CATEGORY_LABEL: Record<AppCategory, string> = {
   coding: "Codice",
   office: "Documenti",

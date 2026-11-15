@@ -11,7 +11,8 @@ import { formatClock, formatDayLabel, formatDelta, formatDuration, formatShort, 
 import type { ScreenLimit } from "./lib/limits";
 import { breakStats, longestGap } from "./lib/sessions";
 import { limitUsage, summarize, type RankItem } from "./lib/summary";
-import { BigTime, ClassLegend, ClassSplit, DayChart, LimitBar } from "./components/parts";
+import { BigTime, ClassLegend, ClassSplit, DayChart, DeviceBars, DeviceFilterTabs, LimitBar } from "./components/parts";
+import { othersFreshText } from "./lib/devices";
 import RankList from "./detail/RankList";
 import LimitDialog, { type LimitDraft } from "./detail/LimitDialog";
 import { usePeriodData, type DayTotal, type PeriodMode } from "./detail/usePeriodData";
@@ -21,36 +22,40 @@ import "./ScreenTimeDetail.css";
 const KIND_NAME = { app: "app", category: "categoria" } as const;
 const pct = (v: number, of: number) => (of > 0 ? Math.round((v / of) * 100) : 0);
 
+const NAME = "Tempo allo schermo";
+
 /**
- * Pagina di Tempo al PC (docs/mockup/temi/tempo-pc.html): giorno (riepilogo, linea del giorno, classifica delle app
- * con il menu ⋯, e accanto limiti e pause) e settimana (barre per giorno con l'obiettivo di focus, più usati, Focus o svago).
+ * Pagina di Tempo allo schermo (docs/mockup/temi/tempo-pc.html e tempo-pc-telefono.html): giorno (riepilogo, linea
+ * del giorno, classifica delle app con il menu ⋯, e accanto limiti e pause di questo computer, o i dispositivi dove
+ * non si conta) e settimana (barre per giorno con l'obiettivo di focus, più usati, Focus o svago). Col sync acceso il
+ * filtro "Tutti / Computer / Telefono" sceglie cosa si somma.
  */
 function ScreenTimeDetail() {
   const { goToDashboard } = useNav();
   const st = useScreenTime();
   const { settings, updateSetting } = useSettings();
 
-  if (!st.available) {
+  if (!st.viewable) {
     return (
       <div className="stp">
         <header className="dashboard-header">
           <div>
-            <h1>Tempo al PC</h1>
+            <h1>{NAME}</h1>
           </div>
           <BackButton onClick={goToDashboard} />
         </header>
         <section className="stp-card">
-          <p className="stp-fine">Tempo al PC legge l'app in primo piano di questo computer: c'è solo nell'app desktop per Windows e macOS.</p>
+          <p className="stp-fine">Tempo allo schermo c'è solo nell'app: conta le app del computer (Windows e macOS) e col sync le mostra anche sugli altri dispositivi.</p>
         </section>
       </div>
     );
   }
-  if (!st.enabled) {
+  if (st.canRecord && !st.enabled) {
     return (
       <div className="stp">
         <header className="dashboard-header">
           <div>
-            <h1>Tempo al PC</h1>
+            <h1>{NAME}</h1>
             <p>Questo computer</p>
           </div>
           <BackButton onClick={goToDashboard} />
@@ -95,6 +100,15 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
   };
   const periodLabel = mode === "week" ? formatWeekLabel(weekStart(day), shiftDay(weekStart(day), 6)) : formatDayLabel(day, today, shiftDay(today, -1));
 
+  const fresh = st.showFilter ? othersFreshText(st.device, st.othersUpdatedAt) : null;
+  const here = st.canRecord
+    ? closeToTray
+      ? "Questo computer · conta anche con la finestra chiusa, finché la dashboard è vicino all'orologio"
+      : "Questo computer · conta finché la dashboard è aperta"
+    : "Qui si vedono i minuti arrivati col sync";
+  // Con "Tutti" e del tempo su più dispositivi: segno del dispositivo e divisione nelle righe.
+  const marks = st.filter === "all" && summary.byDevice.computer > 0 && summary.byDevice.phone > 0;
+
   const limitFor = (kind: ScreenLimit["kind"], target: string) => st.limits.find((l) => l.limit.kind === kind && l.limit.target === target)?.limit ?? null;
 
   function openLimit(item: RankItem) {
@@ -112,21 +126,19 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
   const rankProps = {
     manualCategory: (item: RankItem) => st.classify.manual.get(item.key),
     onCategory: (item: RankItem, category: (typeof APP_CATEGORIES)[number] | null) => st.setCategory(item.key, category),
-    onLimit: openLimit,
+    onLimit: st.canRecord ? openLimit : undefined,
+    marks,
   };
 
   return (
     <div className="stp">
       <header className="dashboard-header">
         <div>
-          <h1>Tempo al PC</h1>
-          <p>
-            {closeToTray
-              ? "Questo computer · conta anche con la finestra chiusa, finché la dashboard è vicino all'orologio"
-              : "Questo computer · conta finché la dashboard è aperta"}
-          </p>
+          <h1>{NAME}</h1>
+          <p>{fresh ? `${here} · ${fresh}` : here}</p>
         </div>
         <div className="stp-actions">
+          {st.showFilter && <DeviceFilterTabs value={st.filter} onChange={st.setFilter} />}
           <div className="stp-tabs" role="group" aria-label="Periodo">
             <button type="button" aria-pressed={mode === "day"} onClick={() => setMode("day")}>
               Giorno
@@ -181,7 +193,7 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
   );
 }
 
-type RankProps = Pick<Parameters<typeof RankList>[0], "manualCategory" | "onCategory" | "onLimit">;
+type RankProps = Pick<Parameters<typeof RankList>[0], "manualCategory" | "onCategory" | "onLimit" | "marks">;
 type Data = ReturnType<typeof usePeriodData>;
 type Summary = ReturnType<typeof summarize>;
 
@@ -218,12 +230,19 @@ function DayView({ day, today, data, summary, rankProps, onAddLimit, onEditLimit
   const gap = longestGap(data.sessions, from, to);
   const breaks = breakStats(data.sessions);
 
-  const limits = isToday ? st.limits : st.limits.map(({ limit }) => ({ limit, usedSeconds: limitUsage(data.rows, limit, st.classify.manual) }));
+  const limits = isToday ? st.limits : st.limits.map(({ limit }) => ({ limit, usedSeconds: limitUsage(data.localRows, limit, st.classify.manual) }));
+  const onThisComputer = st.showFilter ? "su questo computer · " : "";
 
   if (!data.loading && summary.total === 0) {
     return (
       <section className="stp-card stp-empty">
-        <p className="stp-line">{isToday ? "Ancora niente oggi: il conteggio parte da quando apri la dashboard." : "Nessun tempo al PC contato in questo giorno."}</p>
+        <p className="stp-line">
+          {!isToday
+            ? "Nessun tempo allo schermo contato in questo giorno."
+            : st.canRecord
+              ? "Ancora niente oggi: il conteggio parte da quando apri la dashboard."
+              : "Ancora niente oggi: qui arrivano col sync i minuti contati sul computer."}
+        </p>
       </section>
     );
   }
@@ -311,6 +330,16 @@ function DayView({ day, today, data, summary, rankProps, onAddLimit, onEditLimit
           </div>
           <RankList items={summary.apps} {...rankProps} empty="Nessuna app." />
         </section>
+        {!st.canRecord ? (
+          <section className="stp-card">
+            <div className="stp-card-head">
+              <h2>Dispositivi</h2>
+              <span>{isToday ? "oggi" : weekdayName(day)}</span>
+            </div>
+            <DeviceBars byDevice={summary.byDevice} here={st.device} />
+            <p className="stp-fine">Limiti e promemoria delle pause ci sono solo sul computer.</p>
+          </section>
+        ) : (
         <div className="stp-stack">
         <section className="stp-card">
           <div className="stp-card-head">
@@ -343,12 +372,18 @@ function DayView({ day, today, data, summary, rankProps, onAddLimit, onEditLimit
               })}
             </ul>
           )}
-          <p className="stp-fine">Avviso {settingsWarnText(limits.map((l) => l.limit))}, una volta al giorno. Il limite non blocca nulla: ti avvisa e basta.</p>
+          <p className="stp-fine">
+            {st.showFilter ? "Contano solo questo computer. " : ""}Avviso {settingsWarnText(limits.map((l) => l.limit))}, una volta al giorno. Il limite non blocca
+            nulla: ti avvisa e basta.
+          </p>
         </section>
         <section className="stp-card">
           <div className="stp-card-head">
             <h2>Pause</h2>
-            <span>{breakMinutes > 0 ? `promemoria dopo ${formatDuration(breakMinutes * 60)}` : "promemoria spento"}</span>
+            <span>
+              {onThisComputer}
+              {breakMinutes > 0 ? `promemoria dopo ${formatDuration(breakMinutes * 60)}` : "promemoria spento"}
+            </span>
           </div>
           <p className="stp-line">
             {isToday && (
@@ -376,6 +411,7 @@ function DayView({ day, today, data, summary, rankProps, onAddLimit, onEditLimit
           <p className="stp-fine">Una pausa è almeno 5 minuti senza toccare mouse e tastiera (o con lo schermo bloccato).</p>
         </section>
         </div>
+        )}
       </div>
     </>
   );
@@ -452,7 +488,7 @@ function WeekView({ today, data, summary, rankProps, goalSeconds }: WeekViewProp
                 )}
               </>
             ) : (
-              "Nessun obiettivo di focus (si imposta in Impostazioni > Widget > Tempo al PC)."
+              "Nessun obiettivo di focus (si imposta in Impostazioni > Widget > Tempo allo schermo)."
             )}
             {best && (
               <>
@@ -468,7 +504,7 @@ function WeekView({ today, data, summary, rankProps, goalSeconds }: WeekViewProp
             <h2>Più usati in settimana</h2>
             <span>app</span>
           </div>
-          <RankList items={summary.apps} {...rankProps} empty="Nessun tempo al PC in questa settimana." />
+          <RankList items={summary.apps} {...rankProps} empty="Nessun tempo allo schermo in questa settimana." />
         </section>
       </div>
 

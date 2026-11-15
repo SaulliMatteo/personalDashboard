@@ -1,5 +1,5 @@
 /**
- * Nome da mostrare per un'app (classifiche di Tempo al PC). `classifyApp` ha etichette fatte per le frasi di Pixy
+ * Nome da mostrare per un'app (classifiche di Tempo allo schermo). `classifyApp` ha etichette fatte per le frasi di Pixy
  * ("il browser", "l'editor"): qui servono i nomi veri. Prima i nomi noti, poi la descrizione dell'eseguibile
  * ("Opera Internet Browser" → "Opera"), poi il nome del file.
  */

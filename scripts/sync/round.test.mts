@@ -539,4 +539,50 @@ await test("Usa i dati del cloud: Note e Studio di qui cancellati, cartelle su d
   assert.deepEqual(phone.subjects(), []);
 });
 
+await test("Tempo allo schermo: i minuti del PC arrivano al telefono col suo dispositivo, quelli di qui restano NULL", async () => {
+  const { server, pc, phone } = pair();
+  const KINDS_ST: SyncKind[] = ["screen_usage"];
+  const add = (d: Device, kind: "computer" | "phone", hour: number, app: string, seconds: number) =>
+    d.sql(
+      `INSERT INTO screen_usage (origin_device, device_kind, day, hour, app_key, app_label, category, seconds, first_at, last_at)
+       VALUES (NULL, ?, '2026-11-14', ?, ?, ?, 'chat', ?, 1, 2)
+       ON CONFLICT (day, hour, app_key) WHERE origin_device IS NULL DO UPDATE SET seconds = seconds + excluded.seconds`,
+      kind, hour, app, app, seconds
+    );
+  const rows = (d: Device) =>
+    d.all<{ origin_device: string | null; device_kind: string; app_key: string; seconds: number }>(
+      `SELECT origin_device, device_kind, app_key, seconds FROM screen_usage ORDER BY device_kind, app_key`
+    );
+  add(pc, "computer", 10, "discord", 60);
+  await pc.repo.enqueueAll(["screen_usage"], 1);
+  await pc.round(false, KINDS_ST);
+  add(phone, "phone", 10, "discord", 30);
+  await phone.repo.enqueueAll(["screen_usage"], 0);
+  await phone.round(true, KINDS_ST);
+  await pc.round(false, KINDS_ST);
+  add(pc, "computer", 10, "discord", 15); // il PC continua a contare nella stessa riga
+  await pc.round(false, KINDS_ST);
+  await phone.round(false, KINDS_ST);
+  assert.equal(server.ofKind("screen_usage").length, 2);
+  assert.deepEqual(rows(phone), [
+    { origin_device: PC, device_kind: "computer", app_key: "discord", seconds: 75 },
+    { origin_device: null, device_kind: "phone", app_key: "discord", seconds: 30 },
+  ]);
+  assert.deepEqual(rows(pc), [
+    { origin_device: null, device_kind: "computer", app_key: "discord", seconds: 75 },
+    { origin_device: PHONE, device_kind: "phone", app_key: "discord", seconds: 30 },
+  ]);
+
+  // il PC rifà il DB (stesso dispositivo) e ricomincia a contare prima del giro: la sua riga del cloud prende il posto
+  // di quella nuova, senza doppioni né errori dell'indice unico
+  const fresh = new Device(PC, server);
+  add(fresh, "computer", 10, "discord", 5);
+  await fresh.round(false, KINDS_ST);
+  assert.deepEqual(rows(fresh), [
+    { origin_device: null, device_kind: "computer", app_key: "discord", seconds: 75 },
+    { origin_device: PHONE, device_kind: "phone", app_key: "discord", seconds: 30 },
+  ]);
+  assert.equal(server.ofKind("screen_usage").length, 2);
+});
+
 console.log(`OK: ${passed} prove superate`);

@@ -74,6 +74,12 @@ select public.sync_push('aaaaaaaa-0000-4000-8000-000000000001', $$[
 select ok((select changed_at from public.sync_records where uid = 'userName') <= (extract(epoch from clock_timestamp()) * 1000)::bigint,
   'changed_at nel futuro abbassato all''ora del server');
 
+-- Tempo allo schermo (migrazione …_sync_tempo_schermo.sql)
+select lives_ok($$select public.sync_push('aaaaaaaa-0000-4000-8000-000000000001', '[{"kind": "screen_usage",
+  "uid": "33333333-3333-4333-8333-333333333333", "changed_at": 1000, "deleted": false,
+  "data": {"device_kind": "computer", "day": "2026-11-14", "hour": 10, "app_key": "code", "seconds": 60}}]')$$,
+  'il tipo screen_usage è accettato');
+
 -- ─── Dati non validi ───
 select throws_ok($$select public.sync_push('aaaaaaaa-0000-4000-8000-000000000001',
   '[{"kind": "lavagna", "uid": "x", "changed_at": 1, "data": {}}]')$$, '23514', null, 'tipo sconosciuto rifiutato');

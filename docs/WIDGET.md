@@ -54,21 +54,21 @@ con rolldown: scelta delle metriche, storico dei 60 s, forma che entra nella cel
 - Su Windows l'elenco delle reti di sysinfo contiene anche i filtri NDIS ("Ethernet-QoS Packet Scheduler-0000"…): si
   scartano (`units::is_filter_instance`), altrimenti il traffico si conta più volte.
 
-## Tempo al PC (`widgets/screentime/`)
+## Tempo allo schermo (`widgets/screentime/`)
 
 Backend in `src-tauri/src/screen_time/` (registratore) e `src-tauri/src/app_tray.rs` (icona vicino all'orologio,
-avvio col computer), frontend in `src/widgets/screentime/`. Mockup: `docs/mockup/temi/tempo-pc.html`. Prove (dopo il bundle con rolldown):
+avvio col computer), frontend in `src/widgets/screentime/`. Mockup: `docs/mockup/temi/tempo-pc.html` (computer) e
+`tempo-pc-telefono.html` (telefono, filtro e dispositivi). Prove (dopo il bundle con rolldown):
 `scripts/screentime/classify.test.mts` (classificazione dei segmenti), `migrations.test.mts` (migrazioni
 su SQLite vero) e `logic.test.mts` (ore e mezzanotte,
-focus e serie, limiti, pause e sessioni, settimana, etichette delle date); `cd src-tauri && cargo test --lib screen_time`
-(segmenti).
+focus e serie, limiti, pause e sessioni, settimana, etichette delle date, dispositivi); `scripts/sync/round.test.mts`
+(righe di due dispositivi col sync); `cd src-tauri && cargo test --lib screen_time` (segmenti).
 
 - **Privacy**: il titolo della finestra esce dal Rust solo verso il frontend, serve a `classifyApp` (es. una chiamata
   nel browser) e poi si butta. Nel DB vanno solo app, categoria e secondi. Non loggare titoli e non salvarli in `meta`.
 - **Niente siti** (scelta dell'utente): ogni browser (`BROWSER_KEYS` di `lib/classify.ts`) conta come app, sempre
   categoria "Browser"; un video nel browser senza toccare nulla non conta. Le migrazioni 29 (Opera) e 30 (tutti) hanno
-  unito le righe vecchie con un sito e tolto i limiti per sito. La colonna `site` di `screentime_usage` resta, sempre
-  `''`. Le vecchie scelte di categoria per un sito (`web:…` in `companionAppCategories`) restano ma non contano più.
+  unito le righe vecchie con un sito e tolto i limiti per sito; dalla 31 la tabella non ha più la colonna. Le vecchie scelte di categoria per un sito (`web:…` in `companionAppCategories`) restano ma non contano più.
   La pagina: App a sinistra, Limiti sopra Pause a destra (`.stp-stack`).
 - **Perché in Rust**: con la finestra nascosta la WebView rallenta i timer JS (fino a uno al minuto). Il thread
   `screentime` campiona ogni 2 s (stesse letture di Pixy, `companion.rs`) e tiene i segmenti; il provider li ritira
@@ -79,18 +79,30 @@ focus e serie, limiti, pause e sessioni, settimana, etichette delle date); `cd s
 - Catena di un segmento: `lib/classify.ts` (app con `classifyApp` + correzioni manuali `companionAppCategories`,
   condivise con Pixy; i browser sempre "Browser"; la
   dashboard stessa è `__self`; schermata di blocco = via dal PC) → `lib/aggregate.ts` (spezza su ore e mezzanotte; l'inattività conta
-  solo in video/musica/chiamate) → `screentime_usage` (`seconds += ?`).
-- Tabelle (migrazione 27): `screentime_usage` (giorno × ora × app), `screentime_sessions` (tempo continuo al PC,
-  una pausa ≥ 5 min la chiude), `screentime_limits`. **Non sincronizzate**: sono dati di questo computer (viaggiano solo
-  con Esporta/Importa). Si tengono 400 giorni, pulizia una volta al giorno (`screentime_pruned_day` in `meta`).
+  solo in video/musica/chiamate) → `screen_usage` (`seconds += ?` sulla riga di qui, `device_kind` di `THIS_DEVICE`).
+- Tabelle: `screen_usage` (migrazione 31, giorno × ora × app × dispositivo) **sincronizzata** (`lazy`, vedi
+  `docs/SYNC.md`): ci sono anche le righe degli altri dispositivi (`origin_device` non NULL, `device_kind`
+  computer/telefono). Nel cloud solo app, categoria e secondi, nella tabella privata del sync. Sessioni
+  (`screentime_sessions`, tempo continuo, una pausa ≥ 5 min la chiude) e limiti (`screentime_limits`, migrazione 27)
+  restano di questo dispositivo. Si tengono 400 giorni, pulizia una volta al giorno (`screentime_pruned_day` in
+  `meta`), anche delle righe arrivate. Il tipo `screen_usage` va prima aggiunto su Supabase
+  (`…_sync_tempo_schermo.sql`, `docs/GRUPPI.md` § 9.7).
+- Dispositivi (`lib/devices.ts`): filtro "Tutti / Computer / Telefono" (`screentimeDeviceFilter`, per dispositivo,
+  si vede e vale solo col sync acceso) per widget e pagina; con "Tutti" e tempo su tutti e due, segno del dispositivo
+  accanto alle app e "PC … · tel. …" nelle righe. La stessa `app_key` su PC e telefono è una riga sola. Limiti, menu
+  dell'icona e pause contano solo le righe di qui (`local`). "telefono aggiornato alle…" = l'ultimo secondo arrivato.
 - Limiti: avviso all'80 % (facoltativo) e al 100 %, una volta al giorno per limite (`screentime_limit_notices` in
   `meta`). Pausa: promemoria ogni `screentimeBreakMinutes` di tempo continuo. Notifiche firmate da Pixy.
 - Focus/svago: classe per categoria (`lib/focus.ts`, `screentimeFocusClasses`; vuota = default), editor nella pagina
-  (Settimana). Tutte le impostazioni sono in `PER_DEVICE_SETTINGS` e `systemSignals`.
+  (Settimana). Conteggio, soglie e filtro sono in `PER_DEVICE_SETTINGS`; classi, obiettivo di focus e
+  `companionAppCategories` si sincronizzano (la vista somma i dispositivi, la categoria deve essere la stessa).
 - Pagina (`ScreenTimeDetail.tsx` + `detail/`): `usePeriodData` legge il giorno o la settimana dal DB e per oggi usa le
-  righe del provider; si rilegge a ogni `revision` (una categoria cambiata a mano si vede anche nei giorni passati). Il
+  righe del provider; si rilegge a ogni `revision` (una categoria cambiata a mano si vede anche nei giorni passati;
+  dopo un giro del sync con `screen_usage` il provider rilegge, `onSyncApplied`). Il
   giorno di oggi viene da `now` del contesto, non da `Date.now()` nel render (lint `purity`).
-- Su Android, Linux e nel browser il widget mostra solo il messaggio "solo Windows e macOS" e non chiama comandi. 
+- Si conta solo su Windows e macOS (`SCREENTIME_AVAILABLE`, `canRecord`). Su Android e Linux il widget e la pagina
+  mostrano le righe arrivate col sync (`SCREENTIME_VIEWABLE`), senza limiti né pause (al loro posto i Dispositivi) e
+  senza chiamare comandi; rileggono ogni minuto e al ritorno sull'app. Nel browser solo il messaggio.
 - La X che nasconde la finestra (`closeToTray`, default sì) e "Avvia con il computer" stanno in Impostazioni ›
   Generale › Finestra e avvio (`features/settings/tabs/WindowSection.tsx`); il collegamento col Rust è
   `core/system/useAppWindowBridge.ts`.

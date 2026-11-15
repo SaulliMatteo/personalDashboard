@@ -1,4 +1,4 @@
-/* Pagina di Tempo al PC e dialog "Aggiungi un limite" (docs/mockup/temi/tempo-pc.html). Colori delle classi, pezzi
+/* Pagina di Tempo allo schermo e dialog "Aggiungi un limite" (docs/mockup/temi/tempo-pc.html). Colori delle classi, pezzi
    colorati (st-*), numeri e barre vengono da ScreenTimeWidget.css; qui la disposizione e le parti per tema. */
 
 .stp {
@@ -74,6 +74,28 @@
   color: var(--text-primary);
   font-weight: 600;
   box-shadow: var(--card-shadow);
+}
+
+/* Filtro per dispositivo: icona e nome; `is-wide` tre colonne uguali (telefono) */
+.stp-tabs.is-dev button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.stp-tabs.is-dev svg {
+  flex: none;
+}
+
+.stp-tabs.is-wide {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.stp-tabs.is-wide button {
+  min-height: 40px;
+  padding: 6px 8px;
 }
 
 .stp-daynav {
@@ -263,6 +285,14 @@
 .stp-rank-name span:first-child {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "PC 22 min · tel. 10 min" al posto della categoria, per le app su tutti e due */
+.stp-rank-name small {
+  flex: none;
+  font-size: max(11.5px, var(--fs-min));
+  color: var(--text-muted);
   white-space: nowrap;
 }
 

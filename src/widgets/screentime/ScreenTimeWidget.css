@@ -1,4 +1,4 @@
-/* Tempo al PC in dashboard (docs/mockup/temi/tempo-pc.html). Il tempo si colora per CLASSE (focus / svago / neutro)
+/* Tempo allo schermo in dashboard (docs/mockup/temi/tempo-pc.html). Il tempo si colora per CLASSE (focus / svago / neutro)
    con tre colori presi dai token; le parti per tema in fondo, l'anello della Piccola in card/rings.tsx.
    Le classi st-* (pezzi colorati, linea del giorno) servono anche alla pagina di dettaglio. */
 
@@ -135,6 +135,21 @@
 .stw-top-row i { width: 8px; height: 8px; border-radius: 50%; }
 .stw-top-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stw-top-row .stw-mono { color: var(--text-secondary); font-size: 11.5px; }
+
+/* Segno del dispositivo accanto al nome di un'app (docs/mockup/temi/tempo-pc-telefono.html) */
+.st-dev { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; color: var(--text-muted); vertical-align: -1px; }
+.st-dev svg { flex: none; }
+.stw-top-row .st-dev { margin-left: 5px; }
+
+/* Dispositivi (2×2 dove non si conta, pagina): tempo di oggi per dispositivo */
+.stw-dev { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.stw-dev-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+.stw-dev-top > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.stw-dev-top .stw-mono { font-size: 11px; color: var(--text-secondary); }
+.stw-dev .stw-bar > i { background: var(--text-secondary); }
+.stw-dev.is-here .stw-bar > i { background: var(--st-focus); }
+.stw-fresh { font-size: 10.5px; color: var(--text-muted); }
+.stw-sub svg { vertical-align: -2px; }
 
 /* Piccola 1×1: solo l'anello col totale */
 .stw--S .stw-hero { flex: 1; min-height: 0; display: grid; place-items: center; }

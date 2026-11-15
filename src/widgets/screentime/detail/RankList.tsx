@@ -3,6 +3,7 @@ import { APP_CATEGORIES, type AppCategory } from "../../../core/system/appCatego
 import { CATEGORY_LABEL } from "../lib/categories";
 import { formatShort } from "../lib/format";
 import type { RankItem } from "../lib/summary";
+import { DeviceMark } from "../components/parts";
 
 interface RankListProps {
   items: RankItem[];
@@ -11,15 +12,18 @@ interface RankListProps {
   /** Categoria scelta a mano per questa voce (null = automatica). */
   manualCategory: (item: RankItem) => AppCategory | undefined;
   onCategory: (item: RankItem, category: AppCategory | null) => void;
-  onLimit: (item: RankItem) => void;
+  /** Assente dove non si conta (i limiti sono del computer). */
+  onLimit?: (item: RankItem) => void;
+  /** Segno del dispositivo accanto ai nomi e, per le app su tutti e due, quanto viene da ciascuno. */
+  marks?: boolean;
   empty: string;
 }
 
 /**
- * Classifica delle app (docs/mockup/temi/tempo-pc.html, pagina): nome, categoria, tempo, barra col colore della classe
- * e il menu ⋯ per cambiare categoria o mettere un limite.
+ * Classifica delle app (docs/mockup/temi/tempo-pc.html e tempo-pc-telefono.html, pagina): nome, categoria (o la parte
+ * di PC e telefono), tempo, barra col colore della classe e il menu ⋯ per cambiare categoria o mettere un limite.
  */
-function RankList({ items, max = 8, manualCategory, onCategory, onLimit, empty }: RankListProps) {
+function RankList({ items, max = 8, manualCategory, onCategory, onLimit, marks = false, empty }: RankListProps) {
   const [open, setOpen] = useState<string | null>(null);
   const [all, setAll] = useState(false);
   if (items.length === 0) return <p className="stp-fine">{empty}</p>;
@@ -31,8 +35,17 @@ function RankList({ items, max = 8, manualCategory, onCategory, onLimit, empty }
         {shown.map((item) => (
           <li key={item.key}>
             <div className="stp-rank-name">
-              <span>{item.label}</span>
-              <span className="stp-chip">{CATEGORY_LABEL[item.category]}</span>
+              <span>
+                {item.label}
+                {marks && <DeviceMark byDevice={item.byDevice} />}
+              </span>
+              {marks && item.byDevice.computer > 0 && item.byDevice.phone > 0 ? (
+                <small>
+                  PC {formatShort(item.byDevice.computer)} · tel. {formatShort(item.byDevice.phone)}
+                </small>
+              ) : (
+                <span className="stp-chip">{CATEGORY_LABEL[item.category]}</span>
+              )}
             </div>
             <span className="stw-mono">{formatShort(item.seconds)}</span>
             <button
@@ -54,7 +67,7 @@ function RankList({ items, max = 8, manualCategory, onCategory, onLimit, empty }
                 manual={manualCategory(item)}
                 onClose={() => setOpen(null)}
                 onCategory={(c) => onCategory(item, c)}
-                onLimit={() => onLimit(item)}
+                onLimit={onLimit ? () => onLimit(item) : undefined}
               />
             )}
           </li>
@@ -74,7 +87,7 @@ interface RowMenuProps {
   manual: AppCategory | undefined;
   onClose: () => void;
   onCategory: (category: AppCategory | null) => void;
-  onLimit: () => void;
+  onLimit?: () => void;
 }
 
 function RowMenu({ item, manual, onClose, onCategory, onLimit }: RowMenuProps) {
@@ -129,16 +142,18 @@ function RowMenu({ item, manual, onClose, onCategory, onLimit }: RowMenuProps) {
           <button type="button" role="menuitem" onClick={() => setPicking(true)}>
             Categoria <span>{CATEGORY_LABEL[item.category]} ▸</span>
           </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={() => {
-              onClose();
-              onLimit();
-            }}
-          >
-            Imposta un limite…
-          </button>
+          {onLimit && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                onClose();
+                onLimit();
+              }}
+            >
+              Imposta un limite…
+            </button>
+          )}
         </>
       )}
     </div>

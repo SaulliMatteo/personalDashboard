@@ -34,7 +34,7 @@ reagire agli altri.
   (`core/db/index.ts`) guarda solo `PRAGMA user_version`: due rami che usano lo stesso numero si scontrano al merge, e
   un DB già passato da quel numero salta l'altra migrazione. Si rinumera la parte non rilasciata e si aggiunge una
   migrazione di "riparazione" che riesegue quella saltata (es. la v16).
-- **Tabelle sincronizzate** (`SYNC_TABLES` in `core/sync/tables.ts`: Studio, Note, Raccolte, impostazioni): una colonna
+- **Tabelle sincronizzate** (`SYNC_TABLES` in `core/sync/tables.ts`: Studio, Note, Raccolte, Tempo allo schermo, impostazioni): una colonna
   nuova va aggiunta ai trigger (migrazione nuova con DROP/CREATE TRIGGER) e in `tables.ts`, altrimenti non viaggia
   tra i dispositivi. Dettagli in `docs/SYNC.md`.
 - Impostazioni: `core/settings/schema.ts` è l'unica fonte (`DEFAULT_SETTINGS` + `SETTING_DEFS`; il controllo in UI

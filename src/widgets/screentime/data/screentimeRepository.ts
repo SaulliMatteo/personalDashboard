@@ -2,15 +2,17 @@ import { getDatabase } from "../../../core/db/client";
 import type { UsageDelta } from "../lib/aggregate";
 import type { LimitKind, ScreenLimit } from "../lib/limits";
 import type { Session } from "../lib/sessions";
-import type { UsageRow } from "../lib/summary";
+import type { DeviceKind, UsageRow } from "../lib/summary";
 
 /**
- * Tutto l'SQL di Tempo al PC (tabelle della migrazione 27). Solo dati di questo computer: niente sync.
- * Nessun titolo di finestra arriva qui: solo app, categoria e secondi. La colonna `site` resta (le
- * migrazioni non si toccano) ma è sempre '': i siti non si contano più (migrazioni 29 e 30).
+ * Tutto l'SQL di Tempo allo schermo. `screen_usage` (migrazione 31) va col sync (core/sync/tables.ts): ci sono anche
+ * le righe arrivate dagli altri dispositivi (`origin_device` non NULL); sessioni e limiti (migrazione 27) restano di
+ * questo dispositivo. Nessun titolo di finestra arriva qui: solo app, categoria e secondi.
  */
 
 interface UsageDbRow {
+  origin_device: string | null;
+  device_kind: string;
   day: string;
   hour: number;
   app_key: string;
@@ -22,6 +24,8 @@ interface UsageDbRow {
 }
 
 const toUsage = (r: UsageDbRow): UsageRow => ({
+  device: r.device_kind === "phone" ? "phone" : "computer",
+  local: r.origin_device === null,
   day: r.day,
   hour: r.hour,
   appKey: r.app_key,
@@ -32,40 +36,40 @@ const toUsage = (r: UsageDbRow): UsageRow => ({
   lastAt: r.last_at,
 });
 
-/** Somma i secondi nuovi (una riga per giorno, ora e app). */
-export async function addUsage(deltas: UsageDelta[]): Promise<void> {
+/** Somma i secondi nuovi di questo dispositivo (una riga per giorno, ora e app). */
+export async function addUsage(device: DeviceKind, deltas: UsageDelta[]): Promise<void> {
   if (deltas.length === 0) return;
   const db = await getDatabase();
   for (const d of deltas) {
     await db.execute(
-      `INSERT INTO screentime_usage (day, hour, app_key, site, app_label, category, seconds, first_at, last_at)
-       VALUES (?, ?, ?, '', ?, ?, ?, ?, ?)
-       ON CONFLICT(day, hour, app_key, site) DO UPDATE SET
+      `INSERT INTO screen_usage (origin_device, device_kind, day, hour, app_key, app_label, category, seconds, first_at, last_at)
+       VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT (day, hour, app_key) WHERE origin_device IS NULL DO UPDATE SET
          seconds = seconds + excluded.seconds,
          app_label = excluded.app_label,
          category = excluded.category,
          first_at = MIN(first_at, excluded.first_at),
          last_at = MAX(last_at, excluded.last_at)`,
-      [d.day, d.hour, d.appKey, d.appLabel, d.category, d.seconds, d.firstAt, d.lastAt]
+      [device, d.day, d.hour, d.appKey, d.appLabel, d.category, d.seconds, d.firstAt, d.lastAt]
     );
   }
 }
 
-/** Righe dei giorni da `fromDay` a `toDay` compresi ("YYYY-MM-DD"). */
+/** Righe di tutti i dispositivi dei giorni da `fromDay` a `toDay` compresi ("YYYY-MM-DD"). */
 export async function usageBetween(fromDay: string, toDay: string): Promise<UsageRow[]> {
   const db = await getDatabase();
   const rows = await db.select<UsageDbRow[]>(
-    `SELECT day, hour, app_key, app_label, category, seconds, first_at, last_at
-     FROM screentime_usage WHERE day >= ? AND day <= ?`,
+    `SELECT origin_device, device_kind, day, hour, app_key, app_label, category, seconds, first_at, last_at
+     FROM screen_usage WHERE day >= ? AND day <= ?`,
     [fromDay, toDay]
   );
   return rows.map(toUsage);
 }
 
-/** Primo giorno con dati (per sapere fin dove si può tornare indietro). */
+/** Primo giorno con dati, di qualunque dispositivo (per sapere fin dove si può tornare indietro). */
 export async function firstUsageDay(): Promise<string | null> {
   const db = await getDatabase();
-  const rows = await db.select<{ day: string | null }[]>(`SELECT MIN(day) AS day FROM screentime_usage`);
+  const rows = await db.select<{ day: string | null }[]>(`SELECT MIN(day) AS day FROM screen_usage`);
   return rows[0]?.day ?? null;
 }
 
@@ -101,10 +105,10 @@ export async function lastSession(): Promise<Session | null> {
   return rows[0] ? { startAt: rows[0].start_at, endAt: rows[0].end_at } : null;
 }
 
-/** Toglie i dati più vecchi di `beforeDay` (si tengono ~13 mesi). */
+/** Toglie i dati più vecchi di `beforeDay` (si tengono ~13 mesi), anche quelli degli altri dispositivi. */
 export async function pruneBefore(beforeDay: string, beforeMs: number): Promise<void> {
   const db = await getDatabase();
-  await db.execute(`DELETE FROM screentime_usage WHERE day < ?`, [beforeDay]);
+  await db.execute(`DELETE FROM screen_usage WHERE day < ?`, [beforeDay]);
   await db.execute(`DELETE FROM screentime_sessions WHERE end_at < ?`, [beforeMs]);
 }
 

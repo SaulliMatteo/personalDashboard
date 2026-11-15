@@ -73,4 +73,24 @@ test("30: tutte le righe con un sito si uniscono nel loro browser; via i limiti 
   assert.deepEqual(all(db, "SELECT kind, target FROM screentime_limits"), [{ kind: "app", target: "chrome" }]);
 });
 
+test("31: le righe passano in screen_usage come computer di qui, con l'id del sync; rieseguita non cambia nulla", () => {
+  const db = new DatabaseSync(":memory:");
+  migrate(db, 0, 30);
+  const ins = db.prepare("INSERT INTO screentime_usage (day, hour, app_key, site, app_label, category, seconds, first_at, last_at) VALUES (?, ?, ?, '', ?, ?, ?, ?, ?)");
+  ins.run("2026-11-14", 10, "code", "VS Code", "coding", 500, 1, 2);
+  ins.run("2026-11-14", 11, "opera", "Opera", "browser", 300, 3, 4);
+  migrate(db, 31, 31);
+  const rows = "SELECT origin_device, device_kind, day, hour, app_key, app_label, category, seconds, first_at, last_at FROM screen_usage ORDER BY hour";
+  const expected = [
+    { origin_device: null, device_kind: "computer", day: "2026-11-14", hour: 10, app_key: "code", app_label: "VS Code", category: "coding", seconds: 500, first_at: 1, last_at: 2 },
+    { origin_device: null, device_kind: "computer", day: "2026-11-14", hour: 11, app_key: "opera", app_label: "Opera", category: "browser", seconds: 300, first_at: 3, last_at: 4 },
+  ];
+  assert.deepEqual(all(db, rows), expected);
+  assert.deepEqual(all(db, "SELECT name FROM sqlite_master WHERE name = 'screentime_usage'"), [], "la tabella vecchia non c'è più");
+  assert.equal(all(db, "SELECT uid FROM sync_map WHERE tbl = 'screen_usage'").length, 2, "id globali per il sync");
+  assert.equal(all(db, "SELECT * FROM sync_outbox").length, 0, "nel registro ci vanno quando il tipo si accende (syncSetup.ts)");
+  migrate(db, 31, 31);
+  assert.deepEqual(all(db, rows), expected);
+});
+
 console.log(`screentime migrazioni: ${passed} prove passate`);

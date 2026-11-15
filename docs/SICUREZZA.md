@@ -131,7 +131,7 @@ concede la sola lettura del singolo file. Dettagli in `docs/ANDROID.md`.
 
 - Importare un database sostituisce quello del dispositivo: `db_import_apply` tiene il precedente accanto come
   `dashboard.db.prima` (uno solo). Il file importato è controllato solo nell'intestazione e nella versione.
-- Tempo al PC: il titolo della finestra non va mai su disco né nei log (`docs/WIDGET.md`).
+- Tempo allo schermo: il titolo della finestra non va mai su disco, nei log né nel sync (`docs/WIDGET.md`).
 
 ## Dipendenze (stato al 2026-11-14)
 

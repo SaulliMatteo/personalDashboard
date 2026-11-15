@@ -19,6 +19,7 @@ export const SYNC_KINDS: readonly SyncKind[] = [
   "field",
   "row",
   "view",
+  "screen_usage",
   "setting",
 ];
 
@@ -115,4 +116,5 @@ export async function finishAdopt(repo: SyncRepository, userId: string): Promise
   await repo.setMeta(syncKeys(userId).adopt, null);
 }
 
-export const SYNC_TABLES_ON = tablesOf(SYNC_KINDS);
+/** Le tabelle accese le cui modifiche fanno partire un giro (le `lazy` aspettano il successivo). */
+export const SYNC_EAGER_TABLES = tablesOf(SYNC_KINDS.filter((k) => !specOf(k).lazy));

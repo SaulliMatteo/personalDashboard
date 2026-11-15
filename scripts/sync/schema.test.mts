@@ -155,6 +155,22 @@ test("le sessioni hanno origin_device, NULL di default (= fatte qui)", () => {
   assert.equal(one<{ origin_device: string | null }>(db, "SELECT origin_device FROM study_sessions").origin_device, null);
 });
 
+test("Tempo allo schermo: l'UPSERT dei minuti (come addUsage) tiene una riga e una voce nel registro", () => {
+  const db = upgradedDb();
+  const add = db.prepare(`INSERT INTO screen_usage (origin_device, device_kind, day, hour, app_key, app_label, category, seconds, first_at, last_at)
+    VALUES (NULL, 'computer', '2026-11-14', 10, 'code', 'VS Code', 'coding', ?, ?, ?)
+    ON CONFLICT (day, hour, app_key) WHERE origin_device IS NULL DO UPDATE SET
+      seconds = seconds + excluded.seconds, first_at = MIN(first_at, excluded.first_at), last_at = MAX(last_at, excluded.last_at)`);
+  add.run(30, 100, 200);
+  add.run(30, 300, 400);
+  assert.deepEqual(all(db, "SELECT seconds, first_at, last_at FROM screen_usage"), [{ seconds: 60, first_at: 100, last_at: 400 }]);
+  assert.deepEqual(all(db, "SELECT tbl, deleted FROM sync_outbox"), [{ tbl: "screen_usage", deleted: 0 }]);
+  // la stessa ora e app di un altro dispositivo è un'altra riga
+  db.prepare(`INSERT INTO screen_usage (origin_device, device_kind, day, hour, app_key, app_label, category, seconds, first_at, last_at)
+    VALUES ('telefono', 'phone', '2026-11-14', 10, 'code', 'VS Code', 'coding', 5, 1, 2)`).run();
+  assert.equal(count(db, "SELECT count(*) FROM screen_usage"), 2);
+});
+
 test("le tabelle non sincronizzate non finiscono nel registro", () => {
   const db = upgradedDb();
   db.exec("INSERT INTO meta (key, value) VALUES ('x', 'y')");

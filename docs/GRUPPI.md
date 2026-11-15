@@ -892,7 +892,9 @@ npx supabase db push
 ```
 Mai modifiche allo schema dal pannello: solo migrazioni. Ogni migrazione nuova (es. `…_visto.sql` della Fase 4,
 `…_modifica_gruppo.sql` della Fase 5b, `…_pixy.sql` della 5c, `…_materie_gruppo.sql` della v1.1 C, `…_sync.sql` e
-`…_sync_file.sql` del sync) va applicata di nuovo con `npx supabase db push`.
+`…_sync_file.sql` del sync, `…_sync_tempo_schermo.sql` di Tempo allo schermo) va applicata di nuovo con
+`npx supabase db push`. Una migrazione che aggiunge un tipo del sync (`sync_records_kind`) va applicata PRIMA di
+installare l'app che lo manda: un tipo sconosciuto fa rifiutare tutto il blocco e ferma il sync di ogni cosa.
 
 ## 10. Fasi
 

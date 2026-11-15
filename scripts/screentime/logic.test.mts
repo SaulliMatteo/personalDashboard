@@ -12,6 +12,7 @@ import { BREAK_MS, breakReminderStep, breakStats, continuousMinutes, extendSessi
 import { DEFAULT_CLASSES, focusStreak, parseFocusClasses, serializeFocusClasses } from "../../src/widgets/screentime/lib/focus";
 import { dueNotices, emptyNoticeState, parseNoticeState, type ScreenLimit } from "../../src/widgets/screentime/lib/limits";
 import { dailyTotals, limitUsage, summarize, type UsageRow } from "../../src/widgets/screentime/lib/summary";
+import { byDevice, devicesIn, parseDeviceFilter } from "../../src/widgets/screentime/lib/devices";
 import { formatDayLabel, formatDelta, formatDuration, formatShort, formatWeekLabel, weekdayShort } from "../../src/widgets/screentime/lib/format";
 
 let passed = 0;
@@ -140,7 +141,7 @@ test("limiti: già superato alla prima occhiata = solo lo scadere; senza avviso 
 });
 
 const row = (over: Partial<UsageRow>): UsageRow => ({
-  day: "2026-11-13", hour: 9, appKey: "code", appLabel: "VS Code", category: "coding", seconds: 3600, firstAt: at(9), lastAt: at(10), ...over,
+  device: "computer", local: true, day: "2026-11-13", hour: 9, appKey: "code", appLabel: "VS Code", category: "coding", seconds: 3600, firstAt: at(9), lastAt: at(10), ...over,
 });
 
 test("riepilogo: classi, ore, app dalla più usata", () => {
@@ -168,6 +169,27 @@ test("riepilogo: classi, ore, app dalla più usata", () => {
 
   assert.equal(limitUsage(rows, limit({}), ctx.manual), 1800);
   assert.equal(limitUsage(rows, limit({ kind: "category", target: "coding" }), ctx.manual), 3600);
+});
+
+test("dispositivi: stessa app su PC e telefono è una riga, divisa per dispositivo; i limiti contano solo qui", () => {
+  const rows = [
+    row({ appKey: "discord", appLabel: "Discord", category: "chat", seconds: 1320 }),
+    row({ device: "phone", local: false, appKey: "discord", appLabel: "Discord", category: "chat", seconds: 600 }),
+    row({ device: "phone", local: false, appKey: "instagram", appLabel: "Instagram", category: "social", seconds: 2880 }),
+  ];
+  const ctx = { manual: new Map(), classes: DEFAULT_CLASSES };
+  const all = summarize(rows, ctx);
+  assert.deepEqual(all.byDevice, { computer: 1320, phone: 3480 });
+  assert.deepEqual(all.apps.map((a) => [a.key, a.seconds, a.byDevice]), [
+    ["instagram", 2880, { computer: 0, phone: 2880 }],
+    ["discord", 1920, { computer: 1320, phone: 600 }],
+  ]);
+  assert.equal(summarize(byDevice(rows, "computer"), ctx).total, 1320);
+  assert.equal(summarize(byDevice(rows, "phone"), ctx).apps.length, 2);
+  assert.deepEqual([...devicesIn(rows)].sort(), ["computer", "phone"]);
+  assert.equal(limitUsage(rows, limit({ target: "discord" }), ctx.manual), 1320, "il telefono non conta per i limiti del PC");
+  assert.equal(parseDeviceFilter("phone"), "phone");
+  assert.equal(parseDeviceFilter("tablet"), "all");
 });
 
 test("durate in italiano", () => {

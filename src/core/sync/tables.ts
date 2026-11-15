@@ -19,6 +19,7 @@ export type SyncKind =
   | "field"
   | "row"
   | "view"
+  | "screen_usage"
   | "setting";
 
 export interface RefSpec {
@@ -49,6 +50,16 @@ export interface TableSpec {
    * e una colonna NOT NULL non può diventare NULL.
    */
   defaults?: Readonly<Record<string, unknown>>;
+  /**
+   * La tabella ha `origin_device` (tra le `columns`): NULL qui = "fatta su questo dispositivo", nel cloud l'id del
+   * dispositivo che l'ha fatta. La traduce records.ts.
+   */
+  origin?: true;
+  /**
+   * Le modifiche non fanno partire un giro da sole (SyncContext.tsx): viaggiano col giro successivo (al massimo ogni
+   * 5 minuti). Per le righe che cambiano di continuo, come i minuti di Tempo allo schermo ogni 30 s.
+   */
+  lazy?: true;
 }
 
 /** In ordine di dipendenza: al pull un elemento si applica dopo quelli a cui punta. */
@@ -66,9 +77,9 @@ export const SYNC_TABLES: readonly TableSpec[] = [
     kind: "session",
     table: "study_sessions",
     key: "id",
-    // origin_device non viaggia così com'è: lo traduce records.ts (NULL qui = "fatta su questo dispositivo").
     columns: ["subject_id", "started_at", "ended_at", "duration_seconds", "origin_device"],
     refs: { subject_id: { kind: "subject" } },
+    origin: true,
   },
   { kind: "folder", table: "note_folders", key: "id", columns: ["parent_id", "name", "color", "icon", "created_at"], refs: { parent_id: { kind: "folder", nullable: true } } },
   {
@@ -109,6 +120,16 @@ export const SYNC_TABLES: readonly TableSpec[] = [
     key: "id",
     columns: ["collection_id", "name", "layout", "filter", "sort", "fields", "group_field"],
     refs: { collection_id: { kind: "collection" }, group_field: { kind: "field", nullable: true } },
+  },
+  {
+    kind: "screen_usage",
+    table: "screen_usage",
+    key: "id",
+    // Tempo allo schermo (widgets/screentime/): secondi per giorno, ora e app di ogni dispositivo. Mai titoli né siti.
+    columns: ["origin_device", "device_kind", "day", "hour", "app_key", "app_label", "category", "seconds", "first_at", "last_at"],
+    refs: {},
+    origin: true,
+    lazy: true,
   },
   { kind: "setting", table: "settings", key: "key", columns: ["value"], refs: {} },
 ];

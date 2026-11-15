@@ -5,8 +5,9 @@ import { getMeta, setMeta } from "../../core/db/meta";
 import { sendAppNotification } from "../../core/notify/notifier";
 import { registerBeforeQuit } from "../../core/system/beforeQuit";
 import { setTrayToday } from "../../core/system/appWindowApi";
+import { onSyncApplied } from "../../core/sync/syncEvents";
 import { parseAppCategories, serializeAppCategories, type AppCategory } from "../../core/system/appCategory";
-import { SCREENTIME_AVAILABLE, startRecorder, stopRecorder, takeSegments } from "./data/screentimeApi";
+import { SCREENTIME_AVAILABLE, SCREENTIME_VIEWABLE, THIS_DEVICE, startRecorder, stopRecorder, takeSegments } from "./data/screentimeApi";
 import * as repo from "./data/screentimeRepository";
 import { classifySegment, type RawSegment } from "./lib/classify";
 import { countedIntervals, dayKey, segmentsToDeltas, shiftDay } from "./lib/aggregate";
@@ -14,6 +15,7 @@ import { BREAK_MS, breakReminderStep, continuousMinutes, extendSessions, type Se
 import { parseFocusClasses, serializeFocusClasses, type FocusClass } from "./lib/focus";
 import { dueNotices, emptyNoticeState, parseNoticeState, type ScreenLimit } from "./lib/limits";
 import { limitUsage, summarize, type ClassifyContext, type UsageRow } from "./lib/summary";
+import { byDevice, parseDeviceFilter, zeroDevices, type DeviceFilter } from "./lib/devices";
 import { formatDuration } from "./lib/format";
 import { SCREENTIME_WIDGET_ID, ScreenTimeContext, type LimitStatus, type ScreenTimeContextValue } from "./useScreenTime";
 
@@ -23,6 +25,8 @@ const NOTICES_META = "screentime_limit_notices";
 const PRUNE_META = "screentime_pruned_day";
 /** Si tengono ~13 mesi di dati: abbastanza per confrontare con l'anno prima, pochi KB al mese. */
 const KEEP_DAYS = 400;
+/** Dove non si conta (telefono, Linux): ogni quanto si rilegge oggi, per il cambio di giorno. */
+const VIEW_REFRESH_MS = 60_000;
 
 /** Secondi di `rows` fino all'ora del giorno di `now` (l'ora in corso in proporzione ai minuti passati). */
 function untilSameTime(rows: UsageRow[], now: number): number {
@@ -33,21 +37,25 @@ function untilSameTime(rows: UsageRow[], now: number): number {
 }
 
 /**
- * Tempo al PC: sempre montato (anche col widget fuori dalla dashboard), conta solo su Windows e macOS con
+ * Tempo allo schermo: sempre montato (anche col widget fuori dalla dashboard), conta solo su Windows e macOS con
  * `screentimeEnabled`. Ogni 30 s ritira i segmenti dal registratore in Rust, li classifica (app e
  * categoria), butta il titolo e somma i secondi nel DB; poi controlla limiti e pausa e aggiorna il menu dell'icona.
+ * Le righe degli altri dispositivi arrivano col sync (si rileggono dopo ogni giro) e si sommano secondo il filtro;
+ * limiti, pause e menu dell'icona contano solo questo dispositivo.
  */
 export function ScreenTimeProvider({ children }: { children: ReactNode }) {
   const { settings, updateSetting } = useSettings();
   const settingsRef = useLatestRef(settings);
   const enabled = SCREENTIME_AVAILABLE && settings.screentimeEnabled;
+  const showFilter = settings.syncEnabled;
+  const filter: DeviceFilter = showFilter ? parseDeviceFilter(settings.screentimeDeviceFilter) : "all";
 
   const manual = useMemo(() => parseAppCategories(settings.companionAppCategories), [settings.companionAppCategories]);
   const classes = useMemo(() => parseFocusClasses(settings.screentimeFocusClasses), [settings.screentimeFocusClasses]);
   const classify = useMemo<ClassifyContext>(() => ({ manual, classes }), [manual, classes]);
   const classifyRef = useLatestRef(classify);
 
-  const [loading, setLoading] = useState(SCREENTIME_AVAILABLE);
+  const [loading, setLoading] = useState(SCREENTIME_VIEWABLE);
   const [todayRows, setTodayRows] = useState<UsageRow[]>([]);
   const [yesterdayRows, setYesterdayRows] = useState<UsageRow[]>([]);
   const [limitList, setLimitList] = useState<ScreenLimit[]>([]);
@@ -115,7 +123,7 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
           inbox: false,
         });
       }
-      const total = rows.reduce((sum, r) => sum + r.seconds, 0);
+      const total = rows.reduce((sum, r) => sum + (r.local ? r.seconds : 0), 0);
       void setTrayToday(`Tempo al PC oggi: ${formatDuration(total)}`).catch(() => {});
     },
     [settingsRef, classifyRef]
@@ -125,7 +133,7 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
   const record = useCallback(async (raw: RawSegment[]) => {
     if (raw.length === 0) return;
     const segments = raw.map(classifySegment);
-    await repo.addUsage(segmentsToDeltas(segments));
+    await repo.addUsage(THIS_DEVICE, segmentsToDeltas(segments));
     const { current, closed } = extendSessions(sessionRef.current, countedIntervals(segments));
     sessionRef.current = current;
     setSession(current);
@@ -141,7 +149,7 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
         const rows = await reload();
         await checkNotices(rows);
       } catch (error) {
-        console.error("Tempo al PC: salvataggio non riuscito", error);
+        console.error("Tempo allo schermo: salvataggio non riuscito", error);
       }
     };
     queueRef.current = queueRef.current.then(run, run);
@@ -150,7 +158,7 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
 
   // Avvio: pulizia dei dati vecchi (una volta al giorno), sessione da continuare, limiti, primi dati.
   useEffect(() => {
-    if (!SCREENTIME_AVAILABLE) return;
+    if (!SCREENTIME_VIEWABLE) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -170,7 +178,7 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
         setLimitList(limits);
         await reload();
       } catch (error) {
-        console.error("Tempo al PC: lettura non riuscita", error);
+        console.error("Tempo allo schermo: lettura non riuscita", error);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -190,7 +198,7 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
       try {
         await startRecorder(idleSeconds);
       } catch (error) {
-        console.error("Tempo al PC: avvio non riuscito", error);
+        console.error("Tempo allo schermo: avvio non riuscito", error);
       }
     });
     return () => {
@@ -221,6 +229,29 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
     };
   }, [enabled, flush]);
 
+  // Righe arrivate dagli altri dispositivi: si rilegge oggi (e la pagina, con `revision`).
+  useEffect(() => {
+    if (!SCREENTIME_VIEWABLE) return;
+    return onSyncApplied((applied) => {
+      if (applied.kinds.has("screen_usage")) void reload().catch(() => undefined);
+    });
+  }, [reload]);
+
+  // Dove non si conta niente lo fa il salvataggio ogni 30 s: si rilegge ogni tanto e al ritorno sull'app (cambio di giorno).
+  useEffect(() => {
+    if (!SCREENTIME_VIEWABLE || enabled) return;
+    const refresh = () => void reload().catch(() => undefined);
+    const interval = window.setInterval(refresh, VIEW_REFRESH_MS);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [enabled, reload]);
+
   // Chiusura della pagina (ricarica, X con l'icona spenta): si prova a salvare, può non finire in tempo.
   useEffect(() => {
     if (!enabled) return;
@@ -247,6 +278,8 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
     [settingsRef, updateSetting]
   );
 
+  const setFilter = useCallback((next: DeviceFilter) => updateSetting("screentimeDeviceFilter", next), [updateSetting]);
+
   const refreshLimits = useCallback(async () => {
     const limits = await repo.listLimits();
     limitsRef.current = limits;
@@ -270,23 +303,40 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
     [refreshLimits]
   );
 
-  const today = useMemo(() => summarize(todayRows, classify), [todayRows, classify]);
+  const today = useMemo(() => summarize(byDevice(todayRows, filter), classify), [todayRows, filter, classify]);
+  const todayByDevice = useMemo(() => {
+    const out = zeroDevices();
+    for (const r of todayRows) out[r.device] += r.seconds;
+    return out;
+  }, [todayRows]);
+  const othersUpdatedAt = useMemo(
+    () => todayRows.reduce<number | null>((max, r) => (r.local ? max : Math.max(max ?? 0, r.lastAt)), null),
+    [todayRows]
+  );
   const limits = useMemo<LimitStatus[]>(
     () => limitList.map((limit) => ({ limit, usedSeconds: limitUsage(todayRows, limit, manual) })),
     [limitList, todayRows, manual]
   );
 
-  const yesterdayTotal = useMemo(() => yesterdayRows.reduce((sum, r) => sum + r.seconds, 0), [yesterdayRows]);
-  const yesterdaySoFar = useMemo(() => Math.round(untilSameTime(yesterdayRows, now)), [yesterdayRows, now]);
+  const yesterdayShown = useMemo(() => byDevice(yesterdayRows, filter), [yesterdayRows, filter]);
+  const yesterdayTotal = useMemo(() => yesterdayShown.reduce((sum, r) => sum + r.seconds, 0), [yesterdayShown]);
+  const yesterdaySoFar = useMemo(() => Math.round(untilSameTime(yesterdayShown, now)), [yesterdayShown, now]);
 
   const value = useMemo<ScreenTimeContextValue>(
     () => ({
-      available: SCREENTIME_AVAILABLE,
+      viewable: SCREENTIME_VIEWABLE,
+      canRecord: SCREENTIME_AVAILABLE,
       enabled,
+      device: THIS_DEVICE,
       loading,
       now,
       todayRows,
       today,
+      todayByDevice,
+      filter,
+      showFilter,
+      setFilter,
+      othersUpdatedAt,
       yesterdayTotal,
       yesterdaySoFar,
       limits,
@@ -299,7 +349,7 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
       saveLimit,
       deleteLimit,
     }),
-    [enabled, loading, todayRows, today, yesterdayTotal, yesterdaySoFar, limits, session, now, classify, revision, flush, setCategory, setFocusClass, saveLimit, deleteLimit]
+    [enabled, loading, todayRows, today, todayByDevice, filter, showFilter, setFilter, othersUpdatedAt, yesterdayTotal, yesterdaySoFar, limits, session, now, classify, revision, flush, setCategory, setFocusClass, saveLimit, deleteLimit]
   );
   return <ScreenTimeContext.Provider value={value}>{children}</ScreenTimeContext.Provider>;
 }
