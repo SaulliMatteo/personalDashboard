@@ -42,6 +42,14 @@ della sicurezza: `docs/SICUREZZA.md`.
   cancella con la disinstallazione); il selettore file e l'esportazione danno URI `content://` (il plugin fs li apre da
   solo, il nome vero con `basename()`). Le differenze di piattaforma stanno in `widgets/notes/data/filesApi.ts` (con
   `core/system/platform.ts`), non nei componenti.
+- **usage-stats**: Tempo allo schermo sul telefono, comandi `screentime_usage_access`/`_open_settings`/`_events`
+  (`src/screen_time/android.rs`). Il plugin dichiara `PACKAGE_USAGE_STATS` (permesso protetto: non si concede
+  installando, l'utente lo accende in Accesso ai dati di utilizzo; `openAccessSettings` prova prima la pagina
+  dell'app con `package:`, poi l'elenco) e i `<queries>` per launcher e Home: da Android 11 nome e categoria delle
+  altre app si leggono solo per le app visibili, e bastano quelle con l'icona (niente `QUERY_ALL_PACKAGES`). Gli
+  eventi escono compatti (`[ms, tipo, app]`: primo piano, non più, schermo spento/blocco/spegnimento) e letti in un
+  thread a parte; la classe dell'attività non esce dal Kotlin. Sull'emulatore il permesso si dà con
+  `adb shell appops set it.matteo.personalDashboard.debug GET_USAGE_STATS allow`.
 
 ## `MainActivity.kt` → frontend
 

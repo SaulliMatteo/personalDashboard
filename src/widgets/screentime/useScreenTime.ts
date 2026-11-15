@@ -1,5 +1,6 @@
 import { createContext, useContext } from "react";
 import type { AppCategory } from "../../core/system/appCategory";
+import type { PhoneGap } from "./data/phoneUsage";
 import type { DeviceFilter, DeviceKind } from "./lib/devices";
 import type { FocusClass } from "./lib/focus";
 import type { ScreenLimit } from "./lib/limits";
@@ -18,9 +19,19 @@ export interface LimitStatus {
 export interface ScreenTimeContextValue {
   /** False solo nel browser (niente DB): il widget mostra solo il messaggio. */
   viewable: boolean;
-  /** Si conta su questo dispositivo (Windows e macOS); altrove si vedono solo le righe arrivate col sync. */
+  /** Si può contare su questo dispositivo (Windows, macOS, telefono); altrove si vedono solo le righe del sync. */
   canRecord: boolean;
-  /** Si conta adesso: `canRecord` e conteggio acceso. */
+  /** Limiti, promemoria delle pause e menu dell'icona: solo sul computer (registratore in Rust). */
+  hasLimits: boolean;
+  /** Conteggio spento dall'utente su questo dispositivo. */
+  switchedOff: boolean;
+  /** Telefono col conteggio acceso ma senza il permesso "Accesso ai dati di utilizzo". */
+  needsAccess: boolean;
+  /** Telefono: accende il conteggio e apre la pagina di Android del permesso. */
+  grantAccess: () => void;
+  /** Telefono: periodi che Android non aveva più quando l'app si è aperta (non contati). */
+  phoneGaps: PhoneGap[];
+  /** Si conta adesso: conteggio acceso e, sul telefono, permesso dato. */
   enabled: boolean;
   /** Questo dispositivo: computer o telefono. */
   device: DeviceKind;
@@ -47,7 +58,7 @@ export interface ScreenTimeContextValue {
   yesterdaySoFar: number;
   /** Limiti di questo dispositivo: contano solo le righe contate qui. */
   limits: LimitStatus[];
-  /** Minuti al PC senza una pausa di 5 (0 se sei in pausa). */
+  /** Minuti al PC senza una pausa di 5 (0 se sei in pausa). Solo con `hasLimits`. */
   continuousMinutes: number;
   /** Scelte a mano e classi: servono alla pagina per riassumere altri giorni allo stesso modo. */
   classify: ClassifyContext;

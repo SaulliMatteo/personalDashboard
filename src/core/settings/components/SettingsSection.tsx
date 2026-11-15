@@ -1,6 +1,6 @@
 import { SETTING_DEFS, type SettingDef, type SettingKey, type SettingsGroup } from "../schema";
 import { useCompact } from "../../layout/useCompact";
-import { systemSignalsAvailable } from "../../system/systemApi";
+import { screenUsageAvailable, systemSignalsAvailable } from "../../system/systemApi";
 import { isAndroid } from "../../system/platform";
 import SettingsField from "./SettingsField";
 
@@ -9,7 +9,8 @@ import SettingsField from "./SettingsField";
  * schema, raggruppate per `section` (nell'ordine in cui compaiono).
  * `omit` toglie le chiavi che la pagina mostra con un controllo suo;
  * `overrides` sostituisce una definizione al suo posto (es. opzioni prese dal registry).
- * Sul telefono le definizioni `desktopOnly` non compaiono, senza segnali di sistema quelle `systemSignals`; su Android
+ * Sul telefono le definizioni `desktopOnly` non compaiono, senza segnali di sistema quelle `systemSignals`, dove non si
+ * conta il tempo allo schermo quelle `screenUsage`; su Android
  * valgono i testi `android`. Una sezione rimasta vuota sparisce.
  */
 function SettingsSection({
@@ -26,8 +27,9 @@ function SettingsSection({
   // sul telefono via le impostazioni che valgono solo per il desktop (griglia, trascinamento, barra laterale…)
   const compact = useCompact();
   const signals = systemSignalsAvailable();
+  const screenUsage = screenUsageAvailable();
   const defs = SETTING_DEFS.filter(
-    (def) => def.group === group && !omit.includes(def.key) && !(compact && def.desktopOnly) && !(def.systemSignals && !signals)
+    (def) => def.group === group && !omit.includes(def.key) && !(compact && def.desktopOnly) && !(def.systemSignals && !signals) && !(def.screenUsage && !screenUsage)
   ).map((def) => overrides.find((o) => o.key === def.key) ?? (isAndroid() && def.android ? { ...def, ...def.android } : def));
   const sections = [...new Set(defs.map((def) => def.section))];
 

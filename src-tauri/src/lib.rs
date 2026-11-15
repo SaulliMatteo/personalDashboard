@@ -97,6 +97,9 @@ pub fn run() {
     // Aprire e condividere i file del Quaderno su Android (src/file_open.rs).
     #[cfg(target_os = "android")]
     let builder = builder.plugin(tauri_plugin_file_open::init());
+    // Tempo allo schermo sul telefono: cronologia di uso delle app (src/screen_time/android.rs).
+    #[cfg(target_os = "android")]
+    let builder = builder.plugin(tauri_plugin_usage_stats::init());
     // Aggiornamenti (Impostazioni > Generale, src/core/updater/): nessun controllo automatico, il plugin va
     // in rete solo quando il frontend chiama `check` (pulsante "Controlla aggiornamenti"). Process serve per
     // `relaunch` dopo l'installazione su macOS.
@@ -150,6 +153,9 @@ pub fn run() {
             screen_time::screentime_start,
             screen_time::screentime_take,
             screen_time::screentime_stop,
+            screen_time::android::screentime_usage_access,
+            screen_time::android::screentime_usage_open_settings,
+            screen_time::android::screentime_usage_events,
             app_tray::app_set_close_to_tray,
             app_tray::app_quit,
             app_tray::tray_set_today,

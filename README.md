@@ -45,6 +45,8 @@ L'APK per Android non è nelle Releases: lo compila chi lo usa (vedi [Compilare 
 2. Android chiede di consentire l'installazione di **app sconosciute** per l'app con cui l'hai aperto (es. Files):
    consentila, poi installa.
 3. Notifiche del timer: al primo avvio dello Studio l'app chiede il permesso (Android 13 e successivi).
+   Tempo allo schermo sul telefono: **Concedi l'accesso** apre la pagina di Android **Accesso ai dati di utilizzo**,
+   dove si attiva l'interruttore di personalDashboard.
 4. Su alcuni telefoni (OPPO/ColorOS, Xiaomi, Huawei…) il sistema chiude le app in sfondo e cancella le notifiche
    programmate: nelle impostazioni dell'app consenti l'**attività in background** e l'**avvio automatico**, e nelle
    app recenti blocca personalDashboard (lucchetto). Se chiudi l'app forzatamente o riavvii il telefono, le notifiche
@@ -91,11 +93,15 @@ reinstallare cancella i dati: esportali prima).
   disposizione restano di ogni dispositivo. Se due dispositivi cambiano la stessa cosa vince l'ultima modifica.
   I dati passano dal servizio online dei Gruppi e li vedi solo tu, nemmeno i membri dei tuoi gruppi. Non è un
   backup: una cancellazione arriva anche sugli altri dispositivi.
-- **Tempo allo schermo** (conta su Windows e macOS): quanto usi il computer e con quali app. Si salvano solo nome
-  dell'app, categoria e minuti: niente siti, e i titoli di finestre, pagine, video o documenti non vengono mai
-  salvati. Con il sync acceso i minuti vanno anche agli altri tuoi dispositivi (li vedi solo tu, come il resto del
-  sync; non passano dai Gruppi) e sul telefono o su Linux si vedono quelli del computer. Si tengono gli ultimi 13 mesi
-  circa. Per spegnerlo: **Impostazioni › Widget › Tempo allo schermo › Conta il tempo al PC**.
+- **Tempo allo schermo** (conta su Windows, macOS e Android): quanto usi il computer e il telefono e con quali app.
+  Si salvano solo nome dell'app, categoria e minuti: niente siti, e i titoli di finestre, pagine, video o documenti
+  non vengono mai salvati. Sul telefono conta solo se dai il permesso **Accesso ai dati di utilizzo** (il widget ha
+  il pulsante "Concedi l'accesso"): la dashboard legge la cronologia delle app che Android tiene per circa una
+  settimana quando la apri, quindi se non la apri per più giorni quei giorni si perdono. Con il sync acceso i minuti
+  vanno anche agli altri tuoi dispositivi (li vedi solo tu, come il resto del sync; non passano dai Gruppi), e su
+  Linux si vedono quelli arrivati. Si tengono gli ultimi 13 mesi circa. Per spegnerlo: **Impostazioni › Widget ›
+  Tempo allo schermo › Conta il tempo al PC** (sul telefono **Conta il tempo sul telefono**; il permesso si toglie
+  dalle impostazioni di Android).
   Per continuare a contare con la finestra chiusa la X la nasconde vicino all'orologio (nella barra dei menu su
   macOS): per chiudere davvero usa **Esci** nel menu dell'icona, oppure spegni **Impostazioni › Generale › Finestra e
   avvio › Chiudendo la finestra resta vicino all'orologio**. Lì c'è anche **Avvia con il computer** (spento di

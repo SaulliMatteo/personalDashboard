@@ -1,4 +1,4 @@
-import { createElement, useState, type ReactNode } from "react";
+import { createElement, useState, type MouseEvent, type ReactNode } from "react";
 import { MdOutlineDesktopWindows, MdOutlinePauseCircle, MdOutlineSchedule } from "react-icons/md";
 import WidgetFrame from "../../core/widgets/WidgetFrame";
 import type { WidgetProps } from "../../core/widgets/types";
@@ -9,6 +9,7 @@ import { useElementSize } from "../../core/hooks/useElementSize";
 import { useScreenTime } from "./useScreenTime";
 import { SCREENTIME_RINGS } from "./card/cards";
 import { BigTime, ClassLegend, ClassSplit, DayChart, DeviceBars, DeviceIcon, LimitBar, TopList } from "./components/parts";
+import type { DeviceKind } from "./lib/devices";
 import { formatDelta, formatDuration, formatShort } from "./lib/format";
 import { othersFreshText } from "./lib/devices";
 import "./ScreenTimeWidget.css";
@@ -29,15 +30,30 @@ function Head({ title = NAME, sub }: { title?: string; sub?: ReactNode }) {
   );
 }
 
-/** Browser; oppure conteggio spento. */
-function MessageCell({ size, icon, text }: { size: Size; icon: "pc" | "off"; text: string }) {
+/** Browser; conteggio spento; telefono senza permesso (con il pulsante, tranne nella 1×1: lì si tocca la card). */
+function MessageCell({ size, icon, text, onGrant }: { size: Size; icon: "pc" | "off" | "phone"; text: string; onGrant?: () => void }) {
+  const grant = (e: MouseEvent) => {
+    e.stopPropagation();
+    onGrant?.();
+  };
   return (
     <WidgetFrame>
       <article className={`widget stw stw--${size}`} aria-label={NAME}>
         <Head />
         <div className="stw-na">
-          {icon === "pc" ? <MdOutlineDesktopWindows size={26} aria-hidden="true" /> : <MdOutlinePauseCircle size={26} aria-hidden="true" />}
+          {icon === "pc" ? (
+            <MdOutlineDesktopWindows size={26} aria-hidden="true" />
+          ) : icon === "phone" ? (
+            <DeviceIcon device="phone" size={26} />
+          ) : (
+            <MdOutlinePauseCircle size={26} aria-hidden="true" />
+          )}
           <p>{text}</p>
+          {onGrant && (
+            <button type="button" className="stw-grant" onClick={grant}>
+              Concedi l'accesso
+            </button>
+          )}
         </div>
       </article>
     </WidgetFrame>
@@ -54,12 +70,24 @@ function ScreenTimeWidget({ w, h }: WidgetProps) {
   const key = sizeKey(w, h);
   const size: Size = key === "S" || key === "W" || key === "T" ? key : "M";
   if (!ctx.viewable) return <MessageCell size={size} icon="pc" text="Tempo allo schermo c'è solo nell'app, sul computer e sul telefono." />;
-  if (ctx.canRecord && !ctx.enabled) return <MessageCell size={size} icon="off" text="Conteggio spento. Si riaccende nelle impostazioni del widget." />;
+  if (ctx.switchedOff) {
+    const text = ctx.device === "phone" ? "Conteggio spento su questo telefono." : "Conteggio spento. Si riaccende nelle impostazioni del widget.";
+    return <MessageCell size={size} icon="off" text={text} />;
+  }
+  // Senza permesso la Media mostra lo stesso il computer arrivato col sync, con l'invito in fondo.
+  if (ctx.needsAccess && !(size === "M" && ctx.today.total > 0)) {
+    return size === "S" ? (
+      <MessageCell size={size} icon="phone" text="Il telefono non conta ancora. Tocca per dare il permesso." />
+    ) : (
+      <MessageCell size={size} icon="phone" text={'Per contare anche le app del telefono serve il permesso "Accesso ai dati di utilizzo".'} onGrant={ctx.grantAccess} />
+    );
+  }
   return <LiveWidget size={size} />;
 }
 
 function LiveWidget({ size }: { size: Size }) {
-  const { today, yesterdaySoFar, limits, continuousMinutes, loading, canRecord, filter, device, todayByDevice, othersUpdatedAt } = useScreenTime();
+  const { today, yesterdaySoFar, limits, continuousMinutes, loading, canRecord, hasLimits, needsAccess, grantAccess, filter, device, todayByDevice, othersUpdatedAt } =
+    useScreenTime();
   const { settings } = useSettings();
   const Ring = useThemeVariant(SCREENTIME_RINGS);
   const [list, setList] = useState<HTMLElement | null>(null);
@@ -99,7 +127,9 @@ function LiveWidget({ size }: { size: Size }) {
           <Head sub="oggi" />
           <div className="stw-na">
             <p>
-              {canRecord
+              {canRecord && device === "phone"
+                ? "Si comincia a contare: il telefono legge la cronologia di Android ogni volta che apri la dashboard."
+                : canRecord
                 ? "Si comincia a contare da adesso. Lascia la dashboard aperta o vicino all'orologio: qui vedrai quanto tempo passi al PC e su cosa."
                 : settings.syncEnabled
                   ? "Ancora niente oggi. Qui arrivano col sync i minuti contati sul computer."
@@ -158,14 +188,20 @@ function LiveWidget({ size }: { size: Size }) {
   }
 
   const nowHour = new Date().getHours();
-  const shownLimits = canRecord ? limits.slice(0, 2) : [];
+  const shownLimits = hasLimits ? limits.slice(0, 2) : [];
   const fresh = othersFreshText(device, othersUpdatedAt);
-  // Colonna di destra: i limiti di qui; senza limiti, i dispositivi (se ce n'è più di uno) o le classi.
-  const right = shownLimits.length > 0 ? "limits" : !canRecord || (todayByDevice.computer > 0 && todayByDevice.phone > 0) ? "devices" : "classes";
+  // Colonna di destra: i limiti di qui; senza limiti, i dispositivi (se ce n'è più di uno, o dove non ci sono
+  // limiti) o le classi. Telefono senza permesso: solo il computer, con l'invito in fondo.
+  const right = shownLimits.length > 0 ? "limits" : !hasLimits || (todayByDevice.computer > 0 && todayByDevice.phone > 0) ? "devices" : "classes";
+  const devices: DeviceKind[] | undefined = needsAccess ? ["computer"] : undefined;
+  const grant = (e: MouseEvent) => {
+    e.stopPropagation();
+    grantAccess();
+  };
   return (
     <WidgetFrame>
       <article className="widget stw stw--M" aria-label={NAME}>
-        <Head sub={delta} />
+        <Head sub={needsAccess ? "solo computer" : delta} />
         <div className="stw-total-row">
           <BigTime seconds={today.total} />
           <div className="stw-focus">
@@ -190,9 +226,9 @@ function LiveWidget({ size }: { size: Size }) {
             </div>
           </div>
           <div className="stw-col">
-            <h3>{right === "limits" ? (fresh ? "Limiti del computer" : "Limiti") : right === "devices" ? "Dispositivi" : "Classi"}</h3>
+            <h3>{right === "limits" ? (fresh ? "Limiti del computer" : "Limiti") : right === "devices" ? (devices ? "Computer" : "Dispositivi") : "Classi"}</h3>
             {right === "devices" ? (
-              <DeviceBars byDevice={todayByDevice} here={device} />
+              <DeviceBars byDevice={todayByDevice} here={device} kinds={devices} />
             ) : right === "limits" ? (
               shownLimits.map(({ limit, usedSeconds }) => (
                 <div key={limit.id} className="stw-limit">
@@ -211,7 +247,7 @@ function LiveWidget({ size }: { size: Size }) {
                 <ClassLegend byClass={today.byClass} withTime />
               </>
             )}
-            {continuousMinutes > 0 && (
+            {hasLimits && continuousMinutes > 0 && (
               <div className="stw-pause">
                 <MdOutlineSchedule size={13} aria-hidden="true" />
                 al PC da {formatDuration(continuousMinutes * 60)}
@@ -220,6 +256,13 @@ function LiveWidget({ size }: { size: Size }) {
             {fresh && <div className="stw-fresh">{fresh}</div>}
           </div>
         </div>
+        {needsAccess && (
+          <button type="button" className="stw-cta" onClick={grant}>
+            <DeviceIcon device="phone" size={14} />
+            <span>Il telefono non conta ancora</span>
+            <b>Concedi l'accesso</b>
+          </button>
+        )}
       </article>
     </WidgetFrame>
   );

@@ -56,12 +56,14 @@ con rolldown: scelta delle metriche, storico dei 60 s, forma che entra nella cel
 
 ## Tempo allo schermo (`widgets/screentime/`)
 
-Backend in `src-tauri/src/screen_time/` (registratore) e `src-tauri/src/app_tray.rs` (icona vicino all'orologio,
-avvio col computer), frontend in `src/widgets/screentime/`. Mockup: `docs/mockup/temi/tempo-pc.html` (computer) e
+Backend in `src-tauri/src/screen_time/` (registratore del computer; `android.rs` + plugin `plugins/usage-stats` per il
+telefono) e `src-tauri/src/app_tray.rs` (icona vicino all'orologio, avvio col computer), frontend in
+`src/widgets/screentime/`. Mockup: `docs/mockup/temi/tempo-pc.html` (computer) e
 `tempo-pc-telefono.html` (telefono, filtro e dispositivi). Prove (dopo il bundle con rolldown):
 `scripts/screentime/classify.test.mts` (classificazione dei segmenti), `migrations.test.mts` (migrazioni
 su SQLite vero) e `logic.test.mts` (ore e mezzanotte,
-focus e serie, limiti, pause e sessioni, settimana, etichette delle date, dispositivi); `scripts/sync/round.test.mts`
+focus e serie, limiti, pause e sessioni, settimana, etichette delle date, dispositivi), `androidEvents.test.mts`
+(eventi di Android → tratti, pacchetti → app, giorni persi); `scripts/sync/round.test.mts`
 (righe di due dispositivi col sync); `cd src-tauri && cargo test --lib screen_time` (segmenti).
 
 - **Privacy**: il titolo della finestra esce dal Rust solo verso il frontend, serve a `classifyApp` (es. una chiamata
@@ -100,9 +102,25 @@ focus e serie, limiti, pause e sessioni, settimana, etichette delle date, dispos
   righe del provider; si rilegge a ogni `revision` (una categoria cambiata a mano si vede anche nei giorni passati;
   dopo un giro del sync con `screen_usage` il provider rilegge, `onSyncApplied`). Il
   giorno di oggi viene da `now` del contesto, non da `Date.now()` nel render (lint `purity`).
-- Si conta solo su Windows e macOS (`SCREENTIME_AVAILABLE`, `canRecord`). Su Android e Linux il widget e la pagina
-  mostrano le righe arrivate col sync (`SCREENTIME_VIEWABLE`), senza limiti né pause (al loro posto i Dispositivi) e
-  senza chiamare comandi; rileggono ogni minuto e al ritorno sull'app. Nel browser solo il messaggio.
+- Dove si conta (`canRecord`): Windows e macOS col registratore (`SCREENTIME_AVAILABLE`, con limiti, pause e menu
+  dell'icona: `hasLimits`) e il telefono (`SCREENTIME_PHONE`). Su Linux widget e pagina mostrano solo le righe arrivate
+  col sync (`SCREENTIME_VIEWABLE`), senza chiamare comandi; rileggono ogni minuto e al ritorno sull'app. Nel browser
+  solo il messaggio.
+- **Telefono** (`data/phoneUsage.ts`, `lib/androidEvents.ts`, `lib/androidApps.ts`): non c'è un registratore, l'app
+  non gira in sottofondo. Con il permesso "Accesso ai dati di utilizzo" (`PACKAGE_USAGE_STATS`, lo accende l'utente
+  nella pagina di Android; `needsAccess`/`grantAccess` nel contesto, ricontrollato a ogni ritorno sull'app) il
+  provider legge la cronologia di Android (`UsageStatsManager.queryEvents`) all'avvio, al ritorno e ogni 30 s ad app
+  aperta, da `screentime_android_cursor` in `meta` fino ad adesso. Un'app conta da quando va in primo piano a quando
+  non lo è più, si spegne o blocca lo schermo, o arriva un'altra app; la Home non conta (`__home`), la dashboard è
+  `__self`. **Il tratto ancora aperto (di solito la dashboard stessa) non si conta: il cursore resta al suo inizio**,
+  così rileggere non conta due volte. Il cursore si salva dopo le righe. Alla prima lettura si chiedono 30 giorni
+  (Android ne ha circa una settimana); se Android non ha più i giorni dal cursore in poi, il buco va in
+  `screentime_android_gaps` e la Settimana lo dice (avviso e tratteggio sulle colonne, solo sul telefono).
+  Pacchetti → righe: `KNOWN_PACKAGES` dà la chiave del PC (`com.discord` → `discord`) così su "Tutti" è una riga
+  sola; gli altri tengono il pacchetto come chiave e il nome di Android, categoria da `ApplicationInfo.category`, poi
+  dalle regole del PC sul nome. Niente limiti né promemoria (al loro posto Dispositivi e Sessioni = le volte che lo
+  prendi in mano). `screentimeEnabled` vale anche qui (voce `screenUsage` delle impostazioni, testi `android`): il
+  permesso fa da cancello, quindi senza permesso non si conta comunque.
 - La X che nasconde la finestra (`closeToTray`, default sì) e "Avvia con il computer" stanno in Impostazioni ›
   Generale › Finestra e avvio (`features/settings/tabs/WindowSection.tsx`); il collegamento col Rust è
   `core/system/useAppWindowBridge.ts`.

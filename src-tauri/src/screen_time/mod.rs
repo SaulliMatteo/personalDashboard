@@ -10,6 +10,7 @@
 
 #![cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 
+pub mod android;
 pub mod segments;
 
 use std::sync::{Arc, Condvar, Mutex};

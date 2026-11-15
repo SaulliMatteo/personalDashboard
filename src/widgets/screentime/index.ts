@@ -8,7 +8,7 @@ import { SCREENTIME_WIDGET_ID } from "./useScreenTime";
 export const screenTimeWidget: WidgetDefinition = {
   id: SCREENTIME_WIDGET_ID,
   name: "Tempo allo schermo",
-  description: "Quanto tempo passi al computer (e col sync sul telefono) e su quali app, con focus e svago, limiti giornalieri e promemoria delle pause.",
+  description: "Quanto tempo passi al computer e sul telefono e su quali app, con focus e svago; sul computer anche limiti giornalieri e promemoria delle pause.",
   component: ScreenTimeWidget,
   sizes: [SIZE_M, SIZE_S, SIZE_W, SIZE_T],
   detailComponent: ScreenTimeDetail,

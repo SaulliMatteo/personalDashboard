@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { MdOutlineInfo } from "react-icons/md";
 import { useNav } from "../../core/nav/useNav";
 import { useSettings } from "../../core/settings/useSettings";
 import { APP_CATEGORIES } from "../../core/system/appCategory";
@@ -11,8 +12,9 @@ import { formatClock, formatDayLabel, formatDelta, formatDuration, formatShort, 
 import type { ScreenLimit } from "./lib/limits";
 import { breakStats, longestGap } from "./lib/sessions";
 import { limitUsage, summarize, type RankItem } from "./lib/summary";
-import { BigTime, ClassLegend, ClassSplit, DayChart, DeviceBars, DeviceFilterTabs, LimitBar } from "./components/parts";
+import { BigTime, ClassLegend, ClassSplit, DayChart, DeviceBars, DeviceFilterTabs, DeviceIcon, LimitBar } from "./components/parts";
 import { othersFreshText } from "./lib/devices";
+import type { PhoneGap } from "./data/phoneUsage";
 import RankList from "./detail/RankList";
 import LimitDialog, { type LimitDraft } from "./detail/LimitDialog";
 import { usePeriodData, type DayTotal, type PeriodMode } from "./detail/usePeriodData";
@@ -50,13 +52,13 @@ function ScreenTimeDetail() {
       </div>
     );
   }
-  if (st.canRecord && !st.enabled) {
+  if (st.switchedOff) {
     return (
       <div className="stp">
         <header className="dashboard-header">
           <div>
             <h1>{NAME}</h1>
-            <p>Questo computer</p>
+            <p>{st.device === "phone" ? "Questo telefono" : "Questo computer"}</p>
           </div>
           <BackButton onClick={goToDashboard} />
         </header>
@@ -101,11 +103,17 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
   const periodLabel = mode === "week" ? formatWeekLabel(weekStart(day), shiftDay(weekStart(day), 6)) : formatDayLabel(day, today, shiftDay(today, -1));
 
   const fresh = st.showFilter ? othersFreshText(st.device, st.othersUpdatedAt) : null;
-  const here = st.canRecord
-    ? closeToTray
-      ? "Questo computer · conta anche con la finestra chiusa, finché la dashboard è vicino all'orologio"
-      : "Questo computer · conta finché la dashboard è aperta"
-    : "Qui si vedono i minuti arrivati col sync";
+  const here = st.needsAccess
+    ? "Il telefono non conta ancora · qui si vedono i minuti arrivati col sync"
+    : st.canRecord && st.device === "phone"
+      ? "Questo telefono · legge la cronologia di Android quando apri la dashboard"
+      : st.canRecord
+        ? closeToTray
+          ? "Questo computer · conta anche con la finestra chiusa, finché la dashboard è vicino all'orologio"
+          : "Questo computer · conta finché la dashboard è aperta"
+        : "Qui si vedono i minuti arrivati col sync";
+  // Telefono senza permesso: col filtro Telefono (o senza sync, quando non c'è altro da vedere) solo l'invito.
+  const askAccess = st.needsAccess && (!st.showFilter || st.filter === "phone");
   // Con "Tutti" e del tempo su più dispositivi: segno del dispositivo e divisione nelle righe.
   const marks = st.filter === "all" && summary.byDevice.computer > 0 && summary.byDevice.phone > 0;
 
@@ -126,7 +134,7 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
   const rankProps = {
     manualCategory: (item: RankItem) => st.classify.manual.get(item.key),
     onCategory: (item: RankItem, category: (typeof APP_CATEGORIES)[number] | null) => st.setCategory(item.key, category),
-    onLimit: st.canRecord ? openLimit : undefined,
+    onLimit: st.hasLimits ? openLimit : undefined,
     marks,
   };
 
@@ -160,7 +168,9 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
         </div>
       </header>
 
-      {mode === "day" ? (
+      {askAccess ? (
+        <AccessCard onGrant={st.grantAccess} onLater={st.showFilter ? () => st.setFilter("all") : onBack} hint={st.showFilter} />
+      ) : mode === "day" ? (
         <DayView
           day={day}
           today={today}
@@ -190,6 +200,44 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
         />
       )}
     </div>
+  );
+}
+
+/** Telefono senza il permesso "Accesso ai dati di utilizzo" (docs/mockup/temi/tempo-pc-telefono.html). */
+function AccessCard({ onGrant, onLater, hint }: { onGrant: () => void; onLater: () => void; hint: boolean }) {
+  return (
+    <>
+      <section className="stp-card stp-perm">
+        <div className="stp-perm-ico">
+          <DeviceIcon device="phone" size={24} />
+        </div>
+        <h2 className="is-big">Conta anche il telefono</h2>
+        <p className="stp-line">Android dice quali app hai usato e per quanto solo a chi ha il permesso "Accesso ai dati di utilizzo".</p>
+        <ol>
+          <li>
+            Tocca <b>Concedi l'accesso</b>: si apre la pagina di Android.
+          </li>
+          <li>
+            Scegli <b>personalDashboard</b> e attiva l'interruttore.
+          </li>
+          <li>Torna qui: si leggono anche i giorni che Android ha ancora (circa una settimana).</li>
+        </ol>
+        <div className="stp-btns">
+          <button type="button" className="stp-btn stp-btn--primary" onClick={onGrant}>
+            Concedi l'accesso
+          </button>
+          <button type="button" className="stp-btn" onClick={onLater}>
+            Non ora
+          </button>
+        </div>
+        <p className="stp-fine">Si salvano solo nome dell'app, categoria e minuti. Col sync vanno solo ai tuoi dispositivi, nel tuo account.</p>
+      </section>
+      {hint && (
+        <p className="stp-fine">
+          Intanto con <b>Tutti</b> o <b>Computer</b> vedi il tempo al PC arrivato col sync.
+        </p>
+      )}
+    </>
   );
 }
 
@@ -231,6 +279,8 @@ function DayView({ day, today, data, summary, rankProps, onAddLimit, onEditLimit
   const breaks = breakStats(data.sessions);
 
   const limits = isToday ? st.limits : st.limits.map(({ limit }) => ({ limit, usedSeconds: limitUsage(data.localRows, limit, st.classify.manual) }));
+  // Telefono: le sessioni sono le volte che l'hai preso in mano (5 minuti senza app in primo piano le separano).
+  const phoneSessions = st.canRecord && !st.hasLimits ? breaks : null;
   const onThisComputer = st.showFilter ? "su questo computer · " : "";
 
   if (!data.loading && summary.total === 0) {
@@ -239,9 +289,11 @@ function DayView({ day, today, data, summary, rankProps, onAddLimit, onEditLimit
         <p className="stp-line">
           {!isToday
             ? "Nessun tempo allo schermo contato in questo giorno."
-            : st.canRecord
-              ? "Ancora niente oggi: il conteggio parte da quando apri la dashboard."
-              : "Ancora niente oggi: qui arrivano col sync i minuti contati sul computer."}
+            : st.canRecord && st.device === "phone"
+              ? "Ancora niente oggi: il telefono legge la cronologia di Android quando apri la dashboard."
+              : st.canRecord
+                ? "Ancora niente oggi: il conteggio parte da quando apri la dashboard."
+                : "Ancora niente oggi: qui arrivano col sync i minuti contati sul computer."}
         </p>
       </section>
     );
@@ -330,15 +382,43 @@ function DayView({ day, today, data, summary, rankProps, onAddLimit, onEditLimit
           </div>
           <RankList items={summary.apps} {...rankProps} empty="Nessuna app." />
         </section>
-        {!st.canRecord ? (
-          <section className="stp-card">
-            <div className="stp-card-head">
-              <h2>Dispositivi</h2>
-              <span>{isToday ? "oggi" : weekdayName(day)}</span>
-            </div>
-            <DeviceBars byDevice={summary.byDevice} here={st.device} />
-            <p className="stp-fine">Limiti e promemoria delle pause ci sono solo sul computer.</p>
-          </section>
+        {!st.hasLimits ? (
+          <div className="stp-stack">
+            <section className="stp-card">
+              <div className="stp-card-head">
+                <h2>Dispositivi</h2>
+                <span>{isToday ? "oggi" : weekdayName(day)}</span>
+              </div>
+              <DeviceBars byDevice={summary.byDevice} here={st.device} />
+              {!phoneSessions && <p className="stp-fine">Limiti e promemoria delle pause ci sono solo sul computer.</p>}
+            </section>
+            {phoneSessions && (
+              <section className="stp-card">
+                <div className="stp-card-head">
+                  <h2>Sessioni</h2>
+                  <span>su questo telefono</span>
+                </div>
+                <p className="stp-line">
+                  {data.sessions.length === 0 ? (
+                    "Nessuna sessione sul telefono in questo giorno."
+                  ) : (
+                    <>
+                      {isToday ? "Oggi " : "Quel giorno "}
+                      <b>{data.sessions.length === 1 ? "1 volta" : `${data.sessions.length} volte`}</b> sul telefono
+                      {phoneSessions.longest && (
+                        <>
+                          ; la più lunga <b>{formatDuration((phoneSessions.longest.endAt - phoneSessions.longest.startAt) / 1000)}</b> ({formatClock(phoneSessions.longest.startAt)} –{" "}
+                          {formatClock(phoneSessions.longest.endAt)})
+                        </>
+                      )}
+                      .
+                    </>
+                  )}
+                </p>
+                <p className="stp-fine">Limiti e promemoria delle pause ci sono solo sul computer.</p>
+              </section>
+            )}
+          </div>
         ) : (
         <div className="stp-stack">
         <section className="stp-card">
@@ -430,8 +510,27 @@ interface WeekViewProps {
   goalSeconds: number;
 }
 
+/** I giorni della settimana che il telefono non ha potuto contare (Android non li aveva più). */
+function gapDays(days: string[], gaps: PhoneGap[]): Set<string> {
+  const out = new Set<string>();
+  for (const d of days) {
+    const [from, to] = dayBounds(d);
+    if (gaps.some((g) => g.from < to && g.to > from)) out.add(d);
+  }
+  return out;
+}
+
+/** "Lunedì e martedì il telefono non li ha più." / "Lunedì il telefono non l'ha più." */
+function gapTitle(days: string[]): string {
+  const names = joinDays(days.map(weekdayName));
+  const text = `${names.charAt(0).toUpperCase()}${names.slice(1)}`;
+  return days.length === 1 ? `${text} il telefono non l'ha più.` : `${text} il telefono non li ha più.`;
+}
+
 function WeekView({ today, data, summary, rankProps, goalSeconds }: WeekViewProps) {
   const st = useScreenTime();
+  const lost = st.device === "phone" && st.filter !== "computer" ? gapDays(data.week.map((d) => d.day), st.phoneGaps) : new Set<string>();
+  const lostDays = data.week.map((d) => d.day).filter((d) => lost.has(d));
   const max = Math.max(3600, goalSeconds * 1.25, ...data.week.map((d) => d.total));
   const reached = data.week.filter((d) => goalSeconds > 0 && d.byClass.focus >= goalSeconds);
   const best = data.week.reduce<DayTotal | null>((a, d) => (d.byClass.focus > 0 && (!a || d.byClass.focus > a.byClass.focus) ? d : a), null);
@@ -439,6 +538,15 @@ function WeekView({ today, data, summary, rankProps, goalSeconds }: WeekViewProp
 
   return (
     <>
+      {lostDays.length > 0 && (
+        <div className="stp-gap" role="note">
+          <MdOutlineInfo size={16} aria-hidden="true" />
+          <span>
+            <b>{gapTitle(lostDays)}</b> Android tiene la cronologia delle app per circa una settimana e la dashboard sul telefono non si è aperta in tempo:
+            quei giorni contano solo il computer.
+          </span>
+        </div>
+      )}
       <div className="stp-grid stp-grid--two">
         <section className="stp-card">
           <div className="stp-card-head">
@@ -452,8 +560,8 @@ function WeekView({ today, data, summary, rankProps, goalSeconds }: WeekViewProp
               {data.week.map((d) => (
                 <div
                   key={d.day}
-                  className={`stp-weekbar${d.day === today ? " is-today" : ""}${d.total > 0 ? "" : " is-empty"}`}
-                  title={`${weekdayName(d.day)}: ${d.total > 0 ? formatDuration(d.total) : "niente"}`}
+                  className={`stp-weekbar${d.day === today ? " is-today" : ""}${d.total > 0 ? "" : " is-empty"}${lost.has(d.day) ? " is-gap" : ""}`}
+                  title={`${weekdayName(d.day)}: ${d.total > 0 ? formatDuration(d.total) : "niente"}${lost.has(d.day) ? " (solo computer: il telefono non ha più questo giorno)" : ""}`}
                 >
                   {FOCUS_CLASSES.map((c) =>
                     d.byClass[c] > 0 ? <span key={c} className={`st-seg is-${c}`} style={{ "--v": `${(d.byClass[c] / max) * 100}%` } as CSSProperties} /> : null
@@ -470,7 +578,13 @@ function WeekView({ today, data, summary, rankProps, goalSeconds }: WeekViewProp
               {data.week.map((d) => (
                 <small key={d.day} className={d.day === today ? "is-today" : undefined}>
                   <b>{d.total > 0 ? formatShort(d.total) : "—"}</b>
-                  {weekdayShort(d.day)}
+                  {lost.has(d.day) ? (
+                    <span className="st-dev" role="img" aria-label={`${weekdayName(d.day)}, solo computer`}>
+                      <DeviceIcon device="computer" size={11} />
+                    </span>
+                  ) : (
+                    weekdayShort(d.day)
+                  )}
                 </small>
               ))}
             </div>
@@ -497,6 +611,7 @@ function WeekView({ today, data, summary, rankProps, goalSeconds }: WeekViewProp
               </>
             )}
           </p>
+          {lostDays.length > 0 && <p className="stp-fine">Sotto i giorni senza telefono c'è solo il segno del computer; sopra la colonna, il tratteggio della parte che manca.</p>}
           <ClassLegend byClass={summary.byClass} withTime />
         </section>
         <section className="stp-card">

@@ -107,3 +107,5 @@ features = ["windows-native"]
 [target.'cfg(target_os = "android")'.dependencies]
 tauri-plugin-secure-store = { path = "plugins/secure-store" }
 tauri-plugin-file-open = { path = "plugins/file-open" }
+# Tempo allo schermo sul telefono (UsageStatsManager), anche questo solo SDK di Android.
+tauri-plugin-usage-stats = { path = "plugins/usage-stats" }

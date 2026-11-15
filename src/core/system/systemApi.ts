@@ -9,6 +9,11 @@ export function systemSignalsAvailable(): boolean {
   return typeof navigator !== "undefined" && !isAndroid() && /Windows|Macintosh/.test(navigator.userAgent);
 }
 
+/** Si conta il tempo allo schermo: Windows e macOS (registratore) e Android (cronologia delle app di sistema). */
+export function screenUsageAvailable(): boolean {
+  return systemSignalsAvailable() || isAndroid();
+}
+
 /** Risposta di `companion_snapshot` (src-tauri/src/companion.rs). */
 export interface SystemSnapshot {
   idleSeconds: number | null;

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Tempo allo schermo: quali app sono state in primo piano e quando. Non si concede installando: l'utente
+         lo accende a mano in Impostazioni > Accesso ai dati di utilizzo (per questo "ProtectedPermissions"). -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
+    <!-- Da Android 11 il nome e la categoria di un'altra app si leggono solo se è "visibile": bastano le app con
+         l'icona nel launcher (quelle che vanno in primo piano) e la schermata Home. Niente QUERY_ALL_PACKAGES. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+    </queries>
+</manifest>

@@ -220,13 +220,44 @@
   grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr));
 }
 
-/* Limiti sopra Pause, accanto alle App. */
+/* Limiti sopra Pause, accanto alle App (sul telefono: Dispositivi sopra Sessioni). */
 .stp-stack {
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
+
+/* Telefono senza il permesso di Android (docs/mockup/temi/tempo-pc-telefono.html). */
+.stp-perm { align-items: flex-start; }
+.stp-perm-ico {
+  width: 44px; height: 44px; display: grid; place-items: center; border-radius: 14px;
+  background: var(--surface-1); color: var(--accent);
+}
+:root[data-theme="opaco"] .stp-perm-ico { background: var(--pg-mid, var(--surface-1)); color: var(--pg-ink, var(--text-primary)); }
+.stp-perm h2.is-big { font-size: 17px; color: var(--text-primary); }
+:root[data-theme="quaderno"] .stp-perm h2.is-big { font-size: 28px; color: var(--accent); }
+:root[data-theme="fosforo"] .stp-perm h2.is-big { font-size: 14px; }
+.stp-perm ol { margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
+.stp-perm ol b { color: var(--text-primary); font-weight: 600; }
+.stp-btns { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.stp-btns .stp-btn { min-height: 44px; }
+.stp-btns .stp-btn--primary { flex: 1; }
+
+/* Giorni che Android non aveva più: avviso sopra la settimana, tratteggio sopra la colonna. */
+.stp-gap {
+  display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px;
+  border-radius: var(--radius-panel); border: 1.5px dashed var(--divider);
+  font-size: 13px; line-height: 1.5; color: var(--text-secondary);
+}
+.stp-gap svg { flex: none; margin-top: 2px; color: var(--text-muted); }
+.stp-gap b { color: var(--text-primary); font-weight: 600; }
+:root[data-theme="quaderno"] .stp-gap { border-color: var(--accent); }
+.stp-weekbar.is-gap::before {
+  content: ""; flex: none; order: 9; height: 14px; border: 1.5px dashed var(--text-muted); border-bottom: 0;
+  border-radius: 4px 4px 0 0; opacity: 0.7;
+}
+.stp-week-days small .st-dev { display: block; margin: 0; }
 
 .stp-big {
   font-size: 32px;

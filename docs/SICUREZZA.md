@@ -131,7 +131,10 @@ concede la sola lettura del singolo file. Dettagli in `docs/ANDROID.md`.
 
 - Importare un database sostituisce quello del dispositivo: `db_import_apply` tiene il precedente accanto come
   `dashboard.db.prima` (uno solo). Il file importato è controllato solo nell'intestazione e nella versione.
-- Tempo allo schermo: il titolo della finestra non va mai su disco, nei log né nel sync (`docs/WIDGET.md`).
+- Tempo allo schermo: il titolo della finestra non va mai su disco, nei log né nel sync (`docs/WIDGET.md`). Sul
+  telefono il permesso `PACKAGE_USAGE_STATS` (plugin `usage-stats`, comandi `screentime_usage_*` solo in
+  `capabilities/mobile.json`) dà solo pacchetto, tipo di evento e istante; si salvano app, categoria e secondi come
+  sul PC. Per nome e categoria delle altre app bastano i `<queries>` di launcher e Home, niente `QUERY_ALL_PACKAGES`.
 
 ## Dipendenze (stato al 2026-11-14)
 

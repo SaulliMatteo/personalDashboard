@@ -140,12 +140,12 @@ export function DeviceFilterTabs({ value, onChange, wide = false }: { value: Dev
   );
 }
 
-/** Tempo di oggi per dispositivo, con la barra (colonna "Dispositivi"); `here` = questo dispositivo. */
-export function DeviceBars({ byDevice, here }: { byDevice: Record<DeviceKind, number>; here: DeviceKind }) {
-  const max = Math.max(1, ...DEVICE_KINDS.map((d) => byDevice[d]));
+/** Tempo di oggi per dispositivo, con la barra (colonna "Dispositivi"); `here` = questo dispositivo, `kinds` = quali. */
+export function DeviceBars({ byDevice, here, kinds = DEVICE_KINDS }: { byDevice: Record<DeviceKind, number>; here: DeviceKind; kinds?: readonly DeviceKind[] }) {
+  const max = Math.max(1, ...kinds.map((d) => byDevice[d]));
   return (
     <>
-      {DEVICE_KINDS.map((d) => (
+      {kinds.map((d) => (
         <div key={d} className={`stw-dev${d === here ? " is-here" : ""}`}>
           <div className="stw-dev-top">
             <span>

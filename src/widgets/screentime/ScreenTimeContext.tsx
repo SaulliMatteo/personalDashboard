@@ -7,9 +7,20 @@ import { registerBeforeQuit } from "../../core/system/beforeQuit";
 import { setTrayToday } from "../../core/system/appWindowApi";
 import { onSyncApplied } from "../../core/sync/syncEvents";
 import { parseAppCategories, serializeAppCategories, type AppCategory } from "../../core/system/appCategory";
-import { SCREENTIME_AVAILABLE, SCREENTIME_VIEWABLE, THIS_DEVICE, startRecorder, stopRecorder, takeSegments } from "./data/screentimeApi";
+import {
+  SCREENTIME_AVAILABLE,
+  SCREENTIME_PHONE,
+  SCREENTIME_VIEWABLE,
+  THIS_DEVICE,
+  openUsageAccessSettings,
+  startRecorder,
+  stopRecorder,
+  takeSegments,
+  usageAccessGranted,
+} from "./data/screentimeApi";
 import * as repo from "./data/screentimeRepository";
-import { classifySegment, type RawSegment } from "./lib/classify";
+import { commitPhoneRead, phoneGaps as readPhoneGaps, readPhoneUsage, type PhoneGap } from "./data/phoneUsage";
+import { classifySegment, type ClassifiedSegment } from "./lib/classify";
 import { countedIntervals, dayKey, segmentsToDeltas, shiftDay } from "./lib/aggregate";
 import { BREAK_MS, breakReminderStep, continuousMinutes, extendSessions, type Session } from "./lib/sessions";
 import { parseFocusClasses, serializeFocusClasses, type FocusClass } from "./lib/focus";
@@ -37,16 +48,24 @@ function untilSameTime(rows: UsageRow[], now: number): number {
 }
 
 /**
- * Tempo allo schermo: sempre montato (anche col widget fuori dalla dashboard), conta solo su Windows e macOS con
- * `screentimeEnabled`. Ogni 30 s ritira i segmenti dal registratore in Rust, li classifica (app e
- * categoria), butta il titolo e somma i secondi nel DB; poi controlla limiti e pausa e aggiorna il menu dell'icona.
+ * Tempo allo schermo: sempre montato (anche col widget fuori dalla dashboard), conta con `screentimeEnabled`.
+ * - Computer (Windows e macOS): ogni 30 s ritira i segmenti dal registratore in Rust, li classifica (app e categoria),
+ *   butta il titolo e somma i secondi nel DB; poi controlla limiti e pausa e aggiorna il menu dell'icona.
+ * - Telefono: con il permesso "Accesso ai dati di utilizzo", all'avvio, al ritorno sull'app e ogni 30 s ad app aperta
+ *   legge la cronologia di Android dall'ultima volta (data/phoneUsage.ts). Niente limiti né promemoria: l'app non gira
+ *   in sottofondo e non potrebbe avvisare in tempo.
  * Le righe degli altri dispositivi arrivano col sync (si rileggono dopo ogni giro) e si sommano secondo il filtro;
  * limiti, pause e menu dell'icona contano solo questo dispositivo.
  */
 export function ScreenTimeProvider({ children }: { children: ReactNode }) {
   const { settings, updateSetting } = useSettings();
   const settingsRef = useLatestRef(settings);
-  const enabled = SCREENTIME_AVAILABLE && settings.screentimeEnabled;
+  const canRecord = SCREENTIME_AVAILABLE || SCREENTIME_PHONE;
+  /** Telefono: permesso di Android (null = non ancora controllato, o non è un telefono). */
+  const [access, setAccess] = useState<boolean | null>(null);
+  const enabled = settings.screentimeEnabled && (SCREENTIME_AVAILABLE || (SCREENTIME_PHONE && access === true));
+  const enabledRef = useLatestRef(enabled);
+  const needsAccess = SCREENTIME_PHONE && settings.screentimeEnabled && access === false;
   const showFilter = settings.syncEnabled;
   const filter: DeviceFilter = showFilter ? parseDeviceFilter(settings.screentimeDeviceFilter) : "all";
 
@@ -62,6 +81,7 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [revision, setRevision] = useState(0);
   const [now, setNow] = useState(() => Date.now());
+  const [gaps, setGaps] = useState<PhoneGap[]>([]);
 
   const sessionRef = useRef<Session | null>(null);
   const remindedRef = useRef<{ startAt: number; steps: number }>({ startAt: 0, steps: 0 });
@@ -130,9 +150,8 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
   );
 
   /** Segmenti → DB (righe per ora e sessioni). */
-  const record = useCallback(async (raw: RawSegment[]) => {
-    if (raw.length === 0) return;
-    const segments = raw.map(classifySegment);
+  const record = useCallback(async (segments: ClassifiedSegment[]) => {
+    if (segments.length === 0) return;
     await repo.addUsage(THIS_DEVICE, segmentsToDeltas(segments));
     const { current, closed } = extendSessions(sessionRef.current, countedIntervals(segments));
     sessionRef.current = current;
@@ -143,18 +162,26 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
   /** Un salvataggio alla volta: quelli chiesti nel frattempo si accodano. */
   const flush = useCallback(() => {
     const run = async () => {
-      if (!SCREENTIME_AVAILABLE) return;
+      if (!enabledRef.current) return;
       try {
-        await record(await takeSegments());
-        const rows = await reload();
-        await checkNotices(rows);
+        if (SCREENTIME_PHONE) {
+          const read = await readPhoneUsage(Date.now());
+          await record(read.segments);
+          await commitPhoneRead(read);
+          if (read.gap) setGaps(await readPhoneGaps());
+          await reload();
+        } else {
+          await record((await takeSegments()).map(classifySegment));
+          const rows = await reload();
+          await checkNotices(rows);
+        }
       } catch (error) {
         console.error("Tempo allo schermo: salvataggio non riuscito", error);
       }
     };
     queueRef.current = queueRef.current.then(run, run);
     return queueRef.current;
-  }, [record, reload, checkNotices]);
+  }, [enabledRef, record, reload, checkNotices]);
 
   // Avvio: pulizia dei dati vecchi (una volta al giorno), sessione da continuare, limiti, primi dati.
   useEffect(() => {
@@ -168,12 +195,15 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
           await setMeta(PRUNE_META, today);
         }
         const last = await repo.lastSession();
-        if (last && Date.now() - last.endAt < BREAK_MS && !sessionRef.current) {
+        // Sul telefono i tratti arrivano dopo, in blocco: la sessione da continuare si decide con quelli.
+        if (last && (SCREENTIME_PHONE || Date.now() - last.endAt < BREAK_MS) && !sessionRef.current) {
           sessionRef.current = last;
           setSession(last);
         }
         const limits = await repo.listLimits();
+        const lost = SCREENTIME_PHONE ? await readPhoneGaps() : [];
         if (cancelled) return;
+        setGaps(lost);
         limitsRef.current = limits;
         setLimitList(limits);
         await reload();
@@ -192,8 +222,9 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
   // dalla stessa coda: smontaggio e rimontaggio ravvicinati (StrictMode, soglia cambiata) non devono arrivare al Rust
   // come avvio, avvio, stop, che lascerebbe il registratore spento.
   const idleSeconds = settings.screentimeIdleMinutes * 60;
+  const recorderOn = enabled && SCREENTIME_AVAILABLE;
   useEffect(() => {
-    if (!enabled) return;
+    if (!recorderOn) return;
     queueRef.current = queueRef.current.then(async () => {
       try {
         await startRecorder(idleSeconds);
@@ -204,18 +235,32 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
     return () => {
       queueRef.current = queueRef.current.then(async () => {
         try {
-          await record(await stopRecorder());
+          await record((await stopRecorder()).map(classifySegment));
           await reload();
         } catch {
           // niente: al prossimo avvio si riparte
         }
       });
     };
-  }, [enabled, idleSeconds, record, reload]);
+  }, [recorderOn, idleSeconds, record, reload]);
 
-  // Salvataggio periodico, al ritorno sulla finestra e prima di uscire da "Esci".
+  // Telefono: il permesso si controlla all'avvio e al ritorno sull'app (anche dalla pagina di Android). Appena c'è,
+  // `enabled` diventa vero e il salvataggio periodico legge subito la cronologia.
+  useEffect(() => {
+    if (!SCREENTIME_PHONE) return;
+    const check = () => void usageAccessGranted().then(setAccess, () => setAccess(false));
+    check();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") check();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+
+  // Salvataggio periodico, al ritorno sulla finestra e prima di uscire da "Esci". Sul telefono anche subito.
   useEffect(() => {
     if (!enabled) return;
+    if (SCREENTIME_PHONE) void flush();
     const interval = window.setInterval(() => void flush(), FLUSH_MS);
     const onVisible = () => {
       if (document.visibilityState === "visible") void flush();
@@ -278,6 +323,12 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
     [settingsRef, updateSetting]
   );
 
+  /** Telefono: accende il conteggio e apre la pagina di Android del permesso (al ritorno si ricontrolla). */
+  const grantAccess = useCallback(() => {
+    updateSetting("screentimeEnabled", true);
+    void openUsageAccessSettings().catch((error) => console.error("Tempo allo schermo: impostazioni non aperte", error));
+  }, [updateSetting]);
+
   const setFilter = useCallback((next: DeviceFilter) => updateSetting("screentimeDeviceFilter", next), [updateSetting]);
 
   const refreshLimits = useCallback(async () => {
@@ -325,7 +376,12 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
   const value = useMemo<ScreenTimeContextValue>(
     () => ({
       viewable: SCREENTIME_VIEWABLE,
-      canRecord: SCREENTIME_AVAILABLE,
+      canRecord,
+      hasLimits: SCREENTIME_AVAILABLE,
+      switchedOff: canRecord && !settings.screentimeEnabled,
+      needsAccess,
+      grantAccess,
+      phoneGaps: gaps,
       enabled,
       device: THIS_DEVICE,
       loading,
@@ -349,7 +405,7 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
       saveLimit,
       deleteLimit,
     }),
-    [enabled, loading, todayRows, today, todayByDevice, filter, showFilter, setFilter, othersUpdatedAt, yesterdayTotal, yesterdaySoFar, limits, session, now, classify, revision, flush, setCategory, setFocusClass, saveLimit, deleteLimit]
+    [canRecord, settings.screentimeEnabled, needsAccess, grantAccess, gaps, enabled, loading, todayRows, today, todayByDevice, filter, showFilter, setFilter, othersUpdatedAt, yesterdayTotal, yesterdaySoFar, limits, session, now, classify, revision, flush, setCategory, setFocusClass, saveLimit, deleteLimit]
   );
   return <ScreenTimeContext.Provider value={value}>{children}</ScreenTimeContext.Provider>;
 }

@@ -224,6 +224,8 @@ interface BaseDef {
   desktopOnly?: true;
   /** Solo dove ci sono i segnali di sistema (Windows e macOS, `systemSignalsAvailable`): altrove non compare. */
   systemSignals?: true;
+  /** Solo dove si conta il tempo allo schermo: Windows, macOS e Android (`screenUsageAvailable`). */
+  screenUsage?: true;
   /** Testi da usare su Android, se lì il campo vuol dire altro (es. lo stop automatico dello Studio). */
   android?: { label: string; description?: string };
 }
@@ -359,8 +361,12 @@ export const SETTING_DEFS: SettingDef[] = [
 
   // ======================= WIDGET: TEMPO AL PC =======================
   {
-    key: "screentimeEnabled", systemSignals: true, group: "screentime", section: "Conteggio", type: "boolean", label: "Conta il tempo al PC",
+    key: "screentimeEnabled", screenUsage: true, group: "screentime", section: "Conteggio", type: "boolean", label: "Conta il tempo al PC",
     description: "Guarda l'app in primo piano. Su disco restano solo app, categoria e minuti, mai i titoli delle finestre. Col sync acceso i minuti vanno anche agli altri tuoi dispositivi, nel tuo account.",
+    android: {
+      label: "Conta il tempo sul telefono",
+      description: "Legge la cronologia delle app di Android quando apri la dashboard (serve il permesso \"Accesso ai dati di utilizzo\"). Su disco restano solo app, categoria e minuti. Col sync acceso i minuti vanno anche agli altri tuoi dispositivi, nel tuo account.",
+    },
   },
   {
     key: "screentimeIdleMinutes", systemSignals: true, group: "screentime", section: "Conteggio", type: "number", control: "input", min: 1, max: 30, step: 1, dependsOn: "screentimeEnabled",
@@ -371,7 +377,7 @@ export const SETTING_DEFS: SettingDef[] = [
     label: "Ricordami una pausa dopo (min)", description: "Minuti al PC senza una pausa di almeno 5. 0 = nessun promemoria.",
   },
   {
-    key: "screentimeFocusGoalMinutes", systemSignals: true, group: "screentime", section: "Pause e obiettivi", type: "number", control: "input", min: 0, max: 960, step: 15, dependsOn: "screentimeEnabled",
+    key: "screentimeFocusGoalMinutes", screenUsage: true, group: "screentime", section: "Pause e obiettivi", type: "number", control: "input", min: 0, max: 960, step: 15, dependsOn: "screentimeEnabled",
     label: "Obiettivo di focus al giorno (min)", description: "Quali categorie sono focus si sceglie nella pagina del widget. 0 = nessun obiettivo.",
   },
 
