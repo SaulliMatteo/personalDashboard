@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
-import type { FocusClass } from "../lib/focus";
-import type { RingClass, RingPart } from "./ringParts";
+import type { RingClass, RingColor, RingPart } from "./ringParts";
 
 /**
  * Anello del widget, una forma per tema (docs/mockup/widget/tempo-allo-schermo.html): il giro è diviso tra i pezzi.
@@ -15,7 +14,7 @@ export interface RingProps {
   children?: ReactNode;
 }
 
-const VAR: Record<FocusClass, string> = { focus: "var(--st-focus)", fun: "var(--st-fun)", neutral: "var(--st-neutral)" };
+const VAR: Record<RingColor, string> = { focus: "var(--st-focus)", fun: "var(--st-fun)", neutral: "var(--st-neutral)", warn: "var(--st-warn)" };
 
 const sum = (parts: RingPart[]) => parts.reduce((s, p) => s + p.value, 0);
 
@@ -37,7 +36,7 @@ interface ArcStyle {
   /** Distanza dal bordo del riquadro. */
   margin?: number;
   /** Alone sugli archi (`filter` CSS), per classe. */
-  glow?: (cls: FocusClass) => string | undefined;
+  glow?: (cls: RingColor) => string | undefined;
 }
 
 function arcs(parts: RingPart[], { thick, gap, cap, margin = 1, glow }: ArcStyle) {
@@ -120,7 +119,7 @@ function rays(
 }
 
 export function RingNotte(props: RingProps) {
-  const glow = (cls: FocusClass) => `drop-shadow(0 0 3px color-mix(in srgb, ${VAR[cls]} 50%, transparent))`;
+  const glow = (cls: RingColor) => `drop-shadow(0 0 3px color-mix(in srgb, ${VAR[cls]} 50%, transparent))`;
   return <Frame {...props} ring={arcs(props.parts, { thick: 7, gap: 5, cap: "round", glow })} />;
 }
 
@@ -130,9 +129,9 @@ export function RingOpaco(props: RingProps) {
 
 export function RingQuaderno(props: RingProps) {
   const ticks = rays(props.parts, 40, 37, (cls) => ({
-    r2: cls === "focus" ? 48 : 45,
-    width: cls === "focus" ? 2.4 : 1.8,
-    stroke: cls === "focus" || cls === "fun" ? VAR[cls] : "var(--tick-off)",
+    r2: cls === "focus" || cls === "warn" ? 48 : 45,
+    width: cls === "focus" || cls === "warn" ? 2.4 : 1.8,
+    stroke: cls === "focus" || cls === "fun" || cls === "warn" ? VAR[cls] : "var(--tick-off)",
   }));
   return <Frame {...props} ring={ticks} />;
 }
@@ -171,7 +170,7 @@ export function RingVetro(props: RingProps) {
 export function RingEclisse(props: RingProps) {
   const thick = 2.4;
   const r = 50 - thick / 2 - 3;
-  const glow = (cls: FocusClass) => (cls === "focus" ? "drop-shadow(0 0 3px var(--core-glow))" : undefined);
+  const glow = (cls: RingColor) => (cls === "focus" || cls === "warn" ? "drop-shadow(0 0 3px var(--core-glow))" : undefined);
   return (
     <Frame
       {...props}
@@ -188,10 +187,10 @@ export function RingEclisse(props: RingProps) {
 /** Ombra di giorno: stella di raggi con l'alone dorato dietro; il focus ha i raggi più lunghi e la fiamma. */
 export function RingStella(props: RingProps) {
   const lines = rays(props.parts, 36, 37, (cls) => ({
-    r2: cls === "focus" ? 49 : cls === "fun" ? 45.5 : cls === "neutral" ? 43 : 41,
-    width: cls === "focus" ? 2.6 : 1.7,
+    r2: cls === "focus" || cls === "warn" ? 49 : cls === "fun" ? 45.5 : cls === "neutral" ? 43 : 41,
+    width: cls === "focus" || cls === "warn" ? 2.6 : 1.7,
     stroke: cls && cls !== "off" ? VAR[cls] : "var(--tick-off)",
-    glow: cls === "focus" ? "drop-shadow(0 0 2.5px var(--prog-glow))" : undefined,
+    glow: cls === "focus" || cls === "warn" ? "drop-shadow(0 0 2.5px var(--prog-glow))" : undefined,
   }));
   return (
     <Frame

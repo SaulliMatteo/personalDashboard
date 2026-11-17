@@ -14,6 +14,8 @@ export interface ScreenLimit {
   minutes: number;
   /** Avviso anche all'80 %. */
   warn: boolean;
+  /** A tempo finito una schermata copre l'app (solo Windows, src-tauri/src/screen_block.rs). */
+  block: boolean;
 }
 
 export const NEAR_RATIO = 0.8;
@@ -73,4 +75,92 @@ export function parseNoticeState(raw: string | null): LimitNoticeState | null {
   } catch {
     return null;
   }
+}
+
+// ----------------------------------------------------------------- blocco (solo Windows)
+
+/** "Altri 15 minuti": quanto dura e quante volte al giorno per limite (una). */
+export const EXTENSION_MS = 15 * 60_000;
+
+/** Proroghe chieste oggi: id del limite → fine della proroga (ms). Si salva in `meta`. */
+export interface BlockExtensions {
+  day: string;
+  until: Record<string, number>;
+}
+
+export function emptyExtensions(day: string): BlockExtensions {
+  return { day, until: {} };
+}
+
+export function parseExtensions(raw: string | null, today: string): BlockExtensions {
+  try {
+    const v = raw ? (JSON.parse(raw) as BlockExtensions) : null;
+    if (v && v.day === today && v.until && typeof v.until === "object") return v;
+  } catch {
+    // stato rovinato: si riparte senza proroghe
+  }
+  return emptyExtensions(today);
+}
+
+/** Fine della proroga in corso del limite, o null (nessuna, o già finita). */
+export function extensionEnd(ext: BlockExtensions, limitId: number, today: string, now: number): number | null {
+  if (ext.day !== today) return null;
+  const until = ext.until[limitId];
+  return typeof until === "number" && until > now ? until : null;
+}
+
+/** Il limite blocca adesso: tempo finito e nessuna proroga in corso. */
+export function isBlocking(limit: ScreenLimit, usedSeconds: number, ext: BlockExtensions, today: string, now: number): boolean {
+  return limit.block && limit.minutes > 0 && usedSeconds >= limit.minutes * 60 && extensionEnd(ext, limit.id, today, now) === null;
+}
+
+/** Un'app da coprire, come la riceve il Rust (`screenblock_set`). */
+export interface BlockTarget {
+  /** app_key: nome dell'eseguibile senza .exe, minuscolo (`processKey`). */
+  key: string;
+  /** Nome dell'app per "Chiudi …". */
+  app: string;
+  limitId: number;
+  /** Nome del limite: l'app o la categoria. */
+  label: string;
+  kind: LimitKind;
+  usedSeconds: number;
+  maxSeconds: number;
+  /** "Altri 15 minuti" non ancora usato oggi per questo limite. */
+  canExtend: boolean;
+}
+
+/**
+ * Le app da coprire adesso. `appsOf(limit)` = le app del limite (per una categoria quelle che si conoscono). Se due
+ * limiti prendono la stessa app vale quello superato di più.
+ */
+export function blockTargets(
+  limits: { limit: ScreenLimit; usedSeconds: number }[],
+  appsOf: (limit: ScreenLimit) => { key: string; label: string }[],
+  ext: BlockExtensions,
+  today: string,
+  now: number
+): BlockTarget[] {
+  const byKey = new Map<string, BlockTarget & { ratio: number }>();
+  for (const { limit, usedSeconds } of limits) {
+    if (!isBlocking(limit, usedSeconds, ext, today, now)) continue;
+    const ratio = usedSeconds / (limit.minutes * 60);
+    const canExtend = ext.day !== today || ext.until[limit.id] === undefined;
+    for (const app of appsOf(limit)) {
+      const prev = byKey.get(app.key);
+      if (prev && prev.ratio >= ratio) continue;
+      byKey.set(app.key, {
+        key: app.key,
+        app: app.label,
+        limitId: limit.id,
+        label: limit.label,
+        kind: limit.kind,
+        usedSeconds,
+        maxSeconds: limit.minutes * 60,
+        canExtend,
+        ratio,
+      });
+    }
+  }
+  return [...byKey.values()].map(({ ratio: _ratio, ...t }) => t);
 }

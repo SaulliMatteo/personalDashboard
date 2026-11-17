@@ -1,0 +1,62 @@
+/* Schermata di blocco (docs/mockup/widget/tempo-blocco.html): occupa tutta la finestra "blocco", che il Rust mette
+   sull'area di lavoro del monitor dell'app finita. Un anello pieno del colore d'avviso col lucchetto, la frase e i
+   pulsanti; ogni tema ha il suo fondo e il suo pannello. */
+.stk {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow: auto;
+  background: radial-gradient(45% 55% at 50% 45%, color-mix(in srgb, var(--st-warn) 10%, transparent), transparent 75%), var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  user-select: none;
+}
+.stk-panel { width: min(440px, 100%); display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.stk-kicker { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
+.stk .stw-ring { width: 120px; }
+.stk .stw-ring-val { gap: 2px; }
+.stk .stw-ring-val .stk-lockicon { position: static; inset: auto; width: 28px; height: 28px; color: var(--st-warn); }
+.stk-ringtime { font-size: 11.5px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.stk h2 { margin: 0; font-family: var(--font-title); font-size: 26px; font-weight: 700; line-height: 1.2; }
+.stk p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
+.stk-used { font-size: 12.5px; color: var(--text-muted); }
+.stk-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 4px; }
+.stk-btn { min-height: 40px; padding: 8px 18px; border-radius: var(--radius-item); font: inherit; font-size: 14px; cursor: pointer; }
+.stk-btn:disabled, .stk-link:disabled { opacity: 0.6; cursor: default; }
+.stk-btn--primary { border: 0; background: var(--btn-primary-bg); color: var(--btn-primary-fg); font-weight: 600; }
+.stk-btn--ghost { border: var(--btn-ghost-border); background: var(--btn-ghost-bg); color: var(--btn-ghost-fg); }
+.stk-btn small { display: block; font-size: 10.5px; font-weight: 400; color: var(--text-muted); }
+.stk-link { border: 0; background: none; padding: 4px; font: inherit; font-size: 13px; color: var(--text-muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.stk-btn:focus-visible, .stk-link:focus-visible { outline: 2px solid var(--st-warn); outline-offset: 2px; }
+
+/* ---------- Per tema ---------- */
+:root[data-theme="notte"] .stk h2 { text-shadow: 0 0 24px color-mix(in srgb, var(--st-warn) 35%, transparent); }
+:root[data-theme="opaco"] .stk { background: var(--pg-bg, var(--bg)); }
+:root[data-theme="opaco"] .stk p, :root[data-theme="opaco"] .stk-kicker, :root[data-theme="opaco"] .stk-used, :root[data-theme="opaco"] .stk-link { color: var(--text-primary); }
+:root[data-theme="opaco"] .stk h2 { font-size: 30px; font-weight: 800; }
+:root[data-theme="quaderno"] .stk { background: var(--main-bg); }
+:root[data-theme="quaderno"] .stk-panel { padding: 22px 26px; background: var(--note-page-pattern), var(--card-bg); border: var(--card-border); box-shadow: var(--card-shadow); transform: rotate(-0.6deg); }
+:root[data-theme="quaderno"] .stk h2 { font-size: 34px; font-weight: 600; color: var(--accent); }
+:root[data-theme="fosforo"] .stk { background: radial-gradient(circle, var(--dot-off) 1px, transparent 1.4px) 0 0 / 9px 9px, var(--bg); }
+:root[data-theme="fosforo"] .stk h2 { font-weight: 500; font-size: 21px; text-transform: lowercase; letter-spacing: 0.02em; }
+:root[data-theme="fosforo"] .stk-btn { border-radius: 0; }
+:root[data-theme="fosforo"] .stk-btn--primary { border: 1px solid var(--st-warn); color: var(--st-warn); }
+:root[data-theme="vetro"] .stk {
+  background:
+    radial-gradient(38% 46% at 16% 18%, var(--room-window-glow), transparent 70%),
+    radial-gradient(24% 34% at 84% 26%, var(--room-lamp-glow), transparent 70%),
+    radial-gradient(18% 22% at 62% 78%, var(--room-book-2), transparent 70%),
+    radial-gradient(16% 20% at 30% 70%, var(--room-plant), transparent 70%),
+    linear-gradient(var(--room-wall-top), var(--room-wall-bottom));
+}
+:root[data-theme="vetro"] .stk-panel { padding: 26px 30px; border-radius: var(--radius-card); background: var(--card-gloss), var(--card-bg); border: var(--card-border); box-shadow: var(--card-shadow); backdrop-filter: blur(var(--blur)) saturate(175%); }
+:root[data-theme="vetro"] .stk h2 { font-weight: 600; }
+:root[data-theme="ombra"] .stk h2 { font-family: var(--font-flavor); font-weight: 300; font-size: 29px; }
+:root[data-theme="ombra"][data-mode="notte"] .stk { background: radial-gradient(40% 50% at 50% 42%, color-mix(in srgb, var(--core-glow) 8%, transparent), transparent 70%), var(--bg); }
+:root[data-theme="ombra"][data-mode="notte"] .stk-kicker { letter-spacing: 0.3em; }
+:root[data-theme="ombra"][data-mode="notte"] .stk-btn { border-radius: 0; }
+:root[data-theme="ombra"][data-mode="giorno"] .stk { background: radial-gradient(60% 50% at 50% 0%, var(--wall-top), transparent 70%), var(--bg); }
+:root[data-theme="ombra"][data-mode="giorno"] .stk-panel { position: relative; padding: 26px 30px; border-radius: var(--radius-card); background: var(--card-gloss), var(--card-bg); box-shadow: 0 12px 30px var(--fx-shadow); }
+:root[data-theme="ombra"][data-mode="giorno"] .stk-panel::after { content: ""; position: absolute; inset: -1px 18% auto; height: 2px; border-radius: 2px; background: var(--flame-line); box-shadow: 0 0 12px var(--flame-glow); }

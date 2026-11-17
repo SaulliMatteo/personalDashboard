@@ -8,11 +8,14 @@ import { setTrayToday } from "../../core/system/appWindowApi";
 import { onSyncApplied } from "../../core/sync/syncEvents";
 import { parseAppCategories, serializeAppCategories, type AppCategory } from "../../core/system/appCategory";
 import {
+  SCREENBLOCK_AVAILABLE,
   SCREENTIME_AVAILABLE,
   SCREENTIME_PHONE,
   SCREENTIME_VIEWABLE,
   THIS_DEVICE,
+  onBlockExtended,
   openUsageAccessSettings,
+  setBlockTargets,
   startRecorder,
   stopRecorder,
   takeSegments,
@@ -24,8 +27,18 @@ import { classifySegment, type ClassifiedSegment } from "./lib/classify";
 import { countedIntervals, dayKey, segmentsToDeltas, shiftDay } from "./lib/aggregate";
 import { BREAK_MS, breakReminderStep, continuousMinutes, extendSessions, type Session } from "./lib/sessions";
 import { parseFocusClasses, serializeFocusClasses, type FocusClass } from "./lib/focus";
-import { dueNotices, emptyNoticeState, parseNoticeState, type ScreenLimit } from "./lib/limits";
-import { limitUsage, summarize, type ClassifyContext, type UsageRow } from "./lib/summary";
+import {
+  blockTargets,
+  dueNotices,
+  emptyNoticeState,
+  extensionEnd,
+  isBlocking,
+  parseExtensions,
+  parseNoticeState,
+  type BlockExtensions,
+  type ScreenLimit,
+} from "./lib/limits";
+import { limitApps, limitUsage, summarize, type ClassifyContext, type UsageRow } from "./lib/summary";
 import { byDevice, parseDeviceFilter, zeroDevices, type DeviceFilter } from "./lib/devices";
 import { formatDuration } from "./lib/format";
 import { SCREENTIME_WIDGET_ID, ScreenTimeContext, type LimitStatus, type ScreenTimeContextValue } from "./useScreenTime";
@@ -34,6 +47,8 @@ import { SCREENTIME_WIDGET_ID, ScreenTimeContext, type LimitStatus, type ScreenT
 const FLUSH_MS = 30_000;
 const NOTICES_META = "screentime_limit_notices";
 const PRUNE_META = "screentime_pruned_day";
+/** "Altri 15 minuti" chiesti oggi (lib/limits.ts, BlockExtensions). */
+const EXTENSIONS_META = "screentime_block_extensions";
 /** Si tengono ~13 mesi di dati: abbastanza per confrontare con l'anno prima, pochi KB al mese. */
 const KEEP_DAYS = 400;
 /** Dove non si conta (telefono, Linux): ogni quanto si rilegge oggi, per il cambio di giorno. */
@@ -82,10 +97,14 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
   const [revision, setRevision] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const [gaps, setGaps] = useState<PhoneGap[]>([]);
+  const [extensions, setExtensions] = useState<BlockExtensions>(() => parseExtensions(null, dayKey(Date.now())));
 
   const sessionRef = useRef<Session | null>(null);
   const remindedRef = useRef<{ startAt: number; steps: number }>({ startAt: 0, steps: 0 });
   const limitsRef = useRef<ScreenLimit[]>([]);
+  /** Righe di ieri e oggi: le app di una categoria da bloccare. */
+  const recentRowsRef = useRef<UsageRow[]>([]);
+  const extensionsRef = useLatestRef(extensions);
   const queueRef = useRef<Promise<void>>(Promise.resolve());
 
   /** Rilegge oggi e ieri dal DB. */
@@ -93,12 +112,29 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
     const today = dayKey(Date.now());
     const yesterday = shiftDay(today, -1);
     const rows = await repo.usageBetween(yesterday, today);
+    recentRowsRef.current = rows;
     setTodayRows(rows.filter((r) => r.day === today));
     setYesterdayRows(rows.filter((r) => r.day === yesterday));
     setNow(Date.now());
     setRevision((r) => r + 1);
     return rows.filter((r) => r.day === today);
   }, []);
+
+  /**
+   * Windows: dice al Rust quali app coprire adesso (limiti col blocco finiti, senza proroga in corso). Si chiama a ogni
+   * salvataggio e quando cambiano i limiti; il Rust controlla l'app davanti ogni secondo anche a finestra nascosta.
+   */
+  const pushBlock = useCallback(async () => {
+    if (!SCREENBLOCK_AVAILABLE) return;
+    const today = dayKey(Date.now());
+    const rows = recentRowsRef.current;
+    const todayLocal = rows.filter((r) => r.day === today);
+    const manual = classifyRef.current.manual;
+    const limits = limitsRef.current.map((limit) => ({ limit, usedSeconds: limitUsage(todayLocal, limit, manual) }));
+    const targets = enabledRef.current ? blockTargets(limits, (l) => limitApps(l, rows, manual), extensionsRef.current, today, Date.now()) : [];
+    const root = document.documentElement;
+    await setBlockTargets(today, targets, { theme: root.dataset.theme ?? "notte", mode: root.dataset.mode ?? "notte" });
+  }, [classifyRef, extensionsRef, enabledRef]);
 
   /** Limiti superati e pausa: notifiche (firmate da Pixy, vedi companion/notify/pixyNotifications.ts). */
   const checkNotices = useCallback(
@@ -145,8 +181,9 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
       }
       const total = rows.reduce((sum, r) => sum + (r.local ? r.seconds : 0), 0);
       void setTrayToday(`Tempo al PC oggi: ${formatDuration(total)}`).catch(() => {});
+      await pushBlock().catch((error) => console.error("Tempo allo schermo: blocco non aggiornato", error));
     },
-    [settingsRef, classifyRef]
+    [settingsRef, classifyRef, pushBlock]
   );
 
   /** Segmenti → DB (righe per ora e sessioni). */
@@ -202,8 +239,10 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
         }
         const limits = await repo.listLimits();
         const lost = SCREENTIME_PHONE ? await readPhoneGaps() : [];
+        const ext = SCREENBLOCK_AVAILABLE ? parseExtensions(await getMeta(EXTENSIONS_META), today) : null;
         if (cancelled) return;
         setGaps(lost);
+        if (ext) setExtensions(ext);
         limitsRef.current = limits;
         setLimitList(limits);
         await reload();
@@ -297,6 +336,38 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
     };
   }, [enabled, reload]);
 
+  // Windows: "Altri 15 minuti" dalla schermata di blocco. Il Rust ha già tolto il blocco; qui si ricorda (una volta al
+  // giorno per limite) anche dopo un riavvio dell'app.
+  useEffect(() => {
+    if (!SCREENBLOCK_AVAILABLE) return;
+    let unlisten: (() => void) | null = null;
+    let cancelled = false;
+    void onBlockExtended(({ limitId, until, day }) => {
+      void (async () => {
+        const today = dayKey(Date.now());
+        if (day !== today) return;
+        const saved = parseExtensions(await getMeta(EXTENSIONS_META), today);
+        const next: BlockExtensions = { day: today, until: { ...saved.until, [limitId]: until } };
+        await setMeta(EXTENSIONS_META, JSON.stringify(next));
+        extensionsRef.current = next;
+        setExtensions(next);
+      })().catch((error) => console.error("Tempo allo schermo: proroga non salvata", error));
+    }).then((fn) => {
+      if (cancelled) fn();
+      else unlisten = fn;
+    });
+    return () => {
+      cancelled = true;
+      unlisten?.();
+    };
+  }, [extensionsRef]);
+
+  // Conteggio spento: niente più blocchi.
+  useEffect(() => {
+    if (!SCREENBLOCK_AVAILABLE || enabled) return;
+    void pushBlock().catch(() => undefined);
+  }, [enabled, pushBlock]);
+
   // Chiusura della pagina (ricarica, X con l'icona spenta): si prova a salvare, può non finire in tempo.
   useEffect(() => {
     if (!enabled) return;
@@ -336,7 +407,8 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
     limitsRef.current = limits;
     setLimitList(limits);
     setRevision((r) => r + 1);
-  }, []);
+    await pushBlock().catch((error) => console.error("Tempo allo schermo: blocco non aggiornato", error));
+  }, [pushBlock]);
 
   const saveLimit = useCallback(
     async (limit: Omit<ScreenLimit, "id">) => {
@@ -365,8 +437,18 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
     [todayRows]
   );
   const limits = useMemo<LimitStatus[]>(
-    () => limitList.map((limit) => ({ limit, usedSeconds: limitUsage(todayRows, limit, manual) })),
-    [limitList, todayRows, manual]
+    () =>
+      limitList.map((limit) => {
+        const usedSeconds = limitUsage(todayRows, limit, manual);
+        const day = dayKey(now);
+        return {
+          limit,
+          usedSeconds,
+          blocked: SCREENBLOCK_AVAILABLE && isBlocking(limit, usedSeconds, extensions, day, now),
+          extendedUntil: SCREENBLOCK_AVAILABLE && limit.block ? extensionEnd(extensions, limit.id, day, now) : null,
+        };
+      }),
+    [limitList, todayRows, manual, extensions, now]
   );
 
   const yesterdayShown = useMemo(() => byDevice(yesterdayRows, filter), [yesterdayRows, filter]);
@@ -378,6 +460,7 @@ export function ScreenTimeProvider({ children }: { children: ReactNode }) {
       viewable: SCREENTIME_VIEWABLE,
       canRecord,
       hasLimits: SCREENTIME_AVAILABLE,
+      canBlock: SCREENBLOCK_AVAILABLE,
       switchedOff: canRecord && !settings.screentimeEnabled,
       needsAccess,
       grantAccess,

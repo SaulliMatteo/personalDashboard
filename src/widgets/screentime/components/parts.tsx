@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { MdOutlineDesktopWindows, MdOutlineSmartphone } from "react-icons/md";
+import { MdOutlineDesktopWindows, MdOutlineLock, MdOutlineSmartphone } from "react-icons/md";
 import { DEVICE_FILTERS, DEVICE_KINDS, DEVICE_LABEL, FILTER_LABEL, type DeviceFilter, type DeviceKind } from "../lib/devices";
 import { CLASS_LABEL, FOCUS_CLASSES, type FocusClass } from "../lib/focus";
 import type { ClassSeconds, RankItem } from "../lib/summary";
@@ -218,4 +218,9 @@ export function LimitBar({ used, max, quiet = false }: { used: number; max: numb
       <i style={{ width: `${Math.min(100, pct(used, max))}%` }} />
     </div>
   );
+}
+
+/** Lucchetto dei limiti che bloccano l'app (docs/mockup/widget/tempo-blocco.html). Senza `label` è decorativo. */
+export function LockIcon({ className, label }: { className?: string; label?: string }) {
+  return <MdOutlineLock className={className} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true} />;
 }

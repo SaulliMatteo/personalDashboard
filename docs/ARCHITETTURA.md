@@ -49,7 +49,8 @@ reagire agli altri.
 
 ## Backend nativo, in breve
 
-`src-tauri/src/lib.rs` registra plugin e comandi e crea la finestra `main` (in `tauri.conf.json` ha `create: false`).
+`src-tauri/src/lib.rs` registra plugin e comandi e crea la finestra `main` (in `tauri.conf.json` ha `create: false`). Su Windows c'è una seconda finestra, `blocco`
+(Tempo allo schermo, `src/screen_block.rs`), creata dal Rust quando serve.
 Lato frontend ogni widget chiama `invoke()` da un solo file `data/*Api.ts` (segnali di sistema condivisi da
 `core/system/systemApi.ts`). Sui sistemi non supportati (oggi: Linux) l'app deve compilare e i widget mostrano un
 errore chiaro. Moduli, macOS, aggiornamenti e release: `docs/BACKEND.md`; cosa serve per un comando nuovo:
@@ -59,7 +60,7 @@ errore chiaro. Moduli, macOS, aggiornamenti e release: `docs/BACKEND.md`; cosa s
 
 ```
 src/
-├─ main.tsx                  entry point: importa gli stili e monta <App/>
+├─ main.tsx                  entry point: importa gli stili e monta <App/> (con `?view=blocco` solo la schermata di blocco)
 ├─ app/                      guscio dell'applicazione
 │   ├─ App.tsx               albero dei provider + vista corrente
 │   ├─ DatabaseGate.tsx      non monta nulla finché le migrazioni DB non sono finite

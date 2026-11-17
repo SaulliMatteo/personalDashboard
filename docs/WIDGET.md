@@ -95,6 +95,17 @@ focus e serie, limiti, pause e sessioni, settimana, etichette delle date, dispos
   dell'icona e pause contano solo le righe di qui (`local`). "telefono aggiornato alle…" = l'ultimo secondo arrivato.
 - Limiti: avviso all'80 % (facoltativo) e al 100 %, una volta al giorno per limite (`screentime_limit_notices` in
   `meta`). Pausa: promemoria ogni `screentimeBreakMinutes` di tempo continuo. Notifiche firmate da Pixy.
+- **Blocco al limite** (solo Windows, `SCREENBLOCK_AVAILABLE`; mockup `docs/mockup/widget/tempo-blocco.html`): un
+  limite con `block` (migrazione 32, interruttore nel dialog) a tempo finito fa coprire l'app da una schermata. A ogni
+  salvataggio (~30 s) e quando cambiano i limiti `pushBlock` (`ScreenTimeContext.tsx`) manda al Rust le app da coprire
+  (`blockTargets` in `lib/limits.ts`; per una categoria `limitApps` in `lib/summary.ts`: app viste ieri e oggi, scelte
+  a mano e, per Browser, i browser noti); il Rust (`src-tauri/src/screen_block.rs`) guarda l'app davanti ogni secondo e
+  mette sopra la finestra `blocco` (`?view=blocco` in `main.tsx` → `block/BlockScreen.tsx`, senza DB: tema e testi
+  dal Rust). "Chiudi" = `WM_CLOSE` come la X; "Altri 15 minuti" una volta al giorno per limite
+  (`screentime_block_extensions` in `meta`, salvata dall'evento `screenblock:extended`; lo controlla anche il Rust);
+  "Apri la dashboard" = evento `app:open-widget` → `NavContext`. Un'app di una categoria mai vista oggi viene presa al
+  salvataggio dopo (≤ ~1 min). Nel widget l'avviso più urgente diventa "bloccata fino a mezzanotte" o "N min in più,
+  poi si blocca" (Piccola: "bloccato"); nella pagina il lucchetto accanto ai limiti che bloccano.
 - Focus/svago: classe per categoria (`lib/focus.ts`, `screentimeFocusClasses`; vuota = default), editor nella pagina
   (Settimana). Conteggio, soglie e filtro sono in `PER_DEVICE_SETTINGS`; classi, obiettivo di focus e
   `companionAppCategories` si sincronizzano (la vista somma i dispositivi, la categoria deve essere la stessa).
@@ -103,7 +114,8 @@ focus e serie, limiti, pause e sessioni, settimana, etichette delle date, dispos
   o PC/telefono con "Tutti") e 3 app come barre (`AppBars`, il tempo solo sulla prima); Alta: anche la giornata a
   parole (`DayInWords`, al posto della legenda); Media: anello del focus e la giornata in 6 momenti di 4 ore
   (`DayMoments`). Limiti, pausa e permesso del telefono sono **un solo avviso**, il più urgente (`pickAlert` in
-  `lib/widgetText.ts`: limite all'80 % → pausa oltre `screentimeBreakMinutes` → permesso), e con l'avviso le app
+  `lib/widgetText.ts`: app bloccata → proroga in corso → limite all'80 % → pausa oltre `screentimeBreakMinutes` →
+  permesso), e con l'avviso le app
   scendono di una. L'anello ha una forma per tema (`card/rings.tsx`, `SCREENTIME_RINGS`; Ombra con `perMode`:
   eclisse di notte, stella di giorno), il resto cambia forma col CSS. Il dettaglio sta tutto nella pagina.
 - Pagina (`ScreenTimeDetail.tsx` + `detail/`): `usePeriodData` legge il giorno o la settimana dal DB e per oggi usa le

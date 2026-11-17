@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { APP_CATEGORIES } from "../../../core/system/appCategory";
 import { CATEGORY_LABEL } from "../lib/categories";
+import { LockIcon } from "../components/parts";
 import type { LimitKind, ScreenLimit } from "../lib/limits";
 
 export interface LimitOption {
@@ -15,6 +16,7 @@ export interface LimitDraft {
   label: string;
   minutes: number;
   warn: boolean;
+  block: boolean;
 }
 
 interface LimitDialogProps {
@@ -23,6 +25,8 @@ interface LimitDialogProps {
   /** Il limite che si sta modificando (mostra "Togli il limite"). */
   editing: ScreenLimit | null;
   apps: LimitOption[];
+  /** Windows: c'è l'interruttore "Blocca quando finisce il tempo". */
+  canBlock: boolean;
   onSave: (draft: LimitDraft) => void;
   onDelete: (id: number) => void;
   onClose: () => void;
@@ -40,10 +44,11 @@ function withCurrent(list: LimitOption[], draft: LimitDraft | null, kind: LimitK
 }
 
 /**
- * "Aggiungi un limite" (docs/mockup/temi/tempo-pc.html): app o categoria, minuti al giorno, avviso all'80 %.
+ * "Aggiungi un limite" (docs/mockup/temi/tempo-pc.html): app o categoria, minuti al giorno, avviso all'80 % e, su
+ * Windows, il blocco (docs/mockup/widget/tempo-blocco.html).
  * Lo stesso dialog modifica un limite esistente (stessa app o categoria = stesso limite).
  */
-function LimitDialog({ initial, editing, apps, onSave, onDelete, onClose }: LimitDialogProps) {
+function LimitDialog({ initial, editing, apps, canBlock, onSave, onDelete, onClose }: LimitDialogProps) {
   const [kind, setKind] = useState<LimitKind>(initial?.kind ?? "app");
   const lists: Record<LimitKind, LimitOption[]> = {
     app: withCurrent(apps, initial, "app"),
@@ -55,6 +60,7 @@ function LimitDialog({ initial, editing, apps, onSave, onDelete, onClose }: Limi
   }));
   const [minutes, setMinutes] = useState(initial?.minutes ?? 60);
   const [warn, setWarn] = useState(initial?.warn ?? true);
+  const [block, setBlock] = useState(canBlock && (initial?.block ?? false));
   const ref = useRef<HTMLDivElement | null>(null);
   const onCloseRef = useRef(onClose);
   useEffect(() => {
@@ -80,7 +86,7 @@ function LimitDialog({ initial, editing, apps, onSave, onDelete, onClose }: Limi
 
   function save() {
     if (!chosen || !valid) return;
-    onSave({ kind, target: chosen.target, label: chosen.label, minutes: Math.round(minutes), warn });
+    onSave({ kind, target: chosen.target, label: chosen.label, minutes: Math.round(minutes), warn, block: canBlock && block });
   }
 
   return createPortal(
@@ -93,7 +99,16 @@ function LimitDialog({ initial, editing, apps, onSave, onDelete, onClose }: Limi
       <div ref={ref} className="std" role="dialog" aria-modal="true" aria-labelledby="std-title">
         <header className="std-head">
           <h2 id="std-title">{editing ? "Modifica il limite" : "Aggiungi un limite"}</h2>
-          <p>Ti avviso quando ti avvicini e quando lo superi. Si azzera a mezzanotte.</p>
+          <p>
+            {block ? (
+              <>
+                Ti avviso quando ti avvicini e, quando lo superi, <b>blocco {kind === "app" ? "l'app" : "le sue app"}</b>. Si azzera a
+                mezzanotte.
+              </>
+            ) : (
+              "Ti avviso quando ti avvicini e quando lo superi. Si azzera a mezzanotte."
+            )}
+          </p>
         </header>
         <div className="std-body">
           <div className="std-field">
@@ -143,6 +158,26 @@ function LimitDialog({ initial, editing, apps, onSave, onDelete, onClose }: Limi
           <label className="std-check">
             <input type="checkbox" checked={warn} onChange={(e) => setWarn(e.target.checked)} /> Avvisami anche all'80 %
           </label>
+          {canBlock && (
+            <button type="button" role="switch" aria-checked={block} className={`std-block${block ? " is-on" : ""}`} onClick={() => setBlock((b) => !b)}>
+              <span className="std-switch" aria-hidden="true" />
+              <b>
+                <LockIcon className="std-lock" />
+                Blocca quando finisce il tempo
+              </b>
+              {kind === "category" && target === "browser" && (
+                <small className="is-warn">
+                  Blocca <b>tutti i browser</b>: Opera, Chrome, Edge, Firefox…
+                </small>
+              )}
+              <small>
+                {kind === "app"
+                  ? `Quando finisce il tempo una schermata copre ${chosen?.label ?? "l'app"} finché non la chiudi. Puoi chiedere altri 15 minuti una volta al giorno.`
+                  : `Una schermata copre le app di ${chosen?.label ?? "questa categoria"} quando finisce il tempo. "Altri 15 minuti" una volta al giorno.`}
+              </small>
+              <small>Solo su questo computer.</small>
+            </button>
+          )}
         </div>
         <footer className="std-actions">
           {editing && (

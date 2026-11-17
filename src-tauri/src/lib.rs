@@ -5,6 +5,7 @@ mod file_open;
 mod file_send;
 mod file_transfer;
 mod notify;
+mod screen_block;
 mod screen_time;
 mod secure_store;
 mod system_monitor;
@@ -123,6 +124,7 @@ pub fn run() {
         .manage(file_transfer::FileTransferState::default())
         .manage(system_monitor::SysmonState::default())
         .manage(screen_time::ScreenTimeState::default())
+        .manage(screen_block::ScreenBlockState::default())
         .manage(app_tray::TrayState::default())
         .invoke_handler(tauri::generate_handler![
             file_transfer::ft_start_server,
@@ -156,6 +158,11 @@ pub fn run() {
             screen_time::android::screentime_usage_access,
             screen_time::android::screentime_usage_open_settings,
             screen_time::android::screentime_usage_events,
+            screen_block::screenblock_set,
+            screen_block::screenblock_current,
+            screen_block::screenblock_close_target,
+            screen_block::screenblock_extend,
+            screen_block::screenblock_open_dashboard,
             app_tray::app_set_close_to_tray,
             app_tray::app_quit,
             app_tray::tray_set_today,
@@ -171,6 +178,13 @@ pub fn run() {
             // all'orologio, il server e il conteggio di Tempo al PC continuano.
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let app = window.app_handle();
+                // La schermata di blocco di Tempo allo schermo (src/screen_block.rs) non si chiude con Alt+F4: si
+                // nasconde, e se l'app finita è ancora davanti torna al giro dopo. Non ferma nulla dell'app.
+                if window.label() == screen_block::WINDOW_LABEL {
+                    api.prevent_close();
+                    let _ = window.hide();
+                    return;
+                }
                 if app_tray::should_hide(app) {
                     api.prevent_close();
                     let _ = window.hide();
@@ -180,6 +194,8 @@ pub fn run() {
                 file_transfer::shutdown(app);
                 system_monitor::shutdown(app);
                 screen_time::shutdown(app);
+                // Altrimenti la finestra di blocco nascosta terrebbe aperta l'app.
+                screen_block::shutdown(app);
             }
         })
         .setup(|app| {
@@ -244,6 +260,7 @@ pub fn run() {
                 file_transfer::shutdown(app);
                 system_monitor::shutdown(app);
                 screen_time::shutdown(app);
+                screen_block::shutdown(app);
             }
             // macOS: clic sull'icona nel Dock con la finestra nascosta.
             #[cfg(target_os = "macos")]

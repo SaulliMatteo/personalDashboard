@@ -1,8 +1,12 @@
 import type { FocusClass } from "../lib/focus";
 import type { ClassSeconds } from "../lib/summary";
 
-/** I pezzi dell'anello del widget (card/rings.tsx): una classe o "off", la parte spenta del giro. */
-export type RingClass = FocusClass | "off";
+/**
+ * I pezzi dell'anello del widget (card/rings.tsx): una classe, "warn" (il colore d'avviso: l'anello pieno della
+ * schermata di blocco) o "off", la parte spenta del giro.
+ */
+export type RingColor = FocusClass | "warn";
+export type RingClass = RingColor | "off";
 
 export interface RingPart {
   cls: RingClass;

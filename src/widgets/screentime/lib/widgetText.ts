@@ -46,20 +46,32 @@ export function dayMoments(hours: ClassSeconds[]): ClassSeconds[] {
 }
 
 export type WidgetAlert =
+  | { kind: "blocked"; label: string }
+  | { kind: "extended"; label: string; leftSeconds: number }
   | { kind: "limit"; label: string; leftSeconds: number }
   | { kind: "pause"; minutes: number }
   | { kind: "access" };
 
+/** Un limite superato o vicino: anche col blocco (Windows). */
+export const isLimitAlert = (alert: WidgetAlert | null): boolean => alert?.kind === "limit" || alert?.kind === "blocked" || alert?.kind === "extended";
+
 /**
- * L'unico avviso del widget, il più urgente: un limite all'80 % (quello più vicino a finire), poi la pausa (oltre i
- * minuti scelti nelle impostazioni), poi il telefono che non ha ancora il permesso.
+ * L'unico avviso del widget, il più urgente: un'app bloccata, poi una proroga in corso ("Altri 15 minuti"), poi un
+ * limite all'80 % (quello più vicino a finire), poi la pausa (oltre i minuti scelti nelle impostazioni), poi il
+ * telefono che non ha ancora il permesso.
  */
 export function pickAlert(input: {
-  limits: { limit: ScreenLimit; usedSeconds: number }[];
+  limits: { limit: ScreenLimit; usedSeconds: number; blocked?: boolean; extendedUntil?: number | null }[];
   continuousMinutes: number;
   breakMinutes: number;
   needsAccess: boolean;
+  now?: number;
 }): WidgetAlert | null {
+  const blocked = input.limits.find((l) => l.blocked);
+  if (blocked) return { kind: "blocked", label: blocked.limit.label };
+  const now = input.now ?? Date.now();
+  const extended = input.limits.find((l) => l.extendedUntil && l.extendedUntil > now);
+  if (extended?.extendedUntil) return { kind: "extended", label: extended.limit.label, leftSeconds: Math.ceil((extended.extendedUntil - now) / 1000) };
   let worst: { limit: ScreenLimit; usedSeconds: number; ratio: number } | null = null;
   for (const { limit, usedSeconds } of input.limits) {
     if (limit.minutes <= 0) continue;

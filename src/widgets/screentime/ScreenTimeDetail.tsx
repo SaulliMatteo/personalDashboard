@@ -12,7 +12,7 @@ import { formatClock, formatDayLabel, formatDelta, formatDuration, formatShort, 
 import type { ScreenLimit } from "./lib/limits";
 import { breakStats, longestGap } from "./lib/sessions";
 import { limitUsage, summarize, type RankItem } from "./lib/summary";
-import { BigTime, ClassLegend, ClassSplit, DayChart, DeviceBars, DeviceFilterTabs, DeviceIcon, LimitBar } from "./components/parts";
+import { BigTime, ClassLegend, ClassSplit, DayChart, DeviceBars, DeviceFilterTabs, DeviceIcon, LimitBar, LockIcon } from "./components/parts";
 import { othersFreshText } from "./lib/devices";
 import type { PhoneGap } from "./data/phoneUsage";
 import RankList from "./detail/RankList";
@@ -121,7 +121,7 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
 
   function openLimit(item: RankItem) {
     const existing = limitFor("app", item.key);
-    setDialog({ initial: existing ?? { kind: "app", target: item.key, label: item.label, minutes: 60, warn: true }, editing: existing });
+    setDialog({ initial: existing ?? { kind: "app", target: item.key, label: item.label, minutes: 60, warn: true, block: false }, editing: existing });
   }
 
   async function saveLimit(draft: LimitDraft) {
@@ -191,6 +191,7 @@ function LiveDetail({ onBack, closeToTray }: { onBack: () => void; closeToTray: 
           initial={dialog.initial}
           editing={dialog.editing}
           apps={data.recentApps}
+          canBlock={st.canBlock}
           onSave={(d) => void saveLimit(d)}
           onDelete={(id) => {
             void st.deleteLimit(id);
@@ -278,7 +279,7 @@ function DayView({ day, today, data, summary, rankProps, onAddLimit, onEditLimit
   const gap = longestGap(data.sessions, from, to);
   const breaks = breakStats(data.sessions);
 
-  const limits = isToday ? st.limits : st.limits.map(({ limit }) => ({ limit, usedSeconds: limitUsage(data.localRows, limit, st.classify.manual) }));
+  const limits = isToday ? st.limits : st.limits.map(({ limit }) => ({ limit, usedSeconds: limitUsage(data.localRows, limit, st.classify.manual), blocked: false, extendedUntil: null }));
   // Telefono: le sessioni sono le volte che l'hai preso in mano (5 minuti senza app in primo piano le separano).
   const phoneSessions = st.canRecord && !st.hasLimits ? breaks : null;
   const onThisComputer = st.showFilter ? "su questo computer · " : "";
@@ -432,7 +433,7 @@ function DayView({ day, today, data, summary, rankProps, onAddLimit, onEditLimit
             <p className="stp-fine">Nessun limite. Mettine uno a un'app o a una categoria, anche dal menu ⋯ di una riga.</p>
           ) : (
             <ul className="stp-limits">
-              {limits.map(({ limit, usedSeconds }) => {
+              {limits.map(({ limit, usedSeconds, blocked, extendedUntil }) => {
                 const max = limit.minutes * 60;
                 const near = usedSeconds / max >= 0.8;
                 return (
@@ -440,10 +441,11 @@ function DayView({ day, today, data, summary, rankProps, onAddLimit, onEditLimit
                     <button type="button" className="stp-limit-top" onClick={() => onEditLimit(limit)} aria-label={`Modifica il limite di ${limit.label}`}>
                       <span>
                         {limit.label} <small>{KIND_NAME[limit.kind]}</small>
+                        {st.canBlock && limit.block && <LockIcon className="stw-lock" label="Blocca l'app" />}
                       </span>
                       <span className={`stw-mono${near ? " is-near" : ""}`}>
                         {Math.floor(usedSeconds / 60)} / {limit.minutes} min
-                        {usedSeconds >= max ? " · superato" : near ? " · quasi" : ""}
+                        {blocked ? " · bloccata" : extendedUntil ? " · 15 min in più" : usedSeconds >= max ? " · superato" : near ? " · quasi" : ""}
                       </span>
                     </button>
                     <LimitBar used={usedSeconds} max={max} />
@@ -453,8 +455,8 @@ function DayView({ day, today, data, summary, rankProps, onAddLimit, onEditLimit
             </ul>
           )}
           <p className="stp-fine">
-            {st.showFilter ? "Contano solo questo computer. " : ""}Avviso {settingsWarnText(limits.map((l) => l.limit))}, una volta al giorno. Il limite non blocca
-            nulla: ti avvisa e basta.
+            {st.showFilter ? "Contano solo questo computer. " : ""}Avviso {settingsWarnText(limits.map((l) => l.limit))}, una volta al giorno.{" "}
+            {st.canBlock ? "I limiti col lucchetto bloccano l'app quando finisce il tempo." : "Il limite non blocca nulla: ti avvisa e basta."}
           </p>
         </section>
         <section className="stp-card">

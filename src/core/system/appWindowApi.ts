@@ -46,3 +46,23 @@ export function onQuitRequested(handler: () => void): Promise<UnlistenFn> {
 export function onHiddenToTray(handler: () => void): Promise<UnlistenFn> {
   return listen("app:hidden", handler);
 }
+
+/**
+ * Il Rust chiede di aprire la pagina di un widget (es. "Apri la dashboard" dalla schermata di blocco di Tempo allo
+ * schermo, src-tauri/src/screen_block.rs). Arriva solo dal Rust: il nome del widget non viene dalla pagina.
+ */
+export function onOpenWidgetRequested(handler: (widgetId: string) => void): () => void {
+  if (!APP_TRAY_AVAILABLE) return () => {};
+  let unlisten: UnlistenFn | null = null;
+  let stopped = false;
+  void listen<string>("app:open-widget", (event) => {
+    if (typeof event.payload === "string" && event.payload) handler(event.payload);
+  }).then((fn) => {
+    if (stopped) fn();
+    else unlisten = fn;
+  });
+  return () => {
+    stopped = true;
+    unlisten?.();
+  };
+}

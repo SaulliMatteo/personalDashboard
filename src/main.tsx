@@ -26,6 +26,8 @@ import "./styles/tokens-varianti.css";
 import "./styles/base.css";
 
 import App from "./app/App";
+import BlockScreen from "./widgets/screentime/block/BlockScreen";
+import { widgetPigment } from "./widgets/registry";
 import { installAndroidInsets } from "./core/system/androidInsets";
 import { installExternalLinks } from "./core/system/externalLinks";
 
@@ -34,8 +36,10 @@ installAndroidInsets();
 // Link esterni nel browser di sistema, non nella finestra dell'app.
 installExternalLinks();
 
+// La finestra "blocco" di Tempo allo schermo (Windows, src-tauri/src/screen_block.rs) carica lo stesso frontend con
+// `?view=blocco` e mostra solo la schermata di blocco: niente DB, impostazioni o sync.
+const blockView = new URLSearchParams(window.location.search).get("view") === "blocco";
+
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
+  <StrictMode>{blockView ? <BlockScreen pigment={widgetPigment("screentime")} /> : <App />}</StrictMode>
 );

@@ -36,6 +36,7 @@
     "allow-sysmon-unsubscribe",
     "allow-sysmon-reset",
     "allow-sysmon-set-interval",
+    "allow-screenblock-set",
     "allow-screentime-start",
     "allow-screentime-take",
     "allow-screentime-stop",

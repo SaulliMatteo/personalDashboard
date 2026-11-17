@@ -222,6 +222,9 @@
   flex: none;
 }
 .stw-alert > i { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--st-warn); }
+/* Limite che blocca l'app (Windows, docs/mockup/widget/tempo-blocco.html): lucchetto e fondo più deciso. */
+.stw-lock { width: 13px; height: 13px; flex: none; color: var(--st-warn); }
+.stw-alert.is-blocked { background: color-mix(in srgb, var(--st-warn) 22%, transparent); }
 .stw-alert.is-action { background: var(--surface-1); color: var(--text-secondary); cursor: pointer; }
 .stw-alert.is-action svg { flex: none; }
 .stw-alert.is-action b { margin-left: auto; color: var(--accent); font-weight: 600; white-space: nowrap; }

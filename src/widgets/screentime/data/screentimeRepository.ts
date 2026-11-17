@@ -121,26 +121,27 @@ interface LimitDbRow {
   label: string;
   minutes: number;
   warn: number;
+  block: number;
 }
 
 export async function listLimits(): Promise<ScreenLimit[]> {
   const db = await getDatabase();
-  const rows = await db.select<LimitDbRow[]>(`SELECT id, kind, target, label, minutes, warn FROM screentime_limits ORDER BY created_at, id`);
+  const rows = await db.select<LimitDbRow[]>(`SELECT id, kind, target, label, minutes, warn, block FROM screentime_limits ORDER BY created_at, id`);
   return rows
     .filter((r) => r.kind === "app" || r.kind === "category")
-    .map((r) => ({ id: r.id, kind: r.kind as LimitKind, target: r.target, label: r.label, minutes: r.minutes, warn: r.warn !== 0 }));
+    .map((r) => ({ id: r.id, kind: r.kind as LimitKind, target: r.target, label: r.label, minutes: r.minutes, warn: r.warn !== 0, block: r.block !== 0 }));
 }
 
-/** Un limite per bersaglio: se c'è già, cambia minuti e avviso. */
+/** Un limite per bersaglio: se c'è già, cambia minuti, avviso e blocco. */
 export async function saveLimit(limit: Omit<ScreenLimit, "id">, now: number): Promise<void> {
   const db = await getDatabase();
   const existing = await db.select<{ id: number }[]>(`SELECT id FROM screentime_limits WHERE kind = ? AND target = ?`, [limit.kind, limit.target]);
   if (existing[0]) {
-    await db.execute(`UPDATE screentime_limits SET minutes = ?, warn = ?, label = ? WHERE id = ?`, [limit.minutes, limit.warn ? 1 : 0, limit.label, existing[0].id]);
+    await db.execute(`UPDATE screentime_limits SET minutes = ?, warn = ?, block = ?, label = ? WHERE id = ?`, [limit.minutes, limit.warn ? 1 : 0, limit.block ? 1 : 0, limit.label, existing[0].id]);
   } else {
     await db.execute(
-      `INSERT INTO screentime_limits (kind, target, label, minutes, warn, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
-      [limit.kind, limit.target, limit.label, limit.minutes, limit.warn ? 1 : 0, now]
+      `INSERT INTO screentime_limits (kind, target, label, minutes, warn, block, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [limit.kind, limit.target, limit.label, limit.minutes, limit.warn ? 1 : 0, limit.block ? 1 : 0, now]
     );
   }
 }

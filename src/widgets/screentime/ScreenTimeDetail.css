@@ -539,6 +539,11 @@
   text-underline-offset: 3px;
 }
 
+.stp-limit-top .stw-lock {
+  margin-left: 6px;
+  vertical-align: -2px;
+}
+
 .stp-limit-top small {
   font-size: max(11.5px, var(--fs-min));
   color: var(--text-muted);
@@ -894,3 +899,62 @@
 :root[data-theme="fosforo"] .stp-goal span {
   background: var(--display-bg);
 }
+
+/* ---------- Interruttore "Blocca quando finisce il tempo" (solo Windows, docs/mockup/widget/tempo-blocco.html) ---------- */
+.std-block {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+  align-items: start;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-item);
+  border: 1px solid var(--divider);
+  background: color-mix(in srgb, var(--surface-1) 70%, transparent);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.std-block.is-on {
+  border-color: color-mix(in srgb, var(--st-warn) 55%, transparent);
+  background: color-mix(in srgb, var(--st-warn) 9%, transparent);
+}
+.std-block > b { font-weight: 600; }
+.std-block > small { grid-column: 2; font-size: 12.5px; line-height: 1.45; color: var(--text-secondary); }
+.std-block > small.is-warn { color: var(--text-primary); }
+.std-block > small.is-warn::before { content: "⚠ "; color: var(--st-warn); }
+.std-switch {
+  position: relative;
+  grid-row: span 4;
+  width: 36px;
+  height: 21px;
+  margin-top: 1px;
+  border-radius: 99px;
+  background: var(--track);
+  transition: background 0.15s;
+}
+.std-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  transition: transform 0.15s;
+}
+.std-block.is-on .std-switch { background: var(--st-warn); }
+.std-block.is-on .std-switch::after { transform: translateX(15px); background: var(--modal-bg); }
+.std-lock { width: 15px; height: 15px; margin-right: 6px; vertical-align: -2px; color: var(--st-warn); }
+:root[data-theme="quaderno"] .std-block { border: 1.5px dashed var(--text-muted); background: transparent; }
+:root[data-theme="quaderno"] .std-block.is-on { border-color: var(--st-warn); }
+:root[data-theme="fosforo"] .std-block,
+:root[data-theme="fosforo"] .std-switch,
+:root[data-theme="fosforo"] .std-switch::after { border-radius: 0; }
+:root[data-theme="opaco"] .std-block.is-on { background: var(--pg-light, var(--surface-1)); border-color: var(--text-primary); }
+:root[data-theme="opaco"] .std-block.is-on .std-switch { background: var(--text-primary); }
+:root[data-theme="ombra"][data-mode="notte"] .std-block { border-radius: 0; border-width: 0 0 0 2px; border-color: var(--divider); }
+:root[data-theme="ombra"][data-mode="notte"] .std-block.is-on { border-color: var(--st-warn); }

@@ -1,5 +1,6 @@
 import type { AppCategory } from "../../../core/system/appCategory";
-import { effectiveCategory } from "./classify";
+import { BROWSER_KEYS, SELF_KEY, effectiveCategory } from "./classify";
+import { appDisplayName } from "./appName";
 import { zeroDevices, type DeviceKind } from "./devices";
 import type { FocusClass } from "./focus";
 import type { ScreenLimit } from "./limits";
@@ -117,4 +118,23 @@ export function limitUsage(rows: UsageRow[], limit: ScreenLimit, manual: Readonl
     }
   }
   return sum;
+}
+
+/**
+ * Le app di un limite, per il blocco: la sua app, o le app della categoria viste negli ultimi giorni (righe di questo
+ * computer), quelle messe a mano in quella categoria e, per Browser, i browser noti. La dashboard mai.
+ */
+export function limitApps(
+  limit: ScreenLimit,
+  rows: UsageRow[],
+  manual: ReadonlyMap<string, AppCategory>
+): { key: string; label: string }[] {
+  if (limit.kind === "app") return limit.target === SELF_KEY ? [] : [{ key: limit.target, label: limit.label }];
+  const out = new Map<string, string>();
+  for (const row of rows) {
+    if (row.local && row.appKey !== SELF_KEY && effectiveCategory(row, manual) === limit.target) out.set(row.appKey, row.appLabel);
+  }
+  for (const [key, category] of manual) if (category === limit.target && key !== SELF_KEY && !out.has(key)) out.set(key, appDisplayName(key, ""));
+  if (limit.target === "browser") for (const key of BROWSER_KEYS) if (!out.has(key) && manual.get(key) === undefined) out.set(key, appDisplayName(key, ""));
+  return [...out].map(([key, label]) => ({ key, label }));
 }

@@ -135,6 +135,15 @@ concede la sola lettura del singolo file. Dettagli in `docs/ANDROID.md`.
 
 - Importare un database sostituisce quello del dispositivo: `db_import_apply` tiene il precedente accanto come
   `dashboard.db.prima` (uno solo). Il file importato è controllato solo nell'intestazione e nella versione.
+- Blocco delle app al limite (Windows, `src-tauri/src/screen_block.rs`): seconda finestra, `blocco`, con lo stesso
+  `is_app_url` della principale e una capability sua (`capabilities/blocco.json`: solo `screenblock_current`,
+  `_close_target`, `_extend`, `_open_dashboard` e gli eventi; niente sql, fs, opener). Con il manifesto dei comandi in
+  `build.rs` l'ACL vale anche per le finestre locali, quindi da lì non si raggiunge nient'altro. "Chiudi" manda
+  `WM_CLOSE` solo alle finestre del processo che il Rust ha coperto (nessun pid dalla pagina, nessuna chiusura
+  forzata). Mai coperti: la dashboard e i processi di Windows in `NEVER_BLOCK` (Esplora file, Gestione attività, Start,
+  ricerca, schermata di blocco, UAC…): non toglierli. I bersagli da `screenblock_set` sono controllati (nome senza
+  separatori né `:`, al massimo 500, testi corti senza caratteri di controllo). Non è una difesa contro chi vuole
+  aggirarla (basta Gestione attività): è un aiuto per chi la accende.
 - Tempo allo schermo: il titolo della finestra non va mai su disco, nei log né nel sync (`docs/WIDGET.md`). Sul
   telefono il permesso `PACKAGE_USAGE_STATS` (plugin `usage-stats`, comandi `screentime_usage_*` solo in
   `capabilities/mobile.json`) dà solo pacchetto, tipo di evento e istante; si salvano app, categoria e secondi come

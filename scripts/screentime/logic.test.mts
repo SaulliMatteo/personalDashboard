@@ -10,8 +10,8 @@ import { countedIntervals, dayBounds, dayKey, segmentsToDeltas, shiftDay, weekSt
 import type { ClassifiedSegment } from "../../src/widgets/screentime/lib/classify";
 import { BREAK_MS, breakReminderStep, breakStats, continuousMinutes, extendSessions, longestGap } from "../../src/widgets/screentime/lib/sessions";
 import { DEFAULT_CLASSES, focusStreak, parseFocusClasses, serializeFocusClasses } from "../../src/widgets/screentime/lib/focus";
-import { dueNotices, emptyNoticeState, parseNoticeState, type ScreenLimit } from "../../src/widgets/screentime/lib/limits";
-import { dailyTotals, limitUsage, summarize, type UsageRow } from "../../src/widgets/screentime/lib/summary";
+import { blockTargets, dueNotices, emptyExtensions, emptyNoticeState, extensionEnd, isBlocking, parseExtensions, parseNoticeState, type ScreenLimit } from "../../src/widgets/screentime/lib/limits";
+import { dailyTotals, limitApps, limitUsage, summarize, type UsageRow } from "../../src/widgets/screentime/lib/summary";
 import { byDevice, devicesIn, parseDeviceFilter } from "../../src/widgets/screentime/lib/devices";
 import { formatDayLabel, formatDelta, formatDuration, formatShort, formatWeekLabel, weekdayShort } from "../../src/widgets/screentime/lib/format";
 import { dayMoments, deltaWords, mixWords, moodWord, pickAlert } from "../../src/widgets/screentime/lib/widgetText";
@@ -113,7 +113,7 @@ test("serie del focus: i giorni senza PC non la rompono, oggi conta se già ragg
   assert.equal(focusStreak([d(6, 5)], 0), 0);
 });
 
-const limit = (over: Partial<ScreenLimit>): ScreenLimit => ({ id: 1, kind: "app", target: "chrome", label: "Chrome", minutes: 60, warn: true, ...over });
+const limit = (over: Partial<ScreenLimit>): ScreenLimit => ({ id: 1, kind: "app", target: "chrome", label: "Chrome", minutes: 60, warn: true, block: false, ...over });
 
 test("limiti: 80 % una volta, poi lo scadere; giorno nuovo riparte", () => {
   const l = limit({});
@@ -258,7 +258,7 @@ test("widget: la giornata a parole e in 6 momenti", () => {
 });
 
 test("widget: un solo avviso, il più urgente", () => {
-  const lim = (id: number, label: string, minutes: number): ScreenLimit => ({ id, kind: "app", target: label, label, minutes, warn: true });
+  const lim = (id: number, label: string, minutes: number): ScreenLimit => ({ id, kind: "app", target: label, label, minutes, warn: true, block: false });
   const base = { limits: [], continuousMinutes: 0, breakMinutes: 50, needsAccess: false };
   assert.equal(pickAlert(base), null);
   // sotto l'80 % niente; il più vicino a finire vince
@@ -274,6 +274,62 @@ test("widget: un solo avviso, il più urgente", () => {
   assert.equal(pickAlert({ ...base, continuousMinutes: 49 }), null);
   assert.equal(pickAlert({ ...base, continuousMinutes: 90, breakMinutes: 0 }), null);
   assert.deepEqual(pickAlert({ ...base, needsAccess: true }), { kind: "access" });
+});
+
+test("blocco: chi blocca, proroga una volta al giorno", () => {
+  const now = Date.UTC(2026, 10, 17, 15);
+  const opera = limit({ id: 1, target: "opera", label: "Opera", minutes: 120, block: true });
+  const giochi = limit({ id: 2, kind: "category", target: "game", label: "Giochi", minutes: 60, block: true });
+  const avviso = limit({ id: 3, target: "discord", label: "Discord", minutes: 30, block: false });
+  const none = emptyExtensions("d");
+  // solo i limiti col blocco e finiti
+  assert.equal(isBlocking(opera, 119 * 60, none, "d", now), false);
+  assert.equal(isBlocking(opera, 120 * 60, none, "d", now), true);
+  assert.equal(isBlocking(avviso, 99 * 60, none, "d", now), false);
+  const apps = (l: ScreenLimit) => (l.kind === "app" ? [{ key: l.target, label: l.label }] : [{ key: "steam", label: "Steam" }, { key: "opera", label: "Opera" }]);
+  const status = [
+    { limit: opera, usedSeconds: 125 * 60 },
+    { limit: giochi, usedSeconds: 90 * 60 },
+    { limit: avviso, usedSeconds: 99 * 60 },
+  ];
+  const t = blockTargets(status, apps, none, "d", now);
+  assert.deepEqual(t.map((x) => [x.key, x.limitId, x.canExtend]).sort(), [["opera", 2, true], ["steam", 2, true]]);
+  // proroga in corso: quel limite non blocca; finita: blocca ma senza seconda proroga
+  const ext = { day: "d", until: { 2: now + 5 * MIN } };
+  assert.equal(extensionEnd(ext, 2, "d", now), now + 5 * MIN);
+  const during = blockTargets(status, apps, ext, "d", now);
+  assert.deepEqual(during.map((x) => [x.key, x.limitId, x.canExtend]), [["opera", 1, true]]);
+  const after = blockTargets(status, apps, ext, "d", now + 6 * MIN);
+  assert.equal(after.find((x) => x.key === "steam")?.canExtend, false);
+  // il giorno dopo si riparte
+  assert.deepEqual(parseExtensions(JSON.stringify(ext), "e"), emptyExtensions("e"));
+  assert.deepEqual(parseExtensions("{rotto", "d"), emptyExtensions("d"));
+  assert.equal(blockTargets(status, apps, ext, "e", now + 6 * MIN).find((x) => x.key === "steam")?.canExtend, true);
+});
+
+test("blocco: le app di una categoria", () => {
+  const row = (appKey: string, category: string, local = true): UsageRow => ({
+    device: "computer", local, day: "d", hour: 9, appKey, appLabel: appKey.toUpperCase(), category, seconds: 60, firstAt: 0, lastAt: 0,
+  });
+  const rows = [row("steam", "game"), row("code", "code"), row("__self", "game"), row("epic", "game", false), row("vlc", "video")];
+  const manual = new Map([["vlc", "game" as const]]);
+  const giochi = limit({ kind: "category", target: "game", label: "Giochi", block: true });
+  assert.deepEqual(limitApps(giochi, rows, manual).map((a) => a.key).sort(), ["steam", "vlc"]);
+  const browser = limitApps(limit({ kind: "category", target: "browser", label: "Browser", block: true }), [], new Map());
+  assert.ok(browser.some((a) => a.key === "opera") && browser.some((a) => a.key === "chrome"));
+  assert.deepEqual(limitApps(limit({ target: "opera", label: "Opera" }), [], new Map()), [{ key: "opera", label: "Opera" }]);
+});
+
+test("widget: l'avviso del blocco viene prima", () => {
+  const now = 1_000_000;
+  const lim = limit({ target: "opera", label: "Opera", minutes: 60, block: true });
+  const base = { continuousMinutes: 90, breakMinutes: 50, needsAccess: false, now };
+  assert.deepEqual(pickAlert({ ...base, limits: [{ limit: lim, usedSeconds: 3600, blocked: true, extendedUntil: null }] }), { kind: "blocked", label: "Opera" });
+  assert.deepEqual(pickAlert({ ...base, limits: [{ limit: lim, usedSeconds: 3600, blocked: false, extendedUntil: now + 12 * MIN }] }), {
+    kind: "extended",
+    label: "Opera",
+    leftSeconds: 720,
+  });
 });
 
 console.log(`logic: ${passed} prove passate`);

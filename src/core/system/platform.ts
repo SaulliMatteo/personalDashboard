@@ -8,6 +8,11 @@ export function isAndroid(): boolean {
   return typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
 }
 
+/** Windows (WebView2): il blocco delle app di Tempo allo schermo c'è solo qui. */
+export function isWindows(): boolean {
+  return typeof navigator !== "undefined" && /windows/i.test(navigator.userAgent);
+}
+
 /** macOS (WKWebView): Cmd al posto di Ctrl nelle scorciatoie e nei loro testi. */
 export function isMac(): boolean {
   if (typeof navigator === "undefined") return false;

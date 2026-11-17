@@ -753,4 +753,12 @@ export const MIGRATIONS: Migration[] = [
       ...syncTracking("screen_usage", "id", ["device_kind", "day", "hour", "app_key", "app_label", "category", "seconds", "first_at", "last_at"]),
     ],
   },
+  {
+    version: 32,
+    description: "Tempo allo schermo: un limite può bloccare l'app quando finisce il tempo (solo Windows)",
+    statements: [
+      // 1 = a tempo finito una schermata copre l'app (src-tauri/src/screen_block.rs). La tabella resta locale.
+      `ALTER TABLE screentime_limits ADD COLUMN block INTEGER NOT NULL DEFAULT 0`,
+    ],
+  },
 ];

@@ -8,9 +8,9 @@ import { useSettings } from "../../core/settings/useSettings";
 import { useScreenTime } from "./useScreenTime";
 import { SCREENTIME_RINGS } from "./card/cards";
 import { classParts, fillParts } from "./card/ringParts";
-import { AppBars, BigTime, ClassSplit, DayInWords, DayMoments, DeviceIcon } from "./components/parts";
+import { AppBars, BigTime, ClassSplit, DayInWords, DayMoments, DeviceIcon, LockIcon } from "./components/parts";
 import { formatDuration, formatShort } from "./lib/format";
-import { deltaWords, moodWord, pickAlert, type WidgetAlert } from "./lib/widgetText";
+import { deltaWords, isLimitAlert, moodWord, pickAlert, type WidgetAlert } from "./lib/widgetText";
 import "./ScreenTimeWidget.css";
 
 type Size = "S" | "W" | "T" | "M";
@@ -84,7 +84,7 @@ function ScreenTimeWidget({ w, h }: WidgetProps) {
 }
 
 function LiveWidget({ size }: { size: Size }) {
-  const { today, yesterdaySoFar, limits, continuousMinutes, loading, canRecord, needsAccess, grantAccess, filter, device } = useScreenTime();
+  const { today, yesterdaySoFar, limits, continuousMinutes, loading, canRecord, needsAccess, grantAccess, filter, device, now } = useScreenTime();
   const { settings } = useSettings();
   const Ring = useThemeVariant(SCREENTIME_RINGS);
 
@@ -93,7 +93,7 @@ function LiveWidget({ size }: { size: Size }) {
   // Con "Tutti" e del tempo su più dispositivi: segno del dispositivo accanto alle app e la riga PC / telefono.
   const marks = filter === "all" && today.byDevice.computer > 0 && today.byDevice.phone > 0;
   const filterIcon = filter === "all" ? null : <DeviceIcon device={filter} />;
-  const alert = pickAlert({ limits, continuousMinutes, breakMinutes: settings.screentimeBreakMinutes, needsAccess });
+  const alert = pickAlert({ limits, continuousMinutes, breakMinutes: settings.screentimeBreakMinutes, needsAccess, now });
 
   /** L'unica riga sotto al totale: PC e telefono, o il confronto con ieri. */
   const line = marks ? (
@@ -112,7 +112,7 @@ function LiveWidget({ size }: { size: Size }) {
   );
 
   if (size === "S") {
-    const nearLimit = alert?.kind === "limit";
+    const nearLimit = isLimitAlert(alert);
     return (
       <WidgetFrame>
         <article className="widget stw stw--S" aria-label={NAME}>
@@ -122,7 +122,7 @@ function LiveWidget({ size }: { size: Size }) {
               { parts: classParts(today.byClass), label: `Oggi ${formatDuration(today.total)} allo schermo, ${focusPct} per cento di focus` },
               <span className="stw-kicker">{filterIcon ?? "oggi"}</span>,
               <BigTime seconds={today.total} />,
-              <span className={`stw-word${nearLimit ? " is-warn" : ""}`}>{nearLimit ? "al limite" : moodWord(today.byClass)}</span>
+              <span className={`stw-word${nearLimit ? " is-warn" : ""}`}>{alert?.kind === "blocked" ? "bloccato" : nearLimit ? "al limite" : moodWord(today.byClass)}</span>
             )}
           </div>
         </article>
@@ -159,7 +159,7 @@ function LiveWidget({ size }: { size: Size }) {
           <div className="stw-body">
             <div className="stw-lead">
               <BigTime seconds={today.total} />
-              {alert?.kind === "limit" ? <span className="stw-line is-warn">{alertText(alert)}</span> : line}
+              {alert && isLimitAlert(alert) ? <span className="stw-line is-warn">{alertText(alert)}</span> : line}
             </div>
             <AppBars items={today.apps} max={3} marks={marks} />
           </div>
@@ -216,6 +216,8 @@ function LiveWidget({ size }: { size: Size }) {
 }
 
 function alertText(alert: WidgetAlert): string {
+  if (alert.kind === "blocked") return `${alert.label}: bloccata fino a mezzanotte`;
+  if (alert.kind === "extended") return `${alert.label}: ${formatDuration(alert.leftSeconds)} in più, poi si blocca`;
   if (alert.kind === "limit") return alert.leftSeconds > 0 ? `${alert.label}: mancano ${formatDuration(alert.leftSeconds)} al limite` : `${alert.label}: limite raggiunto`;
   if (alert.kind === "pause") return `Al PC da ${formatDuration(alert.minutes * 60)}: una pausa?`;
   return "Il telefono non conta ancora";
@@ -236,9 +238,10 @@ function AlertRow({ alert, onGrant }: { alert: WidgetAlert; onGrant: () => void 
       </button>
     );
   }
+  const locked = alert.kind === "blocked" || alert.kind === "extended";
   return (
-    <div className="stw-alert" role="status">
-      <i aria-hidden="true" />
+    <div className={`stw-alert${alert.kind === "blocked" ? " is-blocked" : ""}`} role="status">
+      {locked ? <LockIcon className="stw-lock" /> : <i aria-hidden="true" />}
       <span>{alertText(alert)}</span>
     </div>
   );

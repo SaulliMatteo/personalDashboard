@@ -40,6 +40,14 @@ crea la finestra `main`.
 - **Tempo allo schermo** (`src/screen_time/`): thread `screentime` che campiona ogni 2 s con `companion::foreground()` e
   `idle_seconds()` e costruisce i segmenti (`segments.rs`, puro, `cargo test --lib screen_time`); comandi
   `screentime_start/take/stop`. Niente su disco dal Rust: il titolo va solo al frontend. Si ferma in `shutdown`.
+- **Blocco delle app al limite** (`src/screen_block.rs`, solo Windows; altrove i comandi non fanno nulla): thread
+  `screenblock`, acceso finché `screenblock_set` ha bersagli, che ogni secondo legge la finestra davanti e mette sopra
+  la finestra `blocco` (senza bordi, sempre in primo piano, sull'area di lavoro del monitor dell'app). Insidie: le
+  chiamate alle finestre aspettano il thread principale, dove girano i comandi sincroni, quindi il thread decide col
+  lucchetto preso e tocca le finestre solo dopo averlo lasciato; la finestra si crea dal thread (nascosta, appena ci
+  sono bersagli), non da un comando. Il `CloseRequested` globale di `lib.rs` la esclude (Alt+F4 la nasconde soltanto,
+  senza fermare server e conteggio) e la chiusura vera la distrugge (`screen_block::shutdown`), altrimenti l'app
+  resterebbe aperta con una finestra nascosta. Test: `cargo test --lib screen_block`.
 - **Icona vicino all'orologio** (`src/app_tray.rs`, feature `tray-icon` di tauri): menu Apri / tempo di oggi / Esci.
   `CloseRequested` nasconde la finestra solo se il frontend ha acceso `closeToTray` (`app_set_close_to_tray`; finché
   non lo dice la X chiude come prima). **Uscita con salvataggio**: "Esci" manda `app:quitting`, il frontend finisce i

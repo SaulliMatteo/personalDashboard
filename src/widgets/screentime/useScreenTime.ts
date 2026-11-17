@@ -14,6 +14,10 @@ export const SCREENTIME_WIDGET_ID = "screentime";
 export interface LimitStatus {
   limit: ScreenLimit;
   usedSeconds: number;
+  /** Windows: il limite blocca l'app adesso (tempo finito, nessuna proroga in corso). */
+  blocked: boolean;
+  /** Windows: fine di "Altri 15 minuti" in corso (ms), o null. */
+  extendedUntil: number | null;
 }
 
 export interface ScreenTimeContextValue {
@@ -69,6 +73,8 @@ export interface ScreenTimeContextValue {
   /** Categoria scelta a mano per un'app (app_key); null = torna automatica. */
   setCategory: (key: string, category: AppCategory | null) => void;
   setFocusClass: (category: AppCategory, cls: FocusClass) => void;
+  /** Il blocco delle app c'è (Windows): il dialog mostra l'interruttore. */
+  canBlock: boolean;
   saveLimit: (limit: Omit<ScreenLimit, "id">) => Promise<void>;
   deleteLimit: (id: number) => Promise<void>;
 }

@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "blocco",
+  "description": "Schermata di blocco di Tempo allo schermo (src/screen_block.rs, solo Windows): solo i comandi del blocco e gli eventi. Niente DB, file, rete né altri comandi dell'app.",
+  "platforms": ["windows"],
+  "windows": ["blocco"],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "allow-screenblock-current",
+    "allow-screenblock-close-target",
+    "allow-screenblock-extend",
+    "allow-screenblock-open-dashboard"
+  ]
+}

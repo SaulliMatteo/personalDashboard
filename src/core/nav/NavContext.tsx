@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { onBackButtonPress } from "@tauri-apps/api/app";
 import { isAndroid } from "../system/platform";
+import { onOpenWidgetRequested } from "../system/appWindowApi";
 import { onNotificationOpen } from "../notify/notifier";
 import { useLatestRef } from "../hooks/useLatestRef";
 import { runBackHandler, useBackHandlerCount } from "./backHandlers";
@@ -42,6 +43,9 @@ export function NavProvider({ children }: { children: ReactNode }) {
       }),
     []
   );
+
+  // Il Rust chiede la pagina di un widget (desktop, es. dalla schermata di blocco di Tempo allo schermo).
+  useEffect(() => onOpenWidgetRequested((widgetId) => setView({ type: "widgetDetail", widgetId })), []);
 
   // Indietro di Android: prima lo schermo intero o il dialogo in cima (overlays.ts), poi chi ha qualcosa da chiudere
   // (backHandlers.ts), poi la dashboard. Il listener c'è solo quando serve: senza, Android fa da sé (dalla dashboard
