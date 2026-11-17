@@ -4,6 +4,7 @@ import { DEVICE_FILTERS, DEVICE_KINDS, DEVICE_LABEL, FILTER_LABEL, type DeviceFi
 import { CLASS_LABEL, FOCUS_CLASSES, type FocusClass } from "../lib/focus";
 import type { ClassSeconds, RankItem } from "../lib/summary";
 import { formatShort, splitHours } from "../lib/format";
+import { dayMoments, mixWords, MOMENT_HOURS, MOMENT_NAMES } from "../lib/widgetText";
 
 /** Pezzi di Tempo allo schermo usati dal widget e dalla pagina. Forma per tema solo nel CSS (ScreenTimeWidget.css). */
 
@@ -108,21 +109,67 @@ export function DeviceMark({ byDevice }: { byDevice: Record<DeviceKind, number> 
   );
 }
 
-/** Le voci più usate: pallino della classe, nome (col segno del dispositivo se `marks`), tempo. */
-export function TopList({ items, max, marks = false }: { items: RankItem[]; max: number; marks?: boolean }) {
+/**
+ * Le app più usate come barre lunghe quanto il loro tempo (la più usata è piena); il tempo scritto solo sulla prima
+ * (docs/mockup/widget/tempo-allo-schermo.html). Con `marks` il segno del dispositivo accanto al nome.
+ */
+export function AppBars({ items, max, marks = false }: { items: RankItem[]; max: number; marks?: boolean }) {
+  const shown = items.slice(0, max);
+  const top = shown[0]?.seconds ?? 0;
   return (
-    <div className="stw-top">
-      {items.slice(0, max).map((item) => (
-        <div key={item.key} className="stw-top-row">
-          <ClassDot cls={item.cls} />
-          <span>
-            {item.label}
-            {marks && <DeviceMark byDevice={item.byDevice} />}
-          </span>
-          <span className="stw-mono">{formatShort(item.seconds)}</span>
+    <div className="stw-apps">
+      {shown.map((item, i) => (
+        <div key={item.key} className="stw-app">
+          <div className="stw-app-top">
+            <span>
+              {item.label}
+              {marks && <DeviceMark byDevice={item.byDevice} />}
+            </span>
+            {i === 0 && <span className="stw-app-time">{formatShort(item.seconds)}</span>}
+          </div>
+          <div className="stw-nbar" role="img" aria-label={`${item.label}: ${formatShort(item.seconds)}`}>
+            <span className={`st-seg is-${item.cls}`} style={{ "--v": `${pct(item.seconds, top)}%` } as CSSProperties} />
+          </div>
         </div>
       ))}
     </div>
+  );
+}
+
+/** La giornata in 6 momenti di 4 ore (ogni colonna piena = 4 ore), quello di adesso si chiama "adesso". */
+export function DayMoments({ hours, nowHour }: { hours: ClassSeconds[]; nowHour: number }) {
+  const moments = dayMoments(hours);
+  const now = Math.floor(nowHour / MOMENT_HOURS);
+  const full = MOMENT_HOURS * 3600;
+  return (
+    <div className="stw-moments-box">
+      <div className="stw-moments" role="img" aria-label="La giornata in sei momenti">
+        {moments.map((m, i) => (
+          <div key={i} className={`stw-moment${i === now ? " is-now" : ""}`} title={`${MOMENT_NAMES[i]}: ${formatShort(m.focus + m.fun + m.neutral)}`}>
+            {FOCUS_CLASSES.map((c) =>
+              m[c] > 0 ? <span key={c} className={`st-seg is-${c}`} style={{ "--v": `${Math.min(100, (m[c] / full) * 100)}%` } as CSSProperties} /> : null
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="stw-moments-lab" aria-hidden="true">
+        {MOMENT_NAMES.map((name, i) => (
+          <span key={name} className={i === now ? "is-now" : undefined}>
+            {i === now ? "adesso" : name}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** "metà focus, quasi niente svago, il resto neutro", nei colori delle classi: al posto della legenda. */
+export function DayInWords({ byClass }: { byClass: ClassSeconds }) {
+  const words = mixWords(byClass);
+  return (
+    <p className="stw-mix">
+      <b className="is-focus">{words.focus}</b>, <b className="is-fun">{words.fun}</b>, il resto neutro
+    </p>
   );
 }
 
@@ -163,7 +210,7 @@ export function DeviceBars({ byDevice, here, kinds = DEVICE_KINDS }: { byDevice:
   );
 }
 
-/** Barra di un limite: colore d'avviso dall'80 % (`quiet`: mai, es. l'obiettivo di focus). */
+/** Barra di un limite (pagina): colore d'avviso dall'80 % (`quiet`: mai, es. l'obiettivo di focus). */
 export function LimitBar({ used, max, quiet = false }: { used: number; max: number; quiet?: boolean }) {
   const near = !quiet && max > 0 && used / max >= 0.8;
   return (

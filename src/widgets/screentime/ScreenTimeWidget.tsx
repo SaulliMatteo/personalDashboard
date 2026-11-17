@@ -1,23 +1,19 @@
-import { createElement, useState, type MouseEvent, type ReactNode } from "react";
-import { MdOutlineDesktopWindows, MdOutlinePauseCircle, MdOutlineSchedule } from "react-icons/md";
+import { createElement, type MouseEvent, type ReactNode } from "react";
+import { MdOutlineDesktopWindows, MdOutlinePauseCircle } from "react-icons/md";
 import WidgetFrame from "../../core/widgets/WidgetFrame";
 import type { WidgetProps } from "../../core/widgets/types";
 import { sizeKey } from "../../core/widgets/sizes";
 import { useThemeVariant } from "../../core/theme/variants";
 import { useSettings } from "../../core/settings/useSettings";
-import { useElementSize } from "../../core/hooks/useElementSize";
 import { useScreenTime } from "./useScreenTime";
 import { SCREENTIME_RINGS } from "./card/cards";
-import { BigTime, ClassLegend, ClassSplit, DayChart, DeviceBars, DeviceIcon, LimitBar, TopList } from "./components/parts";
-import type { DeviceKind } from "./lib/devices";
-import { formatDelta, formatDuration, formatShort } from "./lib/format";
-import { othersFreshText } from "./lib/devices";
+import { classParts, fillParts } from "./card/ringParts";
+import { AppBars, BigTime, ClassSplit, DayInWords, DayMoments, DeviceIcon } from "./components/parts";
+import { formatDuration, formatShort } from "./lib/format";
+import { deltaWords, moodWord, pickAlert, type WidgetAlert } from "./lib/widgetText";
 import "./ScreenTimeWidget.css";
 
 type Size = "S" | "W" | "T" | "M";
-
-/** Altezza di una riga dell'elenco "più usati" più lo spazio tra le righe (ScreenTimeWidget.css). */
-const TOP_ROW_PX = 22;
 
 const NAME = "Tempo allo schermo";
 
@@ -61,9 +57,11 @@ function MessageCell({ size, icon, text, onGrant }: { size: Size; icon: "pc" | "
 }
 
 /**
- * Tempo allo schermo in dashboard (docs/mockup/temi/tempo-pc.html e tempo-pc-telefono.html): Piccola 1×1 anello
- * delle classi col totale, Larga 2×1 totale + barra + più usati, Alta 1×2 totale + elenco, Media 2×2 linea del giorno,
- * più usati, limiti e pausa (o i dispositivi dove non si conta). Somma i dispositivi del filtro della pagina.
+ * Tempo allo schermo in dashboard (docs/mockup/widget/tempo-allo-schermo.html, proposta A): ogni taglia dice una cosa
+ * sola e c'è un solo numero grande, il totale di oggi. Piccola 1×1 l'anello delle classi con una parola; Larga 2×1
+ * totale e 3 app; Alta 1×2 totale, la giornata a parole e 4 app; Media 2×2 totale, anello del focus, la giornata in 6
+ * momenti e 3 app. Limiti, pausa e permesso del telefono: un solo avviso, il più urgente (`pickAlert`), e solo quando
+ * serve; il resto è nella pagina. Somma i dispositivi del filtro della pagina.
  */
 function ScreenTimeWidget({ w, h }: WidgetProps) {
   const ctx = useScreenTime();
@@ -86,33 +84,45 @@ function ScreenTimeWidget({ w, h }: WidgetProps) {
 }
 
 function LiveWidget({ size }: { size: Size }) {
-  const { today, yesterdaySoFar, limits, continuousMinutes, loading, canRecord, hasLimits, needsAccess, grantAccess, filter, device, todayByDevice, othersUpdatedAt } =
-    useScreenTime();
+  const { today, yesterdaySoFar, limits, continuousMinutes, loading, canRecord, needsAccess, grantAccess, filter, device } = useScreenTime();
   const { settings } = useSettings();
   const Ring = useThemeVariant(SCREENTIME_RINGS);
-  const [list, setList] = useState<HTMLElement | null>(null);
-  const listBox = useElementSize(list);
-  const rowsThatFit = Math.max(1, Math.floor((listBox.height + 6) / TOP_ROW_PX));
 
-  const delta = loading || today.total === 0 && yesterdaySoFar === 0 ? null : formatDelta(today.total - yesterdaySoFar, "ieri");
   const empty = !loading && today.total === 0;
   const focusPct = today.total > 0 ? Math.round((today.byClass.focus / today.total) * 100) : 0;
-  const goal = settings.screentimeFocusGoalMinutes * 60;
-  // Con "Tutti" e del tempo su più dispositivi: segno del dispositivo accanto alle app.
+  // Con "Tutti" e del tempo su più dispositivi: segno del dispositivo accanto alle app e la riga PC / telefono.
   const marks = filter === "all" && today.byDevice.computer > 0 && today.byDevice.phone > 0;
   const filterIcon = filter === "all" ? null : <DeviceIcon device={filter} />;
+  const alert = pickAlert({ limits, continuousMinutes, breakMinutes: settings.screentimeBreakMinutes, needsAccess });
+
+  /** L'unica riga sotto al totale: PC e telefono, o il confronto con ieri. */
+  const line = marks ? (
+    <span className="stw-line">
+      <span className="stw-line-dev">
+        <DeviceIcon device="computer" />
+        {formatShort(today.byDevice.computer)}
+      </span>
+      <span className="stw-line-dev">
+        <DeviceIcon device="phone" />
+        {formatShort(today.byDevice.phone)}
+      </span>
+    </span>
+  ) : loading ? null : (
+    <span className="stw-line">{deltaWords(today.total - yesterdaySoFar)}</span>
+  );
 
   if (size === "S") {
+    const nearLimit = alert?.kind === "limit";
     return (
       <WidgetFrame>
         <article className="widget stw stw--S" aria-label={NAME}>
-          <Head title="Oggi" sub={filterIcon} />
           <div className="stw-hero">
             {createElement(
               Ring,
-              { byClass: today.byClass, label: `Oggi ${formatDuration(today.total)} allo schermo, ${focusPct} per cento di focus` },
+              { parts: classParts(today.byClass), label: `Oggi ${formatDuration(today.total)} allo schermo, ${focusPct} per cento di focus` },
+              <span className="stw-kicker">{filterIcon ?? "oggi"}</span>,
               <BigTime seconds={today.total} />,
-              <small>{today.total > 0 ? `${focusPct}% focus` : "si comincia"}</small>
+              <span className={`stw-word${nearLimit ? " is-warn" : ""}`}>{nearLimit ? "al limite" : moodWord(today.byClass)}</span>
             )}
           </div>
         </article>
@@ -145,16 +155,13 @@ function LiveWidget({ size }: { size: Size }) {
     return (
       <WidgetFrame>
         <article className="widget stw stw--W" aria-label={NAME}>
-          <Head sub={delta} />
+          <Head sub={filterIcon} />
           <div className="stw-body">
-            <div className="stw-total">
+            <div className="stw-lead">
               <BigTime seconds={today.total} />
-              <ClassSplit byClass={today.byClass} />
-              <ClassLegend />
+              {alert?.kind === "limit" ? <span className="stw-line is-warn">{alertText(alert)}</span> : line}
             </div>
-            <div className="stw-top-box" ref={setList}>
-              <TopList items={today.apps} max={Math.min(4, rowsThatFit)} marks={marks} />
-            </div>
+            <AppBars items={today.apps} max={3} marks={marks} />
           </div>
         </article>
       </WidgetFrame>
@@ -165,106 +172,75 @@ function LiveWidget({ size }: { size: Size }) {
     return (
       <WidgetFrame>
         <article className="widget stw stw--T" aria-label={NAME}>
-          <Head sub="oggi" />
-          <div className="stw-total">
+          <Head title="Oggi" sub={filterIcon} />
+          <div className="stw-lead">
             <BigTime seconds={today.total} />
-            {marks ? (
-              <span className="stw-label">
-                PC {formatShort(today.byDevice.computer)} · telefono {formatShort(today.byDevice.phone)}
-              </span>
-            ) : (
-              delta && <span className="stw-label">{delta}</span>
-            )}
+            {line}
+          </div>
+          <div className="stw-words">
             <ClassSplit byClass={today.byClass} />
-            <ClassLegend />
+            <DayInWords byClass={today.byClass} />
           </div>
           <div className="stw-sep" />
-          <div className="stw-top-box" ref={setList}>
-            <TopList items={today.apps} max={rowsThatFit} marks={marks} />
-          </div>
+          <AppBars items={today.apps} max={alert ? 2 : 4} marks={marks} />
+          {alert && <AlertRow alert={alert} onGrant={grantAccess} />}
         </article>
       </WidgetFrame>
     );
   }
 
-  const nowHour = new Date().getHours();
-  const shownLimits = hasLimits ? limits.slice(0, 2) : [];
-  const fresh = othersFreshText(device, othersUpdatedAt);
-  // Colonna di destra: i limiti di qui; senza limiti, i dispositivi (se ce n'è più di uno, o dove non ci sono
-  // limiti) o le classi. Telefono senza permesso: solo il computer, con l'invito in fondo.
-  const right = shownLimits.length > 0 ? "limits" : !hasLimits || (todayByDevice.computer > 0 && todayByDevice.phone > 0) ? "devices" : "classes";
-  const devices: DeviceKind[] | undefined = needsAccess ? ["computer"] : undefined;
-  const grant = (e: MouseEvent) => {
-    e.stopPropagation();
-    grantAccess();
-  };
   return (
     <WidgetFrame>
       <article className="widget stw stw--M" aria-label={NAME}>
-        <Head sub={needsAccess ? "solo computer" : delta} />
-        <div className="stw-total-row">
-          <BigTime seconds={today.total} />
+        <Head sub={filterIcon} />
+        <div className="stw-top">
+          <div className="stw-lead">
+            <BigTime seconds={today.total} />
+            {line}
+          </div>
           <div className="stw-focus">
-            <span className="stw-num">
-              {focusPct}
-              <span className="stw-unit">%</span>
-            </span>
-            <span className="stw-label">
-              focus · {formatShort(today.byClass.focus)}
-              {goal > 0 ? ` di ${formatShort(goal)}` : ""}
-            </span>
-          </div>
-        </div>
-        <div className="stw-day-box">
-          <DayChart hours={today.hours} nowHour={nowHour} />
-        </div>
-        <div className="stw-cols">
-          <div className="stw-col">
-            <h3>Più usati</h3>
-            <div className="stw-top-box" ref={setList}>
-              <TopList items={today.apps} max={rowsThatFit} marks={marks} />
-            </div>
-          </div>
-          <div className="stw-col">
-            <h3>{right === "limits" ? (fresh ? "Limiti del computer" : "Limiti") : right === "devices" ? (devices ? "Computer" : "Dispositivi") : "Classi"}</h3>
-            {right === "devices" ? (
-              <DeviceBars byDevice={todayByDevice} here={device} kinds={devices} />
-            ) : right === "limits" ? (
-              shownLimits.map(({ limit, usedSeconds }) => (
-                <div key={limit.id} className="stw-limit">
-                  <div className="stw-limit-top">
-                    <span>{limit.label}</span>
-                    <span className="stw-mono">
-                      {Math.floor(usedSeconds / 60)}/{limit.minutes} min
-                    </span>
-                  </div>
-                  <LimitBar used={usedSeconds} max={limit.minutes * 60} />
-                </div>
-              ))
-            ) : (
-              <>
-                <ClassSplit byClass={today.byClass} />
-                <ClassLegend byClass={today.byClass} withTime />
-              </>
+            {createElement(
+              Ring,
+              { parts: fillParts("focus", today.byClass.focus, today.total), label: `${focusPct} per cento di focus` },
+              <span className="stw-num">{focusPct}%</span>,
+              <small>focus</small>
             )}
-            {hasLimits && continuousMinutes > 0 && (
-              <div className="stw-pause">
-                <MdOutlineSchedule size={13} aria-hidden="true" />
-                al PC da {formatDuration(continuousMinutes * 60)}
-              </div>
-            )}
-            {fresh && <div className="stw-fresh">{fresh}</div>}
           </div>
         </div>
-        {needsAccess && (
-          <button type="button" className="stw-cta" onClick={grant}>
-            <DeviceIcon device="phone" size={14} />
-            <span>Il telefono non conta ancora</span>
-            <b>Concedi l'accesso</b>
-          </button>
-        )}
+        <DayMoments hours={today.hours} nowHour={new Date().getHours()} />
+        <AppBars items={today.apps} max={alert ? 2 : 3} marks={marks} />
+        {alert && <AlertRow alert={alert} onGrant={grantAccess} />}
       </article>
     </WidgetFrame>
+  );
+}
+
+function alertText(alert: WidgetAlert): string {
+  if (alert.kind === "limit") return alert.leftSeconds > 0 ? `${alert.label}: mancano ${formatDuration(alert.leftSeconds)} al limite` : `${alert.label}: limite raggiunto`;
+  if (alert.kind === "pause") return `Al PC da ${formatDuration(alert.minutes * 60)}: una pausa?`;
+  return "Il telefono non conta ancora";
+}
+
+/** L'avviso in fondo (Alta e Media). Telefono senza permesso: si tocca per darlo. */
+function AlertRow({ alert, onGrant }: { alert: WidgetAlert; onGrant: () => void }) {
+  if (alert.kind === "access") {
+    const grant = (e: MouseEvent) => {
+      e.stopPropagation();
+      onGrant();
+    };
+    return (
+      <button type="button" className="stw-alert is-action" onClick={grant}>
+        <DeviceIcon device="phone" size={14} />
+        <span>{alertText(alert)}</span>
+        <b>Concedi l'accesso</b>
+      </button>
+    );
+  }
+  return (
+    <div className="stw-alert" role="status">
+      <i aria-hidden="true" />
+      <span>{alertText(alert)}</span>
+    </div>
   );
 }
 

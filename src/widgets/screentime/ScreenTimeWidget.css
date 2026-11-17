@@ -1,6 +1,6 @@
-/* Tempo allo schermo in dashboard (docs/mockup/temi/tempo-pc.html). Il tempo si colora per CLASSE (focus / svago / neutro)
-   con tre colori presi dai token; le parti per tema in fondo, l'anello della Piccola in card/rings.tsx.
-   Le classi st-* (pezzi colorati, linea del giorno) servono anche alla pagina di dettaglio. */
+/* Tempo allo schermo in dashboard (docs/mockup/widget/tempo-allo-schermo.html, proposta A). Il tempo si colora per
+   CLASSE (focus / svago / neutro) con tre colori presi dai token; le forme per tema stanno in fondo, l'anello in
+   card/rings.tsx. Le classi st-* e stw-split/legend/bar/dev servono anche alla pagina di dettaglio. */
 
 /* ---------- Colori delle classi (per tema) ---------- */
 :root {
@@ -27,6 +27,23 @@
   --st-track: var(--dot-off);
   --st-warn: var(--led);
 }
+/* Vetro: inchiostro (focus) e corallo (svago) sul vetro. */
+:root[data-theme="vetro"] {
+  --st-fun: var(--accent-2);
+  --st-neutral: color-mix(in srgb, var(--text-muted) 45%, transparent);
+}
+/* Ombra di notte: bianco e grigi (focus il più chiaro), l'avviso in oro. */
+:root[data-theme="ombra"][data-mode="notte"] {
+  --st-fun: var(--accent-2);
+  --st-neutral: color-mix(in srgb, var(--text-muted) 70%, transparent);
+}
+/* Ombra di giorno (Fiamma): il focus è la fiamma dorata, lo svago l'argento scuro, l'avviso rosso. */
+:root[data-theme="ombra"][data-mode="giorno"] {
+  --st-focus: var(--accent-2);
+  --st-fun: var(--accent);
+  --st-neutral: color-mix(in srgb, var(--text-muted) 45%, transparent);
+  --st-warn: var(--danger);
+}
 
 /* Un pezzo colorato (barre, colonne, pallini). */
 .st-seg {
@@ -41,8 +58,10 @@
 :root[data-theme="quaderno"] .st-seg.is-neutral { background: repeating-linear-gradient(-45deg, var(--accent) 0 1.5px, transparent 1.5px 4px); }
 :root[data-theme="quaderno"] .st-seg.is-fun { background: repeating-linear-gradient(45deg, var(--st-fun) 0 2px, transparent 2px 3.5px); }
 :root[data-theme="fosforo"] .st-seg { background: radial-gradient(circle, var(--c) 2.2px, transparent 2.6px) 0 0 / 7px 7px repeat; }
+:root[data-theme="vetro"] .st-seg { background: linear-gradient(180deg, var(--glass-shine), transparent 65%), var(--c); }
+:root[data-theme="ombra"][data-mode="giorno"] .st-seg.is-focus { background: var(--prog); }
 
-/* ---------- Linea del giorno ---------- */
+/* ---------- Linea del giorno (pagina) ---------- */
 .st-day {
   display: grid;
   grid-template-columns: repeat(24, minmax(0, 1fr));
@@ -71,29 +90,8 @@
 .st-axis span:last-child { text-align: right; }
 
 /* ==========================================================================
-   WIDGET
+   PEZZI COMUNI A WIDGET E PAGINA
    ========================================================================== */
-.stw {
-  position: relative;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: min(var(--widget-padding), 16px) min(var(--widget-padding), 18px);
-  color: var(--text-primary);
-  container-type: size;
-}
-.stw-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 18px; }
-.stw-title {
-  margin: 0;
-  font-family: var(--font-title);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-.stw-sub { margin-left: auto; font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .stw-num {
   font-family: var(--font-display);
   font-weight: var(--display-weight);
@@ -102,7 +100,7 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.stw-unit { font-family: var(--font-family); font-weight: 500; font-size: 0.48em; color: var(--text-muted); letter-spacing: 0; margin: 0 3px 0 1px; }
+.stw-unit { font-family: var(--font-family); font-weight: 500; font-size: 0.46em; color: var(--text-muted); letter-spacing: 0; margin: 0 3px 0 1px; }
 .stw-mono { font-family: "JetBrains Mono Variable", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
 .stw-label { font-size: 11px; color: var(--text-secondary); }
 
@@ -121,43 +119,120 @@
 .stw-legend i { width: 8px; height: 8px; border-radius: 50%; }
 .stw-legend b { font-weight: 600; color: var(--text-primary); }
 
-/* Più usati */
-.stw-top-box { flex: 1; min-height: 0; overflow: hidden; }
-.stw-top { display: flex; flex-direction: column; gap: 6px; }
-.stw-top-row {
-  display: grid;
-  grid-template-columns: 8px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  height: 16px;
-  font-size: 12px;
-}
-.stw-top-row i { width: 8px; height: 8px; border-radius: 50%; }
-.stw-top-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.stw-top-row .stw-mono { color: var(--text-secondary); font-size: 11.5px; }
-
 /* Segno del dispositivo accanto al nome di un'app (docs/mockup/temi/tempo-pc-telefono.html) */
 .st-dev { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; color: var(--text-muted); vertical-align: -1px; }
 .st-dev svg { flex: none; }
-.stw-top-row .st-dev { margin-left: 5px; }
 
-/* Dispositivi (2×2 dove non si conta, pagina): tempo di oggi per dispositivo */
+/* Dispositivi (pagina): tempo di oggi per dispositivo */
 .stw-dev { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
 .stw-dev-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
 .stw-dev-top > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
 .stw-dev-top .stw-mono { font-size: 11px; color: var(--text-secondary); }
 .stw-dev .stw-bar > i { background: var(--text-secondary); }
 .stw-dev.is-here .stw-bar > i { background: var(--st-focus); }
-.stw-fresh { font-size: 10.5px; color: var(--text-muted); }
-.stw-sub svg { vertical-align: -2px; }
 
-/* Piccola 1×1: solo l'anello col totale */
-.stw--S .stw-hero { flex: 1; min-height: 0; display: grid; place-items: center; }
-.stw-ring { position: relative; width: min(118px, 68cqh, 80cqw); aspect-ratio: 1; }
-.stw-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.stw-ring-val { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
-.stw-ring-val .stw-num { font-size: 24px; }
-.stw-ring-val small { display: block; margin-top: 4px; font-size: 10.5px; color: var(--text-muted); }
+/* Barra di un limite (pagina) */
+.stw-bar { position: relative; height: var(--st-bar-h, 6px); border-radius: 99px; background: var(--st-track); overflow: hidden; }
+.stw-bar > i { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--st-focus); }
+.stw-bar.is-near > i { background: var(--st-warn); }
+
+/* Anello (card/rings.tsx) */
+.stw-ring { position: relative; aspect-ratio: 1; flex: none; }
+.stw-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.stw-ring-val { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 3px; text-align: center; }
+
+/* ==========================================================================
+   WIDGET
+   ========================================================================== */
+.stw {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: min(var(--widget-padding), 16px) min(var(--widget-padding), 18px);
+  color: var(--text-primary);
+  container-type: size;
+  overflow: hidden;
+}
+.stw-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 18px; flex: none; }
+.stw-title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.stw-sub { margin-left: auto; font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stw-sub svg { vertical-align: -2px; }
+.stw .is-warn { color: var(--st-warn); }
+
+/* Il totale grande con una sola riga sotto */
+.stw-lead { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.stw-lead > .stw-num { font-size: 42px; }
+.stw-line { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--text-secondary); }
+.stw-line.is-warn { color: var(--st-warn); }
+.stw-line-dev { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.stw-line-dev svg { color: var(--text-muted); }
+
+/* Le app: nome e barra proporzionale, il tempo solo sulla prima */
+.stw-apps { display: flex; flex-direction: column; gap: 11px; min-width: 0; min-height: 0; }
+.stw-app { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.stw-app-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12.5px; }
+.stw-app-top > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stw-app-time { flex: none; font-size: 11.5px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.stw-nbar { position: relative; flex: none; height: var(--stw-nbar-h, 6px); border-radius: 99px; background: var(--st-track); overflow: hidden; }
+.stw-nbar > .st-seg { position: absolute; inset: 0 auto 0 0; width: var(--v); border-radius: inherit; }
+
+/* La giornata a parole, nei colori delle classi */
+.stw-words { display: flex; flex-direction: column; gap: 8px; }
+.stw-words .stw-split { height: var(--stw-split-h, 10px); }
+.stw-mix { margin: 0; font-size: 12px; line-height: 1.45; color: var(--text-secondary); }
+.stw-mix b { font-weight: 650; }
+.stw-mix .is-focus { color: var(--st-focus); }
+.stw-mix .is-fun { color: var(--st-fun); }
+
+/* I 6 momenti del giorno (Media) */
+.stw-moments-box { flex: none; }
+.stw-moments { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; align-items: end; height: 62px; }
+.stw-moment { height: 100%; display: flex; flex-direction: column-reverse; gap: 2px; border-radius: 6px; overflow: hidden; background: color-mix(in srgb, var(--st-track) 55%, transparent); }
+.stw-moment > .st-seg { flex: none; height: var(--v); }
+.stw-moment.is-now { outline: 1.5px dashed var(--text-muted); outline-offset: 2px; }
+.stw-moments-lab { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 6px; font-size: 10.5px; color: var(--text-muted); text-align: center; white-space: nowrap; }
+.stw-moments-lab .is-now { color: var(--text-primary); font-weight: 600; }
+
+/* L'unico avviso, in fondo */
+.stw-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+  padding: 8px 11px;
+  border: 0;
+  border-radius: min(var(--radius-card), 10px);
+  background: color-mix(in srgb, var(--st-warn) 14%, transparent);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: left;
+  flex: none;
+}
+.stw-alert > i { width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--st-warn); }
+.stw-alert.is-action { background: var(--surface-1); color: var(--text-secondary); cursor: pointer; }
+.stw-alert.is-action svg { flex: none; }
+.stw-alert.is-action b { margin-left: auto; color: var(--accent); font-weight: 600; white-space: nowrap; }
+
+/* Piccola 1×1: l'anello è il widget. Dentro "oggi", il totale e una parola. */
+.stw-hero { flex: 1; min-height: 0; display: grid; place-items: center; }
+.stw--S .stw-ring { width: min(146px, 100cqh - 32px, 100cqw - 32px); }
+.stw--S .stw-ring-val .stw-num { font-size: 30px; }
+.stw-kicker { font-size: 10.5px; color: var(--text-muted); letter-spacing: 0.04em; }
+.stw-word { font-size: 11.5px; color: var(--text-secondary); }
+.stw-word.is-warn { color: var(--st-warn); }
 
 /* Larga 2×1 */
 .stw--W .stw-body {
@@ -165,109 +240,142 @@
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
+  gap: 22px;
   align-items: center;
 }
-.stw--W .stw-top-box { height: 100%; display: flex; align-items: center; }
-.stw--W .stw-top { width: 100%; }
-.stw-total { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.stw-total > .stw-num { font-size: 34px; }
 
 /* Alta 1×2 */
-.stw--T .stw-total > .stw-num { font-size: 32px; }
-.stw--T .stw-top { gap: 6px; }
+.stw--T .stw-lead > .stw-num { font-size: 40px; }
 .stw-sep { height: 1px; flex: none; background: var(--divider); }
 
 /* Media 2×2 */
-.stw--M { gap: 9px; }
-.stw-total-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
-.stw-total-row > .stw-num { font-size: 34px; }
-.stw-focus { text-align: right; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.stw-focus .stw-num { font-size: 22px; }
-.stw-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 14px; }
-.stw-col { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 7px; }
-.stw-col h3 { margin: 0; font-size: 11px; font-weight: 600; color: var(--text-muted); }
-.stw-limit { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
-.stw-limit-top { display: flex; justify-content: space-between; gap: 6px; }
-.stw-limit-top span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.stw-limit-top .stw-mono { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
-.stw-bar { position: relative; height: var(--st-bar-h, 6px); border-radius: 99px; background: var(--st-track); overflow: hidden; }
-.stw-bar > i { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--st-focus); }
-.stw-bar.is-near > i { background: var(--st-warn); }
-.stw-pause { display: flex; align-items: center; gap: 6px; margin-top: auto; font-size: 11px; color: var(--text-secondary); }
-.stw-pause svg { flex: none; color: var(--text-muted); }
+.stw-top { display: flex; justify-content: space-between; align-items: center; gap: 14px; }
+.stw-focus .stw-ring { width: 68px; }
+.stw-focus .stw-ring-val .stw-num { font-size: 17px; }
+.stw-focus .stw-ring-val small { font-size: 9.5px; color: var(--text-muted); }
+.stw--M .stw-apps { gap: 9px; }
 
-/* Celle basse (più righe in griglia): via quello che non entra. */
-@container (max-height: 300px) {
-  .stw--M .stw-day-box { display: none; }
+/* Celle più basse del solito (più righe in griglia): via quello che non entra. */
+@container (max-height: 320px) {
+  .stw--M .stw-moments-box { display: none; }
+}
+@container (max-height: 320px) {
+  .stw--T .stw-mix { display: none; }
 }
 @container (max-height: 150px) {
-  .stw--W .stw-legend { display: none; }
-  .stw--W .stw-total > .stw-num { font-size: 28px; }
-}
-@container (max-height: 280px) {
-  .stw--T .stw-legend { display: none; }
+  .stw--W .stw-lead > .stw-num { font-size: 32px; }
 }
 
 /* Messaggi (telefono, conteggio spento, primo avvio) */
 .stw-na { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
 .stw-na p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--text-secondary); }
 .stw-na svg { color: var(--text-muted); }
-
-/* Telefono senza il permesso di Android: pulsante nel messaggio e riga in fondo alla Media. */
 .stw-grant {
   align-self: flex-start; min-height: 32px; padding: 5px 12px; border: 0; border-radius: var(--radius-item);
   background: var(--btn-primary-bg); color: var(--btn-primary-fg); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
 }
-.stw-cta {
-  display: flex; align-items: center; gap: 8px; width: 100%; margin-top: auto; padding: 8px 10px; border: 0;
-  border-radius: var(--radius-item); background: var(--surface-1); font: inherit; font-size: 11.5px; color: var(--text-secondary);
-  text-align: left; cursor: pointer;
-}
-.stw-cta b { margin-left: auto; color: var(--accent); font-weight: 600; white-space: nowrap; }
-.stw-cta svg { flex: none; }
-:root[data-theme="opaco"] .stw-cta { background: var(--pg-mid, var(--surface-1)); color: var(--text-primary); }
-:root[data-theme="opaco"] .stw-cta b { color: var(--text-primary); text-decoration: underline; }
 
-/* ---------- Le parti per tema ---------- */
+/* ==========================================================================
+   LE FORME PER TEMA
+   ========================================================================== */
+
 /* NOTTE: pezzi arrotondati e staccati, con un alone. */
 :root[data-theme="notte"] .stw-split { gap: 3px; background: transparent; }
-:root[data-theme="notte"] .stw-split > .st-seg { border-radius: 99px; box-shadow: 0 0 10px color-mix(in srgb, var(--c) 40%, transparent); }
+:root[data-theme="notte"] .stw-split > .st-seg,
+:root[data-theme="notte"] .stw-nbar > .st-seg { border-radius: 99px; box-shadow: 0 0 10px color-mix(in srgb, var(--c) 45%, transparent); }
+:root[data-theme="notte"] .stw-nbar { overflow: visible; }
+:root[data-theme="notte"] .stw-moment { border-radius: 6px 6px 3px 3px; }
 
 /* OPACO: pigmento, barre piene e squadrate, testo pieno. */
-:root[data-theme="opaco"] { --st-bar-h: 12px; }
+:root[data-theme="opaco"] { --st-bar-h: 12px; --stw-nbar-h: 10px; --stw-split-h: 14px; }
 :root[data-theme="opaco"] .stw-title { font-size: 13px; font-weight: 700; color: var(--text-primary); }
 :root[data-theme="opaco"] .stw-split { border-radius: 4px; gap: 0; }
-:root[data-theme="opaco"] .st-hour { border-radius: 2px; background: var(--pg-mid, var(--surface-1)); }
+:root[data-theme="opaco"] .stw-nbar { border-radius: 3px; }
+:root[data-theme="opaco"] .st-hour,
+:root[data-theme="opaco"] .stw-moment { border-radius: 2px; background: var(--pg-mid, var(--surface-1)); }
 :root[data-theme="opaco"] .stw-legend,
 :root[data-theme="opaco"] .stw-label,
-:root[data-theme="opaco"] .stw-top-row .stw-mono,
+:root[data-theme="opaco"] .stw-line,
+:root[data-theme="opaco"] .stw-mix,
+:root[data-theme="opaco"] .stw-moments-lab,
 :root[data-theme="opaco"] .st-axis { color: var(--text-primary); }
 :root[data-theme="opaco"] .stw-bar { border-radius: 4px; }
+:root[data-theme="opaco"] .stw-alert { background: var(--pg-light, var(--surface-1)); border-radius: 3px; }
+:root[data-theme="opaco"] .stw-alert.is-action { background: var(--pg-mid, var(--surface-1)); color: var(--text-primary); }
+:root[data-theme="opaco"] .stw-alert.is-action b { color: var(--text-primary); text-decoration: underline; }
 
 /* QUADERNO: matita, tratteggi, titoli e numeri a mano. */
-:root[data-theme="quaderno"] { --st-bar-h: 11px; }
+:root[data-theme="quaderno"] { --st-bar-h: 11px; --stw-nbar-h: 10px; --stw-split-h: 13px; }
 :root[data-theme="quaderno"] .stw-title { font-size: 20px; font-weight: 600; color: var(--accent); letter-spacing: 0; line-height: 1; }
 :root[data-theme="quaderno"] .stw-num { color: var(--accent); }
 :root[data-theme="quaderno"] .stw-split { border-radius: 2px; background: transparent; border: 1.5px solid var(--accent); gap: 0; }
 :root[data-theme="quaderno"] .stw-split > .st-seg + .st-seg { border-left: 1.5px solid var(--accent); }
+:root[data-theme="quaderno"] .stw-nbar { border-radius: 2px; background: transparent; border: 1.5px solid var(--accent); }
 :root[data-theme="quaderno"] .st-hour { border-radius: 0; background: transparent; border-bottom: 1.5px solid var(--sheet-rule); }
+:root[data-theme="quaderno"] .stw-moment { border-radius: 0; gap: 0; background: transparent; border-bottom: 1.5px solid var(--sheet-rule); }
+:root[data-theme="quaderno"] .stw-moment > .st-seg { border: 1.5px solid var(--accent); border-bottom: 0; }
+:root[data-theme="quaderno"] .stw-moments-lab { font-family: var(--font-title); font-size: 15px; line-height: 1; }
+:root[data-theme="quaderno"] .stw-mix .is-neutral,
+:root[data-theme="quaderno"] .stw-line { color: var(--text-primary); }
+:root[data-theme="quaderno"] .stw-alert { background: transparent; border: 1.5px dashed var(--st-warn); }
 :root[data-theme="quaderno"] .stw-bar { border-radius: 2px; background: transparent; border: 1.5px solid var(--accent); }
 :root[data-theme="quaderno"] .stw-bar > i { background: repeating-linear-gradient(-45deg, var(--accent) 0 1.5px, transparent 1.5px 4px); }
 :root[data-theme="quaderno"] .stw-bar.is-near { border-color: var(--st-warn); }
 :root[data-theme="quaderno"] .stw-bar.is-near > i { background: repeating-linear-gradient(-45deg, var(--st-warn) 0 1.5px, transparent 1.5px 4px); }
 
 /* FOSFORO: tutto a punti, svago in LED. */
-:root[data-theme="fosforo"] { --st-bar-h: 7px; }
+:root[data-theme="fosforo"] { --st-bar-h: 7px; --stw-nbar-h: 7px; --stw-split-h: 7px; }
 :root[data-theme="fosforo"] .stw-title { font-size: 11px; font-weight: 400; text-transform: lowercase; letter-spacing: 0.04em; }
 :root[data-theme="fosforo"] .stw-split { border-radius: 0; background: transparent; gap: 7px; }
 :root[data-theme="fosforo"] .stw-split > .st-seg { background-position: 0 50%; background-repeat: repeat-x; }
+:root[data-theme="fosforo"] .stw-nbar { border-radius: 0; background: radial-gradient(circle, var(--dot-off) 2.2px, transparent 2.6px) 0 50% / 7px 7px repeat-x; }
+:root[data-theme="fosforo"] .stw-nbar > .st-seg { border-radius: 0; background-position: 0 50%; background-repeat: repeat-x; }
 :root[data-theme="fosforo"] .st-hour { border-radius: 0; background: radial-gradient(circle, var(--dot-off) 1.6px, transparent 2px) 50% 100% / 7px 7px repeat-y; gap: 0; }
 :root[data-theme="fosforo"] .st-hour > .st-seg { background-position: 50% 100%; background-repeat: repeat-y; }
+:root[data-theme="fosforo"] .stw-moment { border-radius: 0; gap: 0; background: radial-gradient(circle, var(--dot-off) 2px, transparent 2.4px) 50% 100% / 7px 7px repeat; }
+:root[data-theme="fosforo"] .stw-moment > .st-seg { background-position: 50% 100%; }
+:root[data-theme="fosforo"] .stw-moment.is-now { outline-style: dotted; }
+:root[data-theme="fosforo"] .stw-moments-lab { text-transform: lowercase; letter-spacing: 0.04em; }
 :root[data-theme="fosforo"] .stw-bar { border-radius: 0; background: radial-gradient(circle, var(--dot-off) 2.2px, transparent 2.6px) 0 50% / 7px 7px repeat-x; }
 :root[data-theme="fosforo"] .stw-bar > i { border-radius: 0; background: radial-gradient(circle, var(--dot-on) 2.2px, transparent 2.6px) 0 50% / 7px 7px repeat-x; }
 :root[data-theme="fosforo"] .stw-bar.is-near > i { background: radial-gradient(circle, var(--led) 2.2px, transparent 2.6px) 0 50% / 7px 7px repeat-x; }
-:root[data-theme="fosforo"] .stw-legend i,
-:root[data-theme="fosforo"] .stw-top-row i { border-radius: 0; width: 6px; height: 6px; }
+:root[data-theme="fosforo"] .stw-legend i { border-radius: 0; width: 6px; height: 6px; }
+:root[data-theme="fosforo"] .stw-alert { background: transparent; border: 1px dotted var(--st-warn); border-radius: 0; }
+:root[data-theme="fosforo"] .stw-alert > i { border-radius: 0; }
 :root[data-theme="fosforo"] .stw-unit,
 :root[data-theme="fosforo"] .stw-mono { font-family: var(--font-family); }
+
+/* VETRO: tubi di vetro col riflesso in alto. */
+:root[data-theme="vetro"] { --stw-nbar-h: 8px; --stw-split-h: 12px; }
+:root[data-theme="vetro"] .stw-title { font-size: 12.5px; color: var(--text-secondary); letter-spacing: 0.01em; }
+:root[data-theme="vetro"] .stw-nbar,
+:root[data-theme="vetro"] .stw-split,
+:root[data-theme="vetro"] .stw-moment { box-shadow: inset 0 1px 0 var(--glass-line), inset 0 0 0 1px var(--glass-line); }
+:root[data-theme="vetro"] .stw-split { gap: 3px; padding: 2px; }
+:root[data-theme="vetro"] .stw-split > .st-seg { border-radius: 99px; }
+:root[data-theme="vetro"] .stw-moment { border-radius: 12px; padding: 2px; background: var(--st-track); }
+:root[data-theme="vetro"] .stw-moment > .st-seg { border-radius: 10px; }
+
+/* OMBRA di notte: fili sottili e luminosi, spigoli vivi. */
+:root[data-theme="ombra"][data-mode="notte"] { --stw-nbar-h: 3px; --stw-split-h: 4px; }
+:root[data-theme="ombra"][data-mode="notte"] .stw-title { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; }
+:root[data-theme="ombra"][data-mode="notte"] .stw-nbar,
+:root[data-theme="ombra"][data-mode="notte"] .stw-split { border-radius: 0; overflow: visible; }
+:root[data-theme="ombra"][data-mode="notte"] .stw-split { gap: 4px; background: transparent; }
+:root[data-theme="ombra"][data-mode="notte"] .stw-nbar > .st-seg,
+:root[data-theme="ombra"][data-mode="notte"] .stw-split > .st-seg { border-radius: 0; }
+:root[data-theme="ombra"][data-mode="notte"] .stw .st-seg.is-focus { box-shadow: 0 0 9px var(--prog-glow); }
+:root[data-theme="ombra"][data-mode="notte"] .stw-moments { gap: 14px; }
+:root[data-theme="ombra"][data-mode="notte"] .stw-moment { border-radius: 0; overflow: visible; background: linear-gradient(var(--st-track), var(--st-track)) 50% 0 / 1px 100% no-repeat; }
+:root[data-theme="ombra"][data-mode="notte"] .stw-moments-lab { text-transform: uppercase; letter-spacing: 0.14em; font-size: 9px; }
+:root[data-theme="ombra"][data-mode="notte"] .stw-alert { background: transparent; border-left: 2px solid var(--st-warn); border-radius: 0; }
+
+/* OMBRA di giorno (Fiamma): pillole morbide, il focus è la fiamma. */
+:root[data-theme="ombra"][data-mode="giorno"] .stw-title { font-size: 15px; font-weight: 500; color: var(--text-secondary); letter-spacing: 0; }
+:root[data-theme="ombra"][data-mode="giorno"] .stw .st-seg.is-focus { box-shadow: 0 0 10px var(--prog-glow); }
+:root[data-theme="ombra"][data-mode="giorno"] .stw-nbar { overflow: visible; }
+:root[data-theme="ombra"][data-mode="giorno"] .stw-split { gap: 3px; background: transparent; overflow: visible; }
+:root[data-theme="ombra"][data-mode="giorno"] .stw-split > .st-seg { border-radius: 99px; }
+:root[data-theme="ombra"][data-mode="giorno"] .stw-moment { border-radius: 99px 99px 8px 8px; }
+:root[data-theme="ombra"][data-mode="giorno"] .stw-moments-lab { font-family: var(--font-flavor); font-style: italic; font-size: 12px; }
+:root[data-theme="ombra"] .stw .stw-num { font-weight: 300; }

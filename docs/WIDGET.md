@@ -58,8 +58,8 @@ con rolldown: scelta delle metriche, storico dei 60 s, forma che entra nella cel
 
 Backend in `src-tauri/src/screen_time/` (registratore del computer; `android.rs` + plugin `plugins/usage-stats` per il
 telefono) e `src-tauri/src/app_tray.rs` (icona vicino all'orologio, avvio col computer), frontend in
-`src/widgets/screentime/`. Mockup: `docs/mockup/temi/tempo-pc.html` (computer) e
-`tempo-pc-telefono.html` (telefono, filtro e dispositivi). Prove (dopo il bundle con rolldown):
+`src/widgets/screentime/`. Mockup: `docs/mockup/widget/tempo-allo-schermo.html` (widget in dashboard, proposta A),
+`docs/mockup/temi/tempo-pc.html` (pagina) e `tempo-pc-telefono.html` (telefono, filtro e dispositivi). Prove (dopo il bundle con rolldown):
 `scripts/screentime/classify.test.mts` (classificazione dei segmenti), `migrations.test.mts` (migrazioni
 su SQLite vero) e `logic.test.mts` (ore e mezzanotte,
 focus e serie, limiti, pause e sessioni, settimana, etichette delle date, dispositivi), `androidEvents.test.mts`
@@ -98,6 +98,14 @@ focus e serie, limiti, pause e sessioni, settimana, etichette delle date, dispos
 - Focus/svago: classe per categoria (`lib/focus.ts`, `screentimeFocusClasses`; vuota = default), editor nella pagina
   (Settimana). Conteggio, soglie e filtro sono in `PER_DEVICE_SETTINGS`; classi, obiettivo di focus e
   `companionAppCategories` si sincronizzano (la vista somma i dispositivi, la categoria deve essere la stessa).
+- **Widget** (`ScreenTimeWidget.tsx`, proposta A del mockup): ogni taglia dice una cosa sola e c'è un solo numero
+  grande, il totale di oggi. Piccola: anello delle classi con una parola (`moodWord`); Larga: totale, una riga (ieri,
+  o PC/telefono con "Tutti") e 3 app come barre (`AppBars`, il tempo solo sulla prima); Alta: anche la giornata a
+  parole (`DayInWords`, al posto della legenda); Media: anello del focus e la giornata in 6 momenti di 4 ore
+  (`DayMoments`). Limiti, pausa e permesso del telefono sono **un solo avviso**, il più urgente (`pickAlert` in
+  `lib/widgetText.ts`: limite all'80 % → pausa oltre `screentimeBreakMinutes` → permesso), e con l'avviso le app
+  scendono di una. L'anello ha una forma per tema (`card/rings.tsx`, `SCREENTIME_RINGS`; Ombra con `perMode`:
+  eclisse di notte, stella di giorno), il resto cambia forma col CSS. Il dettaglio sta tutto nella pagina.
 - Pagina (`ScreenTimeDetail.tsx` + `detail/`): `usePeriodData` legge il giorno o la settimana dal DB e per oggi usa le
   righe del provider; si rilegge a ogni `revision` (una categoria cambiata a mano si vede anche nei giorni passati;
   dopo un giro del sync con `screen_usage` il provider rilegge, `onSyncApplied`). Il

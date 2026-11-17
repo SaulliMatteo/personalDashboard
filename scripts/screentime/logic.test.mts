@@ -14,6 +14,7 @@ import { dueNotices, emptyNoticeState, parseNoticeState, type ScreenLimit } from
 import { dailyTotals, limitUsage, summarize, type UsageRow } from "../../src/widgets/screentime/lib/summary";
 import { byDevice, devicesIn, parseDeviceFilter } from "../../src/widgets/screentime/lib/devices";
 import { formatDayLabel, formatDelta, formatDuration, formatShort, formatWeekLabel, weekdayShort } from "../../src/widgets/screentime/lib/format";
+import { dayMoments, deltaWords, mixWords, moodWord, pickAlert } from "../../src/widgets/screentime/lib/widgetText";
 
 let passed = 0;
 function test(name: string, fn: () => void) {
@@ -236,6 +237,43 @@ test("etichette delle date", () => {
   assert.equal(formatWeekLabel("2026-10-26", "2026-11-01"), "26 ottobre – 1 novembre");
   assert.equal(formatWeekLabel("2025-12-29", "2026-01-04"), "29 dicembre 2025 – 4 gennaio 2026");
   assert.equal(weekdayShort("2026-11-09"), "lun");
+});
+
+test("widget: la giornata a parole e in 6 momenti", () => {
+  assert.equal(moodWord({ focus: 152, fun: 30, neutral: 130 }), "concentrato");
+  assert.equal(moodWord({ focus: 50, fun: 100, neutral: 150 }), "tanto svago");
+  assert.equal(moodWord({ focus: 100, fun: 50, neutral: 150 }), "misto");
+  assert.equal(moodWord({ focus: 0, fun: 0, neutral: 0 }), "si comincia");
+  assert.deepEqual(mixWords({ focus: 152, fun: 30, neutral: 130 }), { focus: "metà focus", fun: "quasi niente svago" });
+  assert.deepEqual(mixWords({ focus: 0, fun: 0, neutral: 0 }), { focus: "poco focus", fun: "quasi niente svago" });
+  const hours = Array.from({ length: 24 }, (_, h) => ({ focus: h === 9 ? 3600 : 0, fun: h === 17 ? 600 : 0, neutral: h === 23 ? 60 : 0 }));
+  const m = dayMoments(hours);
+  assert.equal(m.length, 6);
+  assert.deepEqual(m[2], { focus: 3600, fun: 0, neutral: 0 });
+  assert.deepEqual(m[4], { focus: 0, fun: 600, neutral: 0 });
+  assert.deepEqual(m[5], { focus: 0, fun: 0, neutral: 60 });
+  assert.equal(deltaWords(2400), "40 min più di ieri");
+  assert.equal(deltaWords(-3900), "1 h 5 min meno di ieri");
+  assert.equal(deltaWords(20), "come ieri");
+});
+
+test("widget: un solo avviso, il più urgente", () => {
+  const lim = (id: number, label: string, minutes: number): ScreenLimit => ({ id, kind: "app", target: label, label, minutes, warn: true });
+  const base = { limits: [], continuousMinutes: 0, breakMinutes: 50, needsAccess: false };
+  assert.equal(pickAlert(base), null);
+  // sotto l'80 % niente; il più vicino a finire vince
+  const limits = [
+    { limit: lim(1, "Opera", 120), usedSeconds: 90 * 60 },
+    { limit: lim(2, "Discord", 60), usedSeconds: 55 * 60 },
+    { limit: lim(3, "Giochi", 60), usedSeconds: 10 * 60 },
+  ];
+  assert.deepEqual(pickAlert({ ...base, limits, continuousMinutes: 90, needsAccess: true }), { kind: "limit", label: "Discord", leftSeconds: 300 });
+  assert.deepEqual(pickAlert({ ...base, limits: [{ limit: lim(1, "Opera", 60), usedSeconds: 70 * 60 }] }), { kind: "limit", label: "Opera", leftSeconds: 0 });
+  // poi la pausa (solo oltre i minuti scelti, spenta con 0), poi il permesso del telefono
+  assert.deepEqual(pickAlert({ ...base, continuousMinutes: 50, needsAccess: true }), { kind: "pause", minutes: 50 });
+  assert.equal(pickAlert({ ...base, continuousMinutes: 49 }), null);
+  assert.equal(pickAlert({ ...base, continuousMinutes: 90, breakMinutes: 0 }), null);
+  assert.deepEqual(pickAlert({ ...base, needsAccess: true }), { kind: "access" });
 });
 
 console.log(`logic: ${passed} prove passate`);
