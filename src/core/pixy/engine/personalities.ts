@@ -25,6 +25,11 @@ export type PhraseKey =
   | "video_start"
   | "video_end"
   | "file_received"
+  | "calendar_soon"
+  | "calendar_reminder"
+  | "reminder_bubble"
+  | "plan_missed"
+  | "plan_done"
   | "welcome_back"
   | "sleep"
   | "night"
@@ -105,6 +110,7 @@ export interface Personality {
  *   {,name}  →  ", Matteo" (o niente se il nome non è impostato)
  *   {app}    →  nome leggibile dell'app (es. "VS Code")
  *   {min}    →  minuti
+ *   {what}   →  di cosa si parla (titolo dell'impegno, materia)
  */
 export const PERSONALITIES: Record<PersonalityId, Personality> = {
   cheerful: {
@@ -139,6 +145,11 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       video_start: ["Cosa guardiamo?", "Popcorn pronti!"],
       video_end: ["Finito! Bello?", "E il prossimo?"],
       file_received: ["È arrivato un file!", "Posta in arrivo! 📦"],
+      calendar_soon: ["Tra {min} minuti: {what}! ⏰", "Ehi{,name}, {what} sta per iniziare!", "Pronto? Fra {min} minuti c'è {what}!"],
+      calendar_reminder: ["Ti ricordo una cosa!", "Psst{,name}, non dimenticarlo!", "Promemoria in arrivo! 📌"],
+      reminder_bubble: ["Promemoria: {what}! 📌", "Ehi{,name}, ricordati: {what}!"],
+      plan_missed: ["Era l'ora di {what}! Partiamo?", "{what} ti aspetta{,name}! Avvio il timer?", "Dai, {what}: anche solo un pomodoro!"],
+      plan_done: ["{what} fatto: {min} minuti! 🎉", "Sessione completata! Sei un mito{,name}!", "Piano rispettato! Che orgoglio!"],
       welcome_back: ["Bentornato! Com'è andata con {app}?", "Eccoti{,name}! Tutto bene con {app}?", "Bentornato{,name}!"],
       sleep: ["Zzz…", "Faccio un pisolino…"],
       night: ["Si sta facendo tardi…", "Dormire fa bene alla memoria, sai?", "Ancora cinque minuti di chiacchiere?"],
@@ -211,6 +222,11 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       video_start: ["Buona visione."],
       video_end: ["Finito."],
       file_received: ["È arrivato un file."],
+      calendar_soon: ["Fra {min} minuti c'è {what}.", "{what} tra poco. Con calma."],
+      calendar_reminder: ["Un promemoria per te.", "Ricordati di questo."],
+      reminder_bubble: ["Promemoria: {what}.", "Ricordati: {what}."],
+      plan_missed: ["Era l'ora di {what}. Quando vuoi, si comincia.", "{what} può ancora iniziare."],
+      plan_done: ["{what}: {min} minuti, come previsto. Bene.", "Sessione completata. Costanza."],
       welcome_back: ["Bentornato.", "Ah, eccoti. Tutto bene con {app}?"],
       sleep: ["Zzz…"],
       night: ["Forse è ora di riposare."],
@@ -283,6 +299,11 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       video_start: ["Se mi addormento svegliami a metà."],
       video_end: ["Ah, è già finito? Dormivo."],
       file_received: ["Mh? Un file."],
+      calendar_soon: ["Mh… fra {min} minuti c'è {what}.", "Svegliati… {what} sta per iniziare."],
+      calendar_reminder: ["*sbadiglio* Avevi detto di ricordartelo.", "Promemoria… prima che mi riaddormenti."],
+      reminder_bubble: ["*sbadiglio* Promemoria: {what}.", "Mh… ricordati: {what}."],
+      plan_missed: ["Anche tu dormi? Era l'ora di {what}.", "{what}… iniziamo e poi facciamo un pisolino?"],
+      plan_done: ["{what} fatto. Mi sono svegliato apposta.", "{min} minuti! Ora un riposino ce lo meritiamo."],
       welcome_back: ["Oh, sei tornato. Dormivo un po'.", "Tu con {app}, io con un pisolino."],
       sleep: ["Zzz…", "Zzz… zzz…"],
       night: ["Nanna. Subito.", "Io dormo, tu fai come vuoi."],
@@ -355,6 +376,11 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       video_start: ["Studio o svago? Non dirmelo."],
       video_end: ["E adesso torniamo a cose serie?"],
       file_received: ["Un file. Che emozione."],
+      calendar_soon: ["{what} tra {min} minuti. Muoviti.", "Non fare tardi a {what}."],
+      calendar_reminder: ["Te l'avevo detto di ricordartelo.", "Promemoria. Non dire che non lo sapevi."],
+      reminder_bubble: ["Promemoria: {what}. Non dire che non lo sapevi.", "{what}. Te lo ricordo una volta sola."],
+      plan_missed: ["Avevi in programma {what}. Lo vedo, sai.", "{what}? Il timer non parte da solo."],
+      plan_done: ["{what}: {min} minuti. Ok, piano rispettato.", "Fatto quello che avevi detto. Raro."],
       welcome_back: ["Ah, ti sei ricordato di me. Divertente {app}, eh?", "Bentornato. Ci hai messo."],
       sleep: ["Zzz… (non svegliarmi)"],
       night: ["Vai a dormire. Sul serio.", "Vai a letto. Ora."],
@@ -429,6 +455,11 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       video_start: ["Un video. Per studiare, immagino.", "Cosa guardiamo, stavolta?"],
       video_end: ["Finito. E adesso?", "Fine. Ne parte subito un altro, vero?"],
       file_received: ["È arrivato un file. Che emozione.", "Posta. Qualcuno si ricorda di te."],
+      calendar_soon: ["{what} tra {min} minuti. Sorpresa.", "Tra {min} minuti c'è {what}. Lo dico per niente."],
+      calendar_reminder: ["Un promemoria. Te l'eri scritto tu, eh.", "Ti ricordo una cosa. Prego."],
+      reminder_bubble: ["Promemoria: {what}. Non ringraziarmi.", "{what}. Te l'eri appuntato, ricordi?"],
+      plan_missed: ["Avevi in programma {what}. Avevi.", "{what} ti sta ancora aspettando. Pazientemente."],
+      plan_done: ["{what}: {min} minuti. Hai fatto quello che avevi detto. Notevole.", "Piano rispettato. Me lo segno, è raro."],
       welcome_back: ["Bentornato. Com'era {app}? Non dirmelo.", "Eccoti{,name}. {app} ti ha lasciato andare."],
       sleep: ["Zzz… (sto solo riposando gli occhi)", "Mi sciolgo un attimo…"],
       night: ["Domani te ne pentirai. Io no.", "È tardi. Le ombre lo sanno."],
@@ -501,6 +532,11 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
       video_start: ["Guardiamo."],
       video_end: ["Finito."],
       file_received: ["È arrivato un file."],
+      calendar_soon: ["Tra {min} minuti: {what}. Preparati con calma.", "{what} sta per cominciare."],
+      calendar_reminder: ["Un promemoria per te.", "Ricorda ciò che ti eri proposto."],
+      reminder_bubble: ["Promemoria: {what}.", "È il momento: {what}."],
+      plan_missed: ["Era il momento di {what}. Si può ancora iniziare.", "{what}: anche poco è meglio di niente."],
+      plan_done: ["{what}: {min} minuti, come previsto. Bene così.", "Hai fatto ciò che avevi deciso. Questo conta."],
       welcome_back: ["Bentornato.", "Eccoti{,name}. Riprendiamo."],
       sleep: ["Riposo.", "La fiamma si abbassa…"],
       night: ["È tardi. Dormire serve.", "Domani conta. Vai a letto."],
@@ -545,8 +581,9 @@ export const PERSONALITIES: Record<PersonalityId, Personality> = {
 
 export const PERSONALITY_IDS = Object.keys(PERSONALITIES) as PersonalityId[];
 
-export function fillPhrase(template: string, vars: { name?: string; app?: string; min?: number }): string {
+export function fillPhrase(template: string, vars: { name?: string; app?: string; min?: number; what?: string }): string {
   return template
+    .replace("{what}", vars.what ?? "quello che avevi in programma")
     .replace("{,name}", vars.name ? `, ${vars.name}` : "")
     .replace("{app}", vars.app ?? "un'altra app")
     .replace("{min}", String(vars.min ?? 0));

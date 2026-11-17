@@ -1,0 +1,120 @@
+/* Calendario in Fosforo (proposta "Altri temi"): display a punti con la data, moduli col bordo sottile, maiuscole. */
+
+.calt--fosforo .calt-display {
+  height: 56px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border: var(--display-border);
+  border-radius: 8px;
+  background: var(--display-texture), var(--display-bg);
+}
+
+.calt--fosforo .calt-title {
+  font-family: var(--font-display);
+  font-size: min(40px, 10cqh, 13cqw);
+  font-weight: 900;
+  color: var(--dot-on);
+}
+
+.calt--fosforo .calt-views {
+  padding: 0;
+}
+
+.calt--fosforo .calt-views button {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 24px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.calt--fosforo .calt-views button.active {
+  background: var(--cal-seg-on-bg);
+  color: var(--cal-seg-on-fg);
+}
+
+.calt--fosforo .calt-weekday-l {
+  color: var(--text-secondary);
+}
+
+.calt--fosforo .calt-weekday-n {
+  font-size: 14px;
+}
+
+.calt--fosforo .calt-weekday-n--today {
+  min-width: 0;
+  margin-top: 2px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  line-height: 24px;
+}
+
+/* Giorno con qualcosa: un pixel acceso sotto il numero. */
+.calt--fosforo .calt-weekday--busy::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 3px;
+  height: 3px;
+  background: var(--led);
+}
+
+.calt--fosforo .calt-item {
+  padding: 0 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.calt--fosforo .calt-item-right {
+  color: var(--text-secondary);
+}
+
+.calt--fosforo .calt-item--event .cal-mark--event {
+  background: var(--item, var(--led));
+}
+
+.calt--fosforo .calt-item--study .calt-mark,
+.calt--fosforo .calt-item--note .calt-mark {
+  color: var(--dot-on);
+}
+
+.calt--fosforo .calt-item--note {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--text-primary) 40%, transparent);
+}
+
+.calt--fosforo .calt-new {
+  height: 34px;
+  padding: 0 16px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 32px;
+  text-transform: uppercase;
+}
+
+/* 1×1 e 2×1 di base: la data in un display a punti. */
+:root[data-theme="fosforo"] .calc--S .calc-day,
+:root[data-theme="fosforo"] .calc--W .calc-day {
+  color: var(--dot-on);
+}
+
+:root[data-theme="fosforo"] .calc--W .calc-date {
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: var(--display-border);
+  border-radius: 8px;
+  background: var(--display-texture), var(--display-bg);
+}
+
+:root[data-theme="fosforo"] .calc--W .calc-vline {
+  display: none;
+}

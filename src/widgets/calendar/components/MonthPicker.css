@@ -1,0 +1,78 @@
+/* Scelta di mese e anno (clic sul titolo del Calendario). */
+
+.cal-picker {
+  width: 264px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--modal-bg);
+  border: var(--modal-border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-pop);
+  color: var(--text-primary);
+}
+
+.cal-picker-year {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-picker-months {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.cal-picker-month {
+  all: unset;
+  box-sizing: border-box;
+  height: 36px;
+  border-radius: var(--cal-seg-item-radius);
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+
+.cal-picker-month:hover {
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+
+.cal-picker-month.now {
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.cal-picker-month.active {
+  background: var(--cal-seg-on-bg);
+  color: var(--cal-seg-on-fg);
+  font-weight: 600;
+}
+
+.cal-picker-month:focus-visible,
+.cal-picker-today:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.cal-picker-today {
+  all: unset;
+  align-self: center;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.cal-picker-today:hover {
+  color: var(--text-primary);
+}
+
+:root[data-theme="fosforo"] .cal-picker-month {
+  text-transform: uppercase;
+  font-size: 12px;
+}

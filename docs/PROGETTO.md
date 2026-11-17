@@ -40,6 +40,7 @@ node node_modules/.tmp/gruppi-chat.test.mjs
 | `core/layout/mobileLayout.ts` | `scripts/layout/mobileLayout.test.mts` |
 | `widgets/study/timer/phases.ts` | `scripts/study/phases.test.mts` |
 | `widgets/study/lib/` | `scripts/studio/` (piano settimanale, Prospettiva) |
+| `widgets/calendar/lib/` | `scripts/calendar/calendar.test.mts` (bundle con rolldown) |
 | `core/notify/inbox.ts` | `scripts/notify/inbox.test.mts` |
 | Monitor di sistema | `scripts/sysmon/metrics.test.mts` e `cd src-tauri && cargo test --lib system_monitor` |
 | `widgets/screentime/lib/`, `src-tauri/src/screen_time/` | `scripts/screentime/siteFromTitle.test.mts`, `logic.test.mts` e `cd src-tauri && cargo test --lib screen_time` |

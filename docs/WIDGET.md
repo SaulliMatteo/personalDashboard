@@ -125,6 +125,47 @@ focus e serie, limiti, pause e sessioni, settimana, etichette delle date, dispos
   Generale › Finestra e avvio (`features/settings/tabs/WindowSection.tsx`); il collegamento col Rust è
   `core/system/useAppWindowBridge.ts`.
 
+## Calendario (`widgets/calendar/`)
+
+Mockup: la cartella `calendario/` dei mockup locali. Il tipo si legge dalla **forma**, in tutti i temi: quadratino = evento,
+cerchio = sessione di studio pianificata (vuoto in programma, pieno fatta), campanella = promemoria (un'ora sola; vuota
+da fare, piena fatto), chip tratteggiato = nota collegata. Griglia fatta a mano (niente librerie di calendario).
+
+```
+calendar/
+├─ index.ts                  WidgetDefinition (taglie 2×2, 1×1, 2×1; pagina; mini; provider)
+├─ CalendarWidget.tsx        card per tema con useThemeVariant(CALENDAR_CARDS) (card/cards.ts; Vetro e Ombra per ora
+│                            usano la card di base)
+├─ CalendarDetail.tsx/.css   pagina: Mese / Settimana / Giorno (l'ultima vista in meta), filtri, evento rapido,
+│                            pannello; legge l'intento "calendar" (openView / new) delle card
+├─ CalendarWatchProvider.tsx sempre montato: hooks/useCalendarWatch.ts manda i promemoria (solo con l'app aperta,
+│                            recupero all'apertura con `calendar_reminders_checked_at` in meta), i momenti per il
+│                            Companion (calendarSoon, plannedStudyMissed, plannedStudyDone, calendarReminder) e fa
+│                            rileggere tutto quando il sync porta tipi `calendar_*`
+├─ views/                    MonthView, TimeGrid (settimana e giorno: trascina per creare/spostare/allungare),
+│                            DaySidebar, filters.ts
+├─ panel/                    EventPanel (pannello laterale) + editor: ripetizione, promemoria, categoria, colore,
+│                            proprietà personalizzate, cose da fare, sessioni collegate
+├─ components/               ItemChip, KindMark (le forme), QuickEventPopover, MonthPicker, NotePicker…
+├─ card/ + mini/             card 1×1, 2×1, 2×2 e il mini dell'intestazione
+├─ hooks/useCalendarData.ts  dati di un intervallo (occorrenze, note, materie, studio fatto)
+├─ data/                     calendarRepository.ts (TUTTO l'SQL, tabelle delle migrazioni 32–33),
+│                            occurrenceOps.ts (serie: "solo questa / tutte"), calendarChanges.ts (rilettura)
+└─ lib/                      logica PURA con orologio iniettato (prova scripts/calendar/calendar.test.mts):
+                             dates, recurrence (regola + eccezioni, cambio d'ora), monthLayout, weekLayout,
+                             studyProgress (pianificato contro fatto, ±30 min), reminders, cues, format, serialize
+```
+
+- Niente import di `study` o `notes`: materie e studio fatto da `core/study/studyReadRepository.ts` (colori da
+  `core/study/subjectColors.ts`), titoli delle note da `core/notes/noteRefsRepository.ts`. Aprire una nota o il timer
+  con la materia pronta (evidenziata, non parte da sola) passa dagli intenti di `core/nav/intents.ts`
+  (`requestWidgetIntent` + `openWidgetDetail`). Lo Studio pubblica `studySubjectId` sul bus per lo stato "in corso".
+- Serie: `repeat` (JSON) con `exdates`; "solo questa" = riga con `series_id` + `original_start`. Promemoria fatti:
+  `done` (JSON degli inizi delle occorrenze). Nei JSON nessun id locale (proprietà per `uid`, istanti): il sync
+  (migrazione 34) traduce solo le colonne di riferimento.
+- Notifiche: tipo `calendarReminder`, firmate da Pixy, solo sul desktop (su Android per ora non si pianifica nulla).
+  Pigmento Opaco: `malva`. Telefono: il dettaglio mostra solo la vista Giorno.
+
 ## File Transfer (`widgets/filetransfer/`)
 
 Riceve file dall'iPad via Wi-Fi: il PC avvia un piccolo server HTTP, l'iPad apre l'indirizzo

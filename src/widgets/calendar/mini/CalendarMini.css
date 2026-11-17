@@ -1,0 +1,81 @@
+/* Mini del Calendario nell'intestazione (mockup: riquadro 46 × 46 con mese e giorno, poi due righe di testo). */
+
+.cal-mini {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  height: 56px;
+  color: var(--text-primary);
+}
+
+.cal-mini-box {
+  flex: none;
+  box-sizing: border-box;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  border: var(--panel-border);
+  border-radius: 14px;
+  background: var(--panel-bg);
+}
+
+.cal-mini-month {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.cal-mini-day {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-mini-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cal-mini-title,
+.cal-mini-when {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-mini-title {
+  font-size: 13px;
+}
+
+.cal-mini-when {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+:root[data-theme="opaco"] .cal-mini-box {
+  border-radius: 999px;
+}
+
+:root[data-theme="opaco"] .cal-mini-day {
+  font-weight: 800;
+}
+
+:root[data-theme="quaderno"] .cal-mini-day {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+:root[data-theme="fosforo"] .cal-mini-month {
+  text-transform: uppercase;
+}
+
+:root[data-theme="fosforo"] .cal-mini-day {
+  color: var(--accent);
+}

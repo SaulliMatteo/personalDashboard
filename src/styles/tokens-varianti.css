@@ -142,6 +142,13 @@
   --field-bg: #F4F6FB;
   --field-border: 1px solid #DCE2EE;
   --field-focus: 1px solid #3B57D6;
+
+  /* Calendario (la variante giorno non ha un mockup: chiari come le card). */
+  --cal-head-bg: #E4E9F4;
+  --cal-cell-bg: #FFFFFF;
+  --cal-cell-out-bg: #F2F4F9;
+  --cal-cell-today-bg: #F4F6FB;
+  --cal-hour-line: #E8ECF4;
   --field-error: 1px solid #C2413A;
   --modal-title-weight: 400;
 

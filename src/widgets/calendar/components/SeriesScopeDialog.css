@@ -1,0 +1,58 @@
+/* Domanda "Solo questa / Tutte" sopra il calendario (sopra anche l'evento rapido). */
+
+.cal-scope-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay);
+}
+
+.cal-scope {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+  padding: 20px;
+  background: var(--modal-bg);
+  border: var(--modal-border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-pop);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+}
+
+.cal-scope h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.cal-scope-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cal-scope-actions > * {
+  flex: 1;
+}
+
+.cal-scope-cancel {
+  all: unset;
+  align-self: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.cal-scope-cancel:hover {
+  color: var(--text-primary);
+}
+
+.cal-scope-cancel:focus-visible {
+  outline: var(--focus-ring);
+}

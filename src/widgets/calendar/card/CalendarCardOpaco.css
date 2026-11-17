@@ -1,0 +1,77 @@
+/* Calendario in Opaco (proposta "Altri temi"): dentro il pigmento (malva) tutto è inchiostro su colore pieno. */
+
+.calt--opaco .calt-title {
+  font-family: var(--font-display);
+  font-size: min(30px, 8cqh);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.calt--opaco .calt-views {
+  border-radius: 999px;
+  background: var(--cal-seg-bg);
+}
+
+.calt--opaco .calt-views button {
+  border-radius: 999px;
+  color: var(--text-primary);
+}
+
+.calt--opaco .calt-views button.active {
+  background: var(--cal-seg-on-bg);
+  color: var(--cal-seg-on-fg);
+}
+
+.calt--opaco .calt-week {
+  font-weight: 600;
+}
+
+.calt--opaco .calt-weekday-n--today {
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.calt--opaco .calt-weekday--busy .calt-weekday-n:not(.calt-weekday-n--today) {
+  text-decoration: underline 2px;
+  text-underline-offset: 3px;
+}
+
+.calt--opaco .calt-item {
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--cal-event-bg);
+  font-weight: 500;
+}
+
+.calt--opaco .calt-mark {
+  --item: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.calt--opaco .calt-item--note {
+  border: 1.5px dashed var(--text-primary);
+  background: transparent;
+}
+
+.calt--opaco .calt-new {
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* 1×1 e 2×1 (card di base): righe a pillola, come la 2×2. */
+:root[data-theme="opaco"] .calc--W .cal-agenda-row {
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--cal-event-bg);
+}
+
+:root[data-theme="opaco"] .calc--W .calc-list {
+  gap: 6px;
+}
+
+:root[data-theme="opaco"] .calc--W .calc-hline,
+:root[data-theme="opaco"] .calc--W .calc-vline {
+  display: none;
+}

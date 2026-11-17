@@ -585,4 +585,134 @@ await test("Tempo allo schermo: i minuti del PC arrivano al telefono col suo dis
   assert.equal(server.ofKind("screen_usage").length, 2);
 });
 
+// ---------------------------------------------------------------- Calendario
+
+/**
+ * Un calendario con tutti i riferimenti: categoria, proprietà (valori per uid), serie settimanale con un'eccezione
+ * "solo questa", sessione di studio collegata a un evento, promemoria spuntato, note collegate a un giorno e a un evento.
+ */
+function calendar(d: Device) {
+  const subject = d.subject("Analisi");
+  const note = Number(d.sql(`INSERT INTO notes (folder_id, title, created_at, updated_at) VALUES (NULL, 'Appunti', 1, 1)`).lastInsertRowid);
+  const cat = Number(d.sql(`INSERT INTO calendar_categories (name, color, position, created_at) VALUES ('Uni', '#5B8DEF', 0, 1)`).lastInsertRowid);
+  d.sql(`INSERT INTO calendar_properties (uid, name, type, options, position) VALUES ('p-aula', 'Aula', 'text', '[]', 0)`);
+  const ev = (kind: string, title: string, start: number, end: number, extra: Record<string, string | number | null> = {}) => {
+    const cols = ["kind", "title", "start_at", "end_at", "created_at", "updated_at", ...Object.keys(extra)];
+    const vals = [kind, title, start, end, 1, 1, ...Object.values(extra)];
+    return Number(d.sql(`INSERT INTO calendar_events (${cols.join(", ")}) VALUES (${cols.map(() => "?").join(", ")})`, ...vals).lastInsertRowid);
+  };
+  const exam = ev("event", "Esame", 10_000, 20_000, { category_id: cat, props: JSON.stringify({ "p-aula": "B2" }), reminders: '[{"type":"offset","minutes":10}]' });
+  const series = ev("event", "Lezione", 100_000, 110_000, { repeat: JSON.stringify({ freq: "week", interval: 1, weekdays: 0, until: null, count: null, exdates: [704_900_000] }) });
+  ev("event", "Lezione spostata", 705_000_000, 705_010_000, { series_id: series, original_start: 704_900_000 });
+  ev("study", "", 30_000, 40_000, { subject_id: subject, parent_id: exam });
+  ev("reminder", "Medicina", 50_000, 50_000, { description: "Una pastiglia", done: "[50000]" });
+  d.sql(`INSERT INTO calendar_note_links (note_id, day, event_id, created_at) VALUES (?, '2026-11-17', NULL, 1)`, note);
+  d.sql(`INSERT INTO calendar_note_links (note_id, day, event_id, created_at) VALUES (?, NULL, ?, 1)`, note, exam);
+  return { exam, series };
+}
+
+/** Il calendario come lo vede l'utente: gli id locali risolti in nomi. */
+function readCalendar(d: Device) {
+  type E = Record<string, unknown> & { id: number };
+  const events = d.all<E>(`SELECT * FROM calendar_events ORDER BY start_at`);
+  const title = (id: unknown) => events.find((e) => e.id === id)?.title ?? null;
+  const name = (table: string, id: unknown) =>
+    id === null ? null : (d.all<{ name: string }>(`SELECT name FROM ${table} WHERE id = ?`, id as number)[0]?.name ?? "?");
+  return {
+    categories: d.all(`SELECT name, color FROM calendar_categories`),
+    properties: d.all(`SELECT uid, name, type FROM calendar_properties`),
+    events: events.map((e) => ({
+      kind: e.kind,
+      title: e.title,
+      start: e.start_at,
+      end: e.end_at,
+      category: name("calendar_categories", e.category_id),
+      subject: name("subjects", e.subject_id),
+      parent: e.parent_id === null ? null : title(e.parent_id),
+      series: e.series_id === null ? null : title(e.series_id),
+      original: e.original_start,
+      repeat: e.repeat,
+      reminders: e.reminders,
+      props: e.props,
+      description: e.description,
+      done: e.done,
+    })),
+    links: d
+      .all<{ note: string; day: string | null; event_id: number | null }>(
+        `SELECT n.title AS note, l.day, l.event_id FROM calendar_note_links l JOIN notes n ON n.id = l.note_id ORDER BY l.day IS NULL`
+      )
+      .map((l) => ({ note: l.note, day: l.day, event: l.event_id === null ? null : title(l.event_id) })),
+  };
+}
+
+const ALL_TABLES = ALL.map((k) => specOf(k).table);
+
+await test("Calendario: elementi, serie con eccezione, sessione collegata, promemoria e note arrivano tradotti", async () => {
+  const { server, pc, phone } = pair();
+  calendar(pc);
+  await pc.repo.enqueueAll(ALL_TABLES, 1);
+  await pc.round(false, ALL);
+  assert.equal(server.ofKind("calendar_event").length, 5);
+  assert.equal(server.ofKind("calendar_note").length, 2);
+  // nel cloud nessun id locale: i riferimenti sono id globali
+  const study = server.ofKind("calendar_event").find((r) => r.data?.kind === "study");
+  assert.equal(typeof study?.data?.parent_id, "string");
+  assert.equal(typeof study?.data?.subject_id, "string");
+
+  await phone.round(false, ALL);
+  const seen = readCalendar(phone);
+  assert.deepEqual(seen, readCalendar(pc));
+  assert.equal(seen.events.find((e) => e.title === "Lezione spostata")?.series, "Lezione");
+  assert.equal(seen.events.find((e) => e.kind === "study")?.parent, "Esame");
+  assert.deepEqual(seen.links.map((l) => [l.note, l.day, l.event]), [["Appunti", "2026-11-17", null], ["Appunti", null, "Esame"]]);
+  assert.equal(phone.outboxCount(), 0);
+});
+
+await test("Calendario: modifica e cancellazione (con eccezioni e note collegate) arrivano sull'altro", async () => {
+  const { pc, phone } = pair();
+  const { exam, series } = calendar(pc);
+  await pc.repo.enqueueAll(ALL_TABLES, 1);
+  await pc.round(false, ALL);
+  await phone.round(false, ALL);
+
+  // sul PC: l'esame cambia ora; la serie si elimina come fa calendarRepository.deleteEvent
+  pc.sql(`UPDATE calendar_events SET start_at = 12000, end_at = 22000, updated_at = 2 WHERE id = ?`, exam);
+  pc.sql(`DELETE FROM calendar_events WHERE id = ? OR series_id = ?`, series, series);
+  await pc.round(false, ALL);
+  await phone.round(false, ALL);
+  const seen = readCalendar(phone);
+  assert.deepEqual(seen, readCalendar(pc));
+  assert.equal(seen.events.find((e) => e.title === "Esame")?.start, 12_000);
+  assert.equal(seen.events.some((e) => String(e.title).startsWith("Lezione")), false);
+
+  // sul telefono: elimina l'esame (scollega la sessione, toglie le sue note) → sul PC la sessione resta, senza padre
+  const phoneExam = phone.all<{ id: number }>(`SELECT id FROM calendar_events WHERE title = 'Esame'`)[0].id;
+  phone.sql(`UPDATE calendar_events SET parent_id = NULL WHERE parent_id = ?`, phoneExam);
+  phone.sql(`DELETE FROM calendar_note_links WHERE event_id = ?`, phoneExam);
+  phone.sql(`DELETE FROM calendar_events WHERE id = ?`, phoneExam);
+  await phone.round(false, ALL);
+  await pc.round(false, ALL);
+  const pcSeen = readCalendar(pc);
+  assert.deepEqual(pcSeen, readCalendar(phone));
+  assert.deepEqual(pcSeen.events.map((e) => [e.kind, e.parent]), [["study", null], ["reminder", null]]);
+  assert.deepEqual(pcSeen.links.map((l) => l.day), ["2026-11-17"]);
+});
+
+await test("Calendario: Unisci con una copia dello stesso calendario non duplica niente", async () => {
+  const { server, pc, phone } = pair();
+  calendar(pc);
+  calendar(phone);
+  await pc.repo.enqueueAll(ALL_TABLES, 1);
+  await pc.round(false, ALL);
+  await phone.repo.enqueueAll(ALL_TABLES, 0);
+  await phone.round(true, ALL);
+  await pc.round(false, ALL);
+  assert.deepEqual(readCalendar(phone), readCalendar(pc));
+  assert.equal(server.ofKind("calendar_event").length, 5);
+  assert.equal(server.ofKind("calendar_category").length, 1);
+  assert.equal(server.ofKind("calendar_property").length, 1);
+  assert.equal(server.ofKind("calendar_note").length, 2);
+  assert.equal(phone.all(`SELECT * FROM calendar_events`).length, 5);
+});
+
 console.log(`OK: ${passed} prove superate`);

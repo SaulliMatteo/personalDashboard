@@ -1,0 +1,582 @@
+/* Viste Settimana e Giorno (mockup docs/design/calendario/calendario.html): colonna delle ore 56 px, righe di
+   --hour-px (46 settimana, 64 giorno), blocchi posizionati in px dalla mezzanotte. */
+
+.cal-tg {
+  flex: 1;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--cal-line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: var(--cal-cell-bg);
+}
+
+.cal-tg-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.cal-tg-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.cal-tg-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: 8px;
+}
+
+.cal-tg-row {
+  display: grid;
+  grid-template-columns: 56px repeat(var(--cols), minmax(0, 1fr));
+}
+
+/* Giorni e riga "giorno" restano in cima mentre le ore scorrono (dentro lo stesso scroll: colonne allineate). */
+.cal-tg-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--cal-cell-bg);
+}
+
+.cal-tg-days {
+  height: 54px;
+  background: var(--cal-head-bg);
+  border-bottom: 1px solid var(--cal-line);
+}
+
+.cal-tg-dayhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 0 12px;
+  border-left: 1px solid var(--cal-line);
+}
+
+.cal-tg-dayname {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.cal-tg-daynum {
+  font-size: 20px;
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.cal-tg-dayhead--today .cal-tg-dayname {
+  color: var(--accent);
+}
+
+.cal-tg-daynum--today {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cal-tg-allday {
+  min-height: 32px;
+  border-bottom: 1px solid var(--cal-line);
+}
+
+.cal-tg-allday-label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.cal-tg-allday-cell {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 6px 5px 4px;
+  border-left: 1px solid var(--cal-line);
+}
+
+.cal-tg-allday-cell > .cal-chip {
+  flex: none;
+  height: 21px;
+  line-height: 21px;
+}
+
+.cal-tg-allday-cell > .cal-chip--note {
+  line-height: 19px;
+}
+
+/* Giorno: la riga "giorno" è una fila di chip (44 px), come nel mockup. */
+.cal-tg--day .cal-tg-allday {
+  min-height: 44px;
+  background: var(--cal-head-bg);
+}
+
+.cal-tg--day .cal-tg-allday-cell {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.cal-tg--day .cal-tg-allday-cell > .cal-chip {
+  height: 24px;
+  line-height: 24px;
+  padding: 0 9px;
+  font-size: 12px;
+}
+
+.cal-tg--day .cal-tg-allday-cell > .cal-chip--note {
+  line-height: 22px;
+}
+
+/* ---------- Ore ---------- */
+
+.cal-tg-body {
+  height: calc(24 * var(--hour-px));
+}
+
+.cal-tg-hours {
+  position: relative;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ogni etichetta è centrata in altezza sulla linea della sua ora (la linea è in cima alla fascia dell'ora). */
+.cal-tg-hour {
+  position: relative;
+  height: var(--hour-px);
+}
+
+.cal-tg-hour > span {
+  position: absolute;
+  top: 0;
+  right: 8px;
+  line-height: 16px;
+  transform: translateY(-50%);
+}
+
+.cal-tg-now-pill {
+  position: absolute;
+  right: 4px;
+  z-index: 3;
+  height: 16px;
+  line-height: 16px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: var(--cal-now);
+  color: var(--bg);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.cal-tg-col {
+  position: relative;
+  min-width: 0;
+  border-left: 1px solid var(--cal-line);
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--cal-hour-line) 0,
+    var(--cal-hour-line) 1px,
+    transparent 1px,
+    transparent var(--hour-px)
+  );
+  touch-action: pan-y;
+}
+
+.cal-tg-col--today {
+  background-color: var(--cal-today-col);
+}
+
+.cal-tg-allday-cell.cal-tg-col--today {
+  background: var(--cal-today-col);
+}
+
+.cal-tg-now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: 2px;
+  background: var(--cal-now);
+  pointer-events: none;
+}
+
+/* ---------- Blocchi ---------- */
+
+.cal-block {
+  position: absolute;
+  z-index: 1;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: var(--cal-block-radius);
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.cal-block-body {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  padding: 4px 8px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.cal-block-body:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+  border-radius: inherit;
+}
+
+.cal-block-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-block-line {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-block--event {
+  border: var(--cal-block-border);
+  background: var(--cal-event-bg);
+  color: var(--text-primary);
+}
+
+.cal-block--event .cal-block-line {
+  color: var(--text-secondary);
+}
+
+.cal-block--study {
+  --item: var(--accent);
+  background: color-mix(in srgb, var(--item) 16%, var(--cal-cell-bg));
+  color: color-mix(in srgb, var(--item) var(--cal-tint), var(--text-primary));
+}
+
+.cal-block--study .cal-block-body {
+  padding: 5px 8px;
+}
+
+.cal-block--running {
+  background: color-mix(in srgb, var(--item) 22%, var(--cal-cell-bg));
+}
+
+.cal-block--missed {
+  opacity: 0.6;
+}
+
+/* Promemoria: un'ora sola. La riga in alto è l'ora esatta; sotto, il nome con la campanella. */
+.cal-block--reminder {
+  border-top: 2px solid var(--item, var(--accent));
+  border-radius: 0 0 var(--cal-block-radius) var(--cal-block-radius);
+  background: color-mix(in srgb, var(--item, var(--accent)) 10%, var(--cal-cell-bg));
+  color: var(--text-primary);
+}
+
+.cal-block--reminder .cal-block-body {
+  padding: 2px 8px;
+}
+
+.cal-block--reminder .cal-mark--reminder {
+  vertical-align: -1px;
+}
+
+.cal-block--done {
+  opacity: 0.6;
+}
+
+.cal-block--done .cal-block-title {
+  text-decoration: line-through;
+}
+
+.cal-block--short .cal-block-line,
+.cal-block--short .cal-block-pill {
+  display: none;
+}
+
+.cal-block .cal-mark--study {
+  vertical-align: 0;
+}
+
+.cal-block-resize {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.cal-block--moving {
+  opacity: 0.35;
+}
+
+.cal-block--ghost {
+  z-index: 4;
+  opacity: 0.85;
+  pointer-events: none;
+  box-shadow: 0 0 0 1.5px var(--accent), var(--shadow-pop);
+}
+
+.cal-block--draft {
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px;
+  border: 1.5px dashed var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  color: color-mix(in srgb, var(--accent) var(--cal-tint), var(--text-primary));
+  pointer-events: none;
+}
+
+.cal-block--draft b {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ---------- Giorno: blocchi più grandi (64 px per ora) ---------- */
+
+.cal-block--day {
+  border-radius: calc(var(--cal-block-radius) + 2px);
+}
+
+.cal-block--day .cal-block-body {
+  gap: 3px;
+  padding: 10px 14px;
+}
+
+.cal-block--day .cal-block-title {
+  font-size: 15px;
+  line-height: 20px;
+}
+
+.cal-block--day {
+  container-type: inline-size;
+}
+
+.cal-block-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cal-block-head .cal-block-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.cal-block-status-inline {
+  display: none;
+}
+
+/* Blocco stretto (più elementi affiancati): niente pillola, lo stato va nella riga sotto. */
+@container (max-width: 320px) {
+  .cal-block-head .cal-block-pill {
+    display: none;
+  }
+
+  .cal-block-status-inline {
+    display: inline;
+  }
+}
+
+.cal-block--day .cal-block-line {
+  font-size: 12.5px;
+  line-height: 18px;
+}
+
+.cal-block--day .cal-mark {
+  margin-right: 8px;
+}
+
+.cal-block--day .cal-mark--study {
+  width: 10px;
+  height: 10px;
+  border-width: 2px;
+}
+
+.cal-block--day .cal-mark--event {
+  width: 8px;
+  height: 8px;
+}
+
+.cal-block--day.cal-block--short .cal-block-body {
+  padding: 2px 14px;
+}
+
+.cal-block-pill {
+  flex: none;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 22px;
+  line-height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--item) 22%, transparent);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cal-block-pill--on {
+  background: var(--item);
+  color: var(--bg);
+}
+
+/* ---------- Temi ---------- */
+
+:root[data-theme="fosforo"] .cal-tg-dayname,
+:root[data-theme="fosforo"] .cal-tg-allday-label {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+:root[data-theme="quaderno"] .cal-tg-daynum--today {
+  padding: 0 8px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent);
+  transform: rotate(-6deg);
+}
+
+:root[data-theme="opaco"] .cal-block--study {
+  background: color-mix(in srgb, var(--item) 22%, var(--cal-event-bg));
+  color: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .cal-block--study .cal-mark--study,
+:root[data-theme="opaco"] .cal-block-pill--on {
+  color: var(--text-primary);
+}
+
+:root[data-theme="opaco"] .cal-block-pill--on {
+  background: var(--cal-event-bg);
+}
+
+/* ---------- Elementi sovrapposti ---------- */
+
+.cal-block--week {
+  container-type: inline-size;
+}
+
+/* Blocco molto stretto: il nome va a capo (fin dove c'è posto) invece di tagliarsi, gli orari si tolgono. */
+@container (max-width: 96px) {
+  .cal-block--week .cal-block-body {
+    padding: 4px 5px;
+  }
+
+  .cal-block--week .cal-block-title {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 11px;
+    line-height: 14px;
+  }
+
+  .cal-block--week .cal-block-line {
+    display: none;
+  }
+
+  .cal-block--week .cal-mark {
+    margin-right: 4px;
+  }
+}
+
+/* "+N" della Settimana: dal terzo elemento alla stessa ora (apre il giorno). Sopra l'angolo del secondo blocco. */
+.cal-tg-more {
+  all: unset;
+  position: absolute;
+  right: 8px;
+  z-index: 2;
+  box-sizing: border-box;
+  min-width: 26px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 0 0 2px var(--cal-cell-bg);
+}
+
+.cal-tg-more:hover {
+  filter: brightness(1.08);
+}
+
+.cal-tg-more:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Note collegate dentro un blocco della vista Giorno (mockup: "Limiti e derivate" sotto l'orario). */
+.cal-block-notes {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 60px;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  overflow: hidden;
+  max-height: calc(100% - 66px);
+}
+
+.cal-block-notes .cal-chip {
+  height: 22px;
+  line-height: 20px;
+  color: inherit;
+  border-color: color-mix(in srgb, currentColor 60%, transparent);
+}
+
+/* "+ Aggiungi" nella riga "giorno" della vista Giorno (collega una nota al giorno). */
+.cal-tg-addnote {
+  all: unset;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.cal-tg-addnote:hover {
+  color: var(--text-primary);
+  background: var(--surface-1);
+}
+
+.cal-tg-addnote:focus-visible {
+  outline: var(--focus-ring);
+}

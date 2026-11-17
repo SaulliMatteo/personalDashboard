@@ -1,0 +1,229 @@
+/* Colonna destra della vista Giorno (mockup: 316 px, tre card nello stile delle card del tema). */
+
+.cal-side {
+  width: 316px;
+  flex: none;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cal-side-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  background: var(--card-bg);
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--card-shadow);
+  color: var(--text-primary);
+}
+
+.cal-side-card h2 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.cal-side-session {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cal-side-session > div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cal-side-ring-track {
+  fill: none;
+  stroke: var(--track);
+  stroke-width: 4;
+}
+
+.cal-side-ring {
+  fill: none;
+  stroke: var(--item, var(--accent));
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.cal-side-big {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.cal-side-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.cal-side-wide {
+  width: 100%;
+}
+
+.cal-side-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.cal-side-row {
+  all: unset;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.cal-side-row:focus-visible,
+.cal-side-note:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.cal-side-time {
+  flex: none;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-side-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-side-row .cal-mark {
+  margin-right: -2px;
+}
+
+.cal-side-row .cal-mark--study {
+  color: var(--item, var(--accent));
+}
+
+.cal-side-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cal-side-tag {
+  height: 24px;
+  line-height: 24px;
+  padding: 0 9px;
+  border-radius: 7px;
+  background: var(--cal-event-bg);
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.cal-side-note {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: var(--panel-border);
+  border-radius: var(--radius-panel);
+  background: var(--panel-bg);
+  cursor: pointer;
+}
+
+.cal-side-note-icon {
+  flex: none;
+  box-sizing: border-box;
+  width: 14px;
+  height: 18px;
+  border: 1.5px solid var(--text-soft);
+  border-radius: 3px;
+}
+
+.cal-side-note-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: 13.5px;
+}
+
+.cal-side-note-text > span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-side-note-text .cal-side-sub {
+  font-size: 12px;
+}
+
+:root[data-theme="quaderno"] .cal-side-card {
+  transform: var(--card-transform, none);
+}
+
+:root[data-theme="fosforo"] .cal-side-card h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cal-side-note-row {
+  position: relative;
+  display: flex;
+}
+
+.cal-side-note-row .cal-side-note {
+  flex: 1;
+  min-width: 0;
+}
+
+.cal-side-note-remove {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  visibility: hidden;
+}
+
+.cal-side-note-row:hover .cal-side-note-remove,
+.cal-side-note-row:focus-within .cal-side-note-remove {
+  visibility: visible;
+}
+
+@media (hover: none) {
+  .cal-side-note-remove {
+    visibility: visible;
+  }
+}
+
+/* "+ Collega una nota" (mockup): riquadro tratteggiato. */
+.cal-side-link {
+  all: unset;
+  box-sizing: border-box;
+  height: 34px;
+  border: 1px dashed var(--btn-ghost-fg);
+  border-color: color-mix(in srgb, var(--text-secondary) 45%, transparent);
+  border-radius: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.cal-side-link:hover {
+  color: var(--text-primary);
+}
+
+.cal-side-link:focus-visible {
+  outline: var(--focus-ring);
+}

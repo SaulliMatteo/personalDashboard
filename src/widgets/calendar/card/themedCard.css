@@ -1,0 +1,171 @@
+/* Struttura comune delle card 2×2 di Opaco, Quaderno e Fosforo (mockup, tavola "Altri temi"): intestazione,
+   settimana, elenco, "+ Nuovo". L'aspetto lo dà il CSS di ogni tema. In celle basse si tolgono prima "+ Nuovo",
+   poi le righe in più, poi la settimana: niente si taglia a metà. */
+
+.widget.calt {
+  container-type: size;
+  display: flex;
+  flex-direction: column;
+  gap: min(12px, 2.6cqh);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+}
+
+.calt-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  height: 40px;
+}
+
+.calt-title {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1;
+}
+
+.calt-views {
+  flex: none;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+}
+
+.calt-views button {
+  all: unset;
+  box-sizing: border-box;
+  height: 26px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 26px;
+  cursor: pointer;
+}
+
+.calt-views button:focus-visible,
+.calt-new:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.calt-week {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  height: 46px;
+  text-align: center;
+}
+
+.calt-weekday {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.calt-weekday-l {
+  font-size: 11px;
+}
+
+.calt-weekday-n {
+  display: inline-block;
+  min-width: 28px;
+  font-size: 15px;
+  line-height: 28px;
+  font-variant-numeric: tabular-nums;
+}
+
+.calt-items {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calt-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  height: 34px;
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+.calt-item-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calt-item-right {
+  flex: none;
+  white-space: nowrap;
+}
+
+.calt-mark {
+  margin: 0;
+}
+
+.calt .cal-mark--event {
+  width: 8px;
+  height: 8px;
+  vertical-align: 0;
+}
+
+.calt .cal-mark--study {
+  width: 10px;
+  height: 10px;
+  border-width: 2px;
+}
+
+.calt .cal-mark--note {
+  width: 8px;
+  height: 10px;
+}
+
+.calt-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.calt-new {
+  all: unset;
+  box-sizing: border-box;
+  margin-top: auto;
+  align-self: flex-start;
+  height: 36px;
+  padding: 0 18px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 36px;
+  cursor: pointer;
+}
+
+@container (max-height: 330px) {
+  .calt-new {
+    display: none;
+  }
+}
+
+@container (max-height: 290px) {
+  .calt-items > :nth-child(n + 3) {
+    display: none;
+  }
+}
+
+@container (max-height: 230px) {
+  .calt-week {
+    display: none;
+  }
+}

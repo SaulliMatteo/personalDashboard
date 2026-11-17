@@ -131,6 +131,47 @@
   --pixy-lens-l: transparent;
   --pixy-lens-r: transparent;
   --pixy-mask: transparent;
+  /* Calendario (widgets/calendar, mockup docs/design/calendario/): valori derivati, ritoccati per tema sotto. */
+  --cal-line: var(--divider);
+  --cal-head-bg: var(--surface-3);
+  --cal-cell-bg: color-mix(in srgb, var(--surface-2) 70%, var(--bg));
+  --cal-cell-out-bg: color-mix(in srgb, var(--surface-2) 25%, var(--bg));
+  --cal-cell-today-bg: var(--surface-2);
+  --cal-hour-line: color-mix(in srgb, var(--divider) 70%, transparent);
+  --cal-today-col: color-mix(in srgb, var(--accent) 5%, transparent);
+  --cal-note-border: var(--tick-off-long);
+  --cal-now: var(--text-primary);
+  --cal-event-bg: var(--surface-3);
+  --cal-event-border: 0;
+  --cal-chip-radius: 6px;
+  --cal-filter-off-bg: transparent;
+  --cal-filter-on-bg: var(--row-active-bg);
+  --cal-filter-on-fg: var(--text-primary);
+  --cal-seg-bg: var(--surface-1);
+  --cal-seg-border: 0;
+  --cal-seg-on-bg: var(--accent-soft);
+  --cal-seg-on-fg: var(--accent);
+  --cal-seg-radius: var(--radius-item);
+  --cal-seg-item-radius: 6px;
+  /* Quanto colore della materia nel testo sui fondi colorati (il resto è --text-primary). */
+  --cal-tint: 70%;
+  /* Blocchi delle viste a ore. */
+  --cal-block-border: 1px solid var(--row-active-border);
+  --cal-block-radius: 10px;
+  /* Linee dentro le card del Calendario (agenda del 2×1 e 2×2): più visibili di --divider sul fondo della card. */
+  --cal-card-line: var(--divider);
+}
+
+/* Nelle varianti chiare il testo colorato tende all'inchiostro, altrimenti i pastelli non si leggono. */
+:root[data-mode="giorno"] {
+  --cal-tint: 45%;
+}
+
+/* Varianti notte (tutti i temi): le linee dentro le card del Calendario tirano verso il colore del testo, così
+   contrastano col fondo scuro. Anche sui blocchi col pigmento (Opaco), che ridefiniscono --text-primary. */
+:root[data-mode="notte"],
+:root[data-mode="notte"] [data-pigment] {
+  --cal-card-line: color-mix(in srgb, var(--text-primary) 26%, transparent);
 }
 
 /* ==========================================================================
@@ -271,6 +312,13 @@
   --field-bg: #0B0F1C;
   --field-border: 1px solid #182036;
   --field-focus: 1px solid rgba(142, 166, 255, 0.55);
+
+  /* Calendario: i fondi delle celle del mockup (docs/design/calendario/calendario.html). */
+  --cal-head-bg: #1C2440;
+  --cal-cell-bg: #10152A;
+  --cal-cell-out-bg: #0C1020;
+  --cal-cell-today-bg: #151B2E;
+  --cal-hour-line: #1A2137;
   --field-error: 1px solid rgba(240, 138, 138, 0.55);
   --modal-title-weight: 400;
 
@@ -1706,4 +1754,98 @@
   --nq-mark-arancio: #FF9A2E;
   --nq-mark-viola: #A77BFF;
   --nq-mark-strength: 48%;
+}
+
+/* ==========================================================================
+   CALENDARIO per tema (widgets/calendar). Il mockup è solo Notte: qui gli altri temi prendono i loro colori e le
+   loro forme. Tutti i valori sono derivati dai token del tema, quindi valgono anche per la variante giorno/notte
+   (tokens-varianti.css ridefinisce i token di partenza); Notte ha i valori esatti del mockup nel suo blocco.
+   ========================================================================== */
+
+:root[data-theme="opaco"] {
+  --cal-line: var(--divider);
+  --cal-head-bg: var(--surface-3);
+  --cal-cell-bg: var(--card-bg);
+  --cal-cell-out-bg: var(--bg);
+  --cal-cell-today-bg: var(--surface-2);
+  --cal-hour-line: color-mix(in srgb, var(--divider) 60%, transparent);
+  --cal-today-col: color-mix(in srgb, var(--text-primary) 5%, transparent);
+  --cal-note-border: var(--text-secondary);
+  --cal-event-bg: var(--surface-2);
+  --cal-chip-radius: 999px;
+  --cal-block-radius: 16px;
+  --cal-filter-off-bg: var(--surface-2);
+  --cal-filter-on-bg: var(--text-primary);
+  --cal-filter-on-fg: var(--on-accent);
+  --cal-seg-bg: var(--surface-2);
+  --cal-seg-on-bg: var(--text-primary);
+  --cal-seg-on-fg: var(--on-accent);
+  --cal-seg-radius: 999px;
+  --cal-seg-item-radius: 999px;
+}
+
+/* Pagina e card del Calendario in Opaco: il pigmento (malva) colora tutto, come nella proposta del mockup. */
+:root[data-theme="opaco"] [data-pigment] {
+  --cal-line: var(--pg-dark);
+  --cal-head-bg: var(--pg-dark);
+  --cal-cell-bg: var(--pg-bg);
+  --cal-cell-out-bg: color-mix(in srgb, var(--pg-mid) 70%, var(--pg-dark));
+  --cal-cell-today-bg: var(--pg-light);
+  --cal-hour-line: color-mix(in srgb, var(--pg-dark) 60%, transparent);
+  --cal-today-col: color-mix(in srgb, var(--pg-light) 35%, transparent);
+  --cal-note-border: var(--pg-ink);
+  --cal-now: var(--pg-ink);
+  --cal-event-bg: var(--pg-light);
+  --cal-filter-off-bg: var(--pg-mid);
+  --cal-filter-on-bg: var(--pg-ink);
+  --cal-filter-on-fg: var(--pg-light);
+  --cal-seg-bg: var(--pg-light);
+  --cal-seg-on-bg: var(--pg-ink);
+  --cal-seg-on-fg: var(--pg-light);
+}
+
+:root[data-theme="quaderno"] {
+  --cal-line: var(--divider);
+  --cal-head-bg: var(--surface-3);
+  --cal-cell-bg: var(--card-bg);
+  --cal-cell-out-bg: color-mix(in srgb, var(--surface-2) 55%, var(--card-bg));
+  --cal-cell-today-bg: color-mix(in srgb, var(--accent) 5%, var(--card-bg));
+  --cal-hour-line: var(--divider);
+  --cal-today-col: color-mix(in srgb, var(--accent) 4%, transparent);
+  --cal-note-border: var(--accent);
+  --cal-now: var(--accent);
+  --cal-event-bg: var(--surface-2);
+  --cal-chip-radius: 4px;
+  --cal-block-border: 1px solid var(--divider);
+  --cal-block-radius: 6px;
+  --cal-filter-on-bg: var(--surface-2);
+  --cal-filter-on-fg: var(--accent);
+  --cal-seg-bg: transparent;
+  --cal-seg-border: 1px solid var(--divider);
+  --cal-seg-on-bg: var(--accent);
+  --cal-seg-on-fg: var(--on-accent);
+  --cal-seg-radius: 8px;
+  --cal-seg-item-radius: 6px;
+}
+
+:root[data-theme="fosforo"] {
+  --cal-line: var(--border-subtle);
+  --cal-head-bg: var(--surface-3);
+  --cal-cell-bg: var(--card-bg);
+  --cal-cell-out-bg: var(--field-bg);
+  --cal-cell-today-bg: var(--surface-2);
+  --cal-hour-line: var(--divider);
+  --cal-today-col: var(--surface-1);
+  --cal-note-border: color-mix(in srgb, var(--text-primary) 40%, transparent);
+  --cal-event-bg: transparent;
+  --cal-event-border: 1px solid var(--border-subtle);
+  --cal-chip-radius: 4px;
+  --cal-block-radius: 6px;
+  --cal-filter-on-bg: var(--chip-bg);
+  --cal-filter-on-fg: var(--chip-fg);
+  --cal-seg-bg: transparent;
+  --cal-seg-on-bg: var(--nav-active-bg);
+  --cal-seg-on-fg: var(--on-accent);
+  --cal-seg-radius: 999px;
+  --cal-seg-item-radius: 999px;
 }
