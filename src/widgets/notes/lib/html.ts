@@ -102,12 +102,30 @@ export interface SanitizeOptions {
   source?: "app" | "esterno";
   /** Tiene i segni anche con source "esterno" (testo copiato da una nota e incollato nell'app). */
   bookmarks?: boolean;
+  /**
+   * Solo con source "esterno": i file che arrivano con l'HTML e che scriviamo noi nella cartella della nota (nota
+   * ricevuta da un amico, widgets/notes/chat/). Restano i blocchi immagine/file e i collegamenti ai PDF che rimandano a
+   * uno di questi nomi; tutti gli altri blocchi, le viste, le righe collegate e i segni si tolgono come sempre.
+   */
+  files?: ReadonlySet<string>;
 }
 
 export function sanitizeHtml(html: string, options: SanitizeOptions = {}): string {
   if (!html) return "";
   const external = options.source === "esterno";
   const keepMarkers = !external || options.bookmarks === true;
+  const allowed = external ? options.files : undefined;
+  /** Un blocco immagine/file arrivato da fuori con uno dei file ammessi. */
+  const allowedBlock = (el: Element) => {
+    const kind = el.getAttribute("data-block");
+    const name = asAttachmentName(el.getAttribute("data-attachment"));
+    return allowed !== undefined && (kind === "image" || kind === "file") && name !== null && allowed.has(name);
+  };
+  /** Un collegamento a un PDF che arriva insieme al suo file. */
+  const allowedPdfLink = (el: Element) => {
+    const file = el.getAttribute("data-pdf-file");
+    return allowed !== undefined && file !== null && allowed.has(file.trim());
+  };
   const doc = new DOMParser().parseFromString(html, "text/html");
   doc
     .querySelectorAll(
@@ -142,7 +160,7 @@ export function sanitizeHtml(html: string, options: SanitizeOptions = {}): strin
     // Un blocco non valido o arrivato da fuori diventa un elemento normale (le didascalie restano testo).
     // Il codice no: è solo testo e non rimanda a file della nota.
     const code = el.getAttribute("data-block") === "code" && isValidBlock(el);
-    if ((external && !code) || !isValidBlock(el)) el.removeAttribute("data-block");
+    if ((external && !code && !allowedBlock(el)) || !isValidBlock(el)) el.removeAttribute("data-block");
   });
   doc.body.querySelectorAll("*").forEach((el) => {
     const isBlock = el.hasAttribute("data-block");
@@ -168,7 +186,7 @@ export function sanitizeHtml(html: string, options: SanitizeOptions = {}): strin
         }
       }
       // Collegamenti ai blocchi PDF: id, nome, pagine e file, validati (lib/bookmarks.ts).
-      if (el.tagName === "SPAN" && name.startsWith("data-pdf") && keepMarkers && asBookmarkId(el.getAttribute("data-pdf"))) {
+      if (el.tagName === "SPAN" && name.startsWith("data-pdf") && (keepMarkers || allowedPdfLink(el)) && asBookmarkId(el.getAttribute("data-pdf"))) {
         const kept = pdfLinkAttr(name, attr.value);
         if (kept !== null) {
           if (kept !== attr.value) el.setAttribute(attr.name, kept);

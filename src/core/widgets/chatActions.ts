@@ -11,6 +11,9 @@ import type { Pigment } from "../theme/themes";
 export interface ChatComposeProps {
   /** Nome utente dell'amico (per i testi: "Consiglia un video a …"). */
   friendName: string;
+  /** Il mio id e quello dell'amico (per caricare i file della scheda, core/cloud/friendFilesApi.ts). */
+  myId: string;
+  friendId: string;
   /**
    * Manda la scheda: `payload` è l'oggetto che leggerà `parse`, `comment` la riga facoltativa che va sotto.
    * Restituisce l'id del messaggio; lancia un Error con il messaggio già in italiano.
@@ -25,6 +28,9 @@ export interface ChatCardProps<P> {
   mine: boolean;
   /** Id del messaggio (per ricordare che una scheda è già stata salvata). */
   messageId: string;
+  /** Mittente e destinatario del messaggio, come li ha decisi il server (mai dal payload): dove stanno i suoi file. */
+  senderId: string;
+  recipientId: string;
   friendName: string;
   /** Chiude il pannello degli amici (prima di aprire una pagina). */
   closePanel: () => void;

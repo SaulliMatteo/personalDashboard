@@ -67,7 +67,10 @@ titoli delle finestre non vanno mai nei log né nei messaggi di errore.
   `insertHTML`, `dangerouslySetInnerHTML`) passa prima da `sanitizeHtml` (`widgets/notes/lib/html.ts`): lista chiusa
   di tag e attributi, `href` solo `http(s)`/`mailto`, `style` ridotto a colore e dimensione, niente `img`/`svg`/
   `iframe`/`form`; con `source: "esterno"` (incolla da un'altra app, note ricevute) niente blocchi che rimandano a
-  file. Un attributo nuovo va aggiunto lì con il suo validatore, mai lasciato passare così com'è.
+  file. Unica eccezione, decisa con l'utente: la nota ricevuta da un amico passa `files` (i nomi dei file arrivati con
+  lei, validati con `asAttachmentName`, che scriviamo noi nella cartella nuova della nota), e restano solo i blocchi
+  immagine/file e i collegamenti `data-pdf` che rimandano a uno di quei nomi; viste, righe collegate e segni si tolgono
+  sempre. Un attributo nuovo va aggiunto lì con il suo validatore, mai lasciato passare così com'è.
 - Il codice evidenziato non passa da `innerHTML` (`lib/codeHighlight.ts`); i testi costruiti a mano usano `escapeHtml`
   (`lib/viewExport.ts`).
 - Ciò che arriva da un'altra persona (chat dei Gruppi e degli amici, schede dei widget, presenza) il server non lo
@@ -112,9 +115,10 @@ Regole per ogni migrazione (dettagli e ricetta in `docs/GRUPPI.md` § 3-4 e `doc
   servono; le scritture passano da RPC `SECURITY DEFINER` con `SET search_path = ''`, nomi completi e controllo di
   `auth.uid()`; funzioni interne nello schema `private`, senza `execute` per i client;
 - i dati del sync (`sync_records`, bucket `sync-files`) sono leggibili **solo** dal proprio utente, mai dai compagni
-  di gruppo; i messaggi diretti solo da mittente e destinatario, per 90 giorni;
+  di gruppo; i messaggi diretti solo da mittente e destinatario, per 90 giorni; i file delle schede (bucket
+  `friend-files`) li carica solo il mittente verso un amico, e li leggono e cancellano solo mittente e destinatario;
 - limiti sui tentativi (codici invito e amico, richieste, messaggi) e sulle dimensioni (500 righe per `sync_push`,
-  2 MB per elemento, 50 MB per file);
+  2 MB per elemento, 50 MB per file del sync, 10 MB per file e 200 file per mittente in `friend-files`);
 - mai modificare una migrazione applicata: si aggiunge un file nuovo, con il suo test pgTAP.
 
 Rischi accettati: il tempo di studio è dichiarato dal client (solo limiti di plausibilità); `from` nei messaggi dal

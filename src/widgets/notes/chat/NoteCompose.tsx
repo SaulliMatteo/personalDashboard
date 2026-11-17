@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ChatComposeProps } from "../../../core/widgets/chatActions";
 import { ChatComposeFoot, ChatComposeList, ChatComposeRow, ChatComposeSearch } from "../../../ui/ChatCompose";
-import { getPages, listNotes, type NoteSummary } from "../data/notesRepository";
+import { removeFriendBatch } from "../../../core/cloud/friendFilesApi";
+import { getPages, listNotes, type NotePage, type NoteSummary } from "../data/notesRepository";
 import { relativeWhen } from "../lib/html";
+import { formatBytes } from "../lib/insertFiles";
+import { pdfThumbName } from "../lib/pdf/pdfData";
 import { buildNotePayload } from "./notePayload";
-import { cleanNoteHtml, rememberNote } from "./noteChat";
+import { cleanNoteHtml, readNoteFiles, rememberNote, uploadNoteFiles, type LocalNoteFile } from "./noteChat";
 import "./NoteChat.css";
 
 type Prepared =
   | { state: "none" }
   | { state: "loading"; noteId: number }
-  | { state: "ready"; noteId: number; payload: Record<string, unknown>; note: string | null }
+  | { state: "ready"; noteId: number; payload: Record<string, unknown>; note: string | null; build: (batch: string | null) => Record<string, unknown>; files: LocalNoteFile[] }
   | { state: "error"; noteId: number; message: string };
 
 const normalize = (s: string) =>
@@ -19,12 +22,26 @@ const normalize = (s: string) =>
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase();
 
-/** "Invia una nota" (docs/mockup/gruppi/amici-notifiche.html, vista 5): si sceglie tra le proprie note, si manda una copia. */
-function NoteCompose({ send, onClose }: ChatComposeProps) {
+/** Un lotto finto per provare il payload alla scelta (dimensioni e limiti): quello vero si crea all'invio. */
+const DRAFT_BATCH = "00000000-0000-4000-8000-000000000000";
+
+/** "3 allegati e immagini, 1 PDF · 4,2 MB" (le miniature dei PDF non si contano). */
+function filesSummary(files: readonly LocalNoteFile[], pages: readonly NotePage[]): string {
+  const pdfs = new Set(pages.flatMap((p) => (p.pdf ? [p.pdf.file] : [])));
+  const thumbs = new Set([...pdfs].map(pdfThumbName));
+  const pdfCount = files.filter((f) => pdfs.has(f.name)).length;
+  const others = files.filter((f) => !pdfs.has(f.name) && !thumbs.has(f.name)).length;
+  const parts = [others > 0 && (others === 1 ? "1 allegato o immagine" : `${others} allegati e immagini`), pdfCount > 0 && `${pdfCount} PDF`].filter(Boolean);
+  return `${parts.join(", ")} · ${formatBytes(files.reduce((n, f) => n + f.size, 0))}`;
+}
+
+/** "Invia una nota" (docs/mockup/gruppi/amici-notifiche.html, vista 5): si sceglie tra le proprie note, si manda una copia completa. */
+function NoteCompose({ send, onClose, myId, friendId }: ChatComposeProps) {
   const [notes, setNotes] = useState<NoteSummary[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [prepared, setPrepared] = useState<Prepared>({ state: "none" });
+  const [uploaded, setUploaded] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -51,21 +68,44 @@ function NoteCompose({ send, onClose }: ChatComposeProps) {
     let next: Prepared;
     try {
       const pages = await getPages(note.id);
-      const built = buildNotePayload(note.title, note.titleColor, pages, cleanNoteHtml);
-      next =
-        built.skippedPdf === pages.length
-          ? { state: "error", noteId: note.id, message: "Questa nota ha solo PDF: i file non si mandano." }
-          : {
-              state: "ready",
-              noteId: note.id,
-              payload: built.payload,
-              note: built.skippedPdf > 0 ? "Le pagine con un PDF restano fuori." : null,
-            };
+      const files = await readNoteFiles(note.id, note.diskPath, pages);
+      const list = files.map(({ name, size }) => ({ name, size }));
+      const build = (batch: string | null) =>
+        buildNotePayload(note.title, note.titleColor, pages, cleanNoteHtml, batch && list.length > 0 ? { batch, list } : null);
+      const payload = build(DRAFT_BATCH);
+      const sent = (payload.pages as unknown[]).length;
+      const left = Math.min(pages.length, 50) - sent;
+      const parts = [
+        files.length > 0 ? `Si manda una copia completa con ${filesSummary(files, pages)}.` : null,
+        left > 0 ? `${left === 1 ? "1 pagina PDF resta fuori" : `${left} pagine PDF restano fuori`}: il file non è sul disco.` : null,
+      ].filter(Boolean);
+      next = { state: "ready", noteId: note.id, payload, note: parts.length > 0 ? parts.join(" ") : null, build, files };
     } catch (err) {
       next = { state: "error", noteId: note.id, message: err instanceof Error ? err.message : String(err) };
     }
     // si tiene solo l'ultima scelta
     setPrepared((cur) => (cur.state !== "none" && cur.noteId === note.id ? next : cur));
+  }
+
+  /** Prima i file nel lotto, poi il messaggio; se il messaggio non parte il lotto si cancella. */
+  async function sendNote(_draft: Record<string, unknown>, comment: string): Promise<string> {
+    if (prepared.state !== "ready") throw new Error("Nessuna nota scelta.");
+    const { files, build } = prepared;
+    if (files.length === 0) return send(build(null), comment);
+    setUploaded(0);
+    try {
+      const place = await uploadNoteFiles(myId, friendId, files, setUploaded);
+      try {
+        return await send(build(place.batch), comment);
+      } catch (err) {
+        await removeFriendBatch(place).catch(() => undefined);
+        throw err;
+      }
+    } catch (err) {
+      throw new Error(err instanceof Error && err.message ? err.message : "File non caricati: riprova.");
+    } finally {
+      setUploaded(null);
+    }
   }
 
   const selectedId = prepared.state === "none" ? null : prepared.noteId;
@@ -96,13 +136,17 @@ function NoteCompose({ send, onClose }: ChatComposeProps) {
         ))}
       </ChatComposeList>
       <p className="nqc-hint">
-        {prepared.state === "ready" && prepared.note ? prepared.note : "Si manda una copia: testo, tabelle e scrittura a mano, senza allegati e PDF."}
+        {uploaded !== null && prepared.state === "ready"
+          ? `Carico i file… ${uploaded}/${prepared.files.length}`
+          : prepared.state === "ready" && prepared.note
+            ? prepared.note
+            : "Si manda una copia completa: testo, tabelle, scrittura a mano, immagini, allegati e PDF (fino a 10 MB di file)."}
       </p>
       <ChatComposeFoot
         payload={prepared.state === "ready" ? prepared.payload : null}
         busy={prepared.state === "loading"}
         error={prepared.state === "error" ? prepared.message : null}
-        send={send}
+        send={sendNote}
         onClose={onClose}
         onSent={(messageId) => (prepared.state === "ready" ? rememberNote(messageId, prepared.noteId) : undefined)}
       />

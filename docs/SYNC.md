@@ -46,3 +46,6 @@ privato `sync-files` (`<user_id>/<note|collection>/<uid>/<nome in base64url>`, r
 `core/cloud/syncFilesApi.ts`). Cosa caricare, scaricare o togliere lo decide `filePlan.ts` (puro) dalle righe che li
 citano e da `sync_files` (migrazione 24: i file già sia qui sia nel cloud). Un riferimento nuovo a un file va in
 `listFileReferences` di `notesRepository.ts`. Lo Storage non si svuota da SQL: `deleteAccount` cancella prima i file.
+Una nota ricevuta da un amico arriva con i suoi file dal bucket `friend-files` (`docs/GRUPPI.md` § Amici): una volta
+salvata in "Ricevute" i file sono nella sua cartella e da lì li porta questo sync, come quelli di ogni altra nota. Lo
+spazio del piano gratuito (circa 1 GB di file) è uno solo per i due bucket.

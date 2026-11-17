@@ -523,6 +523,8 @@ function Chat({ me, friend, full, onClose }: { me: string; friend: FriendProfile
         <GroupsDialog title={composing.composeTitle(friend.username)} wide onClose={() => setComposing(null)}>
           {createElement(composing.Compose, {
             friendName: friend.username,
+            myId: me,
+            friendId: friend.userId,
             send: (payload, comment) => sendWidgetCard(composing.kind, payload, comment),
             onClose: () => setComposing(null),
           })}
@@ -614,7 +616,7 @@ interface WidgetCardProps {
  */
 function WidgetCard({ message: m, mine, selected, friendName, actions, onSelect, closePanel, openRoom }: WidgetCardProps) {
   const action = actions.find((a) => a.kind === m.kind);
-  const card = action?.renderCard({ payload: m.payload, mine, messageId: m.id, friendName, closePanel, openRoom }) ?? null;
+  const card = action?.renderCard({ payload: m.payload, mine, messageId: m.id, senderId: m.sender, recipientId: m.recipient, friendName, closePanel, openRoom }) ?? null;
   if (!action || !card) {
     return (
       <div className={`frp-bub frp-bub--unknown${selected ? " is-selected" : ""}`} onClick={onSelect}>

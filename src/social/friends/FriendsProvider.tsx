@@ -2,11 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { listenDeepLinks } from "../../core/cloud/auth";
 import { retryDelayMs } from "../../core/cloud/backoff";
 import { CloudError, toCloudError } from "../../core/cloud/errors";
+import { cleanupFriendFiles, removeFriendBatch, removeFriendPair } from "../../core/cloud/friendFilesApi";
 import * as api from "../../core/cloud/friendsApi";
+import { getMeta, setMeta } from "../../core/db/meta";
 import { authorizeRealtime } from "../../core/cloud/presence";
 import { useCloud } from "../../core/cloud/useCloud";
 import { useLatestRef } from "../../core/hooks/useLatestRef";
 import type { PlacedChatAction } from "../../core/widgets/chatActions";
+import { batchOfPayload } from "../../core/widgets/chatPayload";
 import { onFriendsPanelRequest, requestFriendsPanel, type FriendsPanelRequest } from "../../core/nav/friendsPanel";
 import { postInAppNotification } from "../../core/notify/inbox";
 import { sendAppNotification } from "../../core/notify/notifier";
@@ -29,6 +32,9 @@ import { FriendsContext, type FriendsContextValue, type FriendsPanelState, type 
 
 /** Al rientro in primo piano si rilegge tutto se l'ultima lettura è più vecchia di così. */
 const STALE_MS = 30_000;
+
+/** Ogni quanto si cancellano i file mandati o ricevuti più vecchi di 30 giorni (core/cloud/friendFilesApi.ts). */
+const FILES_CLEANUP_MS = 24 * 60 * 60 * 1000;
 
 const CLOSED_PANEL: FriendsPanelState = { open: false, chat: null, add: false, addCode: "" };
 
@@ -105,6 +111,22 @@ export function FriendsProvider({ actions, children }: FriendsProviderProps) {
     loadSeq.current++;
     if (me) void loadRef.current();
   }, [me, loadRef]);
+
+  // i file delle schede non salvati entro 30 giorni: al massimo una volta al giorno, se la rete c'è
+  useEffect(() => {
+    if (!me) return;
+    const key = `friend_files_cleanup:${me}`;
+    void (async () => {
+      try {
+        const last = Number(await getMeta(key)) || 0;
+        if (Date.now() - last < FILES_CLEANUP_MS) return;
+        await cleanupFriendFiles();
+        await setMeta(key, String(Date.now()));
+      } catch (e) {
+        console.warn("File degli amici non ripuliti:", toCloudError(e).code);
+      }
+    })();
+  }, [me]);
 
   /* ---------- Eventi della casella ---------- */
 
@@ -338,12 +360,20 @@ export function FriendsProvider({ actions, children }: FriendsProviderProps) {
     (id: string) =>
       guard(async () => {
         await api.deleteDirectMessage(id);
+        // i file della scheda (se ne aveva) non servono più a nessuno
+        const m = dataRef.current.messages.find((x) => x.id === id);
+        const batch = m ? batchOfPayload(m.payload) : null;
+        if (m && batch) {
+          removeFriendBatch({ sender: m.sender, recipient: m.recipient, batch }).catch((e: unknown) =>
+            console.warn("File del messaggio non cancellati:", toCloudError(e).code)
+          );
+        }
         setData((d) => ({
           ...d,
           messages: d.messages.map((m) => (m.id === id ? { ...m, deleted: true, body: "", payload: null } : m)),
         }));
       }),
-    [guard]
+    [guard, dataRef]
   );
 
   const requestFriend = useCallback(
@@ -378,10 +408,13 @@ export function FriendsProvider({ actions, children }: FriendsProviderProps) {
     (userId: string) =>
       guard(async () => {
         await api.removeFriend(userId);
+        if (me) {
+          removeFriendPair(me, userId).catch((e: unknown) => console.warn("File con l'amico non cancellati:", toCloudError(e).code));
+        }
         setPanel((p) => (p.chat === userId ? { ...p, chat: null } : p));
         await loadRef.current();
       }),
-    [guard, loadRef]
+    [guard, loadRef, me]
   );
 
   const loadMyCode = useCallback(

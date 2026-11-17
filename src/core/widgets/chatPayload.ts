@@ -13,3 +13,23 @@ export function asCleanText(value: unknown, max: number): string | null {
 
 export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+/*
+ * File delle schede (core/cloud/friendFilesApi.ts): una scheda con file porta `files: { batch: "<uuid>", list }`; i
+ * file stanno nel lotto <mittente>/<destinatario>/<batch> del bucket degli amici.
+ */
+
+/** Al massimo per invio (somma dei file), deciso con l'utente; il bucket ferma ogni file oltre questo. */
+export const CHAT_FILES_MAX_BYTES = 10 * 1024 * 1024;
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+export function asBatchId(value: unknown): string | null {
+  return typeof value === "string" && UUID_RE.test(value) ? value : null;
+}
+
+/** Il lotto di file di un payload, se ne ha uno. */
+export function batchOfPayload(payload: unknown): string | null {
+  if (!isRecord(payload) || !isRecord(payload.files)) return null;
+  return asBatchId(payload.files.batch);
+}

@@ -42,12 +42,25 @@ Prove: `scripts/gruppi/<modulo>.test.mts`; server: pgTAP in `supabase/tests/data
 - **Schede dei widget nella chat** (il "+"): un widget le dichiara con `chatActions` nella sua `WidgetDefinition`
   (`defineChatAction` di `core/widgets/chatActions.ts`: `kind`, `Compose` che sceglie cosa mandare, `Card` che la
   disegna, `parse` che valida il payload); `app/App.tsx` le raccoglie col pigmento e le passa a `SocialProviders`. Oggi:
-  video (`widgets/youtube/chat/`), nota (`widgets/notes/chat/`, una copia senza PDF né allegati in "Ricevute") e invito
+  video (`widgets/youtube/chat/`), nota (`widgets/notes/chat/`, una copia completa in "Ricevute", vedi sotto) e invito
   a studiare (`widgets/study/chat/`). Il payload arriva da un'altra persona e il server non lo guarda: `parse` lo
   ripulisce a ogni lettura (l'HTML delle note con `sanitizeHtml` `source: "esterno"`, la miniatura del video solo
   dall'id), un payload non valido o un `kind` sconosciuto diventano la scheda di ripiego. Il `kind` non si cambia dopo
   il rilascio; prova `scripts/gruppi/chatCards.test.mts` (bundle con rolldown). Cornice e finestra di scelta comuni:
-  `ui/ChatCard.tsx`, `ui/ChatCompose.tsx`.
+  `ui/ChatCard.tsx`, `ui/ChatCompose.tsx`. `Compose` riceve `myId`/`friendId`, `Card` `senderId`/`recipientId` (dalla
+  riga del messaggio, mai dal payload).
+- **File delle schede** (oggi solo la nota: PDF, immagini, allegati e miniature dei PDF): non stanno nel payload ma nel
+  bucket privato `friend-files` (`supabase/migrations/…_file_amici.sql`, test `14_file_amici.sql`), percorso
+  `<mittente>/<destinatario>/<lotto uuid>/<nome in base64url>`; rete in `core/cloud/friendFilesApi.ts`. Carica solo il
+  mittente e solo verso un amico (al massimo 10 MB per file e 200 file per mittente), leggono e cancellano solo i due.
+  Il payload porta `files: { batch, list: [{ name, size }] }` (`batchOfPayload` e il limite di **10 MB per invio**
+  `CHAT_FILES_MAX_BYTES` in `core/widgets/chatPayload.ts`); la nota con file è `v: 2` (un'app di prima mostra la scheda
+  di ripiego). Chi manda carica prima il lotto e poi il messaggio (se il messaggio non parte, il lotto si cancella).
+  Chi riceve, con "Salva nel Quaderno", crea la nota, accende la copia su disco se serve, scarica i file nella sua
+  cartella `allegati/` (gli allegati tornano in `note_attachments`, PDF e miniature no) e **cancella il lotto**: da lì
+  i file viaggiano con il proprio sync. Un lotto si cancella anche quando il mittente elimina il messaggio, quando si
+  toglie l'amicizia, prima di eliminare l'account, e dopo **30 giorni** (`cleanupFriendFiles`, al massimo una volta al
+  giorno da `FriendsProvider`). File che non ci sono più: la nota si salva lo stesso e la scheda lo dice.
 - Sessione dell'account: `docs/BACKEND.md` (desktop) e il plugin secure-store (Android, `docs/ANDROID.md`).
 
 ## Dove sta cosa (app)
@@ -62,6 +75,9 @@ src/core/cloud/                    UNICO punto con @supabase/supabase-js e con l
 ├─ accountApi.ts                   profilo (nome utente), elimina account, dispositivo, "visto" (mark_seen, last_seen)
 ├─ studyTotalsApi.ts               totali di studio: upsert dei propri, lettura di quelli dei compagni di gruppo
 ├─ backoff.ts                      attesa crescente tra i tentativi (5 s → 5 min), la stessa ovunque
+├─ friendsApi.ts                   amici, richieste, messaggi diretti, letture (RPC di …_amici.sql)
+├─ friendFilesApi.ts               file delle schede mandate agli amici (bucket friend-files, lotti)
+├─ storageFiles.ts                 comune ai bucket: nome dei file in base64url, errori di Storage
 ├─ groupsApi.ts                    gruppi e membri; crea, entra, esci, rimuovi, rigenera il codice, modifica
 ├─ inviteCode.ts                   PURO: codice invito scritto come si legge (K7QM-3XRQ) ↔ come lo vuole il server
 ├─ presence.ts                     canale privato generico group:<id>:<feature> (entra, track, stato, esce)
@@ -185,7 +201,10 @@ supabase/
 │   └─ 20261027120000_materie_gruppo.sql   report per materie: materie del gruppo, totali per materia, consenso,
 │                                  RPC (crea / rinomina / unisci / elimina, invio, revoca, report)
 │   ├─ 20261106120000_sync.sql     sync dei miei dati: sync_records (solo le proprie righe), sync_push, sync_clear
-│   └─ 20261106130000_sync_file.sql   bucket privato sync-files + policy sulla propria cartella
+│   ├─ 20261106130000_sync_file.sql   bucket privato sync-files + policy sulla propria cartella
+│   ├─ 20261107120000_amici.sql    amici, richieste, messaggi diretti (90 giorni), letture, casella inbox:<user_id>
+│   ├─ 20261114120000_sync_tempo_schermo.sql   kind screen_usage del sync
+│   └─ 20261117120000_file_amici.sql   bucket privato friend-files: file delle schede tra mittente e destinatario
 └─ tests/database/                 test pgTAP delle regole di accesso (_aiuti.psql = utenti finti e cambio ruolo)
 ```
 
@@ -742,7 +761,8 @@ Prove: `scripts/sync/*.test.mts` (records, schema, round, files) e `supabase/tes
   impostazioni, ma una cancellazione viaggia come le altre modifiche. Il backup resta Esporta (Impostazioni › Generale).
 - **Sync, conflitti**: vince l'ultima modifica per elemento (una pagina, una riga, una materia), nessuna unione del
   testo. Elementi oltre 2 MB (es. una pagina con moltissimo inchiostro) e file oltre 50 MB non viaggiano.
-- **Sync, spazio**: piano gratuito circa 500 MB di database e 1 GB di file; i PDF grossi lo riempiono.
+- **Sync, spazio**: piano gratuito circa 500 MB di database e 1 GB di file, condiviso con i file mandati agli amici
+  (che però restano solo finché l'amico salva la nota, al massimo 30 giorni); i PDF grossi lo riempiono.
 - **Revoca Realtime ritardata** fino alla scadenza del JWT (vedi sopra).
 - Un utente rimosso da un gruppo può rientrarci se conosce ancora il codice: l'owner lo rigenera.
 - **Chiave di presenza non legata all'utente**: Realtime lascia scegliere la chiave al client, quindi un membro di
