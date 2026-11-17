@@ -1849,3 +1849,59 @@
   --cal-seg-radius: 999px;
   --cal-seg-item-radius: 999px;
 }
+
+/* Vetro: celle di vetro sopra la foto (fondi traslucidi del tema, mai i blu di Notte), linee chiare, pillole.
+   Selettore e filtri attivi come le voci attive della barra laterale. La linea dell'ora è il secondo accento. */
+:root[data-theme="vetro"] {
+  --cal-line: var(--divider);
+  --cal-head-bg: var(--nav-active-bg);
+  --cal-cell-bg: var(--pane-bg);
+  --cal-cell-out-bg: transparent;
+  --cal-cell-today-bg: var(--row-active-bg);
+  --cal-hour-line: var(--divider);
+  --cal-today-col: var(--pane-bg);
+  --cal-note-border: var(--tick-off-long);
+  --cal-now: var(--accent-2);
+  --cal-event-bg: var(--surface-3);
+  --cal-event-border: 0;
+  --cal-chip-radius: 8px;
+  --cal-block-border: var(--card-border);
+  --cal-block-radius: var(--radius-item);
+  --cal-filter-off-bg: var(--pane-bg);
+  --cal-filter-on-bg: var(--nav-active-bg);
+  --cal-filter-on-fg: var(--nav-active-fg);
+  --cal-seg-bg: var(--pane-bg);
+  --cal-seg-border: var(--pane-border);
+  --cal-seg-on-bg: var(--nav-active-bg);
+  --cal-seg-on-fg: var(--nav-active-fg);
+  --cal-seg-radius: 999px;
+  --cal-seg-item-radius: 999px;
+}
+
+/* Ombra: carta nera (di giorno chiara) con filo sottile, raggi del tema (stretti di notte, morbidi di giorno).
+   Le linee della griglia un po' più visibili del --divider, quasi invisibile sul nero. */
+:root[data-theme="ombra"] {
+  --cal-line: var(--row-active-border);
+  --cal-head-bg: var(--surface-2);
+  --cal-cell-bg: var(--card-bg);
+  --cal-cell-out-bg: var(--bg);
+  --cal-cell-today-bg: color-mix(in srgb, var(--text-primary) 6%, var(--card-bg));
+  --cal-hour-line: var(--divider);
+  --cal-today-col: var(--surface-1);
+  --cal-note-border: var(--text-muted);
+  --cal-now: var(--text-primary);
+  --cal-event-bg: var(--surface-2);
+  --cal-event-border: var(--card-border);
+  --cal-chip-radius: var(--radius-item);
+  --cal-block-border: var(--card-border);
+  --cal-block-radius: var(--radius-item);
+  --cal-filter-off-bg: transparent;
+  --cal-filter-on-bg: var(--nav-active-bg);
+  --cal-filter-on-fg: var(--nav-active-fg);
+  --cal-seg-bg: transparent;
+  --cal-seg-border: var(--panel-border);
+  --cal-seg-on-bg: var(--accent);
+  --cal-seg-on-fg: var(--on-accent);
+  --cal-seg-radius: var(--radius-item);
+  --cal-seg-item-radius: var(--radius-item);
+}
