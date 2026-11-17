@@ -45,7 +45,11 @@ crea la finestra `main`.
   non lo dice la X chiude come prima). **Uscita con salvataggio**: "Esci" manda `app:quitting`, il frontend finisce i
   lavori di `core/system/beforeQuit.ts` (l'ultimo pezzo di Tempo allo schermo) e chiama `app_quit`; dopo 2 s si esce comunque.
   Avvio col computer: `tauri-plugin-autostart` `=2.5.1` con `--hidden` (parte con la finestra nascosta; chiave `Run`
-  su Windows, LaunchAgent su macOS). Su Android i comandi esistono e non fanno nulla.
+  su Windows, LaunchAgent su macOS). Insidia: il plugin registra il percorso dell'eseguibile in uso e la voce ha lo
+  stesso nome per debug e release, e `is_enabled` guarda solo che esista. Per questo in `tauri dev` (`cfg(dev)`) non si
+  può accendere (all'avvio partirebbe il debug senza Vite: ERR_CONNECTION_REFUSED) e l'app installata, se è acceso,
+  riscrive la voce col proprio percorso a ogni apertura (`refresh_launch_at_startup` in `setup`). Su Android i comandi
+  esistono e non fanno nulla.
 
 ## macOS
 
