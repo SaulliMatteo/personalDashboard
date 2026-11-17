@@ -42,8 +42,9 @@ function WindowSection() {
     setError(null);
     try {
       setStartup(await setLaunchAtStartup(enabled));
-    } catch {
-      setError("Non sono riuscito a cambiare l'avvio col computer.");
+    } catch (e) {
+      // Il backend spiega il motivo con una stringa (es. in sviluppo: solo nell'app installata).
+      setError(typeof e === "string" ? e : "Non sono riuscito a cambiare l'avvio col computer.");
     }
   }
 

@@ -7,6 +7,9 @@
 //! - "Esci" dal menu manda `app:quitting` al frontend, che salva l'ultimo pezzo di conteggio e chiama `app_quit`;
 //!   se il frontend non risponde, dopo 2 s si esce comunque.
 //! - Avvio col computer: `tauri-plugin-autostart` con l'argomento `--hidden`, che fa partire la finestra nascosta.
+//!   Il plugin registra il percorso dell'eseguibile in uso, e la voce ha lo stesso nome per debug e release: in
+//!   `tauri dev` non si accende (all'avvio partirebbe il debug senza Vite), e all'apertura l'app installata riscrive
+//!   la voce col proprio percorso se è accesa (`refresh_launch_at_startup`).
 //!
 //! Su Android niente di tutto questo: i comandi esistono e non fanno nulla.
 
@@ -135,6 +138,18 @@ pub fn tray_set_today(state: State<'_, TrayState>, text: String) {
     let _ = (state, text);
 }
 
+/// Chiamata in `setup`: se l'avvio col computer è acceso, riscrive la voce col percorso di questo eseguibile.
+/// Ripara una voce rimasta alla build di sviluppo o a un'installazione spostata. Se l'utente l'ha spento (anche da
+/// Gestione attività) `is_enabled` è falso e non si tocca niente.
+#[cfg(all(desktop, not(dev)))]
+pub fn refresh_launch_at_startup(app: &AppHandle) {
+    use tauri_plugin_autostart::ManagerExt;
+    let manager = app.autolaunch();
+    if manager.is_enabled().unwrap_or(false) {
+        let _ = manager.enable();
+    }
+}
+
 /// Avvio col computer: stato reale (può averlo cambiato l'utente dal sistema).
 #[tauri::command]
 pub fn app_launch_at_startup(app: AppHandle) -> bool {
@@ -155,6 +170,10 @@ pub fn app_set_launch_at_startup(app: AppHandle, enabled: bool) -> Result<bool, 
     #[cfg(desktop)]
     {
         use tauri_plugin_autostart::ManagerExt;
+        #[cfg(dev)]
+        if enabled {
+            return Err("Disponibile solo nell'app installata".into());
+        }
         let manager = app.autolaunch();
         let result = if enabled { manager.enable() } else { manager.disable() };
         result.map_err(|e| e.to_string())?;

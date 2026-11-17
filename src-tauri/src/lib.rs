@@ -207,6 +207,8 @@ pub fn run() {
             if app_tray::started_hidden() {
                 config.visible = false;
             }
+            #[cfg(all(desktop, not(dev)))]
+            app_tray::refresh_launch_at_startup(app.handle());
             #[cfg(all(target_os = "macos", not(dev)))]
             {
                 config.url = main_window_url();
