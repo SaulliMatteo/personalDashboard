@@ -8,8 +8,8 @@ zero), `round.test.mts` (due dispositivi su SQLite vero e un server finto), `fil
 
 ## Righe
 
-- Le tabelle sincronizzate (`SYNC_TABLES` in `tables.ts`: Studio, Note, Raccolte, Tempo allo schermo, impostazioni) hanno trigger SQLite
-  (migrazione 23) che danno a ogni riga un id globale (`sync_map`) e segnano le righe cambiate (`sync_outbox`); tacciono
+- Le tabelle sincronizzate (`SYNC_TABLES` in `tables.ts`: Studio, Note, Raccolte, Tempo allo schermo, Calendario, impostazioni) hanno trigger
+  SQLite (migrazione 23; Tempo allo schermo 31, Calendario 34) che danno a ogni riga un id globale (`sync_map`) e segnano le righe cambiate (`sync_outbox`); tacciono
   con `sync_state.applying = 1`.
 - Una colonna nuova in una di quelle tabelle va aggiunta ai trigger (migrazione nuova con DROP/CREATE TRIGGER) e in
   `tables.ts`, altrimenti non viaggia (`schema.test.mts` lo segnala). Nei trigger niente `OR IGNORE`/`OR REPLACE`: con

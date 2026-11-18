@@ -30,6 +30,7 @@ import { pluginNotify, showNotificationWithImage } from "./notifyApi";
  * friendRequest e friendMessage: dagli amici (social/friends); i messaggi di testo non vanno nella campanella (`inbox: false`).
  * screenLimitNear/screenLimitReached/screenBreak: Tempo al PC (limiti e promemoria della pausa); trayHidden: la prima
  * volta che la X nasconde la finestra (solo notifica di sistema).
+ * calendarReminder: un promemoria del Calendario (solo desktop, mandato all'ora giusta dal suo provider).
  */
 export type AppNotificationKind =
   | "pomodoroDone"
@@ -46,7 +47,8 @@ export type AppNotificationKind =
   | "screenLimitNear"
   | "screenLimitReached"
   | "screenBreak"
-  | "trayHidden";
+  | "trayHidden"
+  | "calendarReminder";
 
 /**
  * Dove porta il clic sulla notifica: la pagina di un widget, la Stanza comune o una sezione delle Impostazioni.
@@ -120,6 +122,8 @@ const CHANNEL_OF: Record<AppNotificationKind, ChannelId> = {
   screenLimitReached: "avvisi",
   screenBreak: "avvisi",
   trayHidden: "avvisi",
+  // il Calendario non manda nulla su Android per ora: la voce serve al tipo
+  calendarReminder: "avvisi",
 };
 
 let channelsReady: Promise<void> | null = null;

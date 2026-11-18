@@ -20,6 +20,10 @@ export type SyncKind =
   | "row"
   | "view"
   | "screen_usage"
+  | "calendar_category"
+  | "calendar_property"
+  | "calendar_event"
+  | "calendar_note"
   | "setting";
 
 export interface RefSpec {
@@ -130,6 +134,32 @@ export const SYNC_TABLES: readonly TableSpec[] = [
     refs: {},
     origin: true,
     lazy: true,
+  },
+  // Calendario (widgets/calendar). Nei JSON degli elementi non ci sono id locali: `props` è indicizzato per
+  // calendar_properties.uid (che viaggia come colonna), exdates/done/original_start sono istanti.
+  { kind: "calendar_category", table: "calendar_categories", key: "id", columns: ["name", "color", "position", "created_at"], refs: {} },
+  { kind: "calendar_property", table: "calendar_properties", key: "id", columns: ["uid", "name", "type", "options", "position"], refs: {} },
+  {
+    kind: "calendar_event",
+    table: "calendar_events",
+    key: "id",
+    columns: ["kind", "title", "start_at", "end_at", "all_day", "category_id", "subject_id", "parent_id", "series_id", "original_start", "color", "repeat", "reminders", "props", "todos", "description", "done", "created_at", "updated_at"],
+    // categoria, materia, evento padre (sessione collegata) e serie possono sparire: l'elemento resta, senza
+    refs: {
+      category_id: { kind: "calendar_category", nullable: true },
+      subject_id: { kind: "subject", nullable: true },
+      parent_id: { kind: "calendar_event", nullable: true },
+      series_id: { kind: "calendar_event", nullable: true },
+    },
+    defaults: { reminders: "[]", props: "{}", todos: "[]", description: "", done: "[]" },
+  },
+  {
+    kind: "calendar_note",
+    table: "calendar_note_links",
+    key: "id",
+    columns: ["note_id", "day", "event_id", "created_at"],
+    // senza la nota (o senza l'elemento, se era collegata a uno) il collegamento non ha senso
+    refs: { note_id: { kind: "note" }, event_id: { kind: "calendar_event" } },
   },
   { kind: "setting", table: "settings", key: "key", columns: ["value"], refs: {} },
 ];

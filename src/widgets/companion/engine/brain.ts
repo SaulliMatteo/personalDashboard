@@ -417,6 +417,23 @@ export class CompanionBrain {
         this.react("surprised", 1800, undefined, PRIORITY.event);
         this.say("file_received", {}, { priority: PRIORITY.event });
         break;
+      case "calendarSoon":
+        this.react("surprised", 2200, "exclaim", PRIORITY.event);
+        this.say("calendar_soon", { what: event.title, min: event.minutes }, { priority: PRIORITY.event });
+        break;
+      case "plannedStudyMissed":
+        this.react("curious", 2400, "question", PRIORITY.event);
+        this.say("plan_missed", { what: event.title }, { priority: PRIORITY.event });
+        break;
+      case "calendarReminder":
+        this.react("surprised", 2400, "exclaim", PRIORITY.study);
+        this.say("reminder_bubble", { what: event.title }, { priority: PRIORITY.study });
+        break;
+      case "plannedStudyDone":
+        if (this.isOn("study_goal")) this.reactPose("react_goal", 4000, PRIORITY.study);
+        else this.react("proud", 2600, undefined, PRIORITY.study);
+        this.say("plan_done", { what: event.title, min: event.minutes }, { priority: PRIORITY.study });
+        break;
     }
     this.changed();
   }
@@ -634,7 +651,7 @@ export class CompanionBrain {
    */
   private say(
     key: PhraseKey,
-    vars: { app?: string; min?: number } = {},
+    vars: { app?: string; min?: number; what?: string } = {},
     options: { spontaneous?: boolean; cooldownMs?: number; priority?: number } = {}
   ): boolean {
     if (!this.config.bubbles) return false;

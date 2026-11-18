@@ -4,6 +4,7 @@ import type { IconType } from "react-icons";
 import {
   MdArrowBack,
   MdChatBubbleOutline,
+  MdEvent,
   MdNotificationsNone,
   MdPeopleOutline,
   MdPersonAddAlt,
@@ -31,6 +32,7 @@ const ICON_OF: Record<string, IconType> = {
   friendRequest: MdPersonAddAlt,
   friendAccepted: MdPeopleOutline,
   friendMessage: MdChatBubbleOutline,
+  calendarReminder: MdEvent,
 };
 
 const pad = (n: number) => String(n).padStart(2, "0");

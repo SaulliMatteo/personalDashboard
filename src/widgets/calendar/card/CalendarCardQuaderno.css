@@ -1,0 +1,101 @@
+/* Calendario in Quaderno (proposta "Altri temi"): scritto a mano, righe del quaderno, la nota è un post-it. */
+
+.calt--quaderno .calt-title {
+  font-family: var(--font-title);
+  font-size: min(36px, 9cqh);
+  font-weight: 600;
+}
+
+.calt--quaderno .calt-views {
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+}
+
+.calt--quaderno .calt-views button {
+  border-radius: 6px;
+  color: var(--text-secondary);
+}
+
+.calt--quaderno .calt-views button.active {
+  background: var(--cal-seg-on-bg);
+  color: var(--cal-seg-on-fg);
+}
+
+.calt--quaderno .calt-weekday-l {
+  color: var(--text-secondary);
+}
+
+/* Oggi cerchiato a penna, un po' storto. */
+.calt--quaderno .calt-weekday-n--today {
+  box-sizing: border-box;
+  width: 30px;
+  min-width: 30px;
+  line-height: 25px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font-weight: 700;
+  transform: rotate(-6deg);
+}
+
+.calt--quaderno .calt-weekday--busy::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.calt--quaderno .calt-item {
+  padding: 0 4px;
+  border-bottom: 1px solid var(--divider);
+}
+
+.calt--quaderno .calt-item-right {
+  color: var(--text-secondary);
+}
+
+.calt--quaderno .calt-item--event .cal-mark--event {
+  background: var(--item, var(--danger));
+}
+
+.calt--quaderno .calt-item--study .calt-mark {
+  color: var(--item, var(--accent));
+}
+
+/* La nota del giorno: un post-it. */
+.calt--quaderno .calt-item--note {
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 3px;
+  background: var(--postit-bg);
+  color: var(--postit-text);
+  box-shadow: 0 2px 0 color-mix(in srgb, var(--postit-text) 12%, transparent);
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 600;
+  transform: rotate(-1.2deg);
+}
+
+.calt--quaderno .calt-item--note .calt-mark {
+  display: none;
+}
+
+.calt--quaderno .calt-new {
+  border: 1.5px solid var(--accent);
+  border-radius: 8px;
+  color: var(--accent);
+}
+
+/* 2×1 di base: righe del quaderno al posto delle linee divisorie. */
+:root[data-theme="quaderno"] .calc--W .cal-agenda-row {
+  border-bottom: 1px solid var(--divider);
+}
+
+:root[data-theme="quaderno"] .calc--W .calc-hline {
+  display: none;
+}
