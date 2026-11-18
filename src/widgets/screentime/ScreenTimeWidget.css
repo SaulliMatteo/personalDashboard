@@ -229,22 +229,44 @@
 .stw-alert.is-action svg { flex: none; }
 .stw-alert.is-action b { margin-left: auto; color: var(--accent); font-weight: 600; white-space: nowrap; }
 
-/* Piccola 1×1: l'anello è il widget. Dentro "oggi", il totale e una parola. */
-.stw-hero { flex: 1; min-height: 0; display: grid; place-items: center; }
-.stw--S .stw-ring { width: min(146px, 100cqh - 32px, 100cqw - 32px); }
-.stw--S .stw-ring-val .stw-num { font-size: 30px; }
-.stw-kicker { font-size: 10.5px; color: var(--text-muted); letter-spacing: 0.04em; }
-.stw-word { font-size: 11.5px; color: var(--text-secondary); }
+/* Piccola 1×1: l'anello è il widget. "oggi", il totale e una parola stanno DENTRO l'anello quando la cella è alta
+   abbastanza (anello e testo nella stessa cella della griglia); nella cella bassa l'anello si fa piccolo e il testo
+   va ACCANTO, così non si toccano mai. Il testo segue la misura dell'anello (cqmin). */
+.stw-hero { flex: 1; min-height: 0; display: grid; place-items: center; place-content: center; }
+.stw-hero > * { grid-area: 1 / 1; }
+.stw--S .stw-ring { width: min(150px, 100cqh - 8px, 100cqw - 8px); }
+.stw-hero-text { position: relative; display: grid; justify-items: center; gap: 4px; text-align: center; line-height: 1.1; }
+.stw--S .stw-hero-text .stw-num { font-size: clamp(22px, 15cqmin, 30px); }
+.stw-kicker { display: inline-flex; font-size: 10.5px; color: var(--text-muted); letter-spacing: 0.04em; }
+.stw-word { font-size: 11.5px; color: var(--text-secondary); white-space: nowrap; }
 .stw-word.is-warn { color: var(--st-warn); }
+@container (max-height: 179px) {
+  .stw--S .stw-hero { grid-template-columns: auto auto; gap: clamp(12px, 7cqw, 22px); }
+  .stw--S .stw-hero > .stw-ring { grid-area: 1 / 1; width: min(96px, 100cqh - 6px, 100cqw - 100px); }
+  .stw--S .stw-hero-text { grid-area: 1 / 2; justify-items: start; text-align: left; gap: 5px; }
+  .stw--S .stw-hero-text .stw-num { font-size: clamp(20px, 13cqw, 28px); }
+}
+/* Pochissima altezza (righe fitte): solo il totale accanto all'anello. */
+@container (max-height: 95px) {
+  .stw--S .stw-kicker { display: none; }
+}
 
-/* Larga 2×1 */
-.stw--W .stw-body {
-  flex: 1;
-  min-height: 0;
+/* Larga 2×1: due colonne a tutta altezza. A sinistra il titolo in alto e il totale nel resto; a destra le app,
+   centrate. Celle basse: meno app (mai tagliate a metà) e il totale più piccolo. */
+.stw--W {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 22px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  column-gap: clamp(20px, 6cqw, 36px);
   align-items: center;
+}
+.stw-wcol { display: flex; flex-direction: column; align-self: stretch; min-width: 0; min-height: 0; }
+.stw-wcol > .stw-lead { margin-block: auto; padding-top: 6px; }
+.stw--W .stw-apps { gap: 12px; }
+@container (max-height: 175px) {
+  .stw--W .stw-lead > .stw-num { font-size: 36px; }
+  .stw--W .stw-lead { gap: 5px; }
+  .stw--W .stw-app:nth-child(n + 3) { display: none; }
+  .stw--W .stw-apps { gap: 14px; }
 }
 
 /* Alta 1×2 */
@@ -265,8 +287,9 @@
 @container (max-height: 320px) {
   .stw--T .stw-mix { display: none; }
 }
-@container (max-height: 150px) {
-  .stw--W .stw-lead > .stw-num { font-size: 32px; }
+@container (max-height: 130px) {
+  .stw--W .stw-lead > .stw-num { font-size: 30px; }
+  .stw--W .stw-lead { gap: 3px; padding-top: 2px; }
 }
 
 /* Messaggi (telefono, conteggio spento, primo avvio) */

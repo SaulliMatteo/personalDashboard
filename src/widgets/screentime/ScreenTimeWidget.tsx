@@ -116,14 +116,14 @@ function LiveWidget({ size }: { size: Size }) {
     return (
       <WidgetFrame>
         <article className="widget stw stw--S" aria-label={NAME}>
+          {/* Il testo sta sopra l'anello nella cella alta; nella cella bassa va accanto (CSS, @container). */}
           <div className="stw-hero">
-            {createElement(
-              Ring,
-              { parts: classParts(today.byClass), label: `Oggi ${formatDuration(today.total)} allo schermo, ${focusPct} per cento di focus` },
-              <span className="stw-kicker">{filterIcon ?? "oggi"}</span>,
-              <BigTime seconds={today.total} />,
+            {createElement(Ring, { parts: classParts(today.byClass), label: `Oggi ${formatDuration(today.total)} allo schermo, ${focusPct} per cento di focus` })}
+            <div className="stw-hero-text">
+              <span className="stw-kicker">{filterIcon ?? "oggi"}</span>
+              <BigTime seconds={today.total} />
               <span className={`stw-word${nearLimit ? " is-warn" : ""}`}>{alert?.kind === "blocked" ? "bloccato" : nearLimit ? "al limite" : moodWord(today.byClass)}</span>
-            )}
+            </div>
           </div>
         </article>
       </WidgetFrame>
@@ -154,15 +154,16 @@ function LiveWidget({ size }: { size: Size }) {
   if (size === "W") {
     return (
       <WidgetFrame>
+        {/* Due colonne a tutta altezza: a sinistra titolo e totale, a destra le app (meno righe se la cella è bassa). */}
         <article className="widget stw stw--W" aria-label={NAME}>
-          <Head sub={filterIcon} />
-          <div className="stw-body">
+          <div className="stw-wcol">
+            <Head sub={filterIcon} />
             <div className="stw-lead">
               <BigTime seconds={today.total} />
               {alert && isLimitAlert(alert) ? <span className="stw-line is-warn">{alertText(alert)}</span> : line}
             </div>
-            <AppBars items={today.apps} max={3} marks={marks} />
           </div>
+          <AppBars items={today.apps} max={3} marks={marks} />
         </article>
       </WidgetFrame>
     );
