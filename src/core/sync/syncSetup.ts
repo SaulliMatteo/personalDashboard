@@ -20,6 +20,10 @@ export const SYNC_KINDS: readonly SyncKind[] = [
   "row",
   "view",
   "screen_usage",
+  "calendar_category",
+  "calendar_property",
+  "calendar_event",
+  "calendar_note",
   "setting",
 ];
 

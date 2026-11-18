@@ -64,6 +64,8 @@ export interface ActivityStatus {
   videoDurationSeconds: number | null;
   /** Nome della materia del timer di Studio avviato (null = nessuna). */
   studySubjectName: string | null;
+  /** Id della materia del timer di Studio avviato (null = nessuna). Il Calendario lo confronta col pianificato. */
+  studySubjectId: number | null;
   /** Temperatura attuale del widget Meteo, in °C (null = meteo spento o non ancora arrivato). */
   weatherTemperature: number | null;
   /** Secondi di studio registrati oggi (sessioni concluse). Li usano intestazione e barra laterale. */
@@ -85,7 +87,15 @@ export type ActivityEvent =
   | { type: "breakOver" }
   | { type: "goalReached" }
   | { type: "videoEnded" }
-  | { type: "fileReceived"; count: number };
+  | { type: "fileReceived"; count: number }
+  /** Calendario: un impegno inizia tra `minutes` minuti. */
+  | { type: "calendarSoon"; title: string; minutes: number }
+  /** Calendario: una sessione di studio pianificata è iniziata da un po' e il timer non parte. */
+  | { type: "plannedStudyMissed"; title: string }
+  /** Calendario: fatto almeno quanto pianificato (`minutes` di studio). */
+  | { type: "plannedStudyDone"; title: string; minutes: number }
+  /** Calendario: è suonato un promemoria (oltre alla notifica, Pixy lo dice). */
+  | { type: "calendarReminder"; title: string };
 
 const IDLE: ActivityStatus = {
   studying: false,
@@ -96,6 +106,7 @@ const IDLE: ActivityStatus = {
   videoProgress: null,
   videoDurationSeconds: null,
   studySubjectName: null,
+  studySubjectId: null,
   weatherTemperature: null,
   studyTodaySeconds: 0,
   studyTodaySpans: [],

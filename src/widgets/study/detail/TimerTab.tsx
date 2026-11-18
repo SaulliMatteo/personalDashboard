@@ -8,7 +8,8 @@ import { useTimerView } from "../timer/useTimerView";
 import SubjectList from "./SubjectList";
 import "./timerTab.css";
 
-function TimerTab() {
+/** `readySubjectId`: materia da preparare (richiesta dal Calendario), evidenziata nell'elenco. */
+function TimerTab({ readySubjectId = null }: { readySubjectId?: number | null }) {
   const { subjects, todayBySubject, todayGoalSeconds: goalSeconds } = useTimerView();
   const Card = useThemeVariant(STUDY_CARDS);
 
@@ -64,7 +65,7 @@ function TimerTab() {
         {/* Il timer è la card 2×2 del tema: stesso quadrante e stessi pulsanti della dashboard. */}
         <section className="study-timer-card">{createElement(Card, { size: "M" })}</section>
 
-        <SubjectList />
+        <SubjectList readySubjectId={readySubjectId} />
       </div>
     </>
   );

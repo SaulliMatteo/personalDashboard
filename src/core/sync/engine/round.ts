@@ -90,6 +90,11 @@ const SAME_ELEMENT: Partial<Record<SyncKind, readonly string[]>> = {
   view: ["collection_id", "name"],
   attachment: ["note_id", "name"],
   screen_usage: ["origin_device", "day", "hour", "app_key"],
+  calendar_category: ["name"],
+  // l'uid della proprietà è già globale (lo crea chi la aggiunge)
+  calendar_property: ["uid"],
+  calendar_event: ["kind", "title", "start_at", "end_at", "series_id", "original_start"],
+  calendar_note: ["note_id", "day", "event_id"],
 };
 
 /**

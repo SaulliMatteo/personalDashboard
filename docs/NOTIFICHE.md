@@ -11,6 +11,8 @@ I file senza cartella stanno in `src/core/notify/`.
 - Il Companion registra un decoratore che le firma Pixy (faccia nello stile del tema, emoji, frase della personalità,
   `widgets/companion/notify/`); su Windows il toast con l'immagine lo mostra il comando `notify_with_image`
   (`notifyApi.ts` → `src-tauri/src/notify.rs`), altrove si ripiega sul plugin senza immagine.
+- Promemoria del Calendario (`calendarReminder`): li manda `widgets/calendar/hooks/useCalendarWatch.ts` ogni 20 s
+  con l'app aperta, e all'apertura quelli scaduti nel frattempo se l'impegno non è ancora iniziato. Solo desktop.
 
 ## Android
 

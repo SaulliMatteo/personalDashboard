@@ -1,0 +1,243 @@
+/* Evento rapido (mockup: "Evento rapido", 392 px). */
+
+.cal-quick {
+  width: 392px;
+  max-width: calc(100vw - 16px);
+  padding: 18px;
+  background: var(--modal-bg);
+  border: var(--modal-border);
+  border-radius: 18px;
+  box-shadow: var(--shadow-pop);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cal-quick-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+}
+
+.cal-quick-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.cal-quick-close {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.cal-quick-close:hover {
+  color: var(--text-primary);
+}
+
+.cal-quick-close:focus-visible {
+  outline: var(--focus-ring);
+}
+
+.cal-quick-title {
+  box-sizing: border-box;
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: var(--field-border);
+  border-radius: 12px;
+  background: var(--field-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+  user-select: text;
+}
+
+.cal-quick-title:focus {
+  border: var(--field-focus);
+}
+
+.cal-quick-title::placeholder {
+  color: var(--text-muted);
+}
+
+.cal-quick .cal-seg button {
+  flex: 1;
+}
+
+.cal-seg-mark {
+  margin-right: 7px;
+}
+
+.cal-seg .cal-mark--event {
+  width: 7px;
+  height: 7px;
+  background: currentColor;
+}
+
+.cal-seg .cal-mark--study {
+  width: 9px;
+  height: 9px;
+}
+
+.cal-quick-subjects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cal-quick-subjects button {
+  all: unset;
+  box-sizing: border-box;
+  background: var(--cal-filter-off-bg);
+  height: 28px;
+  padding: 0 11px;
+  border: var(--btn-ghost-border);
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: var(--btn-ghost-fg);
+  cursor: pointer;
+}
+
+.cal-quick-subjects button.active {
+  border: 1px solid var(--item);
+  background: color-mix(in srgb, var(--item) 16%, transparent);
+  color: color-mix(in srgb, var(--item) var(--cal-tint), var(--text-primary));
+}
+
+.cal-quick-subjects button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.cal-quick-hint {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.cal-quick-times {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cal-quick-time {
+  box-sizing: border-box;
+  width: 72px;
+  height: 36px;
+  padding: 0 10px;
+  border: var(--field-border);
+  border-radius: 12px;
+  background: var(--field-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  outline: none;
+  user-select: text;
+}
+
+.cal-quick-time:focus {
+  border: var(--field-focus);
+}
+
+.cal-quick-time[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.cal-quick-time:disabled {
+  opacity: 0.45;
+}
+
+.cal-quick-arrow {
+  flex: none;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.cal-quick-duration {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.cal-quick-allday {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--text-soft);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cal-quick-allday input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.cal-quick-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.cal-quick-save {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Promemoria: descrizione e una sola ora. */
+.cal-quick-desc {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 12px;
+  border: var(--field-border);
+  border-radius: 12px;
+  background: var(--field-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: vertical;
+  outline: none;
+  user-select: text;
+}
+
+.cal-quick-desc:focus {
+  border: var(--field-focus);
+}
+
+.cal-quick-desc::placeholder {
+  color: var(--text-muted);
+}
+
+.cal-quick-at {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}

@@ -54,6 +54,9 @@ select is((select count(*)::int from storage.objects where bucket_id = 'friend-f
 select pg_temp.esci();
 select pg_temp.entra('carla');
 select is((select count(*)::int from storage.objects where bucket_id = 'friend-files'), 0, 'carla non vede niente');
+-- Supabase recente blocca i delete diretti su storage.objects (storage.protect_delete) se la sessione non lo
+-- permette: lo permettiamo, così a decidere sono le regole RLS, come con le API di Storage.
+set local storage.allow_delete_query = 'true';
 select lives_ok($$delete from storage.objects where bucket_id = 'friend-files'$$, 'il delete di carla...');
 select pg_temp.esci();
 select is((select count(*)::int from storage.objects where bucket_id = 'friend-files'), 1, '...non cancella niente');
@@ -70,6 +73,7 @@ select is((select name from storage.objects where bucket_id = 'friend-files'), p
 
 -- ─── Cancellare: il destinatario dopo il salvataggio ───
 select pg_temp.entra('bruno');
+set local storage.allow_delete_query = 'true';
 select lives_ok($$delete from storage.objects where bucket_id = 'friend-files'$$, 'bruno cancella il file ricevuto');
 select pg_temp.esci();
 select is((select count(*)::int from storage.objects where bucket_id = 'friend-files'), 0, 'il file non c''è più');

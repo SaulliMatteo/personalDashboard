@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   MdAdd,
   MdExpandLess,
@@ -22,7 +22,7 @@ import { useTimer } from "../timer/useTimer";
  * Elenco materie (avvio, impostazioni, archiviazione): quelle di oggi, poi "Altre materie" richiudibile
  * (stessa divisione della card, `isTodaySubject`), le archiviate e il form per aggiungerne.
  */
-function SubjectList() {
+function SubjectList({ readySubjectId = null }: { readySubjectId?: number | null }) {
   const {
     phase, subjectId, subjects, todayBySubject, dayStart, startWork, addSubject, updateSubject, renameSubject, archiveSubject,
     restoreSubject,
@@ -36,7 +36,18 @@ function SubjectList() {
   const [settingsId, setSettingsId] = useState<number | null>(null);
   const [archived, setArchived] = useState<Subject[]>([]);
   const [showArchived, setShowArchived] = useState(false);
-  const [showOthers, setShowOthers] = useState(false);
+  // Se la materia preparata dal Calendario sta tra le "Altre materie", la sezione si apre già.
+  const [showOthers, setShowOthers] = useState(() => {
+    if (readySubjectId === null) return false;
+    const s = subjects.find((x) => x.id === readySubjectId);
+    return s ? !isTodaySubject(s, new Date(dayStart), todayBySubject[s.id] ?? 0, s.id === subjectId) : false;
+  });
+  const readyButton = useRef<HTMLButtonElement | null>(null);
+  const ready = phase === "idle" ? readySubjectId : null;
+  useEffect(() => {
+    readyButton.current?.focus();
+    readyButton.current?.scrollIntoView({ block: "nearest" });
+  }, [ready]);
 
   // `subjects` cambia identità dopo ogni archiviazione/ripristino: da lì si rilegge l'elenco delle archiviate.
   useEffect(() => {
@@ -68,7 +79,7 @@ function SubjectList() {
     const isActive = subject.id === subjectId;
     const daysText = isOther ? daysLabel(subject.studyDays) : "";
     return (
-      <div key={subject.id} className={`study-subject-row${isActive ? " is-active" : ""}`}>
+      <div key={subject.id} className={`study-subject-row${isActive ? " is-active" : ""}${subject.id === ready ? " is-ready" : ""}`}>
         <button
           type="button"
           className={`study-row-gear${settingsId === subject.id ? " is-open" : ""}`}
@@ -90,6 +101,7 @@ function SubjectList() {
         <button
           type="button"
           className="study-icon-btn study-icon-btn--small"
+          ref={subject.id === ready ? readyButton : undefined}
           disabled={!canStart}
           onClick={() => startWork(subject.id)}
           aria-label={`Studia ${subject.name}`}
