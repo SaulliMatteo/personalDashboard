@@ -114,9 +114,10 @@ focus e serie, limiti, pause e sessioni, settimana, etichette delle date, dispos
   o PC/telefono con "Tutti") e 3 app come barre (`AppBars`, il tempo solo sulla prima); Alta: anche la giornata a
   parole (`DayInWords`, al posto della legenda); Media: anello del focus e la giornata in 6 momenti di 4 ore
   (`DayMoments`). Le celle cambiano altezza con le righe della griglia (4-8), quindi la Piccola e la Larga si
-  adattano con `@container`: nella Piccola il testo sta dentro l'anello solo se la cella è alta almeno 180 px,
-  altrimenti va accanto all'anello (sotto i 95 px sparisce "oggi"); nella Larga titolo e totale a sinistra, app a
-  destra a tutta altezza, e sotto i 175 px le app sono 2 (mai una riga tagliata). Limiti, pausa e permesso del telefono sono **un solo avviso**, il più urgente (`pickAlert` in
+  adattano con `@container`: nella Piccola l'anello prende tutta l'altezza e il testo dentro scala con lui (l'anello
+  è un container, unità `cqw`; sotto i 112 px di anello sparisce "oggi"); la Larga non ha titolo, il totale sta al
+  centro della metà sinistra (il segno del filtro va davanti alla riga sotto) e con la cella bassa le app sono 2
+  (mai una riga tagliata). Limiti, pausa e permesso del telefono sono **un solo avviso**, il più urgente (`pickAlert` in
   `lib/widgetText.ts`: app bloccata → proroga in corso → limite all'80 % → pausa oltre `screentimeBreakMinutes` →
   permesso), e con l'avviso le app
   scendono di una. L'anello ha una forma per tema (`card/rings.tsx`, `SCREENTIME_RINGS`; Ombra con `perMode`:
