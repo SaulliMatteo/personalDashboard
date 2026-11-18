@@ -229,19 +229,18 @@
 .stw-alert.is-action svg { flex: none; }
 .stw-alert.is-action b { margin-left: auto; color: var(--accent); font-weight: 600; white-space: nowrap; }
 
-/* Piccola 1×1 (come il mockup): l'anello è il widget, dentro "oggi", il totale e una parola. L'anello prende tutta
-   l'altezza della cella e il testo scala con lui (l'anello è un container: unità cqw), così resta sempre dentro al
-   cerchio anche con le righe fitte; sotto i 112 px di anello "oggi" sparisce. */
+/* Piccola 1×1 (come il mockup): l'anello è il widget, dentro "oggi" (o "al limite"), il tempo grande e sotto "ore" o
+   "minuti". L'anello prende tutta l'altezza della cella e il testo scala con lui (l'anello è un container: unità cqw), così resta sempre dentro al
+   cerchio anche con le righe fitte; sotto i 112 px di anello "oggi" sparisce (l'avviso no). */
 .stw--S { padding: 10px; }
 .stw-hero { flex: 1; min-height: 0; display: grid; place-items: center; }
 .stw--S .stw-ring { width: min(156px, 100cqh, 100cqw); container: stw-ring / inline-size; }
 .stw--S .stw-ring-val { gap: 2.2cqw; line-height: 1.05; }
-.stw--S .stw-ring-val .stw-num { font-size: max(15px, 20.5cqw); }
+.stw--S .stw-ring-val .stw-clock { font-size: max(19px, 27cqw); }
 .stw-kicker { display: inline-flex; font-size: max(9px, 7.2cqw); color: var(--text-muted); letter-spacing: 0.04em; }
 .stw-word { font-size: max(9.5px, 7.9cqw); color: var(--text-secondary); white-space: nowrap; }
-.stw-word.is-warn { color: var(--st-warn); }
 @container stw-ring (max-width: 111px) {
-  .stw-kicker { display: none; }
+  .stw-kicker:not(.is-warn) { display: none; }
 }
 
 /* Larga 2×1, senza titolo: a sinistra il totale al centro della sua metà, a destra le app centrate in altezza.

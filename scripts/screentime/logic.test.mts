@@ -13,8 +13,8 @@ import { DEFAULT_CLASSES, focusStreak, parseFocusClasses, serializeFocusClasses 
 import { blockTargets, dueNotices, emptyExtensions, emptyNoticeState, extensionEnd, isBlocking, parseExtensions, parseNoticeState, type ScreenLimit } from "../../src/widgets/screentime/lib/limits";
 import { dailyTotals, limitApps, limitUsage, summarize, type UsageRow } from "../../src/widgets/screentime/lib/summary";
 import { byDevice, devicesIn, parseDeviceFilter } from "../../src/widgets/screentime/lib/devices";
-import { formatDayLabel, formatDelta, formatDuration, formatShort, formatWeekLabel, weekdayShort } from "../../src/widgets/screentime/lib/format";
-import { dayMoments, deltaWords, mixWords, moodWord, pickAlert } from "../../src/widgets/screentime/lib/widgetText";
+import { clockTime, formatDayLabel, formatDelta, formatDuration, formatShort, formatWeekLabel, weekdayShort } from "../../src/widgets/screentime/lib/format";
+import { dayMoments, deltaWords, mixWords, pickAlert } from "../../src/widgets/screentime/lib/widgetText";
 
 let passed = 0;
 function test(name: string, fn: () => void) {
@@ -240,10 +240,10 @@ test("etichette delle date", () => {
 });
 
 test("widget: la giornata a parole e in 6 momenti", () => {
-  assert.equal(moodWord({ focus: 152, fun: 30, neutral: 130 }), "concentrato");
-  assert.equal(moodWord({ focus: 50, fun: 100, neutral: 150 }), "tanto svago");
-  assert.equal(moodWord({ focus: 100, fun: 50, neutral: 150 }), "misto");
-  assert.equal(moodWord({ focus: 0, fun: 0, neutral: 0 }), "si comincia");
+  assert.deepEqual(clockTime(5 * 3600 + 12 * 60), { value: "5:12", unit: "ore" });
+  assert.deepEqual(clockTime(3600 + 5 * 60), { value: "1:05", unit: "ora" });
+  assert.deepEqual(clockTime(47 * 60 + 30), { value: "47", unit: "minuti" });
+  assert.deepEqual(clockTime(60), { value: "1", unit: "minuto" });
   assert.deepEqual(mixWords({ focus: 152, fun: 30, neutral: 130 }), { focus: "metà focus", fun: "quasi niente svago" });
   assert.deepEqual(mixWords({ focus: 0, fun: 0, neutral: 0 }), { focus: "poco focus", fun: "quasi niente svago" });
   const hours = Array.from({ length: 24 }, (_, h) => ({ focus: h === 9 ? 3600 : 0, fun: h === 17 ? 600 : 0, neutral: h === 23 ? 60 : 0 }));

@@ -9,8 +9,8 @@ import { useScreenTime } from "./useScreenTime";
 import { SCREENTIME_RINGS } from "./card/cards";
 import { classParts, fillParts } from "./card/ringParts";
 import { AppBars, BigTime, ClassSplit, DayInWords, DayMoments, DeviceIcon, LockIcon } from "./components/parts";
-import { formatDuration, formatShort } from "./lib/format";
-import { deltaWords, isLimitAlert, moodWord, pickAlert, type WidgetAlert } from "./lib/widgetText";
+import { clockTime, formatDuration, formatShort } from "./lib/format";
+import { deltaWords, isLimitAlert, pickAlert, type WidgetAlert } from "./lib/widgetText";
 import "./ScreenTimeWidget.css";
 
 type Size = "S" | "W" | "T" | "M";
@@ -113,6 +113,7 @@ function LiveWidget({ size }: { size: Size }) {
 
   if (size === "S") {
     const nearLimit = isLimitAlert(alert);
+    const clock = clockTime(today.total);
     return (
       <WidgetFrame>
         <article className="widget stw stw--S" aria-label={NAME}>
@@ -121,9 +122,14 @@ function LiveWidget({ size }: { size: Size }) {
             {createElement(
               Ring,
               { parts: classParts(today.byClass), label: `Oggi ${formatDuration(today.total)} allo schermo, ${focusPct} per cento di focus` },
-              <span className="stw-kicker">{filterIcon ?? "oggi"}</span>,
-              <BigTime seconds={today.total} />,
-              <span className={`stw-word${nearLimit ? " is-warn" : ""}`}>{alert?.kind === "blocked" ? "bloccato" : nearLimit ? "al limite" : moodWord(today.byClass)}</span>
+              // In alto "oggi" (o l'avviso del limite), al centro il tempo grande, sotto ore o minuti.
+              nearLimit ? (
+                <span className="stw-kicker is-warn">{alert?.kind === "blocked" ? "bloccato" : "al limite"}</span>
+              ) : (
+                <span className="stw-kicker">{filterIcon ?? "oggi"}</span>
+              ),
+              <span className="stw-num stw-clock">{clock.value}</span>,
+              <span className="stw-word">{clock.unit}</span>
             )}
           </div>
         </article>

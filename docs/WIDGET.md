@@ -110,7 +110,8 @@ focus e serie, limiti, pause e sessioni, settimana, etichette delle date, dispos
   (Settimana). Conteggio, soglie e filtro sono in `PER_DEVICE_SETTINGS`; classi, obiettivo di focus e
   `companionAppCategories` si sincronizzano (la vista somma i dispositivi, la categoria deve essere la stessa).
 - **Widget** (`ScreenTimeWidget.tsx`, proposta A del mockup): ogni taglia dice una cosa sola e c'è un solo numero
-  grande, il totale di oggi. Piccola: anello delle classi con una parola (`moodWord`); Larga: totale, una riga (ieri,
+  grande, il totale di oggi. Piccola: anello delle classi con dentro "oggi", il tempo grande ("5:12", `clockTime`) e sotto "ore" o
+  "minuti" (con un limite vicino "al limite"/"bloccato" al posto di "oggi"); Larga: totale, una riga (ieri,
   o PC/telefono con "Tutti") e 3 app come barre (`AppBars`, il tempo solo sulla prima); Alta: anche la giornata a
   parole (`DayInWords`, al posto della legenda); Media: anello del focus e la giornata in 6 momenti di 4 ore
   (`DayMoments`). Le celle cambiano altezza con le righe della griglia (4-8), quindi la Piccola e la Larga si

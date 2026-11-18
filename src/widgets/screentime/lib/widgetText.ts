@@ -1,20 +1,11 @@
 /**
  * Quello che il widget dice a parole (docs/mockup/widget/tempo-allo-schermo.html, proposta A): la giornata in una
- * parola o in una frase, i 6 momenti del giorno e l'unico avviso da mostrare. Puro.
+ * frase, i 6 momenti del giorno e l'unico avviso da mostrare. Puro.
  */
 import { NEAR_RATIO, type ScreenLimit } from "./limits";
 import type { ClassSeconds } from "./summary";
 
 const total = (c: ClassSeconds) => c.focus + c.fun + c.neutral;
-
-/** Una parola per la Piccola: "concentrato", "tanto svago" o "misto". */
-export function moodWord(byClass: ClassSeconds): string {
-  const t = total(byClass);
-  if (t <= 0) return "si comincia";
-  if (byClass.focus / t >= 0.45) return "concentrato";
-  if (byClass.fun / t >= 0.3) return "tanto svago";
-  return "misto";
-}
 
 /** La giornata a parole al posto della legenda: "metà focus", "quasi niente svago". */
 export function mixWords(byClass: ClassSeconds): { focus: string; fun: string } {

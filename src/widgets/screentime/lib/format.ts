@@ -22,6 +22,13 @@ export function splitHours(seconds: number): { hours: number; minutes: number } 
   return { hours: Math.floor(min / 60), minutes: min % 60 };
 }
 
+/** Il totale della Piccola: "5:12" con "ore" sotto, "47" con "minuti" sotto (un'ora sola: "1:05" "ora"). */
+export function clockTime(seconds: number): { value: string; unit: string } {
+  const { hours, minutes } = splitHours(seconds);
+  if (hours > 0) return { value: `${hours}:${String(minutes).padStart(2, "0")}`, unit: hours === 1 ? "ora" : "ore" };
+  return { value: String(minutes), unit: minutes === 1 ? "minuto" : "minuti" };
+}
+
 /** "+40 min da ieri", "−1 h 5 min da ieri", "come ieri". */
 export function formatDelta(seconds: number, what: string): string {
   const min = Math.round(seconds / 60);
