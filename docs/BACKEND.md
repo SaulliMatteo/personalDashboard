@@ -78,7 +78,9 @@ Monitor di sistema, registratore di Tempo allo schermo) va fermato anche in `upd
 (`relaunch`) passa invece da `RunEvent::Exit` in `src/lib.rs`. La chiave pubblica in `plugins.updater.pubkey` non si
 cambia più: le app installate accettano solo pacchetti firmati con la privata corrispondente (Secret
 `TAURI_SIGNING_PRIVATE_KEY`); persa quella, chi ha l'app deve reinstallarla a mano. Con `createUpdaterArtifacts`
-anche `npm run tauri build` in locale vuole `TAURI_SIGNING_PRIVATE_KEY` nell'ambiente.
+anche `npm run tauri build` in locale vuole `TAURI_SIGNING_PRIVATE_KEY` nell'ambiente. Per un installer di prova
+senza la privata: un file fuori dal repo con `{ "bundle": { "createUpdaterArtifacts": false } }` e
+`npm run tauri build -- --config <quel file>` (niente pacchetto per l'updater; gli aggiornamenti della CI restano validi).
 
 ## Release
 
