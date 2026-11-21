@@ -71,7 +71,9 @@ src/
 │   ├─ db/                   client SQLite, migrazioni versionate, store chiave/valore "meta"
 │   ├─ settings/             schema.ts = UNICA fonte di verità delle impostazioni
 │   ├─ layout/               griglia: contesto, repository, compactor (spinta ritardata)
-│   ├─ nav/                  vista corrente (dashboard / catalogo / dettaglio widget / impostazioni / stanza comune)
+│   ├─ nav/                  vista corrente (dashboard / catalogo / dettaglio widget / impostazioni / stanza comune);
+│   │                        intents.ts: "apri il widget X così" (nota, timer con materia, vista del calendario)
+│   ├─ study/, notes/        letture in sola lettura per gli altri widget (materie, studio fatto, titoli delle note)
 │   ├─ cloud/                UNICO punto con Supabase (account, gruppi, totali, presenza, orologio): docs/GRUPPI.md
 │   ├─ sync/                 sync dei miei dati tra dispositivi: tables.ts (tabelle e colonne), engine/ (puro:
 │                            traduzione degli id, giro pull+push, scheduler), syncRepository.ts (UNICO SQL del
@@ -108,6 +110,7 @@ src/
 │   ├─ youtube/              widget YouTube (vedi sotto)
 │   ├─ notes/                widget Quaderno (vedi sotto)
 │   ├─ companion/            widget Companion (vedi sotto)
+│   ├─ calendar/             widget Calendario (docs/WIDGET.md)
 │   ├─ clock/, date/         Orario e Giorno: solo 1×1 + mini dell'intestazione
 │   └─ weather/              Meteo (Open-Meteo, opzionale): 1×1 + mini, provider con cache
 ├─ social/                   i Gruppi (opzionali, docs/GRUPPI.md)

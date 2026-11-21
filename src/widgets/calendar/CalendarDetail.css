@@ -1,0 +1,284 @@
+/* Pagina del Calendario (mockup docs/design/calendario/calendario.html). Occupa esattamente la finestra
+   (come la Lavagna): la vista prende lo spazio rimasto. */
+
+.cal-detail {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: var(--text-primary);
+}
+
+.cal-detail > * {
+  flex-shrink: 0;
+}
+
+/* Se non c'è posto (titolo lungo della vista Giorno, finestra stretta) i gruppi vanno a capo invece di
+   sovrapporsi: prima il selettore delle viste scende sotto, poi anche ‹ Oggi › sotto il titolo. */
+.cal-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+}
+
+.cal-head-left,
+.cal-head-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  min-width: 0;
+}
+
+.cal-head-right {
+  flex: none;
+  margin-left: auto;
+  gap: 10px;
+}
+
+.cal-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: var(--heading-weight, 300);
+  letter-spacing: -0.02em;
+  line-height: 36px;
+  white-space: nowrap;
+  color: var(--text-primary);
+}
+
+.cal-title-btn {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px;
+  margin: 0 -6px;
+  border-radius: 10px;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.cal-title-btn:hover {
+  background: var(--surface-1);
+}
+
+.cal-title-btn:focus-visible {
+  outline: var(--focus-ring);
+}
+
+.cal-title-btn span {
+  color: var(--text-secondary);
+}
+
+.cal-title-caret {
+  font-size: 20px;
+  color: var(--text-secondary);
+}
+
+/* Titolo nello stile del tema (come le intestazioni delle pagine, styles/base.css). */
+.cal-title {
+  font-family: var(--font-title, inherit);
+}
+
+:root[data-theme="opaco"] .cal-title {
+  font-size: 30px;
+  letter-spacing: -0.05em;
+}
+
+:root[data-theme="quaderno"] .cal-title {
+  font-size: 40px;
+  letter-spacing: 0;
+  line-height: 40px;
+}
+
+:root[data-theme="fosforo"] .cal-title {
+  font-size: 22px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.cal-head-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cal-today-btn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.cal-new-btn {
+  padding: 0 16px;
+}
+
+.cal-new-btn svg {
+  font-size: 16px;
+}
+
+/* ---------- Filtri e legenda ---------- */
+
+.cal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 30px;
+}
+
+.cal-filters {
+  display: flex;
+  gap: 8px;
+}
+
+.cal-filter {
+  all: unset;
+  background: var(--cal-filter-off-bg);
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  border: var(--btn-ghost-border);
+  border-radius: 999px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.cal-filter[aria-pressed="true"] {
+  background: var(--cal-filter-on-bg);
+  color: var(--cal-filter-on-fg);
+}
+
+/* Dove il filtro acceso ha il fondo scuro/chiaro pieno (Opaco, Fosforo) il segno prende il colore del testo. */
+:root:is([data-theme="opaco"], [data-theme="fosforo"]) .cal-filter[aria-pressed="true"] .cal-mark {
+  --item: currentColor;
+  color: currentColor;
+}
+
+:root[data-theme="fosforo"] .cal-filter {
+  text-transform: uppercase;
+  font-size: 11.5px;
+}
+
+.cal-filter:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.cal-filter .cal-mark {
+  margin-right: 0;
+}
+
+.cal-filter--event .cal-mark--event {
+  width: 7px;
+  height: 7px;
+  vertical-align: 0;
+}
+
+.cal-filter--study .cal-mark--study {
+  width: 9px;
+  height: 9px;
+  color: var(--accent);
+}
+
+.cal-filter--reminder .cal-mark--reminder {
+  color: var(--accent);
+}
+
+.cal-filter--note .cal-mark--note {
+  width: 8px;
+  height: 10px;
+  color: var(--text-soft);
+}
+
+.cal-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.cal-legend > span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.cal-legend .cal-mark--study {
+  width: 9px;
+  height: 9px;
+}
+
+.cal-loading {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+.cal-progress {
+  display: block;
+  width: 120px;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--track);
+}
+
+.cal-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+/* Vista Giorno: griglia a sinistra, tre card a destra (316 px). */
+.cal-dayview {
+  flex: 1;
+  min-height: 420px;
+  display: flex;
+  gap: 14px;
+}
+
+/* Finestra stretta: le card vanno sotto la griglia. */
+@media (max-width: 900px) {
+  .cal-dayview {
+    flex-direction: column;
+  }
+
+  .cal-dayview .cal-side {
+    width: auto;
+  }
+}
+
+/* Fosforo: il titolo sta in un display a punti, in Doto (come "NOV 11" della proposta "Altri temi"). */
+:root[data-theme="fosforo"] .cal-title-btn {
+  margin: 0;
+  padding: 2px 14px;
+  border: var(--display-border);
+  border-radius: 8px;
+  background: var(--display-texture), var(--display-bg);
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: var(--dot-on);
+}
+
+:root[data-theme="fosforo"] .cal-title-btn:hover {
+  background: var(--display-texture), var(--display-bg);
+  border-color: var(--row-active-border);
+}
+
+/* Opaco: titolo pieno, nero; Quaderno: scritto a mano (il font lo dà --font-title). */
+:root[data-theme="opaco"] .cal-title {
+  font-weight: 800;
+}

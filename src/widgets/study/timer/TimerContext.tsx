@@ -185,6 +185,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       onBreak: isBreak && running,
       studyPaused: state.phase !== "idle" && !running,
       studySubjectName: subject,
+      studySubjectId: state.phase === "idle" ? null : state.subjectId,
     });
   }, [state.phase, state.runningSince, state.subjectId, subjects]);
 

@@ -1,7 +1,8 @@
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import "./StudyDetail.css";
 import { useNav } from "../../core/nav/useNav";
 import { useThemeVariant, type ThemeVariants } from "../../core/theme/variants";
+import { peekWidgetIntent, takeWidgetIntent } from "../../core/nav/intents";
 import BackButton from "../../ui/BackButton";
 import { useTimer } from "./timer/useTimer";
 import TimerTab from "./detail/TimerTab";
@@ -42,6 +43,11 @@ function StudyDetail() {
   }
   // cambiando tema la scheda Rune sparisce: si torna al Timer
   const tab = TABS.some((t) => t.id === chosen) ? chosen : "timer";
+  // "Apri il timer" dal Calendario: la materia pianificata è pronta (evidenziata, col focus su ▶), non parte da sola.
+  const [readySubjectId] = useState(() => peekWidgetIntent("study")?.subjectId ?? null);
+  useEffect(() => {
+    takeWidgetIntent("study");
+  }, []);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Frecce sinistra/destra: spostano la scheda scelta (e il focus), in giro.
@@ -91,7 +97,7 @@ function StudyDetail() {
       {!ready ? (
         <p className="study-detail-loading">Caricamento…</p>
       ) : tab === "timer" ? (
-        <TimerTab />
+        <TimerTab readySubjectId={readySubjectId} />
       ) : tab === "report" ? (
         <ReportTab />
       ) : tab === "runes" ? (

@@ -12,6 +12,7 @@ import { weatherWidget } from "./weather";
 import { whiteboardWidget } from "./whiteboard";
 import { sysmonWidget } from "./sysmon";
 import { screenTimeWidget } from "./screentime";
+import { calendarWidget } from "./calendar";
 // L'unica eccezione a "widgets non importa social": il widget Gruppi sta con i moduli che legge.
 import { groupsWidget } from "../social/widget";
 
@@ -23,7 +24,7 @@ import { groupsWidget } from "../social/widget";
  * Catalogo, dashboard, layout di default e provider si aggiornano da soli.
  * L'ordine determina anche l'ordine delle righe nel layout di default.
  */
-export const WIDGET_REGISTRY: WidgetDefinition[] = [studyWidget, fileTransferWidget, youtubeWidget, notesWidget, companionWidget, clockWidget, dateWidget, weatherWidget, groupsWidget, whiteboardWidget, sysmonWidget, screenTimeWidget];
+export const WIDGET_REGISTRY: WidgetDefinition[] = [studyWidget, fileTransferWidget, youtubeWidget, notesWidget, companionWidget, clockWidget, dateWidget, weatherWidget, groupsWidget, whiteboardWidget, sysmonWidget, screenTimeWidget, calendarWidget];
 
 const widgetsById = new Map(WIDGET_REGISTRY.map((widget) => [widget.id, widget] as const));
 

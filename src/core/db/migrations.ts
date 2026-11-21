@@ -754,7 +754,96 @@ export const MIGRATIONS: Migration[] = [
     ],
   },
   {
+    // Calendario: erano la 27–29 del ramo feat/calendario, mai rilasciate; rinumerate dopo la 31 di dev. Tutte
+    // rieseguibili (IF NOT EXISTS, ALTER con duplicate column ignorato, trigger IF NOT EXISTS + INSERT OR IGNORE).
     version: 32,
+    description: "Calendario: eventi, sessioni di studio pianificate, categorie, proprietà e note collegate",
+    statements: [
+      // Categorie degli eventi (colore scelto dall'utente).
+      `CREATE TABLE IF NOT EXISTS calendar_categories (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         name TEXT NOT NULL,
+         color TEXT NOT NULL,
+         position INTEGER NOT NULL DEFAULT 0,
+         created_at INTEGER NOT NULL
+       )`,
+      // Un elemento del calendario: kind 'event' (quadratino) o 'study' (sessione di studio pianificata, cerchio).
+      // Istanti in ms; un elemento "tutto il giorno" va da mezzanotte a mezzanotte (locali) del giorno/i.
+      // repeat: JSON della regola (widgets/calendar/lib/recurrence.ts), NULL = non si ripete.
+      // series_id + original_start: eccezione "solo questa" di una serie (la serie ha l'istante tra gli exdates).
+      // parent_id: sessione di studio collegata a un evento. Niente FK: la pulizia la fa il repository.
+      // Niente cestino: eliminare cancella la riga (con le sue eccezioni e i suoi collegamenti).
+      // props: valori delle proprietà indicizzati per calendar_properties.uid (niente id locali nei JSON, per il sync).
+      `CREATE TABLE IF NOT EXISTS calendar_events (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         kind TEXT NOT NULL DEFAULT 'event',
+         title TEXT NOT NULL DEFAULT '',
+         start_at INTEGER NOT NULL,
+         end_at INTEGER NOT NULL,
+         all_day INTEGER NOT NULL DEFAULT 0,
+         category_id INTEGER,
+         subject_id INTEGER,
+         parent_id INTEGER,
+         series_id INTEGER,
+         original_start INTEGER,
+         color TEXT,
+         repeat TEXT,
+         reminders TEXT NOT NULL DEFAULT '[]',
+         props TEXT NOT NULL DEFAULT '{}',
+         todos TEXT NOT NULL DEFAULT '[]',
+         description TEXT NOT NULL DEFAULT '',
+         created_at INTEGER NOT NULL,
+         updated_at INTEGER NOT NULL
+       )`,
+      `CREATE INDEX IF NOT EXISTS idx_calendar_events_start ON calendar_events(start_at)`,
+      `CREATE INDEX IF NOT EXISTS idx_calendar_events_subject ON calendar_events(subject_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_calendar_events_series ON calendar_events(series_id)`,
+      // Proprietà personalizzate (stile Notion), comuni a tutti gli eventi. options: JSON delle scelte di 'select'.
+      `CREATE TABLE IF NOT EXISTS calendar_properties (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         uid TEXT NOT NULL UNIQUE,
+         name TEXT NOT NULL,
+         type TEXT NOT NULL,
+         options TEXT NOT NULL DEFAULT '[]',
+         position INTEGER NOT NULL DEFAULT 0
+       )`,
+      // Nota del Quaderno collegata a un giorno ('YYYY-MM-DD', riga "giorno") e/o a un evento.
+      `CREATE TABLE IF NOT EXISTS calendar_note_links (
+         id INTEGER PRIMARY KEY AUTOINCREMENT,
+         note_id INTEGER NOT NULL,
+         day TEXT,
+         event_id INTEGER,
+         created_at INTEGER NOT NULL
+       )`,
+      `CREATE INDEX IF NOT EXISTS idx_calendar_note_links_day ON calendar_note_links(day)`,
+      `CREATE INDEX IF NOT EXISTS idx_calendar_note_links_event ON calendar_note_links(event_id)`,
+    ],
+  },
+  {
+    version: 33,
+    description: "Calendario: promemoria spuntati come fatti",
+    statements: [
+      // Il tipo 'reminder' (campanella, un solo orario) usa kind; done = JSON degli inizi delle occorrenze segnate come
+      // fatte (istanti, niente id: pronto per il sync). Un ALTER rieseguito lo ignora il runner (duplicate column).
+      `ALTER TABLE calendar_events ADD COLUMN done TEXT NOT NULL DEFAULT '[]'`,
+    ],
+  },
+  {
+    version: 34,
+    description: "Sync tra dispositivi: anche il Calendario (categorie, proprietà, elementi, note collegate)",
+    statements: [
+      // Stesse colonne di core/sync/tables.ts. Le righe che ci sono già ricevono subito il loro id globale.
+      // Restano di questo dispositivo: l'ultima vista e l'ultimo controllo dei promemoria (meta).
+      ...syncTracking("calendar_categories", "id", ["name", "color", "position", "created_at"]),
+      ...syncTracking("calendar_properties", "id", ["uid", "name", "type", "options", "position"]),
+      ...syncTracking("calendar_events", "id", ["kind", "title", "start_at", "end_at", "all_day", "category_id", "subject_id", "parent_id", "series_id", "original_start", "color", "repeat", "reminders", "props", "todos", "description", "done", "created_at", "updated_at"]),
+      ...syncTracking("calendar_note_links", "id", ["note_id", "day", "event_id", "created_at"]),
+    ],
+  },
+  {
+    // Era la 32 del ramo feat/tempo-widget-a, mai rilasciata: rinumerata dopo le 32–34 del Calendario (1.0.17).
+    // Rieseguibile: l'ALTER già fatto lo ignora il runner (duplicate column).
+    version: 35,
     description: "Tempo allo schermo: un limite può bloccare l'app quando finisce il tempo (solo Windows)",
     statements: [
       // 1 = a tempo finito una schermata copre l'app (src-tauri/src/screen_block.rs). La tabella resta locale.

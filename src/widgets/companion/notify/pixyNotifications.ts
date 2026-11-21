@@ -47,6 +47,8 @@ export function pixyLook(n: AppNotification): PixyLook | null {
         return { emotion: "serious", glyph: null, emoji: (n.category && APP_EMOJI[n.category]) || "⏹", phrase: "autostop_app" };
       }
       return { emotion: "sleepy", glyph: "z", emoji: "😴", phrase: "autostop_idle" };
+    case "calendarReminder":
+      return { emotion: "surprised", glyph: "exclaim", emoji: "📅", phrase: "calendar_reminder" };
   }
 }
 

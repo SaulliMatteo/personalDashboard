@@ -1,0 +1,141 @@
+/* Vista mese (mockup docs/design/calendario/calendario.html, "Vista mese"). Le linee sono il fondo che si vede
+   tra le celle (gap di 1 px), come nel mockup. */
+
+.cal-month {
+  flex: 1;
+  /* In una finestra bassa la griglia non si schiaccia: scorre la pagina. */
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--cal-line);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  background: var(--cal-line);
+}
+
+/* Intestazione dei giorni: fondo più deciso delle celle, testo pieno; il giorno di oggi in accent. */
+.cal-month-head {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  height: 34px;
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-soft);
+}
+
+.cal-month-head > .cal-month-head--today {
+  color: var(--accent);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.cal-month-head > div {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--cal-head-bg);
+}
+
+.cal-month-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  gap: 1px;
+}
+
+.cal-month-cell {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px;
+  background: var(--cal-cell-bg);
+  cursor: default;
+}
+
+.cal-month-cell--out {
+  background: var(--cal-cell-out-bg);
+}
+
+.cal-month-cell--today {
+  background: var(--cal-cell-today-bg);
+}
+
+.cal-month-cell--drop {
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+.cal-month-num {
+  flex: none;
+  align-self: flex-start;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-month-cell--out .cal-month-num {
+  color: var(--text-muted);
+}
+
+.cal-month-num--today {
+  min-width: 22px;
+  box-sizing: border-box;
+  height: 18px;
+  padding: 0;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+  text-align: center;
+}
+
+.cal-month-cell > .cal-chip {
+  flex: none;
+}
+
+.cal-month-more {
+  all: unset;
+  flex: none;
+  height: 20px;
+  line-height: 20px;
+  padding: 0 7px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.cal-month-more:hover {
+  color: var(--text-primary);
+}
+
+.cal-month-more:focus-visible {
+  outline: var(--focus-ring);
+}
+
+/* Quaderno: oggi è un cerchio a penna, un po' storto (proposta del mockup). */
+:root[data-theme="quaderno"] .cal-month-num--today {
+  min-width: 24px;
+  height: 22px;
+  line-height: 19px;
+  margin: -2px 0 -2px -2px;
+  border: 1.5px solid var(--accent);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent);
+  transform: rotate(-6deg);
+}
+
+:root[data-theme="fosforo"] .cal-month-head > div {
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
